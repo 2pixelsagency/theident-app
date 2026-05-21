@@ -44,12 +44,10 @@ export default function OnboardingStep3() {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return
 
-    // Save agent info (using what_i_do field for now)
     await supabase.from('profiles').update({
       what_i_do: noAgent ? null : agent,
     }).eq('id', user.id)
 
-    // Clear existing skills then insert new ones
     await supabase.from('profile_skills').delete().eq('profile_id', user.id)
     if (selectedSkills.length > 0) {
       await supabase.from('profile_skills').insert(
@@ -69,7 +67,6 @@ export default function OnboardingStep3() {
       <div style={{ width: '100%', maxWidth: '700px' }}>
         <h1 style={{ fontFamily: 'Georgia, serif', fontSize: '36px', fontWeight: 500, color: '#0c2520', textAlign: 'center', margin: '0 0 40px' }}>Show off those skills</h1>
 
-        {/* Agent */}
         <div style={{ marginBottom: '32px' }}>
           <label style={{ display: 'block', fontSize: '14px', color: '#0c2520', marginBottom: '8px', fontWeight: 500 }}>Agent</label>
           <input
@@ -86,7 +83,6 @@ export default function OnboardingStep3() {
           </label>
         </div>
 
-        {/* Skills */}
         <div style={{ marginBottom: '32px' }}>
           <label style={{ display: 'block', fontSize: '14px', color: '#0c2520', marginBottom: '8px', fontWeight: 500 }}>
             Skills <span style={{ color: '#888', fontWeight: 400 }}>({selectedSkills.length} selected)</span>
@@ -108,14 +104,13 @@ export default function OnboardingStep3() {
                   onClick={() => toggleSkill(s.id)}
                   style={{
                     padding: '8px 14px',
-                    border: 'none',
                     borderRadius: '20px',
                     background: selected ? '#0c2520' : 'white',
                     color: selected ? '#f1f0ee' : '#0c2520',
                     cursor: 'pointer',
                     fontSize: '13px',
                     fontFamily: 'inherit',
-                    border: selected ? 'none' : '1px solid #e0ddd5',
+                    border: selected ? '1px solid #0c2520' : '1px solid #e0ddd5',
                   }}
                 >
                   {s.name} {selected && '×'}
