@@ -1,5 +1,5 @@
 {
-  "name": "spotlight-appnpx",
+  "name": "theident-app",
   "version": "0.1.0",
   "private": true,
   "scripts": {
@@ -12,7 +12,7 @@
     "next": "16.2.6",
     "react": "19.2.4",
     "react-dom": "19.2.4",
-    "@supabase/supabase-js": "^2.45.0",
+    "@supabase/supabase-js": "^2.45.0"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
