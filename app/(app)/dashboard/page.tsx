@@ -12,6 +12,8 @@ type Job = {
   project_role: string | null
   project_in: string | null
   production_company: string | null
+  company: string | null
+  casting_team: string | null
   location: string | null
   short_summary: string | null
   is_side_hustle: boolean
@@ -22,8 +24,10 @@ type Job = {
   salary: string | null
   created_at: string
   job_title: string | null
-  company: string | null
+  created_by: string | null
 }
+
+type SortOption = 'newest' | 'oldest' | 'az' | 'za'
 
 export default function Dashboard() {
   const router = useRouter()
@@ -32,6 +36,7 @@ export default function Dashboard() {
   const [ethnicities, setEthnicities] = useState<Lookup[]>([])
   const [jobs, setJobs] = useState<Job[]>([])
   const [spotlightJobs, setSpotlightJobs] = useState<Job[]>([])
+  const [savedIds, setSavedIds] = useState<Set<string>>(new Set())
   const [loading, setLoading] = useState(true)
 
   const [selectedProductionTypes, setSelectedProductionTypes] = useState<number[]>([])
@@ -42,6 +47,7 @@ export default function Dashboard() {
   const [locationSearch, setLocationSearch] = useState('')
   const [keywordSearch, setKeywordSearch] = useState('')
   const [showSideHustle, setShowSideHustle] = useState(false)
+  const [sortBy, setSortBy] = useState<SortOption>('newest')
 
   const [openDropdown, setOpenDropdown] = useState<string | null>(null)
   const dropdownRef = useRef<HTMLDivElement>(null)
@@ -56,16 +62,31 @@ export default function Dashboard() {
 
   useEffect(() => {
     const load = async () => {
-      const [{ data: pt }, { data: g }, { data: e }, { data: spot }] = await Promise.all([
+      const { data: { user } } = await supabase.auth.getUser()
+
+      const promises: Promise<unknown>[] = [
         supabase.from('production_types').select('id, name').order('name'),
         supabase.from('genders').select('id, name').order('id'),
         supabase.from('ethnicities').select('id, name').order('name'),
         supabase.from('jobs').select('*').eq('is_spotlighted', true).eq('is_published', true).order('created_at', { ascending: false }).limit(2),
-      ])
-      setProductionTypes(pt || [])
-      setGenders(g || [])
-      setEthnicities(e || [])
-      setSpotlightJobs(spot || [])
+      ]
+
+      if (user) {
+        promises.push(supabase.from('saved_jobs').select('job_id').eq('user_id', user.id))
+      }
+
+      const results = await Promise.all(promises) as Array<{ data: unknown }>
+      const pt = (results[0]?.data || []) as Lookup[]
+      const g = (results[1]?.data || []) as Lookup[]
+      const e = (results[2]?.data || []) as Lookup[]
+      const spot = (results[3]?.data || []) as Job[]
+      const saved = user ? (results[4]?.data || []) as Array<{ job_id: string }> : []
+
+      setProductionTypes(pt)
+      setGenders(g)
+      setEthnicities(e)
+      setSpotlightJobs(spot)
+      setSavedIds(new Set(saved.map(s => s.job_id)))
       setLoading(false)
     }
     load()
@@ -79,11 +100,25 @@ export default function Dashboard() {
       if (keywordSearch) {
         query = query.or(`project_role.ilike.%${keywordSearch}%,project_in.ilike.%${keywordSearch}%,short_summary.ilike.%${keywordSearch}%,job_title.ilike.%${keywordSearch}%`)
       }
-      const { data } = await query.order('created_at', { ascending: false })
-      setJobs(data || [])
+
+      if (sortBy === 'newest') query = query.order('created_at', { ascending: false })
+      if (sortBy === 'oldest') query = query.order('created_at', { ascending: true })
+
+      const { data } = await query
+      let result = data || []
+
+      if (sortBy === 'az' || sortBy === 'za') {
+        result = [...result].sort((a, b) => {
+          const ta = (a.is_side_hustle ? a.job_title : a.project_role) || ''
+          const tb = (b.is_side_hustle ? b.job_title : b.project_role) || ''
+          return sortBy === 'az' ? ta.localeCompare(tb) : tb.localeCompare(ta)
+        })
+      }
+
+      setJobs(result)
     }
     if (!loading) loadJobs()
-  }, [selectedProductionTypes, selectedGenders, selectedEthnicities, minAge, maxAge, locationSearch, keywordSearch, showSideHustle, loading])
+  }, [selectedProductionTypes, selectedGenders, selectedEthnicities, minAge, maxAge, locationSearch, keywordSearch, showSideHustle, sortBy, loading])
 
   const toggleFilter = (list: number[], setList: (v: number[]) => void, id: number) => {
     setList(list.includes(id) ? list.filter(x => x !== id) : [...list, id])
@@ -101,7 +136,47 @@ export default function Dashboard() {
     return productionTypes.find(pt => pt.id === id)?.name
   }
 
+  const formatRelativeDate = (dateStr: string) => {
+    const date = new Date(dateStr)
+    const now = new Date()
+    const diffMs = now.getTime() - date.getTime()
+    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24))
+    if (diffDays === 0) return 'Today'
+    if (diffDays === 1) return 'Yesterday'
+    if (diffDays < 7) return `${diffDays} days ago`
+    if (diffDays < 14) return 'Last week'
+    if (diffDays < 30) return `${Math.floor(diffDays / 7)} weeks ago`
+    if (diffDays < 60) return 'Last month'
+    return `${Math.floor(diffDays / 30)} months ago`
+  }
+
+  const getSentBy = (job: Job) => {
+    return job.is_side_hustle ? job.company : (job.casting_team || job.production_company)
+  }
+
+  const toggleSave = async (e: React.MouseEvent, jobId: string) => {
+    e.preventDefault()
+    e.stopPropagation()
+
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) { router.push('/signup'); return }
+
+    if (savedIds.has(jobId)) {
+      await supabase.from('saved_jobs').delete().eq('user_id', user.id).eq('job_id', jobId)
+      const newSet = new Set(savedIds)
+      newSet.delete(jobId)
+      setSavedIds(newSet)
+    } else {
+      await supabase.from('saved_jobs').insert({ user_id: user.id, job_id: jobId })
+      const newSet = new Set(savedIds)
+      newSet.add(jobId)
+      setSavedIds(newSet)
+    }
+  }
+
   if (loading) return <div style={{ minHeight: '100vh', background: '#f1f0ee' }} />
+
+  const sortLabel = sortBy === 'newest' ? 'Newest first' : sortBy === 'oldest' ? 'Oldest first' : sortBy === 'az' ? 'Name A–Z' : 'Name Z–A'
 
   const FilterPill = ({ id, label, count }: { id: string; label: string; count: number }) => (
     <button onClick={() => setOpenDropdown(openDropdown === id ? null : id)} className="filter-pill" style={{ background: count > 0 ? '#e8efea' : 'white', border: count > 0 ? '1px solid #0c2520' : '1px solid #e0ddd5', padding: '8px 14px', borderRadius: '8px', fontSize: '13px', color: '#0c2520', cursor: 'pointer', fontFamily: 'inherit', display: 'flex', alignItems: 'center', gap: '6px', fontWeight: count > 0 ? 500 : 400, transition: 'all 0.2s ease' }}>
@@ -123,10 +198,26 @@ export default function Dashboard() {
     </div>
   )
 
+  const SaveButton = ({ jobId, isLightBg = false }: { jobId: string; isLightBg?: boolean }) => {
+    const isSaved = savedIds.has(jobId)
+    return (
+      <button onClick={(e) => toggleSave(e, jobId)} className="save-btn" style={{
+        background: isSaved ? '#0c2520' : (isLightBg ? 'white' : 'rgba(255,255,255,0.9)'),
+        border: isSaved ? '1px solid #0c2520' : '1px solid #e0ddd5',
+        color: isSaved ? '#f1f0ee' : '#0c2520',
+        padding: '6px 14px', borderRadius: '20px', fontSize: '12px',
+        cursor: 'pointer', fontFamily: 'inherit', fontWeight: 500,
+        transition: 'all 0.2s ease', whiteSpace: 'nowrap',
+      }}>
+        {isSaved ? 'Saved' : 'Save'}
+      </button>
+    )
+  }
+
   const renderSpotlight = () => {
     const ctaCard = (key: string) => (
       <Link key={key} href="/post-job" style={{ textDecoration: 'none' }}>
-        <div className="job-card" style={{ background: '#e8e6e0', borderRadius: '12px', padding: '24px', minHeight: '260px', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', cursor: 'pointer', textAlign: 'center' }}>
+        <div className="job-card" style={{ background: '#e8e6e0', borderRadius: '12px', padding: '24px', minHeight: '280px', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', cursor: 'pointer', textAlign: 'center' }}>
           <p style={{ fontSize: '13px', color: '#666', margin: '0 0 6px' }}>Spotlight your job</p>
           <p style={{ fontSize: '13px', color: '#0c2520', margin: 0, textDecoration: 'underline', fontWeight: 500 }}>Get your role booked in less<br />than one week</p>
         </div>
@@ -137,24 +228,34 @@ export default function Dashboard() {
       const title = job.is_side_hustle ? job.job_title : job.project_role
       const subtitle = job.is_side_hustle ? job.company : job.project_in
       const productionTypeName = getProductionTypeName(job.production_type_id)
+      const sentBy = getSentBy(job)
 
       return (
         <Link key={job.id} href={`/jobs/${job.id}`} style={{ textDecoration: 'none' }}>
-          <div className="job-card" style={{ background: isMint ? '#92d7af' : '#0c2520', borderRadius: '12px', padding: '24px', minHeight: '260px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', cursor: 'pointer' }}>
-            <div>
+          <div className="job-card" style={{ background: isMint ? '#92d7af' : '#0c2520', borderRadius: '12px', padding: '24px', minHeight: '280px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', cursor: 'pointer', position: 'relative' }}>
+            <div style={{ position: 'absolute', top: '16px', right: '16px' }}>
+              <SaveButton jobId={job.id} isLightBg={isMint} />
+            </div>
+            <div style={{ paddingRight: '70px' }}>
               <h3 style={{ fontFamily: 'Georgia, serif', fontSize: '18px', fontWeight: 600, color: isMint ? '#0c2520' : '#f1f0ee', margin: '0 0 4px', lineHeight: 1.2 }}>{title}</h3>
-              {subtitle && <p style={{ fontSize: '13px', color: isMint ? '#0c2520' : '#a8c4b4', margin: '0 0 12px', fontStyle: 'italic' }}>In {subtitle}</p>}
+              {subtitle && <p style={{ fontSize: '13px', color: isMint ? '#0c2520' : '#a8c4b4', margin: '0 0 10px', fontStyle: 'italic' }}>In {subtitle}</p>}
 
-              {job.short_summary && <p style={{ fontSize: '13px', color: isMint ? '#0c2520' : '#cfdfd6', margin: '0 0 14px', lineHeight: 1.4 }}>{job.short_summary}</p>}
+              {job.short_summary && <p style={{ fontSize: '13px', color: isMint ? '#0c2520' : '#cfdfd6', margin: '0 0 12px', lineHeight: 1.4 }}>{job.short_summary}</p>}
 
               <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', marginBottom: '12px' }}>
                 {job.location && <span style={{ background: isMint ? 'rgba(255,255,255,0.5)' : 'rgba(255,255,255,0.15)', padding: '4px 10px', borderRadius: '6px', fontSize: '11px', color: isMint ? '#0c2520' : '#f1f0ee' }}>{job.location}</span>}
                 {productionTypeName && <span style={{ background: isMint ? 'rgba(255,255,255,0.5)' : 'rgba(255,255,255,0.15)', padding: '4px 10px', borderRadius: '6px', fontSize: '11px', color: isMint ? '#0c2520' : '#f1f0ee' }}>{productionTypeName}</span>}
-                {job.production_company && <span style={{ background: isMint ? 'rgba(255,255,255,0.5)' : 'rgba(255,255,255,0.15)', padding: '4px 10px', borderRadius: '6px', fontSize: '11px', color: isMint ? '#0c2520' : '#f1f0ee' }}>{job.production_company}</span>}
                 {job.salary && <span style={{ background: isMint ? '#0c2520' : '#f1f0ee', color: isMint ? '#f1f0ee' : '#0c2520', padding: '4px 10px', borderRadius: '6px', fontSize: '11px', fontWeight: 500 }}>{job.salary}</span>}
               </div>
             </div>
-            <button style={{ background: 'white', color: '#0c2520', border: 'none', padding: '8px 24px', borderRadius: '20px', fontSize: '13px', fontWeight: 500, cursor: 'pointer', alignSelf: 'flex-start', fontFamily: 'inherit' }}>View Job</button>
+
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', gap: '12px' }}>
+              <div style={{ fontSize: '11px', color: isMint ? '#0c2520' : '#a8c4b4', lineHeight: 1.4 }}>
+                <div style={{ marginBottom: '2px' }}>{formatRelativeDate(job.created_at)}</div>
+                {sentBy && <div>Sent by {sentBy}</div>}
+              </div>
+              <button className="apply-btn" style={{ background: 'white', color: '#0c2520', border: '1px solid white', padding: '8px 24px', borderRadius: '20px', fontSize: '13px', fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit', transition: 'all 0.2s ease' }}>View</button>
+            </div>
           </div>
         </Link>
       )
@@ -183,6 +284,9 @@ export default function Dashboard() {
         .job-card:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(12, 37, 32, 0.1); }
         .filter-pill:hover { border-color: #0c2520 !important; }
         .dropdown-item:hover { background: #f5f3ee; }
+        .save-btn:hover { background: #0c2520 !important; color: #f1f0ee !important; border-color: #0c2520 !important; }
+        .apply-btn:hover { background: #0c2520 !important; color: #f1f0ee !important; border-color: #0c2520 !important; }
+        .list-apply-btn:hover { background: #0c2520 !important; color: #f1f0ee !important; }
         .range-slider { -webkit-appearance: none; appearance: none; width: 100%; height: 4px; background: #d4d2cc; border-radius: 2px; outline: none; }
         .range-slider::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 18px; height: 18px; background: #0c2520; border-radius: 50%; cursor: pointer; border: none; }
         .range-slider::-moz-range-thumb { width: 18px; height: 18px; background: #0c2520; border-radius: 50%; cursor: pointer; border: none; }
@@ -251,9 +355,21 @@ export default function Dashboard() {
               <p style={{ fontSize: '13px', color: '#0c2520', margin: 0, fontWeight: 500 }}>{jobs.length} {jobs.length === 1 ? 'result' : 'results'}</p>
               {hasActiveFilters && <button onClick={clearAllFilters} style={{ background: 'transparent', border: 'none', fontSize: '12px', color: '#666', textDecoration: 'underline', cursor: 'pointer', fontFamily: 'inherit' }}>Clear all filters</button>}
             </div>
-            <button style={{ background: 'transparent', border: 'none', fontSize: '13px', color: '#0c2520', cursor: 'pointer', fontFamily: 'inherit', display: 'flex', alignItems: 'center', gap: '4px' }}>
-              Sort By <span style={{ fontSize: '10px' }}>▼</span>
-            </button>
+
+            <div style={{ position: 'relative' }}>
+              <button onClick={() => setOpenDropdown(openDropdown === 'sort' ? null : 'sort')} style={{ background: 'transparent', border: 'none', fontSize: '13px', color: '#0c2520', cursor: 'pointer', fontFamily: 'inherit', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                Sort: {sortLabel} <span style={{ fontSize: '10px' }}>▼</span>
+              </button>
+              {openDropdown === 'sort' && (
+                <div ref={dropdownRef} style={{ position: 'absolute', top: 'calc(100% + 4px)', right: 0, background: 'white', border: '1px solid #e0ddd5', borderRadius: '10px', boxShadow: '0 4px 12px rgba(0,0,0,0.08)', padding: '6px', minWidth: '180px', zIndex: 20 }}>
+                  {(['newest', 'oldest', 'az', 'za'] as SortOption[]).map(opt => (
+                    <button key={opt} onClick={() => { setSortBy(opt); setOpenDropdown(null) }} className="dropdown-item" style={{ width: '100%', textAlign: 'left', padding: '8px 12px', background: sortBy === opt ? '#e8efea' : 'transparent', border: 'none', borderRadius: '6px', cursor: 'pointer', fontSize: '13px', color: '#0c2520', fontFamily: 'inherit', fontWeight: sortBy === opt ? 500 : 400 }}>
+                      {opt === 'newest' ? 'Newest first' : opt === 'oldest' ? 'Oldest first' : opt === 'az' ? 'Name A–Z' : 'Name Z–A'}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
 
           {jobs.length === 0 ? (
@@ -267,17 +383,29 @@ export default function Dashboard() {
                 const title = job.is_side_hustle ? job.job_title : job.project_role
                 const subtitle = job.is_side_hustle ? job.company : job.project_in
                 const productionTypeName = getProductionTypeName(job.production_type_id)
+                const sentBy = getSentBy(job)
                 return (
                   <Link key={job.id} href={`/jobs/${job.id}`} style={{ textDecoration: 'none' }}>
-                    <div className="job-card" style={{ padding: '20px', border: '1px solid #e8e6e0', borderRadius: '12px', cursor: 'pointer', background: 'white' }}>
-                      <h3 style={{ fontFamily: 'Georgia, serif', fontSize: '18px', fontWeight: 500, color: '#0c2520', margin: '0 0 4px' }}>{title}</h3>
-                      {subtitle && <p style={{ fontSize: '13px', color: '#666', margin: '0 0 8px', fontStyle: 'italic' }}>In {subtitle}</p>}
-                      {job.short_summary && <p style={{ fontSize: '14px', color: '#0c2520', margin: '0 0 12px' }}>{job.short_summary}</p>}
-                      <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
-                        {job.location && <span style={{ background: '#f1f0ee', padding: '4px 10px', borderRadius: '6px', fontSize: '12px', color: '#0c2520' }}>{job.location}</span>}
-                        {productionTypeName && <span style={{ background: '#e8efea', padding: '4px 10px', borderRadius: '6px', fontSize: '12px', color: '#0c2520' }}>{productionTypeName}</span>}
-                        {job.salary && <span style={{ background: '#0c2520', color: '#f1f0ee', padding: '4px 10px', borderRadius: '6px', fontSize: '12px', fontWeight: 500 }}>{job.salary}</span>}
-                        {job.is_side_hustle && <span style={{ background: '#fde6c2', padding: '4px 10px', borderRadius: '6px', fontSize: '12px', color: '#8a5a2e' }}>Side Hustle</span>}
+                    <div className="job-card" style={{ padding: '20px', border: '1px solid #e8e6e0', borderRadius: '12px', cursor: 'pointer', background: 'white', position: 'relative' }}>
+                      <div style={{ position: 'absolute', top: '16px', right: '16px' }}>
+                        <SaveButton jobId={job.id} isLightBg={true} />
+                      </div>
+                      <div style={{ paddingRight: '70px' }}>
+                        <h3 style={{ fontFamily: 'Georgia, serif', fontSize: '18px', fontWeight: 500, color: '#0c2520', margin: '0 0 4px' }}>{title}</h3>
+                        {subtitle && <p style={{ fontSize: '13px', color: '#666', margin: '0 0 8px', fontStyle: 'italic' }}>In {subtitle}</p>}
+                        {job.short_summary && <p style={{ fontSize: '14px', color: '#0c2520', margin: '0 0 12px' }}>{job.short_summary}</p>}
+                        <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', marginBottom: '12px' }}>
+                          {job.location && <span style={{ background: '#f1f0ee', padding: '4px 10px', borderRadius: '6px', fontSize: '12px', color: '#0c2520' }}>{job.location}</span>}
+                          {productionTypeName && <span style={{ background: '#e8efea', padding: '4px 10px', borderRadius: '6px', fontSize: '12px', color: '#0c2520' }}>{productionTypeName}</span>}
+                          {job.salary && <span style={{ background: '#0c2520', color: '#f1f0ee', padding: '4px 10px', borderRadius: '6px', fontSize: '12px', fontWeight: 500 }}>{job.salary}</span>}
+                          {job.is_side_hustle && <span style={{ background: '#fde6c2', padding: '4px 10px', borderRadius: '6px', fontSize: '12px', color: '#8a5a2e' }}>Side Hustle</span>}
+                        </div>
+                      </div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', borderTop: '1px solid #f0ede5', paddingTop: '12px', marginTop: '4px' }}>
+                        <div style={{ fontSize: '11px', color: '#888', lineHeight: 1.4 }}>
+                          <div>{formatRelativeDate(job.created_at)}</div>
+                          {sentBy && <div>Sent by {sentBy}</div>}
+                        </div>
                       </div>
                     </div>
                   </Link>
