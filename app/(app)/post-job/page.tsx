@@ -99,7 +99,7 @@ export default function PostJob() {
       casting_email: isSideHustle ? applyEmail : castingEmail,
     }
 
-    const jobData = isSideHustle
+    const jobData: Record<string, unknown> = isSideHustle
       ? {
           ...baseData,
           job_title: jobTitle,
@@ -201,7 +201,6 @@ export default function PostJob() {
         {!isSideHustle && (
           <div style={{ background: 'white', border: '1px solid #e8e6e0', borderRadius: '12px', padding: '32px' }}>
 
-            {/* Basic Info */}
             <h2 style={sectionTitleStyle}>Project Details</h2>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '16px' }}>
               <div>
@@ -254,7 +253,6 @@ export default function PostJob() {
               </div>
             </div>
 
-            {/* Requirements */}
             <h2 style={sectionTitleStyle}>Talent Requirements</h2>
 
             <div style={{ marginBottom: '16px', position: 'relative' }}>
@@ -308,7 +306,6 @@ export default function PostJob() {
               </div>
             </div>
 
-            {/* Contact */}
             <h2 style={sectionTitleStyle}>How to Apply</h2>
 
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '16px' }}>
