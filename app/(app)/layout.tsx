@@ -36,33 +36,32 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
 
   const isActive = (path: string) => pathname === path || pathname.startsWith(path + '/')
 
-  const navItem = (href: string, label: string, icon: string) => (
+  const navItem = (href: string, label: string) => (
     <Link
       href={href}
       className="nav-item"
       style={{
-        display: 'flex', alignItems: 'center', gap: '12px', width: '100%', padding: '12px 14px',
+        display: 'block', width: '100%', padding: '12px 14px',
         background: isActive(href) ? '#e8efea' : 'transparent', borderRadius: '8px',
         textDecoration: 'none', fontSize: '14px', color: '#0c2520',
         fontWeight: isActive(href) ? 500 : 400, transition: 'background 0.2s ease',
       }}
     >
-      <span style={{ fontSize: '16px' }}>{icon}</span>
       {label}
     </Link>
   )
 
-  const mobileNavItem = (href: string, label: string, icon: string) => (
+  const mobileNavItem = (href: string, label: string) => (
     <Link
       href={href}
       style={{
-        display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px',
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
         textDecoration: 'none', color: isActive(href) ? '#0c2520' : '#888',
-        fontSize: '10px', fontWeight: isActive(href) ? 500 : 400,
-        flex: 1, padding: '8px 0',
+        fontSize: '12px', fontWeight: isActive(href) ? 500 : 400,
+        flex: 1, padding: '14px 0', textAlign: 'center',
+        borderTop: isActive(href) ? '2px solid #0c2520' : '2px solid transparent',
       }}
     >
-      <span style={{ fontSize: '20px' }}>{icon}</span>
       {label}
     </Link>
   )
@@ -85,7 +84,6 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         }
       `}</style>
 
-      {/* Desktop Sidebar */}
       <aside className="desktop-sidebar" style={{
         position: 'fixed', top: 0, left: 0, width: '260px', height: '100vh',
         background: 'white', padding: '24px 16px', flexDirection: 'column',
@@ -98,39 +96,36 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         </div>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
-          {navItem('/dashboard', 'Jobs', '📋')}
-          {navItem('/saved', 'Saved Jobs', '🔖')}
-          {navItem('/post-job', 'Post a job', '➕')}
-          {navItem('/browse', 'Browse Talent', '👥')}
-          {navItem('/news', 'News', '📰')}
+          {navItem('/dashboard', 'Jobs')}
+          {navItem('/saved', 'Saved Jobs')}
+          {navItem('/post-job', 'Post a job')}
+          {navItem('/browse', 'Browse Talent')}
+          {navItem('/news', 'News')}
         </div>
 
         <div style={{ marginTop: '32px', paddingTop: '20px', borderTop: '1px solid #e8e6e0' }}>
           <p style={{ fontSize: '10px', color: '#999', textTransform: 'uppercase', letterSpacing: '0.08em', margin: '0 0 8px 14px', fontWeight: 600 }}>Your Settings</p>
-          {navItem('/profile', 'Profile', '⚙️')}
-          {navItem('/wishlist', 'Wishlist', '❤️')}
-          {navItem('/billing', 'Billing', '💳')}
-          <button onClick={handleLogout} className="nav-item" style={{ display: 'flex', alignItems: 'center', gap: '12px', width: '100%', padding: '12px 14px', background: 'transparent', border: 'none', borderRadius: '8px', textAlign: 'left', cursor: 'pointer', fontSize: '14px', color: '#0c2520', fontFamily: 'inherit' }}>
-            <span style={{ fontSize: '16px' }}>↪️</span>
+          {navItem('/profile', 'Profile')}
+          {navItem('/wishlist', 'Wishlist')}
+          {navItem('/billing', 'Billing')}
+          <button onClick={handleLogout} className="nav-item" style={{ display: 'block', width: '100%', padding: '12px 14px', background: 'transparent', border: 'none', borderRadius: '8px', textAlign: 'left', cursor: 'pointer', fontSize: '14px', color: '#0c2520', fontFamily: 'inherit' }}>
             Logout
           </button>
         </div>
       </aside>
 
-      {/* Mobile Bottom Nav */}
       <nav className="mobile-nav" style={{
         position: 'fixed', bottom: 0, left: 0, right: 0, background: 'white',
-        borderTop: '1px solid #e8e6e0', padding: '4px 8px', zIndex: 10,
-        justifyContent: 'space-around', alignItems: 'center',
+        borderTop: '1px solid #e8e6e0', zIndex: 10,
+        justifyContent: 'space-around', alignItems: 'stretch',
       }}>
-        {mobileNavItem('/dashboard', 'Jobs', '📋')}
-        {mobileNavItem('/saved', 'Saved', '🔖')}
-        {mobileNavItem('/post-job', 'Post', '➕')}
-        {mobileNavItem('/browse', 'Talent', '👥')}
-        {mobileNavItem('/profile', 'Me', '👤')}
+        {mobileNavItem('/dashboard', 'Jobs')}
+        {mobileNavItem('/saved', 'Saved')}
+        {mobileNavItem('/post-job', 'Post')}
+        {mobileNavItem('/browse', 'Talent')}
+        {mobileNavItem('/profile', 'Me')}
       </nav>
 
-      {/* Main Content */}
       <main className="main-content" style={{ minHeight: '100vh' }}>
         {children}
       </main>
