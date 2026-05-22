@@ -12,10 +12,9 @@ export default function PostJob() {
   const router = useRouter()
   const [isSideHustle, setIsSideHustle] = useState(false)
   const [saving, setSaving] = useState(false)
+  const [userEmail, setUserEmail] = useState('')
 
-  // Lookups
   const [productionTypes, setProductionTypes] = useState<Lookup[]>([])
-  const [genders, setGenders] = useState<Lookup[]>([])
   const [skills, setSkills] = useState<Skill[]>([])
   const [skillCategories, setSkillCategories] = useState<SkillCategory[]>([])
 
@@ -24,13 +23,15 @@ export default function PostJob() {
   const [projectIn, setProjectIn] = useState('')
   const [productionCompany, setProductionCompany] = useState('')
   const [shortSummary, setShortSummary] = useState('')
-  const [salary, setSalary] = useState('')
+  const [salaryType, setSalaryType] = useState('Paid')
+  const [salaryAmount, setSalaryAmount] = useState('')
   const [productionTypeId, setProductionTypeId] = useState<number | null>(null)
   const [location, setLocation] = useState('')
   const [contractDates, setContractDates] = useState('')
   const [applicationDeadline, setApplicationDeadline] = useState('')
   const [selectedSkills, setSelectedSkills] = useState<number[]>([])
-  const [ageRange, setAgeRange] = useState('')
+  const [minAge, setMinAge] = useState(18)
+  const [maxAge, setMaxAge] = useState(40)
   const [genderRequirement, setGenderRequirement] = useState('')
   const [appearance, setAppearance] = useState('')
   const [height, setHeight] = useState('')
@@ -51,19 +52,23 @@ export default function PostJob() {
   const [applyEmail, setApplyEmail] = useState('')
   const [startDate, setStartDate] = useState('')
 
-  // Skill search
   const [skillSearch, setSkillSearch] = useState('')
 
   useEffect(() => {
     const load = async () => {
-      const [{ data: pt }, { data: g }, { data: s }, { data: sc }] = await Promise.all([
+      const { data: { user } } = await supabase.auth.getUser()
+      if (user?.email) {
+        setUserEmail(user.email)
+        setCastingEmail(user.email)
+        setApplyEmail(user.email)
+      }
+
+      const [{ data: pt }, { data: s }, { data: sc }] = await Promise.all([
         supabase.from('production_types').select('id, name').order('name'),
-        supabase.from('genders').select('id, name').order('id'),
         supabase.from('skills').select('id, name, category_id').order('name'),
         supabase.from('skills_categories').select('id, name, color, text_color'),
       ])
       setProductionTypes(pt || [])
-      setGenders(g || [])
       setSkills(s || [])
       setSkillCategories(sc || [])
     }
@@ -84,10 +89,32 @@ export default function PostJob() {
     ? skills.filter(s => s.name.toLowerCase().includes(skillSearch.toLowerCase())).slice(0, 8)
     : []
 
+  const validate = (): string | null => {
+    if (isSideHustle) {
+      if (!jobTitle.trim()) return 'Job title is required'
+      if (!company.trim()) return 'Company is required'
+      if (!applyEmail.trim()) return 'Apply email is required'
+      if (!description.trim()) return 'Description is required'
+    } else {
+      if (!projectRole.trim()) return 'Project role is required'
+      if (!projectIn.trim()) return 'Project in is required'
+      if (!productionCompany.trim()) return 'Production company is required'
+      if (!shortSummary.trim()) return 'Short summary is required'
+      if (!castingEmail.trim()) return 'Casting email is required'
+      if (!description.trim()) return 'Description is required'
+    }
+    return null
+  }
+
   const handleSubmit = async () => {
+    const err = validate()
+    if (err) { alert(err); return }
+
     setSaving(true)
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) { router.push('/signup'); return }
+
+    const salary = salaryType === 'Paid' ? salaryAmount : salaryType
 
     const baseData = {
       created_by: user.id,
@@ -121,7 +148,7 @@ export default function PostJob() {
           production_type_id: productionTypeId,
           contract_dates: contractDates,
           application_deadline: applicationDeadline || null,
-          age_range: ageRange,
+          age_range: `${minAge}-${maxAge}`,
           gender_requirement: genderRequirement,
           appearance,
           height,
@@ -137,7 +164,6 @@ export default function PostJob() {
       return
     }
 
-    // Link skills (only for industry jobs)
     if (!isSideHustle && newJob && selectedSkills.length > 0) {
       await supabase.from('job_skills').insert(selectedSkills.map(skillId => ({ job_id: newJob.id, skill_id: skillId })))
     }
@@ -151,12 +177,12 @@ export default function PostJob() {
   }
 
   const labelStyle: React.CSSProperties = {
-    display: 'block', fontSize: '13px', color: '#0c2520', marginBottom: '6px', fontWeight: 500,
+    display: 'block', fontSize: '12px', color: '#0c2520', marginBottom: '6px', fontWeight: 500,
   }
 
-  const sectionTitleStyle: React.CSSProperties = {
-    fontFamily: 'Georgia, serif', fontSize: '18px', fontWeight: 500, color: '#0c2520',
-    margin: '0 0 16px', paddingBottom: '12px', borderBottom: '1px solid #e8e6e0',
+  const sectionStyle: React.CSSProperties = {
+    fontFamily: 'Georgia, serif', fontSize: '15px', fontWeight: 500, color: '#0c2520',
+    margin: '24px 0 14px', textTransform: 'uppercase', letterSpacing: '0.05em',
   }
 
   return (
@@ -176,21 +202,48 @@ export default function PostJob() {
           background: white; border-radius: 50%; transition: transform 0.2s ease;
         }
         .toggle-switch.on .toggle-knob { transform: translateX(20px); }
+        .salary-pill {
+          padding: 8px 14px; border-radius: 8px; font-size: 13px;
+          cursor: pointer; transition: all 0.2s ease; font-family: inherit;
+        }
+        .salary-pill:hover { border-color: #0c2520 !important; }
+        .range-slider {
+          -webkit-appearance: none; appearance: none; width: 100%;
+          height: 4px; background: #d4d2cc; border-radius: 2px; outline: none;
+        }
+        .range-slider::-webkit-slider-thumb {
+          -webkit-appearance: none; appearance: none;
+          width: 16px; height: 16px; background: #0c2520; border-radius: 50%; cursor: pointer; border: none;
+        }
+        .range-slider::-moz-range-thumb {
+          width: 16px; height: 16px; background: #0c2520; border-radius: 50%; cursor: pointer; border: none;
+        }
+        input[type="number"]::-webkit-inner-spin-button,
+        input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+        input[type="number"] { -moz-appearance: textfield; }
       `}</style>
 
-      <div className="fade-in" style={{ maxWidth: '900px', margin: '0 auto' }}>
+      <div className="fade-in" style={{ maxWidth: '760px', margin: '0 auto' }}>
 
         {/* Header */}
-        <div style={{ marginBottom: '24px' }}>
-          <h1 style={{ fontFamily: 'Georgia, serif', fontSize: '28px', fontWeight: 500, color: '#0c2520', margin: '0 0 8px' }}>Post a Job</h1>
-          <p style={{ fontSize: '13px', color: '#666', margin: 0 }}>Please try to give at least 7 days&apos; notice so talent has time to put in their best work — quick 1-day turnarounds don&apos;t always give a fair chance to creators.</p>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '24px', flexWrap: 'wrap', gap: '12px' }}>
+          <div>
+            <h1 style={{ fontFamily: 'Georgia, serif', fontSize: '28px', fontWeight: 500, color: '#0c2520', margin: '0 0 6px' }}>Post a Job</h1>
+            <p style={{ fontSize: '13px', color: '#666', margin: 0, maxWidth: '600px' }}>Please give at least 7 days&apos; notice so talent has time to put in their best work.</p>
+          </div>
+          <button onClick={() => router.push('/dashboard')} style={{ background: 'transparent', border: '1px solid #e0ddd5', padding: '8px 16px', borderRadius: '20px', fontSize: '13px', cursor: 'pointer', color: '#0c2520', fontFamily: 'inherit' }}>
+            Cancel
+          </button>
         </div>
 
         {/* Side Hustle Toggle */}
-        <div style={{ background: '#f5f3ee', border: '1px solid #e8e6e0', borderRadius: '12px', padding: '20px', marginBottom: '24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '16px' }}>
+        <div style={{ background: 'white', border: '1px solid #e8e6e0', borderRadius: '12px', padding: '16px 20px', marginBottom: '20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '16px' }}>
           <div>
-            <p style={{ fontWeight: 500, fontSize: '14px', color: '#0c2520', margin: '0 0 4px' }}>Side Hustle Jobs</p>
-            <p style={{ fontSize: '13px', color: '#666', margin: 0 }}>Toggle if this is a side hustle opportunity rather than an industry job</p>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
+              <p style={{ fontWeight: 500, fontSize: '14px', color: '#0c2520', margin: 0 }}>Side Hustle</p>
+              {isSideHustle && <span style={{ background: '#fde6c2', color: '#8a5a2e', padding: '2px 8px', borderRadius: '4px', fontSize: '11px', fontWeight: 500 }}>ON</span>}
+            </div>
+            <p style={{ fontSize: '12px', color: '#666', margin: 0 }}>Toggle for non-industry jobs (teaching, hospitality, etc.)</p>
           </div>
           <div className={`toggle-switch ${isSideHustle ? 'on' : ''}`} onClick={() => setIsSideHustle(!isSideHustle)}>
             <div className="toggle-knob" />
@@ -199,63 +252,76 @@ export default function PostJob() {
 
         {/* INDUSTRY JOB FORM */}
         {!isSideHustle && (
-          <div style={{ background: 'white', border: '1px solid #e8e6e0', borderRadius: '12px', padding: '32px' }}>
+          <div style={{ background: 'white', border: '1px solid #e8e6e0', borderRadius: '12px', padding: '28px' }}>
 
-            <h2 style={sectionTitleStyle}>Project Details</h2>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '16px' }}>
+            <h2 style={{ ...sectionStyle, margin: '0 0 14px' }}>The Project</h2>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '12px' }}>
               <div>
-                <label style={labelStyle}>Project Role <span style={{ color: '#c44' }}>*</span></label>
+                <label style={labelStyle}>Role <span style={{ color: '#c44' }}>*</span></label>
                 <input type="text" value={projectRole} onChange={(e) => setProjectRole(e.target.value)} placeholder="e.g. Charlie" style={inputStyle} />
               </div>
               <div>
-                <label style={labelStyle}>Project In <span style={{ color: '#c44' }}>*</span></label>
+                <label style={labelStyle}>Project Name <span style={{ color: '#c44' }}>*</span></label>
                 <input type="text" value={projectIn} onChange={(e) => setProjectIn(e.target.value)} placeholder="e.g. To Make Ends Meat" style={inputStyle} />
               </div>
             </div>
 
-            <div style={{ marginBottom: '16px' }}>
-              <label style={labelStyle}>Production Company <span style={{ color: '#c44' }}>*</span></label>
-              <input type="text" value={productionCompany} onChange={(e) => setProductionCompany(e.target.value)} placeholder="e.g. BBC" style={inputStyle} />
-            </div>
-
-            <div style={{ marginBottom: '16px' }}>
-              <label style={labelStyle}>Short Summary <span style={{ color: '#c44' }}>*</span></label>
-              <input type="text" value={shortSummary} onChange={(e) => setShortSummary(e.target.value)} placeholder="One line summary" style={inputStyle} />
-            </div>
-
-            <div style={{ marginBottom: '16px' }}>
-              <label style={labelStyle}>Salary <span style={{ color: '#c44' }}>*</span></label>
-              <input type="text" value={salary} onChange={(e) => setSalary(e.target.value)} placeholder="Equity Minimum" style={inputStyle} />
-            </div>
-
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '16px' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '12px' }}>
+              <div>
+                <label style={labelStyle}>Production Company <span style={{ color: '#c44' }}>*</span></label>
+                <input type="text" value={productionCompany} onChange={(e) => setProductionCompany(e.target.value)} placeholder="e.g. BBC" style={inputStyle} />
+              </div>
               <div>
                 <label style={labelStyle}>Production Type</label>
                 <select value={productionTypeId || ''} onChange={(e) => setProductionTypeId(e.target.value ? Number(e.target.value) : null)} style={inputStyle}>
-                  <option value="">Select a category</option>
+                  <option value="">Select...</option>
                   {productionTypes.map(pt => <option key={pt.id} value={pt.id}>{pt.name}</option>)}
                 </select>
               </div>
+            </div>
+
+            <div style={{ marginBottom: '12px' }}>
+              <label style={labelStyle}>One-line Summary <span style={{ color: '#c44' }}>*</span></label>
+              <input type="text" value={shortSummary} onChange={(e) => setShortSummary(e.target.value)} placeholder="What's this role about in one sentence?" style={inputStyle} />
+            </div>
+
+            <div>
+              <label style={labelStyle}>Payment <span style={{ color: '#c44' }}>*</span></label>
+              <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', marginBottom: '8px' }}>
+                {['Paid', 'Equity', 'Expenses Only', 'Profit Share'].map(opt => (
+                  <button key={opt} type="button" onClick={() => setSalaryType(opt)} className="salary-pill" style={{
+                    background: salaryType === opt ? '#e8efea' : 'white',
+                    border: salaryType === opt ? '1.5px solid #0c2520' : '1px solid #e0ddd5',
+                    color: '#0c2520',
+                    fontWeight: salaryType === opt ? 500 : 400,
+                  }}>{opt}</button>
+                ))}
+              </div>
+              {salaryType === 'Paid' && (
+                <input type="text" value={salaryAmount} onChange={(e) => setSalaryAmount(e.target.value)} placeholder="e.g. £500/day or £2000 total" style={inputStyle} />
+              )}
+            </div>
+
+            <h2 style={sectionStyle}>When & Where</h2>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '12px' }}>
               <div>
                 <label style={labelStyle}>Location</label>
                 <input type="text" value={location} onChange={(e) => setLocation(e.target.value)} placeholder="e.g. London, Cardiff" style={inputStyle} />
               </div>
-            </div>
-
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '24px' }}>
               <div>
                 <label style={labelStyle}>Contract Dates</label>
-                <input type="text" value={contractDates} onChange={(e) => setContractDates(e.target.value)} placeholder="e.g. June 15-25 2025" style={inputStyle} />
-              </div>
-              <div>
-                <label style={labelStyle}>Application Deadline</label>
-                <input type="date" value={applicationDeadline} onChange={(e) => setApplicationDeadline(e.target.value)} style={inputStyle} />
+                <input type="text" value={contractDates} onChange={(e) => setContractDates(e.target.value)} placeholder="e.g. June 15-25 2026" style={inputStyle} />
               </div>
             </div>
 
-            <h2 style={sectionTitleStyle}>Talent Requirements</h2>
+            <div>
+              <label style={labelStyle}>Application Deadline</label>
+              <input type="date" value={applicationDeadline} onChange={(e) => setApplicationDeadline(e.target.value)} style={inputStyle} />
+            </div>
 
-            <div style={{ marginBottom: '16px', position: 'relative' }}>
+            <h2 style={sectionStyle}>Talent Requirements</h2>
+
+            <div style={{ marginBottom: '12px', position: 'relative' }}>
               <label style={labelStyle}>Required Skills</label>
               <input type="text" value={skillSearch} onChange={(e) => setSkillSearch(e.target.value)} placeholder="Search skills..." style={inputStyle} />
               {filteredSkills.length > 0 && (
@@ -284,49 +350,62 @@ export default function PostJob() {
               )}
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '16px' }}>
-              <div>
-                <label style={labelStyle}>Age Range</label>
-                <input type="text" value={ageRange} onChange={(e) => setAgeRange(e.target.value)} placeholder="e.g. 25-35" style={inputStyle} />
+            <div style={{ marginBottom: '16px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                <label style={{ ...labelStyle, marginBottom: 0 }}>Playing Age Range</label>
+                <span style={{ background: '#0c2520', color: '#f1f0ee', padding: '2px 10px', borderRadius: '4px', fontSize: '12px', fontWeight: 500 }}>{minAge} – {maxAge}</span>
               </div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                <div>
+                  <label style={{ fontSize: '11px', color: '#888', marginBottom: '4px', display: 'block' }}>Min</label>
+                  <input type="range" min="0" max="100" value={minAge} onChange={(e) => { const v = Number(e.target.value); if (v <= maxAge) setMinAge(v) }} className="range-slider" />
+                </div>
+                <div>
+                  <label style={{ fontSize: '11px', color: '#888', marginBottom: '4px', display: 'block' }}>Max</label>
+                  <input type="range" min="0" max="100" value={maxAge} onChange={(e) => { const v = Number(e.target.value); if (v >= minAge) setMaxAge(v) }} className="range-slider" />
+                </div>
+              </div>
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '12px' }}>
               <div>
                 <label style={labelStyle}>Gender</label>
-                <input type="text" value={genderRequirement} onChange={(e) => setGenderRequirement(e.target.value)} placeholder="e.g. Male, Non-Binary" style={inputStyle} />
+                <input type="text" value={genderRequirement} onChange={(e) => setGenderRequirement(e.target.value)} placeholder="e.g. Any, Male, Female" style={inputStyle} />
               </div>
-            </div>
-
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '24px' }}>
               <div>
                 <label style={labelStyle}>Appearance</label>
-                <input type="text" value={appearance} onChange={(e) => setAppearance(e.target.value)} placeholder="e.g. Any Appearance" style={inputStyle} />
-              </div>
-              <div>
-                <label style={labelStyle}>Height</label>
-                <input type="text" value={height} onChange={(e) => setHeight(e.target.value)} placeholder="e.g. 5ft 10" style={inputStyle} />
+                <input type="text" value={appearance} onChange={(e) => setAppearance(e.target.value)} placeholder="e.g. Any" style={inputStyle} />
               </div>
             </div>
 
-            <h2 style={sectionTitleStyle}>How to Apply</h2>
+            <div>
+              <label style={labelStyle}>Height (optional)</label>
+              <div style={{ position: 'relative' }}>
+                <input type="number" value={height} onChange={(e) => setHeight(e.target.value)} placeholder="170" style={{ ...inputStyle, paddingRight: '50px' }} />
+                <span style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)', color: '#999', fontSize: '13px', pointerEvents: 'none' }}>cm</span>
+              </div>
+            </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '16px' }}>
+            <h2 style={sectionStyle}>How to Apply</h2>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '12px' }}>
               <div>
                 <label style={labelStyle}>Casting Email <span style={{ color: '#c44' }}>*</span></label>
-                <input type="email" value={castingEmail} onChange={(e) => setCastingEmail(e.target.value)} placeholder="e.g. castings@HBcastings.co.uk" style={inputStyle} />
+                <input type="email" value={castingEmail} onChange={(e) => setCastingEmail(e.target.value)} placeholder="castings@hbcastings.co.uk" style={inputStyle} />
               </div>
               <div>
-                <label style={labelStyle}>Casting Team</label>
+                <label style={labelStyle}>Casting Director / Team</label>
                 <input type="text" value={castingTeam} onChange={(e) => setCastingTeam(e.target.value)} placeholder="e.g. Heather Basten CDG" style={inputStyle} />
               </div>
             </div>
 
-            <div style={{ marginBottom: '16px' }}>
-              <label style={labelStyle}>Submission Link (Dropbox, Drive, Cloud)</label>
-              <input type="text" value={submissionLink} onChange={(e) => setSubmissionLink(e.target.value)} placeholder="Dropbox" style={inputStyle} />
+            <div style={{ marginBottom: '12px' }}>
+              <label style={labelStyle}>Submission Link (optional)</label>
+              <input type="text" value={submissionLink} onChange={(e) => setSubmissionLink(e.target.value)} placeholder="Dropbox, Google Drive, etc." style={inputStyle} />
             </div>
 
             <div style={{ marginBottom: '24px' }}>
-              <label style={labelStyle}>Description <span style={{ color: '#c44' }}>*</span></label>
-              <textarea value={description} onChange={(e) => setDescription(e.target.value)} placeholder="You can start typing here..." rows={8} style={{ ...inputStyle, resize: 'vertical' }} />
+              <label style={labelStyle}>Full Description <span style={{ color: '#c44' }}>*</span></label>
+              <textarea value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Describe the role, character, and what you're looking for..." rows={6} style={{ ...inputStyle, resize: 'vertical' }} />
             </div>
 
             <button onClick={handleSubmit} disabled={saving} style={{ width: '100%', background: '#0c2520', color: '#f1f0ee', border: 'none', padding: '14px', borderRadius: '30px', fontSize: '15px', fontWeight: 500, cursor: 'pointer', opacity: saving ? 0.7 : 1, fontFamily: 'inherit' }}>
@@ -337,11 +416,11 @@ export default function PostJob() {
 
         {/* SIDE HUSTLE FORM */}
         {isSideHustle && (
-          <div style={{ background: 'white', border: '1px solid #e8e6e0', borderRadius: '12px', padding: '32px' }}>
+          <div style={{ background: 'white', border: '1px solid #e8e6e0', borderRadius: '12px', padding: '28px' }}>
 
-            <h2 style={sectionTitleStyle}>Job Details</h2>
+            <h2 style={{ ...sectionStyle, margin: '0 0 14px' }}>The Role</h2>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '16px' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '12px' }}>
               <div>
                 <label style={labelStyle}>Job Title <span style={{ color: '#c44' }}>*</span></label>
                 <input type="text" value={jobTitle} onChange={(e) => setJobTitle(e.target.value)} placeholder="e.g. Pilates Cover Teacher" style={inputStyle} />
@@ -352,11 +431,11 @@ export default function PostJob() {
               </div>
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '16px' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '12px' }}>
               <div>
                 <label style={labelStyle}>Category</label>
                 <select value={jobCategory} onChange={(e) => setJobCategory(e.target.value)} style={inputStyle}>
-                  <option value="">Select a category</option>
+                  <option value="">Select...</option>
                   <option value="Fitness">Fitness & Wellness</option>
                   <option value="Teaching">Teaching</option>
                   <option value="Hospitality">Hospitality</option>
@@ -370,7 +449,7 @@ export default function PostJob() {
               <div>
                 <label style={labelStyle}>Commitment Level</label>
                 <select value={commitmentLevel} onChange={(e) => setCommitmentLevel(e.target.value)} style={inputStyle}>
-                  <option value="">Select</option>
+                  <option value="">Select...</option>
                   <option value="One-off">One-off</option>
                   <option value="Casual">Casual</option>
                   <option value="Part-time">Part-time</option>
@@ -379,7 +458,9 @@ export default function PostJob() {
               </div>
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '16px' }}>
+            <h2 style={sectionStyle}>Details</h2>
+
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '12px' }}>
               <div>
                 <label style={labelStyle}>Experience Required</label>
                 <input type="text" value={experience} onChange={(e) => setExperience(e.target.value)} placeholder="e.g. 2 years teaching" style={inputStyle} />
@@ -390,23 +471,23 @@ export default function PostJob() {
               </div>
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '16px' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '12px' }}>
               <div>
                 <label style={labelStyle}>Location</label>
                 <input type="text" value={location} onChange={(e) => setLocation(e.target.value)} placeholder="e.g. Shoreditch, London" style={inputStyle} />
               </div>
               <div>
                 <label style={labelStyle}>Salary / Rate</label>
-                <input type="text" value={salary} onChange={(e) => setSalary(e.target.value)} placeholder="e.g. £25/class" style={inputStyle} />
+                <input type="text" value={salaryAmount} onChange={(e) => setSalaryAmount(e.target.value)} placeholder="e.g. £25/class" style={inputStyle} />
               </div>
             </div>
 
-            <div style={{ marginBottom: '20px' }}>
+            <div style={{ marginBottom: '16px' }}>
               <label style={labelStyle}>Start Date</label>
               <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} style={inputStyle} />
             </div>
 
-            <div style={{ display: 'flex', gap: '16px', marginBottom: '24px', flexWrap: 'wrap' }}>
+            <div style={{ display: 'flex', gap: '20px', marginBottom: '20px', flexWrap: 'wrap' }}>
               <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', color: '#0c2520', cursor: 'pointer' }}>
                 <input type="checkbox" checked={auditionFriendly} onChange={(e) => setAuditionFriendly(e.target.checked)} style={{ accentColor: '#0c2520', width: '14px', height: '14px' }} />
                 Audition Friendly
@@ -417,9 +498,9 @@ export default function PostJob() {
               </label>
             </div>
 
-            <h2 style={sectionTitleStyle}>How to Apply</h2>
+            <h2 style={sectionStyle}>How to Apply</h2>
 
-            <div style={{ marginBottom: '16px' }}>
+            <div style={{ marginBottom: '12px' }}>
               <label style={labelStyle}>Apply Email <span style={{ color: '#c44' }}>*</span></label>
               <input type="email" value={applyEmail} onChange={(e) => setApplyEmail(e.target.value)} placeholder="hello@yourcompany.com" style={inputStyle} />
             </div>
