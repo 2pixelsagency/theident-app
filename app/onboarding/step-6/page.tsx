@@ -82,7 +82,16 @@ export default function OnboardingStep6() {
   const VideoSlot = ({ label, slot, value }: { label: string; slot: 'vid1' | 'vid2' | 'vid3' | 'vid4'; value: string }) => {
     const isUploading = uploadingVideo === slot
     return (
-      <label style={{ padding: '16px 10px', border: value ? '1px solid #0c2520' : '1px dashed #c4c2bc', borderRadius: '8px', fontSize: '12px', background: value ? '#e8f0eb' : 'transparent', textAlign: 'center', color: '#0c2520', cursor: isUploading ? 'not-allowed' : 'pointer', display: 'block' }}>
+      <label className={`reel-slot ${value ? 'filled' : ''}`} style={{
+        padding: '18px 10px',
+        border: value ? '1.5px solid #0c2520' : '1.5px dashed #c4c2bc',
+        borderRadius: '10px', fontSize: '13px',
+        background: value ? '#e8f0eb' : 'transparent',
+        textAlign: 'center', color: '#0c2520',
+        cursor: isUploading ? 'not-allowed' : 'pointer',
+        display: 'block', fontWeight: 500,
+        transition: 'all 0.2s ease',
+      }}>
         {isUploading ? 'Uploading...' : (value ? `✓ ${label} uploaded` : `+ ${label}`)}
         <input type="file" accept="video/*" disabled={isUploading} onChange={(e) => { const file = e.target.files?.[0]; if (file) handleVideoUpload(slot, file) }} style={{ display: 'none' }} />
       </label>
@@ -102,17 +111,76 @@ export default function OnboardingStep6() {
         input:focus, textarea:focus { border-color: #0c2520 !important; box-shadow: 0 0 0 1px #0c2520 !important; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
         .fade-in { animation: fadeIn 0.5s ease-out; }
+
+        .headshot-upload {
+          position: relative;
+          width: 180px;
+          height: 180px;
+          border-radius: 50%;
+          cursor: pointer;
+          transition: transform 0.3s ease, box-shadow 0.3s ease;
+          overflow: hidden;
+        }
+        .headshot-upload:hover {
+          transform: scale(1.04);
+          box-shadow: 0 8px 24px rgba(12, 37, 32, 0.15);
+        }
+        .headshot-upload .overlay {
+          position: absolute; inset: 0;
+          background: rgba(12, 37, 32, 0.6);
+          color: #f1f0ee;
+          display: flex; align-items: center; justify-content: center;
+          font-size: 13px; font-weight: 500;
+          opacity: 0;
+          transition: opacity 0.3s ease;
+        }
+        .headshot-upload:hover .overlay { opacity: 1; }
+        .headshot-pulse {
+          position: absolute; inset: -4px;
+          border-radius: 50%;
+          border: 2px dashed #c4c2bc;
+          animation: pulse 2.5s ease-in-out infinite;
+          pointer-events: none;
+        }
+        @keyframes pulse {
+          0%, 100% { transform: scale(1); opacity: 0.6; }
+          50% { transform: scale(1.04); opacity: 1; }
+        }
+
+        .reel-slot:hover {
+          transform: translateY(-2px);
+          border-color: #0c2520 !important;
+          background: white !important;
+        }
+        .reel-slot.filled:hover {
+          background: #d8e8df !important;
+        }
       `}</style>
 
       <div className="fade-in" style={{ width: '100%', maxWidth: '520px' }}>
-        <h1 style={{ fontFamily: 'Georgia, serif', fontSize: '28px', fontWeight: 500, color: '#0c2520', textAlign: 'center', margin: '0 0 32px' }}>Almost there! Let&apos;s finish strong</h1>
+        <h1 style={{ fontFamily: 'Georgia, serif', fontSize: '28px', fontWeight: 500, color: '#0c2520', textAlign: 'center', margin: '0 0 8px' }}>Almost there! Let&apos;s finish strong</h1>
+        <p style={{ textAlign: 'center', color: '#666', fontSize: '13px', margin: '0 0 32px' }}>Your headshot is the first thing casting directors see — make it count.</p>
 
-        <div style={{ display: 'flex', gap: '12px', alignItems: 'center', marginBottom: '24px' }}>
-          <div style={{ width: '64px', height: '64px', borderRadius: '8px', background: pictureUrl ? `url(${pictureUrl}) center/cover` : '#e8e6e0', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '20px', color: '#aaa' }}>
-            {!pictureUrl && '👤'}
-          </div>
-          <label style={{ background: 'white', border: '1px solid #e0ddd5', borderRadius: '8px', padding: '8px 16px', cursor: uploadingImage ? 'not-allowed' : 'pointer', fontSize: '13px', color: '#0c2520', fontWeight: 500 }}>
-            ↑ {uploadingImage ? 'Uploading...' : (pictureUrl ? 'Change Headshot' : 'Add Headshot')}
+        {/* HERO HEADSHOT */}
+        <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '40px' }}>
+          <label className="headshot-upload" style={{ background: pictureUrl ? `url(${pictureUrl}) center/cover` : '#e8e6e0' }}>
+            {!pictureUrl && !uploadingImage && (
+              <>
+                <div className="headshot-pulse" />
+                <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: '#0c2520' }}>
+                  <span style={{ fontSize: '32px', marginBottom: '4px' }}>📷</span>
+                  <span style={{ fontSize: '13px', fontWeight: 500 }}>Add Headshot</span>
+                </div>
+              </>
+            )}
+            {uploadingImage && (
+              <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#e8e6e0', color: '#0c2520', fontSize: '13px', fontWeight: 500 }}>
+                Uploading...
+              </div>
+            )}
+            <div className="overlay">
+              {pictureUrl ? 'Change Headshot' : 'Upload'}
+            </div>
             <input type="file" accept="image/*" onChange={handleImageUpload} disabled={uploadingImage} style={{ display: 'none' }} />
           </label>
         </div>
@@ -122,12 +190,12 @@ export default function OnboardingStep6() {
           <input type="text" value={currentlyIn} onChange={(e) => setCurrentlyIn(e.target.value)} placeholder="Currently in Wicked" style={inputStyle} />
         </div>
 
-        <div style={{ marginBottom: '20px' }}>
+        <div style={{ marginBottom: '24px' }}>
           <label style={{ display: 'block', fontSize: '13px', color: '#0c2520', marginBottom: '6px', fontWeight: 500 }}>Bio</label>
           <textarea value={bio} onChange={(e) => setBio(e.target.value)} placeholder="Explain who you are to get you booked." rows={4} style={{ ...inputStyle, resize: 'vertical' }} />
         </div>
 
-        <p style={{ fontSize: '12px', color: '#666', marginBottom: '10px' }}>Upload your reels (optional — max 200MB each)</p>
+        <p style={{ fontSize: '12px', color: '#666', marginBottom: '10px', fontWeight: 500 }}>Upload your reels (optional — max 200MB each)</p>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '32px' }}>
           <VideoSlot label="Ident" slot="vid1" value={vid1} />
           <VideoSlot label="Dance Reel" slot="vid2" value={vid2} />
