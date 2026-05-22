@@ -53,9 +53,7 @@ export default function OnboardingStep3() {
   }, [router])
 
   const addSkill = (id: number) => {
-    if (!selectedSkillIds.includes(id)) {
-      setSelectedSkillIds([...selectedSkillIds, id])
-    }
+    if (!selectedSkillIds.includes(id)) setSelectedSkillIds([...selectedSkillIds, id])
     setSearch('')
     setShowDropdown(false)
   }
@@ -68,30 +66,20 @@ export default function OnboardingStep3() {
     setSaving(true)
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return
-
-    await supabase.from('profiles').update({
-      what_i_do: noAgent ? null : agent,
-    }).eq('id', user.id)
-
+    await supabase.from('profiles').update({ what_i_do: noAgent ? null : agent }).eq('id', user.id)
     await supabase.from('profile_skills').delete().eq('profile_id', user.id)
     if (selectedSkillIds.length > 0) {
       await supabase.from('profile_skills').insert(
         selectedSkillIds.map(skill_id => ({ profile_id: user.id, skill_id }))
       )
     }
-
     router.push('/onboarding/step-4')
   }
 
-  // Filter for dropdown (only show when search has 2+ chars)
   const filteredSkills = search.length >= 1
-    ? allSkills
-        .filter(s => s.name.toLowerCase().includes(search.toLowerCase()))
-        .filter(s => !selectedSkillIds.includes(s.id))
-        .slice(0, 20)
+    ? allSkills.filter(s => s.name.toLowerCase().includes(search.toLowerCase()) && !selectedSkillIds.includes(s.id)).slice(0, 20)
     : []
 
-  // Group filtered by category
   const groupedSkills = filteredSkills.reduce((acc: Record<string, Skill[]>, skill) => {
     const cat = skill.category_name || 'Other'
     if (!acc[cat]) acc[cat] = []
@@ -101,65 +89,55 @@ export default function OnboardingStep3() {
 
   const selectedSkills = allSkills.filter(s => selectedSkillIds.includes(s.id))
 
+  const inputStyle: React.CSSProperties = {
+    width: '100%', padding: '12px', border: '1px solid #e0ddd5', borderRadius: '8px',
+    fontSize: '14px', background: 'white', boxSizing: 'border-box', outline: 'none',
+    fontFamily: 'inherit',
+  }
+
   if (loading) return <div style={{ minHeight: '100vh', background: '#f1f0ee' }} />
 
   return (
     <div style={{ minHeight: '100vh', background: '#f1f0ee', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px', fontFamily: 'system-ui, sans-serif' }}>
-      <div style={{ width: '100%', maxWidth: '700px' }}>
-        <h1 style={{ fontFamily: 'Georgia, serif', fontSize: '36px', fontWeight: 500, color: '#0c2520', textAlign: 'center', margin: '0 0 40px' }}>Show off those skills</h1>
+      <style>{`
+        input:focus, textarea:focus { border-color: #0c2520 !important; box-shadow: 0 0 0 1px #0c2520 !important; }
+      `}</style>
+      <div style={{ width: '100%', maxWidth: '520px' }}>
+        <h1 style={{ fontFamily: 'Georgia, serif', fontSize: '28px', fontWeight: 500, color: '#0c2520', textAlign: 'center', margin: '0 0 32px' }}>Show off those skills</h1>
 
-        {/* Agent */}
-        <div style={{ marginBottom: '32px' }}>
-          <label style={{ display: 'block', fontSize: '14px', color: '#0c2520', marginBottom: '8px', fontWeight: 500 }}>Agent</label>
-          <input
-            type="text"
-            value={agent}
-            disabled={noAgent}
-            onChange={(e) => setAgent(e.target.value)}
-            placeholder="e.g. Hamilton Hodell"
-            style={{ width: '100%', padding: '14px', border: '1px solid #e0ddd5', borderRadius: '8px', fontSize: '15px', background: noAgent ? '#f5f3ee' : 'white', boxSizing: 'border-box', opacity: noAgent ? 0.5 : 1 }}
-          />
-          <label style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '10px', fontSize: '13px', color: '#666', cursor: 'pointer' }}>
+        <div style={{ marginBottom: '24px' }}>
+          <label style={{ display: 'block', fontSize: '13px', color: '#0c2520', marginBottom: '6px', fontWeight: 500 }}>Agent</label>
+          <input type="text" value={agent} disabled={noAgent} onChange={(e) => setAgent(e.target.value)} placeholder="e.g. Hamilton Hodell" style={{ ...inputStyle, background: noAgent ? '#f5f3ee' : 'white', opacity: noAgent ? 0.5 : 1 }} />
+          <label style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '8px', fontSize: '12px', color: '#666', cursor: 'pointer' }}>
             <input type="checkbox" checked={noAgent} onChange={(e) => setNoAgent(e.target.checked)} />
             I don&apos;t have an agent
           </label>
         </div>
 
-        {/* Skills search */}
-        <div style={{ marginBottom: '24px', position: 'relative' }}>
-          <label style={{ display: 'block', fontSize: '14px', color: '#0c2520', marginBottom: '8px', fontWeight: 500 }}>
+        <div style={{ marginBottom: '16px', position: 'relative' }}>
+          <label style={{ display: 'block', fontSize: '13px', color: '#0c2520', marginBottom: '6px', fontWeight: 500 }}>
             Skills <span style={{ color: '#888', fontWeight: 400 }}>({selectedSkills.length} selected)</span>
           </label>
           <input
             type="text"
-            placeholder="Search skills (e.g. tap dance, French, juggling)..."
+            placeholder="Search skills (e.g. tap dance, French)..."
             value={search}
             onChange={(e) => { setSearch(e.target.value); setShowDropdown(true) }}
             onFocus={() => setShowDropdown(true)}
             onBlur={() => setTimeout(() => setShowDropdown(false), 200)}
-            style={{ width: '100%', padding: '14px', border: '1px solid #e0ddd5', borderRadius: '8px', fontSize: '15px', background: 'white', boxSizing: 'border-box' }}
+            style={inputStyle}
           />
 
-          {/* Dropdown */}
           {showDropdown && search.length >= 1 && (
-            <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, marginTop: '4px', background: 'white', border: '1px solid #e0ddd5', borderRadius: '8px', maxHeight: '320px', overflowY: 'auto', zIndex: 10, boxShadow: '0 4px 12px rgba(0,0,0,0.08)' }}>
+            <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, marginTop: '4px', background: 'white', border: '1px solid #e0ddd5', borderRadius: '8px', maxHeight: '280px', overflowY: 'auto', zIndex: 10, boxShadow: '0 4px 12px rgba(0,0,0,0.08)' }}>
               {Object.keys(groupedSkills).length === 0 ? (
-                <div style={{ padding: '14px', fontSize: '13px', color: '#888' }}>No skills found</div>
+                <div style={{ padding: '12px', fontSize: '13px', color: '#888' }}>No skills found</div>
               ) : (
                 Object.entries(groupedSkills).map(([catName, skills]) => (
                   <div key={catName}>
-                    <div style={{ padding: '8px 14px', fontSize: '11px', color: '#888', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 500, background: '#fafaf8' }}>{catName}</div>
+                    <div style={{ padding: '6px 12px', fontSize: '10px', color: '#888', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 500, background: '#fafaf8' }}>{catName}</div>
                     {skills.map(s => (
-                      <button
-                        key={s.id}
-                        type="button"
-                        onMouseDown={(e) => { e.preventDefault(); addSkill(s.id) }}
-                        style={{ display: 'block', width: '100%', padding: '10px 14px', border: 'none', background: 'white', textAlign: 'left', cursor: 'pointer', fontSize: '14px', color: '#0c2520', fontFamily: 'inherit' }}
-                        onMouseEnter={(e) => (e.currentTarget.style.background = '#f5f3ee')}
-                        onMouseLeave={(e) => (e.currentTarget.style.background = 'white')}
-                      >
-                        {s.name}
-                      </button>
+                      <button key={s.id} type="button" onMouseDown={(e) => { e.preventDefault(); addSkill(s.id) }} style={{ display: 'block', width: '100%', padding: '8px 12px', border: 'none', background: 'white', textAlign: 'left', cursor: 'pointer', fontSize: '13px', color: '#0c2520', fontFamily: 'inherit' }}>{s.name}</button>
                     ))}
                   </div>
                 ))
@@ -168,49 +146,30 @@ export default function OnboardingStep3() {
           )}
         </div>
 
-        {/* Selected skill tags */}
         {selectedSkills.length > 0 && (
-          <div style={{ marginBottom: '40px', display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+          <div style={{ marginBottom: '32px', display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
             {selectedSkills.map(s => (
-              <button
-                key={s.id}
-                type="button"
-                onClick={() => removeSkill(s.id)}
-                style={{
-                  padding: '6px 12px 6px 14px',
-                  borderRadius: '20px',
-                  background: s.category_color,
-                  color: s.category_text_color,
-                  border: 'none',
-                  fontSize: '13px',
-                  fontFamily: 'inherit',
-                  cursor: 'pointer',
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '6px',
-                  fontWeight: 500,
-                }}
-              >
+              <button key={s.id} type="button" onClick={() => removeSkill(s.id)} style={{ padding: '5px 10px 5px 12px', borderRadius: '20px', background: s.category_color, color: s.category_text_color, border: 'none', fontSize: '12px', fontFamily: 'inherit', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '6px', fontWeight: 500 }}>
                 {s.name}
-                <span style={{ opacity: 0.6, fontSize: '14px' }}>×</span>
+                <span style={{ opacity: 0.6, fontSize: '13px' }}>×</span>
               </button>
             ))}
           </div>
         )}
 
-        <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '40px' }}>
-          <button onClick={handleNext} disabled={saving} style={{ background: '#0c2520', color: '#f1f0ee', border: 'none', padding: '14px 56px', borderRadius: '30px', fontSize: '16px', fontWeight: 500, cursor: 'pointer', opacity: saving ? 0.7 : 1 }}>
+        <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '32px' }}>
+          <button onClick={handleNext} disabled={saving} style={{ background: '#0c2520', color: '#f1f0ee', border: 'none', padding: '12px 48px', borderRadius: '30px', fontSize: '14px', fontWeight: 500, cursor: 'pointer', opacity: saving ? 0.7 : 1 }}>
             {saving ? 'Saving...' : 'Next'}
           </button>
         </div>
 
-        <div style={{ display: 'flex', justifyContent: 'center', gap: '10px' }}>
-          <div style={{ width: '8px', height: '8px', background: '#d4d2cc', borderRadius: '50%' }} />
-          <div style={{ width: '8px', height: '8px', background: '#d4d2cc', borderRadius: '50%' }} />
-          <div style={{ width: '24px', height: '8px', background: '#0c2520', borderRadius: '4px' }} />
-          <div style={{ width: '8px', height: '8px', background: '#d4d2cc', borderRadius: '50%' }} />
-          <div style={{ width: '8px', height: '8px', background: '#d4d2cc', borderRadius: '50%' }} />
-          <div style={{ width: '8px', height: '8px', background: '#d4d2cc', borderRadius: '50%' }} />
+        <div style={{ display: 'flex', justifyContent: 'center', gap: '8px' }}>
+          <button onClick={() => router.push('/onboarding/step-1')} style={{ width: '8px', height: '8px', background: '#d4d2cc', borderRadius: '50%', border: 'none', cursor: 'pointer', padding: 0 }} />
+          <button onClick={() => router.push('/onboarding/step-2')} style={{ width: '8px', height: '8px', background: '#d4d2cc', borderRadius: '50%', border: 'none', cursor: 'pointer', padding: 0 }} />
+          <div style={{ width: '20px', height: '8px', background: '#0c2520', borderRadius: '4px' }} />
+          <button onClick={() => router.push('/onboarding/step-4')} style={{ width: '8px', height: '8px', background: '#d4d2cc', borderRadius: '50%', border: 'none', cursor: 'pointer', padding: 0 }} />
+          <button onClick={() => router.push('/onboarding/step-5')} style={{ width: '8px', height: '8px', background: '#d4d2cc', borderRadius: '50%', border: 'none', cursor: 'pointer', padding: 0 }} />
+          <button onClick={() => router.push('/onboarding/step-6')} style={{ width: '8px', height: '8px', background: '#d4d2cc', borderRadius: '50%', border: 'none', cursor: 'pointer', padding: 0 }} />
         </div>
       </div>
     </div>
