@@ -77,58 +77,48 @@ export default function OnboardingStep1() {
 
         .headshot-upload {
           position: relative;
-          width: 180px;
-          height: 180px;
-          border-radius: 12px;
+          width: 140px;
+          height: 140px;
+          border-radius: 10px;
+          border: 1.5px dashed #c4c2bc;
           cursor: pointer;
-          transition: transform 0.3s ease, box-shadow 0.3s ease;
+          transition: all 0.2s ease;
           overflow: hidden;
+          background: transparent;
+        }
+        .headshot-upload.has-image {
+          border: 1.5px solid #0c2520;
         }
         .headshot-upload:hover {
-          transform: scale(1.04);
-          box-shadow: 0 8px 24px rgba(12, 37, 32, 0.15);
+          transform: translateY(-2px);
+          border-color: #0c2520;
         }
         .headshot-upload .overlay {
           position: absolute; inset: 0;
           background: rgba(12, 37, 32, 0.6);
           color: #f1f0ee;
           display: flex; align-items: center; justify-content: center;
-          font-size: 13px; font-weight: 500;
+          font-size: 12px; font-weight: 500;
           opacity: 0;
-          transition: opacity 0.3s ease;
+          transition: opacity 0.2s ease;
         }
         .headshot-upload:hover .overlay { opacity: 1; }
-        .headshot-pulse {
-          position: absolute; inset: -4px;
-          border-radius: 14px;
-          border: 2px dashed #c4c2bc;
-          animation: pulse 2.5s ease-in-out infinite;
-          pointer-events: none;
-        }
-        @keyframes pulse {
-          0%, 100% { transform: scale(1); opacity: 0.6; }
-          50% { transform: scale(1.04); opacity: 1; }
-        }
       `}</style>
 
       <div className="fade-in" style={{ width: '100%', maxWidth: '520px' }}>
         <h1 style={{ fontFamily: 'Georgia, serif', fontSize: '28px', fontWeight: 500, color: '#0c2520', textAlign: 'center', margin: '0 0 8px' }}>Let&apos;s get to know you!</h1>
         <p style={{ textAlign: 'center', color: '#666', fontSize: '13px', margin: '0 0 32px' }}>Your headshot is the first thing casting directors see — make it count.</p>
 
-        {/* HERO HEADSHOT */}
-        <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '40px' }}>
-          <label className="headshot-upload" style={{ background: pictureUrl ? `url(${pictureUrl}) center/cover` : '#e8e6e0' }}>
+        {/* HEADSHOT */}
+        <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '32px' }}>
+          <label className={`headshot-upload ${pictureUrl ? 'has-image' : ''}`} style={{ background: pictureUrl ? `url(${pictureUrl}) center/cover` : 'transparent' }}>
             {!pictureUrl && !uploadingImage && (
-              <>
-                <div className="headshot-pulse" />
-                <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: '#0c2520' }}>
-                  <span style={{ fontSize: '32px', marginBottom: '4px' }}>📷</span>
-                  <span style={{ fontSize: '13px', fontWeight: 500 }}>Add Headshot</span>
-                </div>
-              </>
+              <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#0c2520', fontSize: '13px', fontWeight: 500 }}>
+                + Add Headshot
+              </div>
             )}
             {uploadingImage && (
-              <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#e8e6e0', color: '#0c2520', fontSize: '13px', fontWeight: 500 }}>
+              <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#0c2520', fontSize: '13px', fontWeight: 500 }}>
                 Uploading...
               </div>
             )}
