@@ -11,8 +11,13 @@ type SkillCategory = { id: number; name: string; color: string; text_color: stri
 export default function PostJob() {
   const router = useRouter()
   const [isSideHustle, setIsSideHustle] = useState(false)
+  const [spotlightJob, setSpotlightJob] = useState(false)
   const [saving, setSaving] = useState(false)
-  const [userEmail, setUserEmail] = useState('')
+  const [showPayment, setShowPayment] = useState(false)
+  const [cardNumber, setCardNumber] = useState('')
+  const [cardExpiry, setCardExpiry] = useState('')
+  const [cardCvc, setCardCvc] = useState('')
+  const [processing, setProcessing] = useState(false)
 
   const [productionTypes, setProductionTypes] = useState<Lookup[]>([])
   const [skills, setSkills] = useState<Skill[]>([])
@@ -58,7 +63,6 @@ export default function PostJob() {
     const load = async () => {
       const { data: { user } } = await supabase.auth.getUser()
       if (user?.email) {
-        setUserEmail(user.email)
         setCastingEmail(user.email)
         setApplyEmail(user.email)
       }
@@ -97,7 +101,7 @@ export default function PostJob() {
       if (!description.trim()) return 'Description is required'
     } else {
       if (!projectRole.trim()) return 'Project role is required'
-      if (!projectIn.trim()) return 'Project in is required'
+      if (!projectIn.trim()) return 'Project name is required'
       if (!productionCompany.trim()) return 'Production company is required'
       if (!shortSummary.trim()) return 'Short summary is required'
       if (!castingEmail.trim()) return 'Casting email is required'
@@ -110,11 +114,22 @@ export default function PostJob() {
     const err = validate()
     if (err) { alert(err); return }
 
+    // If spotlight is on and we haven't gone through payment yet
+    if (spotlightJob && !showPayment && !processing) {
+      setShowPayment(true)
+      return
+    }
+
     setSaving(true)
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) { router.push('/signup'); return }
 
     const salary = salaryType === 'Paid' ? salaryAmount : salaryType
+
+    const spotlightFields = spotlightJob ? {
+      is_spotlighted: true,
+      spotlight_expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+    } : {}
 
     const baseData = {
       created_by: user.id,
@@ -129,6 +144,7 @@ export default function PostJob() {
     const jobData: Record<string, unknown> = isSideHustle
       ? {
           ...baseData,
+          ...spotlightFields,
           job_title: jobTitle,
           company,
           job_category: jobCategory,
@@ -141,6 +157,7 @@ export default function PostJob() {
         }
       : {
           ...baseData,
+          ...spotlightFields,
           project_role: projectRole,
           project_in: projectIn,
           production_company: productionCompany,
@@ -169,6 +186,14 @@ export default function PostJob() {
     }
 
     router.push('/dashboard')
+  }
+
+  const handlePayment = async () => {
+    setProcessing(true)
+    await new Promise(resolve => setTimeout(resolve, 1500))
+    setShowPayment(false)
+    await handleSubmit()
+    setProcessing(false)
   }
 
   const inputStyle: React.CSSProperties = {
@@ -234,6 +259,20 @@ export default function PostJob() {
           <button onClick={() => router.push('/dashboard')} style={{ background: 'transparent', border: '1px solid #e0ddd5', padding: '8px 16px', borderRadius: '20px', fontSize: '13px', cursor: 'pointer', color: '#0c2520', fontFamily: 'inherit' }}>
             Cancel
           </button>
+        </div>
+
+        {/* Spotlight Toggle */}
+        <div style={{ background: 'linear-gradient(135deg, #92d7af 0%, #b5e5c5 100%)', border: '1px solid #6db98a', borderRadius: '12px', padding: '16px 20px', marginBottom: '12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '16px' }}>
+          <div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
+              <p style={{ fontWeight: 600, fontSize: '14px', color: '#0c2520', margin: 0 }}>✨ Spotlight this job</p>
+              <span style={{ background: '#0c2520', color: '#f1f0ee', padding: '2px 8px', borderRadius: '4px', fontSize: '11px', fontWeight: 500 }}>£5</span>
+            </div>
+            <p style={{ fontSize: '12px', color: '#0c2520', margin: 0 }}>Featured at the top of the dashboard for 7 days. Get booked faster.</p>
+          </div>
+          <div className={`toggle-switch ${spotlightJob ? 'on' : ''}`} onClick={() => setSpotlightJob(!spotlightJob)}>
+            <div className="toggle-knob" />
+          </div>
         </div>
 
         {/* Side Hustle Toggle */}
@@ -409,7 +448,7 @@ export default function PostJob() {
             </div>
 
             <button onClick={handleSubmit} disabled={saving} style={{ width: '100%', background: '#0c2520', color: '#f1f0ee', border: 'none', padding: '14px', borderRadius: '30px', fontSize: '15px', fontWeight: 500, cursor: 'pointer', opacity: saving ? 0.7 : 1, fontFamily: 'inherit' }}>
-              {saving ? 'Posting...' : 'Post Job'}
+              {saving ? 'Posting...' : (spotlightJob ? 'Continue to Payment' : 'Post Job')}
             </button>
           </div>
         )}
@@ -511,8 +550,48 @@ export default function PostJob() {
             </div>
 
             <button onClick={handleSubmit} disabled={saving} style={{ width: '100%', background: '#0c2520', color: '#f1f0ee', border: 'none', padding: '14px', borderRadius: '30px', fontSize: '15px', fontWeight: 500, cursor: 'pointer', opacity: saving ? 0.7 : 1, fontFamily: 'inherit' }}>
-              {saving ? 'Posting...' : 'Post Side Hustle'}
+              {saving ? 'Posting...' : (spotlightJob ? 'Continue to Payment' : 'Post Side Hustle')}
             </button>
+          </div>
+        )}
+
+        {/* Fake Payment Modal */}
+        {showPayment && (
+          <div style={{ position: 'fixed', inset: 0, background: 'rgba(12, 37, 32, 0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 100, padding: '20px' }}>
+            <div style={{ background: 'white', borderRadius: '16px', padding: '32px', maxWidth: '420px', width: '100%' }}>
+              <h2 style={{ fontFamily: 'Georgia, serif', fontSize: '22px', fontWeight: 500, color: '#0c2520', margin: '0 0 6px' }}>✨ Spotlight your job</h2>
+              <p style={{ fontSize: '13px', color: '#666', margin: '0 0 24px' }}>£5 to feature your job at the top of the dashboard for 7 days.</p>
+
+              <div style={{ marginBottom: '12px' }}>
+                <label style={labelStyle}>Card Number</label>
+                <input type="text" value={cardNumber} onChange={(e) => setCardNumber(e.target.value)} placeholder="1234 5678 9012 3456" style={inputStyle} />
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '20px' }}>
+                <div>
+                  <label style={labelStyle}>Expiry</label>
+                  <input type="text" value={cardExpiry} onChange={(e) => setCardExpiry(e.target.value)} placeholder="MM/YY" style={inputStyle} />
+                </div>
+                <div>
+                  <label style={labelStyle}>CVC</label>
+                  <input type="text" value={cardCvc} onChange={(e) => setCardCvc(e.target.value)} placeholder="123" style={inputStyle} />
+                </div>
+              </div>
+
+              <p style={{ fontSize: '11px', color: '#999', textAlign: 'center', marginBottom: '20px' }}>🔒 Test mode — no real payment will be taken</p>
+
+              <button
+                onClick={handlePayment}
+                disabled={processing || !cardNumber || !cardExpiry || !cardCvc}
+                style={{ width: '100%', background: '#0c2520', color: '#f1f0ee', border: 'none', padding: '14px', borderRadius: '30px', fontSize: '15px', fontWeight: 500, cursor: 'pointer', opacity: (processing || !cardNumber || !cardExpiry || !cardCvc) ? 0.5 : 1, fontFamily: 'inherit', marginBottom: '8px' }}
+              >
+                {processing ? 'Processing...' : 'Pay £5 & Post Job'}
+              </button>
+
+              <button onClick={() => { setShowPayment(false); setSpotlightJob(false) }} style={{ width: '100%', background: 'transparent', color: '#666', border: 'none', padding: '8px', fontSize: '13px', cursor: 'pointer', fontFamily: 'inherit' }}>
+                Cancel & Post Without Spotlight
+              </button>
+            </div>
           </div>
         )}
       </div>
