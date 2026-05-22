@@ -12,8 +12,6 @@ export default function OnboardingStep6() {
   const [vid2, setVid2] = useState('')
   const [vid3, setVid3] = useState('')
   const [vid4, setVid4] = useState('')
-  const [pictureUrl, setPictureUrl] = useState('')
-  const [uploadingImage, setUploadingImage] = useState(false)
   const [uploadingVideo, setUploadingVideo] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
@@ -22,10 +20,9 @@ export default function OnboardingStep6() {
     const load = async () => {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) { router.push('/signup'); return }
-      const { data: profile } = await supabase.from('profiles').select('bio, picture_url, vid_1, vid_2, vid_3, vid_4, available').eq('id', user.id).single()
+      const { data: profile } = await supabase.from('profiles').select('bio, vid_1, vid_2, vid_3, vid_4, available').eq('id', user.id).single()
       if (profile) {
         setBio(profile.bio || '')
-        setPictureUrl(profile.picture_url || '')
         setVid1(profile.vid_1 || '')
         setVid2(profile.vid_2 || '')
         setVid3(profile.vid_3 || '')
@@ -36,21 +33,6 @@ export default function OnboardingStep6() {
     }
     load()
   }, [router])
-
-  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (!file) return
-    setUploadingImage(true)
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) { setUploadingImage(false); return }
-    const fileExt = file.name.split('.').pop()
-    const fileName = `${user.id}/headshot-${Date.now()}.${fileExt}`
-    const { error: uploadError } = await supabase.storage.from('headshots').upload(fileName, file, { upsert: true })
-    if (uploadError) { alert('Upload failed: ' + uploadError.message); setUploadingImage(false); return }
-    const { data: { publicUrl } } = supabase.storage.from('headshots').getPublicUrl(fileName)
-    setPictureUrl(publicUrl)
-    setUploadingImage(false)
-  }
 
   const handleVideoUpload = async (slot: 'vid1' | 'vid2' | 'vid3' | 'vid4', file: File) => {
     setUploadingVideo(slot)
@@ -74,7 +56,7 @@ export default function OnboardingStep6() {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return
     await supabase.from('profiles').update({
-      bio, picture_url: pictureUrl, vid_1: vid1, vid_2: vid2, vid_3: vid3, vid_4: vid4, available: currentlyIn,
+      bio, vid_1: vid1, vid_2: vid2, vid_3: vid3, vid_4: vid4, available: currentlyIn,
     }).eq('id', user.id)
     router.push('/dashboard')
   }
@@ -112,41 +94,6 @@ export default function OnboardingStep6() {
         @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
         .fade-in { animation: fadeIn 0.5s ease-out; }
 
-        .headshot-upload {
-          position: relative;
-          width: 180px;
-          height: 180px;
-          border-radius: 50%;
-          cursor: pointer;
-          transition: transform 0.3s ease, box-shadow 0.3s ease;
-          overflow: hidden;
-        }
-        .headshot-upload:hover {
-          transform: scale(1.04);
-          box-shadow: 0 8px 24px rgba(12, 37, 32, 0.15);
-        }
-        .headshot-upload .overlay {
-          position: absolute; inset: 0;
-          background: rgba(12, 37, 32, 0.6);
-          color: #f1f0ee;
-          display: flex; align-items: center; justify-content: center;
-          font-size: 13px; font-weight: 500;
-          opacity: 0;
-          transition: opacity 0.3s ease;
-        }
-        .headshot-upload:hover .overlay { opacity: 1; }
-        .headshot-pulse {
-          position: absolute; inset: -4px;
-          border-radius: 50%;
-          border: 2px dashed #c4c2bc;
-          animation: pulse 2.5s ease-in-out infinite;
-          pointer-events: none;
-        }
-        @keyframes pulse {
-          0%, 100% { transform: scale(1); opacity: 0.6; }
-          50% { transform: scale(1.04); opacity: 1; }
-        }
-
         .reel-slot:hover {
           transform: translateY(-2px);
           border-color: #0c2520 !important;
@@ -159,31 +106,7 @@ export default function OnboardingStep6() {
 
       <div className="fade-in" style={{ width: '100%', maxWidth: '520px' }}>
         <h1 style={{ fontFamily: 'Georgia, serif', fontSize: '28px', fontWeight: 500, color: '#0c2520', textAlign: 'center', margin: '0 0 8px' }}>Almost there! Let&apos;s finish strong</h1>
-        <p style={{ textAlign: 'center', color: '#666', fontSize: '13px', margin: '0 0 32px' }}>Your headshot is the first thing casting directors see — make it count.</p>
-
-        {/* HERO HEADSHOT */}
-        <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '40px' }}>
-          <label className="headshot-upload" style={{ background: pictureUrl ? `url(${pictureUrl}) center/cover` : '#e8e6e0' }}>
-            {!pictureUrl && !uploadingImage && (
-              <>
-                <div className="headshot-pulse" />
-                <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: '#0c2520' }}>
-                  <span style={{ fontSize: '32px', marginBottom: '4px' }}>📷</span>
-                  <span style={{ fontSize: '13px', fontWeight: 500 }}>Add Headshot</span>
-                </div>
-              </>
-            )}
-            {uploadingImage && (
-              <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#e8e6e0', color: '#0c2520', fontSize: '13px', fontWeight: 500 }}>
-                Uploading...
-              </div>
-            )}
-            <div className="overlay">
-              {pictureUrl ? 'Change Headshot' : 'Upload'}
-            </div>
-            <input type="file" accept="image/*" onChange={handleImageUpload} disabled={uploadingImage} style={{ display: 'none' }} />
-          </label>
-        </div>
+        <p style={{ textAlign: 'center', color: '#666', fontSize: '13px', margin: '0 0 32px' }}>Tell us where you are and let&apos;s see those reels.</p>
 
         <div style={{ marginBottom: '16px' }}>
           <label style={{ display: 'block', fontSize: '13px', color: '#0c2520', marginBottom: '6px', fontWeight: 500 }}>Currently In</label>
@@ -212,12 +135,4 @@ export default function OnboardingStep6() {
         <div style={{ display: 'flex', justifyContent: 'center', gap: '8px' }}>
           <button onClick={() => router.push('/onboarding/step-1')} style={{ width: '8px', height: '8px', background: '#d4d2cc', borderRadius: '50%', border: 'none', cursor: 'pointer', padding: 0 }} />
           <button onClick={() => router.push('/onboarding/step-2')} style={{ width: '8px', height: '8px', background: '#d4d2cc', borderRadius: '50%', border: 'none', cursor: 'pointer', padding: 0 }} />
-          <button onClick={() => router.push('/onboarding/step-3')} style={{ width: '8px', height: '8px', background: '#d4d2cc', borderRadius: '50%', border: 'none', cursor: 'pointer', padding: 0 }} />
-          <button onClick={() => router.push('/onboarding/step-4')} style={{ width: '8px', height: '8px', background: '#d4d2cc', borderRadius: '50%', border: 'none', cursor: 'pointer', padding: 0 }} />
-          <button onClick={() => router.push('/onboarding/step-5')} style={{ width: '8px', height: '8px', background: '#d4d2cc', borderRadius: '50%', border: 'none', cursor: 'pointer', padding: 0 }} />
-          <div style={{ width: '20px', height: '8px', background: '#0c2520', borderRadius: '4px' }} />
-        </div>
-      </div>
-    </div>
-  )
-}
+          <button onClick={() => router.push('/onboarding/step-3')} style={{ width: '8px', height: '8px', background: '#d4d2cc', borderRadius: '50%', border:
