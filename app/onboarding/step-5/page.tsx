@@ -16,13 +16,7 @@ export default function OnboardingStep5() {
     const load = async () => {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) { router.push('/signup'); return }
-
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('height, minimum_age, maximum_age')
-        .eq('id', user.id)
-        .single()
-
+      const { data: profile } = await supabase.from('profiles').select('height, minimum_age, maximum_age').eq('id', user.id).single()
       if (profile) {
         if (profile.height) setHeight(profile.height)
         if (profile.minimum_age) setMinAge(profile.minimum_age)
@@ -38,16 +32,9 @@ export default function OnboardingStep5() {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return
     await supabase.from('profiles').update({
-      height,
-      minimum_age: minAge,
-      maximum_age: maxAge,
+      height, minimum_age: minAge, maximum_age: maxAge,
     }).eq('id', user.id)
     router.push('/onboarding/step-6')
-  }
-
-  const inputStyle: React.CSSProperties = {
-    width: '100%', padding: '12px', border: '1px solid #e0ddd5', borderRadius: '8px',
-    fontSize: '14px', background: 'white', boxSizing: 'border-box', outline: 'none', fontFamily: 'inherit',
   }
 
   if (loading) return <div style={{ minHeight: '100vh', background: '#f1f0ee' }} />
@@ -55,34 +42,76 @@ export default function OnboardingStep5() {
   return (
     <div style={{ minHeight: '100vh', background: '#f1f0ee', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px', fontFamily: 'system-ui, sans-serif' }}>
       <style>{`
-        input:focus, textarea:focus { border-color: #0c2520 !important; box-shadow: 0 0 0 1px #0c2520 !important; }
+        input[type="text"]:focus, input[type="number"]:focus, textarea:focus {
+          border-color: #0c2520 !important;
+          box-shadow: 0 0 0 1px #0c2520 !important;
+        }
+        input[type="number"]::-webkit-inner-spin-button,
+        input[type="number"]::-webkit-outer-spin-button {
+          -webkit-appearance: none;
+          margin: 0;
+        }
+        input[type="number"] { -moz-appearance: textfield; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
         .fade-in { animation: fadeIn 0.5s ease-out; }
-        input[type=range] { accent-color: #0c2520; }
+
+        .range-slider {
+          -webkit-appearance: none;
+          appearance: none;
+          width: 100%;
+          height: 4px;
+          background: #d4d2cc;
+          border-radius: 2px;
+          outline: none;
+        }
+        .range-slider::-webkit-slider-thumb {
+          -webkit-appearance: none;
+          appearance: none;
+          width: 18px;
+          height: 18px;
+          background: #0c2520;
+          border-radius: 50%;
+          cursor: pointer;
+          border: none;
+        }
+        .range-slider::-moz-range-thumb {
+          width: 18px;
+          height: 18px;
+          background: #0c2520;
+          border-radius: 50%;
+          cursor: pointer;
+          border: none;
+        }
       `}</style>
 
       <div className="fade-in" style={{ width: '100%', maxWidth: '520px' }}>
         <h1 style={{ fontFamily: 'Georgia, serif', fontSize: '28px', fontWeight: 500, color: '#0c2520', textAlign: 'center', margin: '0 0 8px' }}>How you&apos;ll look on camera</h1>
         <p style={{ textAlign: 'center', color: '#666', fontSize: '13px', margin: '0 0 32px' }}>This is your playing age — how old you can be cast as.</p>
 
-        <div style={{ marginBottom: '24px' }}>
+        <div style={{ marginBottom: '32px' }}>
           <label style={{ display: 'block', fontSize: '13px', color: '#0c2520', marginBottom: '6px', fontWeight: 500 }}>Height</label>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+          <div style={{ position: 'relative' }}>
             <input
               type="number"
               value={height}
               onChange={(e) => setHeight(e.target.value)}
               placeholder="170"
-              style={{ ...inputStyle, flex: 1 }}
+              style={{
+                width: '100%', padding: '12px 50px 12px 12px', border: '1px solid #e0ddd5', borderRadius: '8px',
+                fontSize: '14px', background: 'white', boxSizing: 'border-box', outline: 'none', fontFamily: 'inherit',
+              }}
             />
-            <span style={{ color: '#0c2520', fontSize: '13px', fontWeight: 500 }}>cm</span>
+            <span style={{
+              position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)',
+              color: '#999', fontSize: '13px', pointerEvents: 'none'
+            }}>cm</span>
           </div>
         </div>
 
-        <div style={{ marginBottom: '20px' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+        <div style={{ marginBottom: '24px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
             <label style={{ fontSize: '13px', color: '#0c2520', fontWeight: 500 }}>Playing age (minimum)</label>
-            <span style={{ background: '#0c2520', color: '#f1f0ee', padding: '3px 10px', borderRadius: '6px', fontSize: '13px', fontWeight: 500 }}>{minAge}</span>
+            <span style={{ background: '#0c2520', color: '#f1f0ee', padding: '3px 12px', borderRadius: '6px', fontSize: '13px', fontWeight: 500, minWidth: '36px', textAlign: 'center' }}>{minAge}</span>
           </div>
           <input
             type="range"
@@ -94,14 +123,14 @@ export default function OnboardingStep5() {
               setMinAge(val)
               if (val > maxAge) setMaxAge(val)
             }}
-            style={{ width: '100%' }}
+            className="range-slider"
           />
         </div>
 
         <div style={{ marginBottom: '32px' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
             <label style={{ fontSize: '13px', color: '#0c2520', fontWeight: 500 }}>Playing age (maximum)</label>
-            <span style={{ background: '#0c2520', color: '#f1f0ee', padding: '3px 10px', borderRadius: '6px', fontSize: '13px', fontWeight: 500 }}>{maxAge}</span>
+            <span style={{ background: '#0c2520', color: '#f1f0ee', padding: '3px 12px', borderRadius: '6px', fontSize: '13px', fontWeight: 500, minWidth: '36px', textAlign: 'center' }}>{maxAge}</span>
           </div>
           <input
             type="range"
@@ -113,7 +142,7 @@ export default function OnboardingStep5() {
               setMaxAge(val)
               if (val < minAge) setMinAge(val)
             }}
-            style={{ width: '100%' }}
+            className="range-slider"
           />
         </div>
 
