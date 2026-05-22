@@ -91,8 +91,7 @@ export default function OnboardingStep3() {
 
   const inputStyle: React.CSSProperties = {
     width: '100%', padding: '12px', border: '1px solid #e0ddd5', borderRadius: '8px',
-    fontSize: '14px', background: 'white', boxSizing: 'border-box', outline: 'none',
-    fontFamily: 'inherit',
+    fontSize: '14px', background: 'white', boxSizing: 'border-box', outline: 'none', fontFamily: 'inherit',
   }
 
   if (loading) return <div style={{ minHeight: '100vh', background: '#f1f0ee' }} />
@@ -101,15 +100,23 @@ export default function OnboardingStep3() {
     <div style={{ minHeight: '100vh', background: '#f1f0ee', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px', fontFamily: 'system-ui, sans-serif' }}>
       <style>{`
         input:focus, textarea:focus { border-color: #0c2520 !important; box-shadow: 0 0 0 1px #0c2520 !important; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+        .fade-in { animation: fadeIn 0.5s ease-out; }
       `}</style>
-      <div style={{ width: '100%', maxWidth: '520px' }}>
+
+      <div className="fade-in" style={{ width: '100%', maxWidth: '520px' }}>
         <h1 style={{ fontFamily: 'Georgia, serif', fontSize: '28px', fontWeight: 500, color: '#0c2520', textAlign: 'center', margin: '0 0 32px' }}>Show off those skills</h1>
 
         <div style={{ marginBottom: '24px' }}>
           <label style={{ display: 'block', fontSize: '13px', color: '#0c2520', marginBottom: '6px', fontWeight: 500 }}>Agent</label>
           <input type="text" value={agent} disabled={noAgent} onChange={(e) => setAgent(e.target.value)} placeholder="e.g. Hamilton Hodell" style={{ ...inputStyle, background: noAgent ? '#f5f3ee' : 'white', opacity: noAgent ? 0.5 : 1 }} />
           <label style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '8px', fontSize: '12px', color: '#666', cursor: 'pointer' }}>
-            <input type="checkbox" checked={noAgent} onChange={(e) => setNoAgent(e.target.checked)} />
+            <input
+              type="checkbox"
+              checked={noAgent}
+              onChange={(e) => setNoAgent(e.target.checked)}
+              style={{ accentColor: '#0c2520', width: '14px', height: '14px', cursor: 'pointer' }}
+            />
             I don&apos;t have an agent
           </label>
         </div>
