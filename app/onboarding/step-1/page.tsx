@@ -81,28 +81,27 @@ export default function OnboardingStep1() {
           height: 140px;
           border-radius: 10px;
           border: 1.5px dashed #c4c2bc;
+          background: transparent;
           cursor: pointer;
           transition: all 0.2s ease;
           overflow: hidden;
-          background: transparent;
-        }
-        .headshot-upload.has-image {
-          border: 1.5px solid #0c2520;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          color: #0c2520;
+          font-size: 13px;
+          font-weight: 500;
         }
         .headshot-upload:hover {
           transform: translateY(-2px);
           border-color: #0c2520;
+          background: white;
         }
-        .headshot-upload .overlay {
-          position: absolute; inset: 0;
-          background: rgba(12, 37, 32, 0.6);
-          color: #f1f0ee;
-          display: flex; align-items: center; justify-content: center;
-          font-size: 12px; font-weight: 500;
-          opacity: 0;
-          transition: opacity 0.2s ease;
+        .headshot-upload.has-image {
+          border: 1.5px solid #0c2520;
+          background-size: cover;
+          background-position: center;
         }
-        .headshot-upload:hover .overlay { opacity: 1; }
       `}</style>
 
       <div className="fade-in" style={{ width: '100%', maxWidth: '520px' }}>
@@ -111,20 +110,12 @@ export default function OnboardingStep1() {
 
         {/* HEADSHOT */}
         <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '32px' }}>
-          <label className={`headshot-upload ${pictureUrl ? 'has-image' : ''}`} style={{ background: pictureUrl ? `url(${pictureUrl}) center/cover` : 'transparent' }}>
-            {!pictureUrl && !uploadingImage && (
-              <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#0c2520', fontSize: '13px', fontWeight: 500 }}>
-                + Add Headshot
-              </div>
-            )}
-            {uploadingImage && (
-              <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#0c2520', fontSize: '13px', fontWeight: 500 }}>
-                Uploading...
-              </div>
-            )}
-            <div className="overlay">
-              {pictureUrl ? 'Change Headshot' : 'Upload'}
-            </div>
+          <label
+            className={`headshot-upload ${pictureUrl ? 'has-image' : ''}`}
+            style={pictureUrl ? { backgroundImage: `url(${pictureUrl})` } : {}}
+          >
+            {!pictureUrl && !uploadingImage && '+ Add Headshot'}
+            {uploadingImage && 'Uploading...'}
             <input type="file" accept="image/*" onChange={handleImageUpload} disabled={uploadingImage} style={{ display: 'none' }} />
           </label>
         </div>
