@@ -64,29 +64,23 @@ export default function Dashboard() {
     const load = async () => {
       const { data: { user } } = await supabase.auth.getUser()
 
-      const promises: Promise<unknown>[] = [
+      const [pt, g, e, spot] = await Promise.all([
         supabase.from('production_types').select('id, name').order('name'),
         supabase.from('genders').select('id, name').order('id'),
         supabase.from('ethnicities').select('id, name').order('name'),
         supabase.from('jobs').select('*').eq('is_spotlighted', true).eq('is_published', true).order('created_at', { ascending: false }).limit(2),
-      ]
+      ])
+
+      setProductionTypes(pt.data || [])
+      setGenders(g.data || [])
+      setEthnicities(e.data || [])
+      setSpotlightJobs(spot.data || [])
 
       if (user) {
-        promises.push(supabase.from('saved_jobs').select('job_id').eq('user_id', user.id))
+        const { data: saved } = await supabase.from('saved_jobs').select('job_id').eq('user_id', user.id)
+        setSavedIds(new Set((saved || []).map(s => s.job_id)))
       }
 
-      const results = await Promise.all(promises) as Array<{ data: unknown }>
-      const pt = (results[0]?.data || []) as Lookup[]
-      const g = (results[1]?.data || []) as Lookup[]
-      const e = (results[2]?.data || []) as Lookup[]
-      const spot = (results[3]?.data || []) as Job[]
-      const saved = user ? (results[4]?.data || []) as Array<{ job_id: string }> : []
-
-      setProductionTypes(pt)
-      setGenders(g)
-      setEthnicities(e)
-      setSpotlightJobs(spot)
-      setSavedIds(new Set(saved.map(s => s.job_id)))
       setLoading(false)
     }
     load()
@@ -286,7 +280,6 @@ export default function Dashboard() {
         .dropdown-item:hover { background: #f5f3ee; }
         .save-btn:hover { background: #0c2520 !important; color: #f1f0ee !important; border-color: #0c2520 !important; }
         .apply-btn:hover { background: #0c2520 !important; color: #f1f0ee !important; border-color: #0c2520 !important; }
-        .list-apply-btn:hover { background: #0c2520 !important; color: #f1f0ee !important; }
         .range-slider { -webkit-appearance: none; appearance: none; width: 100%; height: 4px; background: #d4d2cc; border-radius: 2px; outline: none; }
         .range-slider::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 18px; height: 18px; background: #0c2520; border-radius: 50%; cursor: pointer; border: none; }
         .range-slider::-moz-range-thumb { width: 18px; height: 18px; background: #0c2520; border-radius: 50%; cursor: pointer; border: none; }
