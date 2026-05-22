@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
 
 type Lookup = { id: number; name: string }
@@ -116,14 +117,19 @@ export default function Dashboard() {
   )
 
   const renderSpotlight = () => {
-    if (spotlightJobs.length === 0) {
-      return [0, 1, 2].map(i => (
-        <div key={i} className="job-card" style={{ background: '#e8e6e0', borderRadius: '12px', padding: '24px', minHeight: '220px', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', cursor: 'pointer', textAlign: 'center' }}>
+    const ctaCard = (key: string) => (
+      <Link key={key} href="/post-job" style={{ textDecoration: 'none' }}>
+        <div className="job-card" style={{ background: '#e8e6e0', borderRadius: '12px', padding: '24px', minHeight: '220px', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', cursor: 'pointer', textAlign: 'center' }}>
           <p style={{ fontSize: '13px', color: '#666', margin: '0 0 6px' }}>Spotlight your job</p>
           <p style={{ fontSize: '13px', color: '#0c2520', margin: 0, textDecoration: 'underline', fontWeight: 500 }}>Get your role booked in less<br />than one week</p>
         </div>
-      ))
+      </Link>
+    )
+
+    if (spotlightJobs.length === 0) {
+      return [0, 1, 2].map(i => ctaCard(`cta-${i}`))
     }
+
     const cards: React.ReactElement[] = []
     spotlightJobs.forEach((job, i) => {
       const isMint = i === 0
@@ -141,12 +147,7 @@ export default function Dashboard() {
       )
     })
     while (cards.length < 3) {
-      cards.push(
-        <div key={`cta-${cards.length}`} className="job-card" style={{ background: '#e8e6e0', borderRadius: '12px', padding: '24px', minHeight: '220px', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', cursor: 'pointer', textAlign: 'center' }}>
-          <p style={{ fontSize: '13px', color: '#666', margin: '0 0 6px' }}>Spotlight your job</p>
-          <p style={{ fontSize: '13px', color: '#0c2520', margin: 0, textDecoration: 'underline', fontWeight: 500 }}>Get your role booked in less<br />than one week</p>
-        </div>
-      )
+      cards.push(ctaCard(`cta-fill-${cards.length}`))
     }
     return cards
   }
