@@ -23,7 +23,6 @@ export default function PostJob() {
   const [skills, setSkills] = useState<Skill[]>([])
   const [skillCategories, setSkillCategories] = useState<SkillCategory[]>([])
 
-  // Industry job fields
   const [projectRole, setProjectRole] = useState('')
   const [projectIn, setProjectIn] = useState('')
   const [productionCompany, setProductionCompany] = useState('')
@@ -45,7 +44,6 @@ export default function PostJob() {
   const [submissionLink, setSubmissionLink] = useState('')
   const [description, setDescription] = useState('')
 
-  // Side hustle fields
   const [jobTitle, setJobTitle] = useState('')
   const [company, setCompany] = useState('')
   const [jobCategory, setJobCategory] = useState('')
@@ -114,7 +112,6 @@ export default function PostJob() {
     const err = validate()
     if (err) { alert(err); return }
 
-    // If spotlight is on and we haven't gone through payment yet
     if (spotlightJob && !showPayment && !processing) {
       setShowPayment(true)
       return
@@ -206,8 +203,8 @@ export default function PostJob() {
   }
 
   const sectionStyle: React.CSSProperties = {
-    fontFamily: 'Georgia, serif', fontSize: '15px', fontWeight: 500, color: '#0c2520',
-    margin: '24px 0 14px', textTransform: 'uppercase', letterSpacing: '0.05em',
+    fontFamily: 'Georgia, serif', fontSize: '17px', fontWeight: 500, color: '#0c2520',
+    margin: '28px 0 14px',
   }
 
   return (
@@ -248,9 +245,8 @@ export default function PostJob() {
         input[type="number"] { -moz-appearance: textfield; }
       `}</style>
 
-      <div className="fade-in" style={{ maxWidth: '760px', margin: '0 auto' }}>
+      <div className="fade-in" style={{ maxWidth: '1100px', margin: '0 auto' }}>
 
-        {/* Header */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '24px', flexWrap: 'wrap', gap: '12px' }}>
           <div>
             <h1 style={{ fontFamily: 'Georgia, serif', fontSize: '28px', fontWeight: 500, color: '#0c2520', margin: '0 0 6px' }}>Post a Job</h1>
@@ -261,11 +257,10 @@ export default function PostJob() {
           </button>
         </div>
 
-        {/* Spotlight Toggle */}
-        <div style={{ background: 'linear-gradient(135deg, #92d7af 0%, #b5e5c5 100%)', border: '1px solid #6db98a', borderRadius: '12px', padding: '16px 20px', marginBottom: '12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '16px' }}>
+        <div style={{ background: '#92d7af', border: '1px solid #6db98a', borderRadius: '12px', padding: '16px 20px', marginBottom: '12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '16px' }}>
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
-              <p style={{ fontWeight: 600, fontSize: '14px', color: '#0c2520', margin: 0 }}>✨ Spotlight this job</p>
+              <p style={{ fontFamily: 'Georgia, serif', fontWeight: 500, fontSize: '15px', color: '#0c2520', margin: 0 }}>Spotlight this job</p>
               <span style={{ background: '#0c2520', color: '#f1f0ee', padding: '2px 8px', borderRadius: '4px', fontSize: '11px', fontWeight: 500 }}>£5</span>
             </div>
             <p style={{ fontSize: '12px', color: '#0c2520', margin: 0 }}>Featured at the top of the dashboard for 7 days. Get booked faster.</p>
@@ -275,13 +270,9 @@ export default function PostJob() {
           </div>
         </div>
 
-        {/* Side Hustle Toggle */}
         <div style={{ background: 'white', border: '1px solid #e8e6e0', borderRadius: '12px', padding: '16px 20px', marginBottom: '20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '16px' }}>
           <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
-              <p style={{ fontWeight: 500, fontSize: '14px', color: '#0c2520', margin: 0 }}>Side Hustle</p>
-              {isSideHustle && <span style={{ background: '#fde6c2', color: '#8a5a2e', padding: '2px 8px', borderRadius: '4px', fontSize: '11px', fontWeight: 500 }}>ON</span>}
-            </div>
+            <p style={{ fontFamily: 'Georgia, serif', fontWeight: 500, fontSize: '15px', color: '#0c2520', margin: '0 0 4px' }}>Side Hustle</p>
             <p style={{ fontSize: '12px', color: '#666', margin: 0 }}>Toggle for non-industry jobs (teaching, hospitality, etc.)</p>
           </div>
           <div className={`toggle-switch ${isSideHustle ? 'on' : ''}`} onClick={() => setIsSideHustle(!isSideHustle)}>
@@ -289,9 +280,8 @@ export default function PostJob() {
           </div>
         </div>
 
-        {/* INDUSTRY JOB FORM */}
         {!isSideHustle && (
-          <div style={{ background: 'white', border: '1px solid #e8e6e0', borderRadius: '12px', padding: '28px' }}>
+          <div style={{ background: 'white', border: '1px solid #e8e6e0', borderRadius: '12px', padding: '32px' }}>
 
             <h2 style={{ ...sectionStyle, margin: '0 0 14px' }}>The Project</h2>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '12px' }}>
@@ -341,7 +331,7 @@ export default function PostJob() {
               )}
             </div>
 
-            <h2 style={sectionStyle}>When & Where</h2>
+            <h2 style={sectionStyle}>When and where</h2>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '12px' }}>
               <div>
                 <label style={labelStyle}>Location</label>
@@ -358,7 +348,7 @@ export default function PostJob() {
               <input type="date" value={applicationDeadline} onChange={(e) => setApplicationDeadline(e.target.value)} style={inputStyle} />
             </div>
 
-            <h2 style={sectionStyle}>Talent Requirements</h2>
+            <h2 style={sectionStyle}>Talent requirements</h2>
 
             <div style={{ marginBottom: '12px', position: 'relative' }}>
               <label style={labelStyle}>Required Skills</label>
@@ -425,7 +415,7 @@ export default function PostJob() {
               </div>
             </div>
 
-            <h2 style={sectionStyle}>How to Apply</h2>
+            <h2 style={sectionStyle}>How to apply</h2>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '12px' }}>
               <div>
                 <label style={labelStyle}>Casting Email <span style={{ color: '#c44' }}>*</span></label>
@@ -453,11 +443,10 @@ export default function PostJob() {
           </div>
         )}
 
-        {/* SIDE HUSTLE FORM */}
         {isSideHustle && (
-          <div style={{ background: 'white', border: '1px solid #e8e6e0', borderRadius: '12px', padding: '28px' }}>
+          <div style={{ background: 'white', border: '1px solid #e8e6e0', borderRadius: '12px', padding: '32px' }}>
 
-            <h2 style={{ ...sectionStyle, margin: '0 0 14px' }}>The Role</h2>
+            <h2 style={{ ...sectionStyle, margin: '0 0 14px' }}>The role</h2>
 
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '12px' }}>
               <div>
@@ -537,7 +526,7 @@ export default function PostJob() {
               </label>
             </div>
 
-            <h2 style={sectionStyle}>How to Apply</h2>
+            <h2 style={sectionStyle}>How to apply</h2>
 
             <div style={{ marginBottom: '12px' }}>
               <label style={labelStyle}>Apply Email <span style={{ color: '#c44' }}>*</span></label>
@@ -555,11 +544,10 @@ export default function PostJob() {
           </div>
         )}
 
-        {/* Fake Payment Modal */}
         {showPayment && (
           <div style={{ position: 'fixed', inset: 0, background: 'rgba(12, 37, 32, 0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 100, padding: '20px' }}>
             <div style={{ background: 'white', borderRadius: '16px', padding: '32px', maxWidth: '420px', width: '100%' }}>
-              <h2 style={{ fontFamily: 'Georgia, serif', fontSize: '22px', fontWeight: 500, color: '#0c2520', margin: '0 0 6px' }}>✨ Spotlight your job</h2>
+              <h2 style={{ fontFamily: 'Georgia, serif', fontSize: '22px', fontWeight: 500, color: '#0c2520', margin: '0 0 6px' }}>Spotlight your job</h2>
               <p style={{ fontSize: '13px', color: '#666', margin: '0 0 24px' }}>£5 to feature your job at the top of the dashboard for 7 days.</p>
 
               <div style={{ marginBottom: '12px' }}>
@@ -578,7 +566,7 @@ export default function PostJob() {
                 </div>
               </div>
 
-              <p style={{ fontSize: '11px', color: '#999', textAlign: 'center', marginBottom: '20px' }}>🔒 Test mode — no real payment will be taken</p>
+              <p style={{ fontSize: '11px', color: '#999', textAlign: 'center', marginBottom: '20px' }}>Test mode — no real payment will be taken</p>
 
               <button
                 onClick={handlePayment}
