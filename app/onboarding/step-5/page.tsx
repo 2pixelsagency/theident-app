@@ -19,8 +19,8 @@ export default function OnboardingStep5() {
       const { data: profile } = await supabase.from('profiles').select('height, minimum_age, maximum_age').eq('id', user.id).single()
       if (profile) {
         if (profile.height) setHeight(profile.height)
-        if (profile.minimum_age) setMinAge(profile.minimum_age)
-        if (profile.maximum_age) setMaxAge(profile.maximum_age)
+        if (typeof profile.minimum_age === 'number') setMinAge(profile.minimum_age)
+        if (typeof profile.maximum_age === 'number') setMaxAge(profile.maximum_age)
       }
       setLoading(false)
     }
@@ -35,6 +35,20 @@ export default function OnboardingStep5() {
       height, minimum_age: minAge, maximum_age: maxAge,
     }).eq('id', user.id)
     router.push('/onboarding/step-6')
+  }
+
+  const handleMinChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = Number(e.target.value)
+    if (val <= maxAge) {
+      setMinAge(val)
+    }
+  }
+
+  const handleMaxChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = Number(e.target.value)
+    if (val >= minAge) {
+      setMaxAge(val)
+    }
   }
 
   if (loading) return <div style={{ minHeight: '100vh', background: '#f1f0ee' }} />
@@ -101,47 +115,38 @@ export default function OnboardingStep5() {
                 fontSize: '14px', background: 'white', boxSizing: 'border-box', outline: 'none', fontFamily: 'inherit',
               }}
             />
-            <span style={{
-              position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)',
-              color: '#999', fontSize: '13px', pointerEvents: 'none'
-            }}>cm</span>
+            <span style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)', color: '#999', fontSize: '13px', pointerEvents: 'none' }}>cm</span>
           </div>
         </div>
 
         <div style={{ marginBottom: '24px' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
-            <label style={{ fontSize: '13px', color: '#0c2520', fontWeight: 500 }}>Playing age (minimum)</label>
+            <label htmlFor="min-age" style={{ fontSize: '13px', color: '#0c2520', fontWeight: 500 }}>Playing age (minimum)</label>
             <span style={{ background: '#0c2520', color: '#f1f0ee', padding: '3px 12px', borderRadius: '6px', fontSize: '13px', fontWeight: 500, minWidth: '36px', textAlign: 'center' }}>{minAge}</span>
           </div>
           <input
+            id="min-age"
             type="range"
             min="0"
             max="100"
             value={minAge}
-            onChange={(e) => {
-              const val = Number(e.target.value)
-              setMinAge(val)
-              if (val > maxAge) setMaxAge(val)
-            }}
+            onChange={handleMinChange}
             className="range-slider"
           />
         </div>
 
         <div style={{ marginBottom: '32px' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
-            <label style={{ fontSize: '13px', color: '#0c2520', fontWeight: 500 }}>Playing age (maximum)</label>
+            <label htmlFor="max-age" style={{ fontSize: '13px', color: '#0c2520', fontWeight: 500 }}>Playing age (maximum)</label>
             <span style={{ background: '#0c2520', color: '#f1f0ee', padding: '3px 12px', borderRadius: '6px', fontSize: '13px', fontWeight: 500, minWidth: '36px', textAlign: 'center' }}>{maxAge}</span>
           </div>
           <input
+            id="max-age"
             type="range"
             min="0"
             max="100"
             value={maxAge}
-            onChange={(e) => {
-              const val = Number(e.target.value)
-              setMaxAge(val)
-              if (val < minAge) setMinAge(val)
-            }}
+            onChange={handleMaxChange}
             className="range-slider"
           />
         </div>
