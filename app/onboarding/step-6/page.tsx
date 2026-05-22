@@ -97,22 +97,14 @@ export default function OnboardingStep6() {
   if (loading) return <div style={{ minHeight: '100vh', background: '#f1f0ee' }} />
 
   return (
-    <div style={{ minHeight: '100vh', background: '#f1f0ee', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px', fontFamily: 'system-ui, sans-serif', position: 'relative', overflow: 'hidden' }}>
+    <div style={{ minHeight: '100vh', background: '#f1f0ee', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px', fontFamily: 'system-ui, sans-serif' }}>
       <style>{`
         input:focus, textarea:focus { border-color: #0c2520 !important; box-shadow: 0 0 0 1px #0c2520 !important; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
         .fade-in { animation: fadeIn 0.5s ease-out; }
-        @keyframes blob1 { 0%, 100% { transform: translate(0, 0) scale(1); } 33% { transform: translate(60px, -40px) scale(1.1); } 66% { transform: translate(-40px, 30px) scale(0.95); } }
-        @keyframes blob2 { 0%, 100% { transform: translate(0, 0) scale(1); } 33% { transform: translate(-50px, 50px) scale(1.05); } 66% { transform: translate(40px, -30px) scale(0.9); } }
-        @keyframes blob3 { 0%, 100% { transform: translate(0, 0) scale(1); } 33% { transform: translate(30px, 40px) scale(0.95); } 66% { transform: translate(-30px, -50px) scale(1.1); } }
-        .blob { position: absolute; border-radius: 50%; filter: blur(80px); opacity: 0.4; pointer-events: none; }
       `}</style>
 
-      <div className="blob" style={{ background: '#92d7af', width: '400px', height: '400px', top: '-100px', left: '-100px', animation: 'blob1 20s ease-in-out infinite' }} />
-      <div className="blob" style={{ background: '#d4e0ec', width: '500px', height: '500px', bottom: '-150px', right: '-100px', animation: 'blob2 25s ease-in-out infinite' }} />
-      <div className="blob" style={{ background: '#f0d9e8', width: '350px', height: '350px', top: '50%', left: '50%', animation: 'blob3 30s ease-in-out infinite' }} />
-
-      <div className="fade-in" style={{ width: '100%', maxWidth: '520px', position: 'relative', zIndex: 1 }}>
+      <div className="fade-in" style={{ width: '100%', maxWidth: '520px' }}>
         <h1 style={{ fontFamily: 'Georgia, serif', fontSize: '28px', fontWeight: 500, color: '#0c2520', textAlign: 'center', margin: '0 0 32px' }}>Almost there! Let&apos;s finish strong</h1>
 
         <div style={{ display: 'flex', gap: '12px', alignItems: 'center', marginBottom: '24px' }}>
