@@ -11,6 +11,7 @@ type Job = {
   id: string
   project_role: string | null
   project_in: string | null
+  production_company: string | null
   location: string | null
   short_summary: string | null
   is_side_hustle: boolean
@@ -21,6 +22,7 @@ type Job = {
   salary: string | null
   created_at: string
   job_title: string | null
+  company: string | null
 }
 
 export default function Dashboard() {
@@ -94,6 +96,11 @@ export default function Dashboard() {
 
   const hasActiveFilters = selectedProductionTypes.length > 0 || selectedGenders.length > 0 || selectedEthnicities.length > 0 || minAge > 0 || maxAge < 100 || locationSearch || keywordSearch
 
+  const getProductionTypeName = (id: number | null) => {
+    if (!id) return null
+    return productionTypes.find(pt => pt.id === id)?.name
+  }
+
   if (loading) return <div style={{ minHeight: '100vh', background: '#f1f0ee' }} />
 
   const FilterPill = ({ id, label, count }: { id: string; label: string; count: number }) => (
@@ -119,12 +126,39 @@ export default function Dashboard() {
   const renderSpotlight = () => {
     const ctaCard = (key: string) => (
       <Link key={key} href="/post-job" style={{ textDecoration: 'none' }}>
-        <div className="job-card" style={{ background: '#e8e6e0', borderRadius: '12px', padding: '24px', minHeight: '220px', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', cursor: 'pointer', textAlign: 'center' }}>
+        <div className="job-card" style={{ background: '#e8e6e0', borderRadius: '12px', padding: '24px', minHeight: '260px', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', cursor: 'pointer', textAlign: 'center' }}>
           <p style={{ fontSize: '13px', color: '#666', margin: '0 0 6px' }}>Spotlight your job</p>
           <p style={{ fontSize: '13px', color: '#0c2520', margin: 0, textDecoration: 'underline', fontWeight: 500 }}>Get your role booked in less<br />than one week</p>
         </div>
       </Link>
     )
+
+    const spotlightCard = (job: Job, isMint: boolean) => {
+      const title = job.is_side_hustle ? job.job_title : job.project_role
+      const subtitle = job.is_side_hustle ? job.company : job.project_in
+      const productionTypeName = getProductionTypeName(job.production_type_id)
+
+      return (
+        <Link key={job.id} href={`/jobs/${job.id}`} style={{ textDecoration: 'none' }}>
+          <div className="job-card" style={{ background: isMint ? '#92d7af' : '#0c2520', borderRadius: '12px', padding: '24px', minHeight: '260px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', cursor: 'pointer' }}>
+            <div>
+              <h3 style={{ fontFamily: 'Georgia, serif', fontSize: '18px', fontWeight: 600, color: isMint ? '#0c2520' : '#f1f0ee', margin: '0 0 4px', lineHeight: 1.2 }}>{title}</h3>
+              {subtitle && <p style={{ fontSize: '13px', color: isMint ? '#0c2520' : '#a8c4b4', margin: '0 0 12px', fontStyle: 'italic' }}>In {subtitle}</p>}
+
+              {job.short_summary && <p style={{ fontSize: '13px', color: isMint ? '#0c2520' : '#cfdfd6', margin: '0 0 14px', lineHeight: 1.4 }}>{job.short_summary}</p>}
+
+              <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', marginBottom: '12px' }}>
+                {job.location && <span style={{ background: isMint ? 'rgba(255,255,255,0.5)' : 'rgba(255,255,255,0.15)', padding: '4px 10px', borderRadius: '6px', fontSize: '11px', color: isMint ? '#0c2520' : '#f1f0ee' }}>{job.location}</span>}
+                {productionTypeName && <span style={{ background: isMint ? 'rgba(255,255,255,0.5)' : 'rgba(255,255,255,0.15)', padding: '4px 10px', borderRadius: '6px', fontSize: '11px', color: isMint ? '#0c2520' : '#f1f0ee' }}>{productionTypeName}</span>}
+                {job.production_company && <span style={{ background: isMint ? 'rgba(255,255,255,0.5)' : 'rgba(255,255,255,0.15)', padding: '4px 10px', borderRadius: '6px', fontSize: '11px', color: isMint ? '#0c2520' : '#f1f0ee' }}>{job.production_company}</span>}
+                {job.salary && <span style={{ background: isMint ? '#0c2520' : '#f1f0ee', color: isMint ? '#f1f0ee' : '#0c2520', padding: '4px 10px', borderRadius: '6px', fontSize: '11px', fontWeight: 500 }}>{job.salary}</span>}
+              </div>
+            </div>
+            <button style={{ background: 'white', color: '#0c2520', border: 'none', padding: '8px 24px', borderRadius: '20px', fontSize: '13px', fontWeight: 500, cursor: 'pointer', alignSelf: 'flex-start', fontFamily: 'inherit' }}>View Job</button>
+          </div>
+        </Link>
+      )
+    }
 
     if (spotlightJobs.length === 0) {
       return [0, 1, 2].map(i => ctaCard(`cta-${i}`))
@@ -132,19 +166,7 @@ export default function Dashboard() {
 
     const cards: React.ReactElement[] = []
     spotlightJobs.forEach((job, i) => {
-      const isMint = i === 0
-      cards.push(
-        <div key={job.id} className="job-card" style={{ background: isMint ? '#92d7af' : '#0c2520', borderRadius: '12px', padding: '24px', minHeight: '220px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', cursor: 'pointer' }}>
-          <div>
-            <h3 style={{ fontFamily: 'Georgia, serif', fontSize: '18px', fontWeight: 600, color: isMint ? '#0c2520' : '#f1f0ee', margin: '0 0 8px', lineHeight: 1.2 }}>{job.project_role || job.job_title}</h3>
-            {job.project_in && <p style={{ fontSize: '13px', color: isMint ? '#0c2520' : '#a8c4b4', margin: '0 0 12px' }}>In {job.project_in}</p>}
-            <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
-              {job.location && <span style={{ background: isMint ? 'rgba(255,255,255,0.5)' : 'rgba(255,255,255,0.15)', padding: '4px 10px', borderRadius: '6px', fontSize: '12px', color: isMint ? '#0c2520' : '#f1f0ee' }}>{job.location}</span>}
-            </div>
-          </div>
-          <button style={{ background: 'white', color: '#0c2520', border: 'none', padding: '8px 24px', borderRadius: '20px', fontSize: '13px', fontWeight: 500, cursor: 'pointer', alignSelf: 'flex-start', fontFamily: 'inherit' }}>Apply</button>
-        </div>
-      )
+      cards.push(spotlightCard(job, i === 0))
     })
     while (cards.length < 3) {
       cards.push(ctaCard(`cta-fill-${cards.length}`))
@@ -241,17 +263,26 @@ export default function Dashboard() {
             </div>
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-              {jobs.map(job => (
-                <div key={job.id} className="job-card" style={{ padding: '20px', border: '1px solid #e8e6e0', borderRadius: '12px', cursor: 'pointer', background: 'white' }}>
-                  <h3 style={{ fontFamily: 'Georgia, serif', fontSize: '18px', fontWeight: 500, color: '#0c2520', margin: '0 0 4px' }}>{job.project_role || job.job_title}</h3>
-                  {job.project_in && <p style={{ fontSize: '13px', color: '#666', margin: '0 0 8px' }}>In {job.project_in}</p>}
-                  {job.short_summary && <p style={{ fontSize: '14px', color: '#0c2520', margin: '0 0 12px' }}>{job.short_summary}</p>}
-                  <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
-                    {job.location && <span style={{ background: '#f1f0ee', padding: '4px 10px', borderRadius: '6px', fontSize: '12px', color: '#0c2520' }}>{job.location}</span>}
-                    {job.is_side_hustle && <span style={{ background: '#fde6c2', padding: '4px 10px', borderRadius: '6px', fontSize: '12px', color: '#8a5a2e' }}>Side Hustle</span>}
-                  </div>
-                </div>
-              ))}
+              {jobs.map(job => {
+                const title = job.is_side_hustle ? job.job_title : job.project_role
+                const subtitle = job.is_side_hustle ? job.company : job.project_in
+                const productionTypeName = getProductionTypeName(job.production_type_id)
+                return (
+                  <Link key={job.id} href={`/jobs/${job.id}`} style={{ textDecoration: 'none' }}>
+                    <div className="job-card" style={{ padding: '20px', border: '1px solid #e8e6e0', borderRadius: '12px', cursor: 'pointer', background: 'white' }}>
+                      <h3 style={{ fontFamily: 'Georgia, serif', fontSize: '18px', fontWeight: 500, color: '#0c2520', margin: '0 0 4px' }}>{title}</h3>
+                      {subtitle && <p style={{ fontSize: '13px', color: '#666', margin: '0 0 8px', fontStyle: 'italic' }}>In {subtitle}</p>}
+                      {job.short_summary && <p style={{ fontSize: '14px', color: '#0c2520', margin: '0 0 12px' }}>{job.short_summary}</p>}
+                      <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+                        {job.location && <span style={{ background: '#f1f0ee', padding: '4px 10px', borderRadius: '6px', fontSize: '12px', color: '#0c2520' }}>{job.location}</span>}
+                        {productionTypeName && <span style={{ background: '#e8efea', padding: '4px 10px', borderRadius: '6px', fontSize: '12px', color: '#0c2520' }}>{productionTypeName}</span>}
+                        {job.salary && <span style={{ background: '#0c2520', color: '#f1f0ee', padding: '4px 10px', borderRadius: '6px', fontSize: '12px', fontWeight: 500 }}>{job.salary}</span>}
+                        {job.is_side_hustle && <span style={{ background: '#fde6c2', padding: '4px 10px', borderRadius: '6px', fontSize: '12px', color: '#8a5a2e' }}>Side Hustle</span>}
+                      </div>
+                    </div>
+                  </Link>
+                )
+              })}
             </div>
           )}
         </section>
