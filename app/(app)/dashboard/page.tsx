@@ -27,17 +27,30 @@ type Job = {
   created_by: string | null
 }
 
+type ScoredJob = Job & {
+  matchScore: number
+  matchTier: 'strong' | 'good' | 'none'
+  matchReasons: string[]
+}
+
 type SortOption = 'newest' | 'oldest' | 'az' | 'za'
+type MatchFilter = 'all' | 'good_strong' | 'strong'
 
 export default function Dashboard() {
   const router = useRouter()
   const [productionTypes, setProductionTypes] = useState<Lookup[]>([])
   const [genders, setGenders] = useState<Lookup[]>([])
   const [ethnicities, setEthnicities] = useState<Lookup[]>([])
-  const [jobs, setJobs] = useState<Job[]>([])
+  const [jobs, setJobs] = useState<ScoredJob[]>([])
   const [spotlightJobs, setSpotlightJobs] = useState<Job[]>([])
   const [savedIds, setSavedIds] = useState<Set<string>>(new Set())
   const [loading, setLoading] = useState(true)
+
+  // User profile data for matching
+  const [userLocation, setUserLocation] = useState<string | null>(null)
+  const [userMinAge, setUserMinAge] = useState<number | null>(null)
+  const [userMaxAge, setUserMaxAge] = useState<number | null>(null)
+  const [userSkillIds, setUserSkillIds] = useState<Set<number>>(new Set())
 
   const [selectedProductionTypes, setSelectedProductionTypes] = useState<number[]>([])
   const [selectedGenders, setSelectedGenders] = useState<number[]>([])
@@ -48,6 +61,7 @@ export default function Dashboard() {
   const [keywordSearch, setKeywordSearch] = useState('')
   const [showSideHustle, setShowSideHustle] = useState(false)
   const [sortBy, setSortBy] = useState<SortOption>('newest')
+  const [matchFilter, setMatchFilter] = useState<MatchFilter>('all')
 
   const [openDropdown, setOpenDropdown] = useState<string | null>(null)
   const dropdownRef = useRef<HTMLDivElement>(null)
@@ -77,14 +91,49 @@ export default function Dashboard() {
       setSpotlightJobs(spot.data || [])
 
       if (user) {
-        const { data: saved } = await supabase.from('saved_jobs').select('job_id').eq('user_id', user.id)
+        const [{ data: saved }, { data: profile }, { data: userSkills }] = await Promise.all([
+          supabase.from('saved_jobs').select('job_id').eq('user_id', user.id),
+          supabase.from('profiles').select('location, minimum_age, maximum_age').eq('id', user.id).single(),
+          supabase.from('profile_skills').select('skill_id').eq('profile_id', user.id),
+        ])
         setSavedIds(new Set((saved || []).map(s => s.job_id)))
+        if (profile) {
+          setUserLocation(profile.location)
+          setUserMinAge(profile.minimum_age)
+          setUserMaxAge(profile.maximum_age)
+        }
+        setUserSkillIds(new Set((userSkills || []).map(s => s.skill_id)))
       }
 
       setLoading(false)
     }
     load()
   }, [])
+
+  // Score a single job based on user profile
+  const scoreJob = async (job: Job): Promise<ScoredJob> => {
+    let score = 0
+    const reasons: string[] = []
+
+    if (userLocation && job.location && job.location.toLowerCase().includes(userLocation.toLowerCase())) {
+      score += 3
+      reasons.push(`Based in ${userLocation}`)
+    }
+
+    if (userMinAge !== null && userMaxAge !== null && job.age_range) {
+      const match = job.age_range.match(/(\d+)\s*-\s*(\d+)/)
+      if (match) {
+        const jobMin = parseInt(match[1])
+        const jobMax = parseInt(match[2])
+        if (userMinAge <= jobMax && userMaxAge >= jobMin) {
+          score += 4
+          reasons.push(`Playing age ${jobMin}–${jobMax} fits yours`)
+        }
+      }
+    }
+
+    return { ...job, matchScore: score, matchTier: 'none', matchReasons: reasons }
+  }
 
   useEffect(() => {
     const loadJobs = async () => {
@@ -101,18 +150,56 @@ export default function Dashboard() {
       const { data } = await query
       let result = data || []
 
+      // Load job_skills for all jobs to score skill matches
+      const jobIds = result.map(j => j.id)
+      const { data: jobSkillsData } = await supabase.from('job_skills').select('job_id, skill_id').in('job_id', jobIds)
+
+      const jobSkillsMap = new Map<string, Set<number>>()
+      ;(jobSkillsData || []).forEach(js => {
+        if (!jobSkillsMap.has(js.job_id)) jobSkillsMap.set(js.job_id, new Set())
+        jobSkillsMap.get(js.job_id)!.add(js.skill_id)
+      })
+
+      // Score each job
+      const scored: ScoredJob[] = await Promise.all(result.map(async job => {
+        const base = await scoreJob(job)
+
+        const jobSkills = jobSkillsMap.get(job.id) || new Set()
+        let matchingSkillCount = 0
+        jobSkills.forEach(sid => { if (userSkillIds.has(sid)) matchingSkillCount++ })
+        if (matchingSkillCount > 0) {
+          const skillPoints = Math.min(matchingSkillCount * 2, 10)
+          base.matchScore += skillPoints
+          base.matchReasons.push(`${matchingSkillCount} of your skill${matchingSkillCount === 1 ? '' : 's'} match${matchingSkillCount === 1 ? 'es' : ''}`)
+        }
+
+        if (base.matchScore >= 8) base.matchTier = 'strong'
+        else if (base.matchScore >= 5) base.matchTier = 'good'
+        else base.matchTier = 'none'
+
+        return base
+      }))
+
+      // Filter by match
+      let filtered = scored
+      if (matchFilter === 'strong') filtered = scored.filter(j => j.matchTier === 'strong')
+      if (matchFilter === 'good_strong') filtered = scored.filter(j => j.matchTier === 'strong' || j.matchTier === 'good')
+
       if (sortBy === 'az' || sortBy === 'za') {
-        result = [...result].sort((a, b) => {
+        filtered = [...filtered].sort((a, b) => {
           const ta = (a.is_side_hustle ? a.job_title : a.project_role) || ''
           const tb = (b.is_side_hustle ? b.job_title : b.project_role) || ''
           return sortBy === 'az' ? ta.localeCompare(tb) : tb.localeCompare(ta)
         })
+      } else if (matchFilter !== 'all') {
+        // When filtering by match, sort by score
+        filtered = [...filtered].sort((a, b) => b.matchScore - a.matchScore)
       }
 
-      setJobs(result)
+      setJobs(filtered)
     }
     if (!loading) loadJobs()
-  }, [selectedProductionTypes, selectedGenders, selectedEthnicities, minAge, maxAge, locationSearch, keywordSearch, showSideHustle, sortBy, loading])
+  }, [selectedProductionTypes, selectedGenders, selectedEthnicities, minAge, maxAge, locationSearch, keywordSearch, showSideHustle, sortBy, matchFilter, loading, userLocation, userMinAge, userMaxAge, userSkillIds])
 
   const toggleFilter = (list: number[], setList: (v: number[]) => void, id: number) => {
     setList(list.includes(id) ? list.filter(x => x !== id) : [...list, id])
@@ -120,10 +207,10 @@ export default function Dashboard() {
 
   const clearAllFilters = () => {
     setSelectedProductionTypes([]); setSelectedGenders([]); setSelectedEthnicities([])
-    setMinAge(0); setMaxAge(100); setLocationSearch(''); setKeywordSearch('')
+    setMinAge(0); setMaxAge(100); setLocationSearch(''); setKeywordSearch(''); setMatchFilter('all')
   }
 
-  const hasActiveFilters = selectedProductionTypes.length > 0 || selectedGenders.length > 0 || selectedEthnicities.length > 0 || minAge > 0 || maxAge < 100 || locationSearch || keywordSearch
+  const hasActiveFilters = selectedProductionTypes.length > 0 || selectedGenders.length > 0 || selectedEthnicities.length > 0 || minAge > 0 || maxAge < 100 || locationSearch || keywordSearch || matchFilter !== 'all'
 
   const getProductionTypeName = (id: number | null) => {
     if (!id) return null
@@ -171,6 +258,8 @@ export default function Dashboard() {
   if (loading) return <div style={{ minHeight: '100vh', background: '#f1f0ee' }} />
 
   const sortLabel = sortBy === 'newest' ? 'Newest first' : sortBy === 'oldest' ? 'Oldest first' : sortBy === 'az' ? 'Name A–Z' : 'Name Z–A'
+  const matchLabel = matchFilter === 'all' ? 'Matches' : matchFilter === 'strong' ? 'Strong matches' : 'Good & strong matches'
+  const matchCount = matchFilter !== 'all' ? 1 : 0
 
   const FilterPill = ({ id, label, count }: { id: string; label: string; count: number }) => (
     <button onClick={() => setOpenDropdown(openDropdown === id ? null : id)} className="filter-pill" style={{ background: count > 0 ? '#e8efea' : 'white', border: count > 0 ? '1px solid #0c2520' : '1px solid #e0ddd5', padding: '8px 14px', borderRadius: '8px', fontSize: '13px', color: '#0c2520', cursor: 'pointer', fontFamily: 'inherit', display: 'flex', alignItems: 'center', gap: '6px', fontWeight: count > 0 ? 500 : 400, transition: 'all 0.2s ease' }}>
@@ -299,6 +388,19 @@ export default function Dashboard() {
 
           <div ref={dropdownRef} style={{ display: 'flex', gap: '8px', marginBottom: '12px', flexWrap: 'wrap', alignItems: 'center', position: 'relative' }}>
             <div style={{ position: 'relative' }}>
+              <FilterPill id="matches" label={matchLabel} count={matchCount} />
+              {openDropdown === 'matches' && (
+                <div style={{ position: 'absolute', top: 'calc(100% + 4px)', left: 0, background: 'white', border: '1px solid #e0ddd5', borderRadius: '10px', boxShadow: '0 4px 12px rgba(0,0,0,0.08)', padding: '6px', minWidth: '220px', zIndex: 20 }}>
+                  {(['all', 'good_strong', 'strong'] as MatchFilter[]).map(opt => (
+                    <button key={opt} onClick={() => { setMatchFilter(opt); setOpenDropdown(null) }} className="dropdown-item" style={{ width: '100%', textAlign: 'left', padding: '8px 12px', background: matchFilter === opt ? '#e8efea' : 'transparent', border: 'none', borderRadius: '6px', cursor: 'pointer', fontSize: '13px', color: '#0c2520', fontFamily: 'inherit', fontWeight: matchFilter === opt ? 500 : 400 }}>
+                      {opt === 'all' ? 'All jobs' : opt === 'good_strong' ? 'Good & strong matches' : 'Strong matches only'}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <div style={{ position: 'relative' }}>
               <FilterPill id="production" label="Production Type" count={selectedProductionTypes.length} />
               {openDropdown === 'production' && <DropdownPanel items={productionTypes} selected={selectedProductionTypes} setSelected={setSelectedProductionTypes} />}
             </div>
@@ -354,7 +456,7 @@ export default function Dashboard() {
                 Sort: {sortLabel} <span style={{ fontSize: '10px' }}>▼</span>
               </button>
               {openDropdown === 'sort' && (
-                <div ref={dropdownRef} style={{ position: 'absolute', top: 'calc(100% + 4px)', right: 0, background: 'white', border: '1px solid #e0ddd5', borderRadius: '10px', boxShadow: '0 4px 12px rgba(0,0,0,0.08)', padding: '6px', minWidth: '180px', zIndex: 20 }}>
+                <div style={{ position: 'absolute', top: 'calc(100% + 4px)', right: 0, background: 'white', border: '1px solid #e0ddd5', borderRadius: '10px', boxShadow: '0 4px 12px rgba(0,0,0,0.08)', padding: '6px', minWidth: '180px', zIndex: 20 }}>
                   {(['newest', 'oldest', 'az', 'za'] as SortOption[]).map(opt => (
                     <button key={opt} onClick={() => { setSortBy(opt); setOpenDropdown(null) }} className="dropdown-item" style={{ width: '100%', textAlign: 'left', padding: '8px 12px', background: sortBy === opt ? '#e8efea' : 'transparent', border: 'none', borderRadius: '6px', cursor: 'pointer', fontSize: '13px', color: '#0c2520', fontFamily: 'inherit', fontWeight: sortBy === opt ? 500 : 400 }}>
                       {opt === 'newest' ? 'Newest first' : opt === 'oldest' ? 'Oldest first' : opt === 'az' ? 'Name A–Z' : 'Name Z–A'}
@@ -368,7 +470,7 @@ export default function Dashboard() {
           {jobs.length === 0 ? (
             <div style={{ textAlign: 'center', padding: '48px 24px' }}>
               <p style={{ fontFamily: 'Georgia, serif', fontSize: '18px', color: '#0c2520', margin: '0 0 8px' }}>No jobs found</p>
-              <p style={{ fontSize: '13px', color: '#666', margin: 0 }}>{showSideHustle ? 'No side hustles match your filters.' : 'No industry jobs match your filters.'}</p>
+              <p style={{ fontSize: '13px', color: '#666', margin: 0 }}>{matchFilter !== 'all' ? 'No matches against your profile right now.' : showSideHustle ? 'No side hustles match your filters.' : 'No industry jobs match your filters.'}</p>
             </div>
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
@@ -377,16 +479,34 @@ export default function Dashboard() {
                 const subtitle = job.is_side_hustle ? job.company : job.project_in
                 const productionTypeName = getProductionTypeName(job.production_type_id)
                 const sentBy = getSentBy(job)
+                const showMatchBadge = job.matchTier !== 'none'
+                const isStrong = job.matchTier === 'strong'
+                const showMatchReasons = matchFilter !== 'all' && job.matchReasons.length > 0
                 return (
                   <Link key={job.id} href={`/jobs/${job.id}`} style={{ textDecoration: 'none' }}>
-                    <div className="job-card" style={{ padding: '20px', border: '1px solid #e8e6e0', borderRadius: '12px', cursor: 'pointer', background: 'white', position: 'relative' }}>
+                    <div className="job-card" style={{ padding: '20px', border: isStrong && matchFilter !== 'all' ? '2px solid #92d7af' : '1px solid #e8e6e0', borderRadius: '12px', cursor: 'pointer', background: 'white', position: 'relative' }}>
                       <div style={{ position: 'absolute', top: '16px', right: '16px' }}>
                         <SaveButton jobId={job.id} isLightBg={true} />
                       </div>
                       <div style={{ paddingRight: '70px' }}>
+                        {showMatchBadge && (
+                          <span style={{ display: 'inline-block', background: isStrong ? '#92d7af' : '#e8efea', color: '#0c2520', padding: '3px 10px', borderRadius: '6px', fontSize: '10px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '8px' }}>
+                            {isStrong ? 'Strong match' : 'Good match'}
+                          </span>
+                        )}
                         <h3 style={{ fontFamily: 'Georgia, serif', fontSize: '18px', fontWeight: 500, color: '#0c2520', margin: '0 0 4px' }}>{title}</h3>
                         {subtitle && <p style={{ fontSize: '13px', color: '#666', margin: '0 0 8px', fontStyle: 'italic' }}>In {subtitle}</p>}
                         {job.short_summary && <p style={{ fontSize: '14px', color: '#0c2520', margin: '0 0 12px' }}>{job.short_summary}</p>}
+
+                        {showMatchReasons && (
+                          <div style={{ background: '#f5f3ee', padding: '10px 14px', borderRadius: '8px', marginBottom: '12px' }}>
+                            <p style={{ fontSize: '11px', color: '#888', margin: '0 0 4px', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 600 }}>Why this matches you</p>
+                            <ul style={{ margin: 0, padding: '0 0 0 16px', fontSize: '12px', color: '#0c2520', lineHeight: 1.6 }}>
+                              {job.matchReasons.map((reason, i) => <li key={i}>{reason}</li>)}
+                            </ul>
+                          </div>
+                        )}
+
                         <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', marginBottom: '12px' }}>
                           {job.location && <span style={{ background: '#f1f0ee', padding: '4px 10px', borderRadius: '6px', fontSize: '12px', color: '#0c2520' }}>{job.location}</span>}
                           {productionTypeName && <span style={{ background: '#e8efea', padding: '4px 10px', borderRadius: '6px', fontSize: '12px', color: '#0c2520' }}>{productionTypeName}</span>}
