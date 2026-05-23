@@ -20,9 +20,14 @@ export default function PostJob() {
   const [processing, setProcessing] = useState(false)
 
   const [productionTypes, setProductionTypes] = useState<Lookup[]>([])
+  const [genders, setGenders] = useState<Lookup[]>([])
+  const [ethnicities, setEthnicities] = useState<Lookup[]>([])
+  const [hairColours, setHairColours] = useState<Lookup[]>([])
+  const [eyeColours, setEyeColours] = useState<Lookup[]>([])
   const [skills, setSkills] = useState<Skill[]>([])
   const [skillCategories, setSkillCategories] = useState<SkillCategory[]>([])
 
+  // Industry job fields
   const [projectRole, setProjectRole] = useState('')
   const [projectIn, setProjectIn] = useState('')
   const [productionCompany, setProductionCompany] = useState('')
@@ -36,14 +41,18 @@ export default function PostJob() {
   const [selectedSkills, setSelectedSkills] = useState<number[]>([])
   const [minAge, setMinAge] = useState(18)
   const [maxAge, setMaxAge] = useState(40)
-  const [genderRequirement, setGenderRequirement] = useState('')
-  const [appearance, setAppearance] = useState('')
+  const [selectedGenders, setSelectedGenders] = useState<number[]>([])
+  const [selectedEthnicities, setSelectedEthnicities] = useState<number[]>([])
+  const [selectedHairColours, setSelectedHairColours] = useState<number[]>([])
+  const [selectedEyeColours, setSelectedEyeColours] = useState<number[]>([])
+  const [appearanceNotes, setAppearanceNotes] = useState('')
   const [height, setHeight] = useState('')
   const [castingEmail, setCastingEmail] = useState('')
   const [castingTeam, setCastingTeam] = useState('')
   const [submissionLink, setSubmissionLink] = useState('')
   const [description, setDescription] = useState('')
 
+  // Side hustle fields
   const [jobTitle, setJobTitle] = useState('')
   const [company, setCompany] = useState('')
   const [jobCategory, setJobCategory] = useState('')
@@ -65,20 +74,28 @@ export default function PostJob() {
         setApplyEmail(user.email)
       }
 
-      const [{ data: pt }, { data: s }, { data: sc }] = await Promise.all([
+      const [pt, g, e, h, ey, s, sc] = await Promise.all([
         supabase.from('production_types').select('id, name').order('name'),
+        supabase.from('genders').select('id, name').order('id'),
+        supabase.from('ethnicities').select('id, name').order('name'),
+        supabase.from('hair_colours').select('id, name').order('id'),
+        supabase.from('eye_colours').select('id, name').order('id'),
         supabase.from('skills').select('id, name, category_id').order('name'),
         supabase.from('skills_categories').select('id, name, color, text_color'),
       ])
-      setProductionTypes(pt || [])
-      setSkills(s || [])
-      setSkillCategories(sc || [])
+      setProductionTypes(pt.data || [])
+      setGenders(g.data || [])
+      setEthnicities(e.data || [])
+      setHairColours(h.data || [])
+      setEyeColours(ey.data || [])
+      setSkills(s.data || [])
+      setSkillCategories(sc.data || [])
     }
     load()
   }, [])
 
-  const toggleSkill = (id: number) => {
-    setSelectedSkills(selectedSkills.includes(id) ? selectedSkills.filter(x => x !== id) : [...selectedSkills, id])
+  const toggleInArray = (list: number[], setList: (v: number[]) => void, id: number) => {
+    setList(list.includes(id) ? list.filter(x => x !== id) : [...list, id])
   }
 
   const getCategoryForSkill = (skillId: number): SkillCategory | undefined => {
@@ -163,8 +180,11 @@ export default function PostJob() {
           contract_dates: contractDates,
           application_deadline: applicationDeadline || null,
           age_range: `${minAge}-${maxAge}`,
-          gender_requirement: genderRequirement,
-          appearance,
+          gender_ids: selectedGenders,
+          ethnicity_ids: selectedEthnicities,
+          hair_colour_ids: selectedHairColours,
+          eye_colour_ids: selectedEyeColours,
+          appearance_notes: appearanceNotes,
           height,
           casting_team: castingTeam,
           submission_link: submissionLink,
@@ -206,6 +226,32 @@ export default function PostJob() {
     fontFamily: 'Georgia, serif', fontSize: '17px', fontWeight: 500, color: '#0c2520',
     margin: '28px 0 14px',
   }
+
+  // Multi-select pill component
+  const MultiSelectPills = ({ items, selected, setSelected, hint }: { items: Lookup[]; selected: number[]; setSelected: (v: number[]) => void; hint?: string }) => (
+    <div>
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginBottom: hint ? '6px' : 0 }}>
+        {items.map(item => {
+          const isSelected = selected.includes(item.id)
+          return (
+            <button key={item.id} type="button" onClick={() => toggleInArray(selected, setSelected, item.id)} style={{
+              padding: '6px 12px',
+              border: isSelected ? '1.5px solid #0c2520' : '1px solid #e0ddd5',
+              borderRadius: '8px',
+              background: isSelected ? '#e8efea' : 'white',
+              cursor: 'pointer',
+              fontSize: '13px',
+              color: '#0c2520',
+              fontFamily: 'inherit',
+              fontWeight: isSelected ? 500 : 400,
+              transition: 'all 0.15s ease',
+            }}>{item.name}</button>
+          )
+        })}
+      </div>
+      {hint && <p style={{ fontSize: '11px', color: '#888', margin: 0 }}>{hint}</p>}
+    </div>
+  )
 
   return (
     <div style={{ padding: '32px 40px' }}>
@@ -283,7 +329,7 @@ export default function PostJob() {
         {!isSideHustle && (
           <div style={{ background: 'white', border: '1px solid #e8e6e0', borderRadius: '12px', padding: '32px' }}>
 
-            <h2 style={{ ...sectionStyle, margin: '0 0 14px' }}>The Project</h2>
+            <h2 style={{ ...sectionStyle, margin: '0 0 14px' }}>The project</h2>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '12px' }}>
               <div>
                 <label style={labelStyle}>Role <span style={{ color: '#c44' }}>*</span></label>
@@ -350,13 +396,13 @@ export default function PostJob() {
 
             <h2 style={sectionStyle}>Talent requirements</h2>
 
-            <div style={{ marginBottom: '12px', position: 'relative' }}>
+            <div style={{ marginBottom: '20px', position: 'relative' }}>
               <label style={labelStyle}>Required Skills</label>
               <input type="text" value={skillSearch} onChange={(e) => setSkillSearch(e.target.value)} placeholder="Search skills..." style={inputStyle} />
               {filteredSkills.length > 0 && (
                 <div style={{ position: 'absolute', top: 'calc(100% + 4px)', left: 0, right: 0, background: 'white', border: '1px solid #e0ddd5', borderRadius: '8px', boxShadow: '0 4px 12px rgba(0,0,0,0.08)', maxHeight: '200px', overflowY: 'auto', zIndex: 10 }}>
                   {filteredSkills.map(skill => (
-                    <button key={skill.id} type="button" onClick={() => { toggleSkill(skill.id); setSkillSearch('') }} style={{ width: '100%', textAlign: 'left', padding: '10px 14px', background: 'transparent', border: 'none', cursor: 'pointer', fontSize: '13px', color: '#0c2520', fontFamily: 'inherit', borderBottom: '1px solid #f0f0f0' }}>
+                    <button key={skill.id} type="button" onClick={() => { toggleInArray(selectedSkills, setSelectedSkills, skill.id); setSkillSearch('') }} style={{ width: '100%', textAlign: 'left', padding: '10px 14px', background: 'transparent', border: 'none', cursor: 'pointer', fontSize: '13px', color: '#0c2520', fontFamily: 'inherit', borderBottom: '1px solid #f0f0f0' }}>
                       {skill.name}
                     </button>
                   ))}
@@ -371,7 +417,7 @@ export default function PostJob() {
                     return (
                       <span key={skillId} style={{ background: cat?.color || '#e8efea', color: cat?.text_color || '#0c2520', padding: '4px 10px', borderRadius: '6px', fontSize: '12px', display: 'flex', alignItems: 'center', gap: '6px' }}>
                         {skill.name}
-                        <button onClick={() => toggleSkill(skillId)} style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: 'inherit', fontSize: '14px', padding: 0, lineHeight: 1 }}>×</button>
+                        <button onClick={() => toggleInArray(selectedSkills, setSelectedSkills, skillId)} style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: 'inherit', fontSize: '14px', padding: 0, lineHeight: 1 }}>×</button>
                       </span>
                     )
                   })}
@@ -379,7 +425,7 @@ export default function PostJob() {
               )}
             </div>
 
-            <div style={{ marginBottom: '16px' }}>
+            <div style={{ marginBottom: '20px' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
                 <label style={{ ...labelStyle, marginBottom: 0 }}>Playing Age Range</label>
                 <span style={{ background: '#0c2520', color: '#f1f0ee', padding: '2px 10px', borderRadius: '4px', fontSize: '12px', fontWeight: 500 }}>{minAge} – {maxAge}</span>
@@ -396,22 +442,37 @@ export default function PostJob() {
               </div>
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '12px' }}>
-              <div>
-                <label style={labelStyle}>Gender</label>
-                <input type="text" value={genderRequirement} onChange={(e) => setGenderRequirement(e.target.value)} placeholder="e.g. Any, Male, Female" style={inputStyle} />
-              </div>
-              <div>
-                <label style={labelStyle}>Appearance</label>
-                <input type="text" value={appearance} onChange={(e) => setAppearance(e.target.value)} placeholder="e.g. Any" style={inputStyle} />
-              </div>
+            <div style={{ marginBottom: '20px' }}>
+              <label style={labelStyle}>Gender (select all that apply)</label>
+              <MultiSelectPills items={genders} selected={selectedGenders} setSelected={setSelectedGenders} hint="Leave empty for any gender" />
             </div>
 
-            <div>
-              <label style={labelStyle}>Height (optional)</label>
-              <div style={{ position: 'relative' }}>
-                <input type="number" value={height} onChange={(e) => setHeight(e.target.value)} placeholder="170" style={{ ...inputStyle, paddingRight: '50px' }} />
-                <span style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)', color: '#999', fontSize: '13px', pointerEvents: 'none' }}>cm</span>
+            <div style={{ marginBottom: '20px' }}>
+              <label style={labelStyle}>Ethnicity (select all that apply)</label>
+              <MultiSelectPills items={ethnicities} selected={selectedEthnicities} setSelected={setSelectedEthnicities} hint="Leave empty for any ethnicity" />
+            </div>
+
+            <div style={{ marginBottom: '20px' }}>
+              <label style={labelStyle}>Hair Colour</label>
+              <MultiSelectPills items={hairColours} selected={selectedHairColours} setSelected={setSelectedHairColours} hint="Leave empty for any hair colour" />
+            </div>
+
+            <div style={{ marginBottom: '20px' }}>
+              <label style={labelStyle}>Eye Colour</label>
+              <MultiSelectPills items={eyeColours} selected={selectedEyeColours} setSelected={setSelectedEyeColours} hint="Leave empty for any eye colour" />
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '20px' }}>
+              <div>
+                <label style={labelStyle}>Other Appearance Notes</label>
+                <input type="text" value={appearanceNotes} onChange={(e) => setAppearanceNotes(e.target.value)} placeholder="e.g. tattoos welcome, athletic build" style={inputStyle} />
+              </div>
+              <div>
+                <label style={labelStyle}>Height (optional)</label>
+                <div style={{ position: 'relative' }}>
+                  <input type="number" value={height} onChange={(e) => setHeight(e.target.value)} placeholder="170" style={{ ...inputStyle, paddingRight: '50px' }} />
+                  <span style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)', color: '#999', fontSize: '13px', pointerEvents: 'none' }}>cm</span>
+                </div>
               </div>
             </div>
 
@@ -568,11 +629,7 @@ export default function PostJob() {
 
               <p style={{ fontSize: '11px', color: '#999', textAlign: 'center', marginBottom: '20px' }}>Test mode — no real payment will be taken</p>
 
-              <button
-                onClick={handlePayment}
-                disabled={processing || !cardNumber || !cardExpiry || !cardCvc}
-                style={{ width: '100%', background: '#0c2520', color: '#f1f0ee', border: 'none', padding: '14px', borderRadius: '30px', fontSize: '15px', fontWeight: 500, cursor: 'pointer', opacity: (processing || !cardNumber || !cardExpiry || !cardCvc) ? 0.5 : 1, fontFamily: 'inherit', marginBottom: '8px' }}
-              >
+              <button onClick={handlePayment} disabled={processing || !cardNumber || !cardExpiry || !cardCvc} style={{ width: '100%', background: '#0c2520', color: '#f1f0ee', border: 'none', padding: '14px', borderRadius: '30px', fontSize: '15px', fontWeight: 500, cursor: 'pointer', opacity: (processing || !cardNumber || !cardExpiry || !cardCvc) ? 0.5 : 1, fontFamily: 'inherit', marginBottom: '8px' }}>
                 {processing ? 'Processing...' : 'Pay £5 & Post Job'}
               </button>
 
