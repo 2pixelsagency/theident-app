@@ -41,8 +41,8 @@ export default function SavedJobs() {
         supabase.from('production_types').select('id, name').order('name'),
         supabase
           .from('saved_jobs')
-          .select('id, created_at, job_id, jobs!inner(*)')
-          .eq('user_id', user.id)
+          .select('profile_id, created_at, job_id, jobs!inner(*)')
+          .eq('profile_id', user.id)
           .order('created_at', { ascending: false }),
       ])
 
@@ -53,7 +53,7 @@ export default function SavedJobs() {
         .map(s => ({
           ...(s.jobs as unknown as Job),
           saved_at: s.created_at,
-          saved_id: s.id,
+          saved_id: s.job_id,
         }))
 
       setSavedJobs(flat)
@@ -65,7 +65,9 @@ export default function SavedJobs() {
   const unsave = async (e: React.MouseEvent, savedId: string) => {
     e.preventDefault()
     e.stopPropagation()
-    await supabase.from('saved_jobs').delete().eq('id', savedId)
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return
+    await supabase.from('saved_jobs').delete().eq('profile_id', user.id).eq('job_id', savedId)
     setSavedJobs(savedJobs.filter(j => j.saved_id !== savedId))
   }
 
