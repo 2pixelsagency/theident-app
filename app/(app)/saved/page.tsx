@@ -39,12 +39,15 @@ export default function SavedJobs() {
 
       const [{ data: pt }, { data: saved }] = await Promise.all([
         supabase.from('production_types').select('id, name').order('name'),
-        supabase.from('saved_jobs').select('id, created_at, job_id, jobs(*)').eq('user_id', user.id).order('created_at', { ascending: false }),
+        supabase
+          .from('saved_jobs')
+          .select('id, created_at, job_id, jobs!inner(*)')
+          .eq('user_id', user.id)
+          .order('created_at', { ascending: false }),
       ])
 
       setProductionTypes(pt || [])
 
-      // Flatten the joined data
       const flat: SavedJob[] = (saved || [])
         .filter(s => s.jobs)
         .map(s => ({
@@ -104,7 +107,7 @@ export default function SavedJobs() {
       <div className="fade-in" style={{ maxWidth: '1100px', margin: '0 auto' }}>
 
         <div style={{ marginBottom: '24px' }}>
-          <h1 style={{ fontFamily: 'Georgia, serif', fontSize: '28px', fontWeight: 500, color: '#0c2520', margin: '0 0 6px' }}>Saved Jobs</h1>
+          <h1 style={{ fontFamily: 'Georgia, serif', fontSize: '28px', fontWeight: 500, color: '#0c2520', margin: '0 0 6px' }}>Saved jobs</h1>
           <p style={{ fontSize: '13px', color: '#666', margin: 0 }}>
             {savedJobs.length === 0 ? 'Jobs you save will appear here.' : `You have ${savedJobs.length} saved ${savedJobs.length === 1 ? 'job' : 'jobs'}.`}
           </p>
@@ -115,7 +118,7 @@ export default function SavedJobs() {
             <h2 style={{ fontFamily: 'Georgia, serif', fontSize: '20px', fontWeight: 500, color: '#0c2520', margin: '0 0 8px' }}>No saved jobs yet</h2>
             <p style={{ fontSize: '13px', color: '#666', margin: '0 0 20px' }}>Browse the job board and tap Save to bookmark roles for later.</p>
             <Link href="/dashboard" style={{ display: 'inline-block', background: '#0c2520', color: '#f1f0ee', padding: '12px 28px', borderRadius: '24px', fontSize: '14px', fontWeight: 500, textDecoration: 'none' }}>
-              Browse Jobs
+              Browse jobs
             </Link>
           </div>
         ) : (
