@@ -99,7 +99,7 @@ export default function Dashboard() {
 
       if (user) {
         const [{ data: saved }, { data: profile }, { data: userSkills }] = await Promise.all([
-          supabase.from('saved_jobs').select('job_id').eq('user_id', user.id),
+          supabase.from('saved_jobs').select('job_id').eq('profile_id', user.id),
           supabase.from('profiles').select('location, minimum_age, maximum_age, gender_id, ethnicity_id, hair_colour_id, eye_colour_id').eq('id', user.id).single(),
           supabase.from('profile_skills').select('skill_id').eq('profile_id', user.id),
         ])
@@ -290,12 +290,12 @@ export default function Dashboard() {
     if (!user) { router.push('/signup'); return }
 
     if (savedIds.has(jobId)) {
-      await supabase.from('saved_jobs').delete().eq('user_id', user.id).eq('job_id', jobId)
+      await supabase.from('saved_jobs').delete().eq('profile_id', user.id).eq('job_id', jobId)
       const newSet = new Set(savedIds)
       newSet.delete(jobId)
       setSavedIds(newSet)
     } else {
-      await supabase.from('saved_jobs').insert({ user_id: user.id, job_id: jobId })
+      await supabase.from('saved_jobs').insert({ profile_id: user.id, job_id: jobId })
       const newSet = new Set(savedIds)
       newSet.add(jobId)
       setSavedIds(newSet)
@@ -428,7 +428,7 @@ export default function Dashboard() {
         </section>
 
         <section style={{ background: 'white', borderRadius: '16px', padding: '32px', border: '1px solid #e8e6e0' }}>
-          <h2 style={{ fontFamily: 'Georgia, serif', fontSize: '24px', fontWeight: 500, color: '#0c2520', margin: '0 0 20px' }}>Job Opportunities</h2>
+          <h2 style={{ fontFamily: 'Georgia, serif', fontSize: '24px', fontWeight: 500, color: '#0c2520', margin: '0 0 20px' }}>Job opportunities</h2>
 
           <div ref={dropdownRef} style={{ display: 'flex', gap: '8px', marginBottom: '12px', flexWrap: 'wrap', alignItems: 'center', position: 'relative' }}>
             <div style={{ position: 'relative' }}>
@@ -445,7 +445,7 @@ export default function Dashboard() {
             </div>
 
             <div style={{ position: 'relative' }}>
-              <FilterPill id="production" label="Production Type" count={selectedProductionTypes.length} />
+              <FilterPill id="production" label="Production type" count={selectedProductionTypes.length} />
               {openDropdown === 'production' && <DropdownPanel items={productionTypes} selected={selectedProductionTypes} setSelected={setSelectedProductionTypes} />}
             </div>
             <div style={{ position: 'relative' }}>
@@ -457,7 +457,7 @@ export default function Dashboard() {
               {openDropdown === 'ethnicity' && <DropdownPanel items={ethnicities} selected={selectedEthnicities} setSelected={setSelectedEthnicities} />}
             </div>
             <div style={{ position: 'relative' }}>
-              <FilterPill id="age" label={minAge > 0 || maxAge < 100 ? `Age ${minAge}-${maxAge}` : 'Age'} count={minAge > 0 || maxAge < 100 ? 1 : 0} />
+              <FilterPill id="age" label={minAge > 0 || maxAge < 100 ? `Age ${minAge}–${maxAge}` : 'Age'} count={minAge > 0 || maxAge < 100 ? 1 : 0} />
               {openDropdown === 'age' && (
                 <div style={{ position: 'absolute', top: 'calc(100% + 4px)', left: 0, background: 'white', border: '1px solid #e0ddd5', borderRadius: '10px', boxShadow: '0 4px 12px rgba(0,0,0,0.08)', padding: '16px', width: '280px', zIndex: 20 }}>
                   <div style={{ marginBottom: '16px' }}>
@@ -483,7 +483,7 @@ export default function Dashboard() {
             <input type="text" placeholder="Location" value={locationSearch} onChange={(e) => setLocationSearch(e.target.value)} style={{ flex: 1, minWidth: '120px', padding: '8px 14px', border: '1px solid #e0ddd5', borderRadius: '8px', fontSize: '13px', fontFamily: 'inherit', outline: 'none' }} />
             <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', color: '#0c2520', cursor: 'pointer' }}>
               <input type="checkbox" checked={showSideHustle} onChange={(e) => setShowSideHustle(e.target.checked)} style={{ accentColor: '#0c2520', width: '14px', height: '14px' }} />
-              Show Side Hustle
+              Side hustles
             </label>
           </div>
 
@@ -553,7 +553,7 @@ export default function Dashboard() {
                           {job.location && <span style={{ background: '#f1f0ee', padding: '4px 10px', borderRadius: '6px', fontSize: '12px', color: '#0c2520' }}>{job.location}</span>}
                           {productionTypeName && <span style={{ background: '#e8efea', padding: '4px 10px', borderRadius: '6px', fontSize: '12px', color: '#0c2520' }}>{productionTypeName}</span>}
                           {job.salary && <span style={{ background: '#0c2520', color: '#f1f0ee', padding: '4px 10px', borderRadius: '6px', fontSize: '12px', fontWeight: 500 }}>{job.salary}</span>}
-                          {job.is_side_hustle && <span style={{ background: '#fde6c2', padding: '4px 10px', borderRadius: '6px', fontSize: '12px', color: '#8a5a2e' }}>Side Hustle</span>}
+                          {job.is_side_hustle && <span style={{ background: '#fde6c2', padding: '4px 10px', borderRadius: '6px', fontSize: '12px', color: '#8a5a2e' }}>Side hustle</span>}
                         </div>
                       </div>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', borderTop: '1px solid #f0ede5', paddingTop: '12px', marginTop: '4px' }}>
