@@ -51,7 +51,8 @@ export default function JobDetail() {
   const [jobSkills, setJobSkills] = useState<Array<Skill & { category?: SkillCategory }>>([])
   const [loading, setLoading] = useState(true)
   const [saved, setSaved] = useState(false)
-  const [savedId, setSavedId] = useState<string | null>(null)
+  const [userId, setUserId] = useState<string | null>(null)
+  const [toast, setToast] = useState<'saved' | 'unsaved' | null>(null)
 
   useEffect(() => {
     const load = async () => {
@@ -80,8 +81,9 @@ export default function JobDetail() {
 
       const { data: { user } } = await supabase.auth.getUser()
       if (user) {
-        const { data: sj } = await supabase.from('saved_jobs').select('id').eq('user_id', user.id).eq('job_id', jobId).maybeSingle()
-        if (sj) { setSaved(true); setSavedId(sj.id) }
+        setUserId(user.id)
+        const { data: sj } = await supabase.from('saved_jobs').select('job_id').eq('profile_id', user.id).eq('job_id', jobId).maybeSingle()
+        if (sj) { setSaved(true) }
       }
 
       setLoading(false)
@@ -89,17 +91,25 @@ export default function JobDetail() {
     load()
   }, [jobId])
 
+  const showToast = (type: 'saved' | 'unsaved') => {
+    setToast(type)
+    setTimeout(() => setToast(null), 3000)
+  }
+
   const toggleSaved = async () => {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) { router.push('/signup'); return }
 
-    if (saved && savedId) {
-      await supabase.from('saved_jobs').delete().eq('id', savedId)
+    if (saved) {
+      await supabase.from('saved_jobs').delete().eq('profile_id', user.id).eq('job_id', jobId)
       setSaved(false)
-      setSavedId(null)
+      showToast('unsaved')
     } else {
-      const { data } = await supabase.from('saved_jobs').insert({ user_id: user.id, job_id: jobId }).select().single()
-      if (data) { setSaved(true); setSavedId(data.id) }
+      const { error } = await supabase.from('saved_jobs').insert({ profile_id: user.id, job_id: jobId })
+      if (!error) {
+        setSaved(true)
+        showToast('saved')
+      }
     }
   }
 
@@ -121,14 +131,34 @@ export default function JobDetail() {
     <div style={{ padding: '32px 40px' }}>
       <style>{`
         @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes toastIn { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes toastOut { from { opacity: 1; transform: translateY(0); } to { opacity: 0; transform: translateY(12px); } }
         .fade-in { animation: fadeIn 0.5s ease-out; }
         .pill { display: inline-block; padding: 4px 12px; border-radius: 6px; font-size: 12px; font-weight: 500; }
+        .toast { animation: toastIn 0.25s ease-out; }
       `}</style>
+
+      {/* Toast */}
+      {toast && (
+        <div className="toast" style={{
+          position: 'fixed', bottom: '32px', left: '50%', transform: 'translateX(-50%)',
+          background: '#0c2520', color: '#f1f0ee', padding: '12px 24px',
+          borderRadius: '30px', fontSize: '13px', fontWeight: 500,
+          zIndex: 1000, whiteSpace: 'nowrap', boxShadow: '0 4px 20px rgba(12,37,32,0.25)',
+          fontFamily: 'inherit',
+        }}>
+          {toast === 'saved' ? (
+            <>Job saved &mdash; <a href="/saved" style={{ color: '#92d7af', textDecoration: 'none', fontWeight: 600 }}>View saved jobs</a></>
+          ) : (
+            'Removed from saved jobs'
+          )}
+        </div>
+      )}
 
       <div className="fade-in" style={{ maxWidth: '900px', margin: '0 auto' }}>
 
         <button onClick={() => router.back()} style={{ background: 'transparent', border: 'none', padding: '0 0 16px', fontSize: '13px', color: '#666', cursor: 'pointer', fontFamily: 'inherit' }}>
-          ← Back
+          Back
         </button>
 
         <div style={{ background: 'white', borderRadius: '16px', padding: '40px', border: '1px solid #e8e6e0', marginBottom: '20px' }}>
@@ -160,7 +190,7 @@ export default function JobDetail() {
           </div>
 
           <button onClick={handleApply} style={{ background: '#0c2520', color: '#f1f0ee', border: 'none', padding: '14px 40px', borderRadius: '30px', fontSize: '15px', fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit' }}>
-            Apply Now
+            Apply now
           </button>
         </div>
 
@@ -274,7 +304,7 @@ export default function JobDetail() {
           {job.casting_team && <p style={{ fontSize: '14px', color: '#0c2520', margin: '0 0 8px' }}><strong>Contact:</strong> {job.casting_team}</p>}
           {job.casting_email && <p style={{ fontSize: '14px', color: '#0c2520', margin: '0 0 16px' }}><strong>Email:</strong> <a href={`mailto:${job.casting_email}`} style={{ color: '#0c2520' }}>{job.casting_email}</a></p>}
           <button onClick={handleApply} style={{ background: '#0c2520', color: '#f1f0ee', border: 'none', padding: '14px 40px', borderRadius: '30px', fontSize: '15px', fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit' }}>
-            Apply Now
+            Apply now
           </button>
         </div>
       </div>
