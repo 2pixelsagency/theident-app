@@ -21,7 +21,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const load = async () => {
       const { data: { user } } = await supabase.auth.getUser()
-      if (!user) { router.push('/signup'); return }
+      if (!user) { router.push('/login'); return }
       const { data: p } = await supabase.from('profiles').select('id, first_name, last_name, picture_url').eq('id', user.id).single()
       setProfile(p)
       setLoading(false)
@@ -31,15 +31,17 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
 
   const handleLogout = async () => {
     await supabase.auth.signOut()
-    router.push('/signup')
+    router.push('/login')
   }
 
   const isActive = (path: string) => pathname === path || pathname.startsWith(path + '/')
 
+  // Hide bottom nav on job detail — it has its own apply bar
+  const isJobDetail = pathname.startsWith('/jobs/')
+
   const navItem = (href: string, label: string) => (
     <Link
       href={href}
-      className="nav-item"
       style={{
         display: 'block', width: '100%', padding: '12px 14px',
         background: isActive(href) ? '#e8efea' : 'transparent', borderRadius: '8px',
@@ -51,48 +53,51 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     </Link>
   )
 
-  const mobileNavItem = (href: string, label: string) => (
-    <Link
-      href={href}
-      style={{
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
-        textDecoration: 'none', color: isActive(href) ? '#0c2520' : '#888',
-        fontSize: '12px', fontWeight: isActive(href) ? 500 : 400,
-        flex: 1, padding: '14px 0', textAlign: 'center',
-        borderTop: isActive(href) ? '2px solid #0c2520' : '2px solid transparent',
-      }}
-    >
-      {label}
-    </Link>
-  )
-
   if (loading || !profile) {
-    return <div style={{ minHeight: '100vh', background: '#f1f0ee' }} />
+    return <div style={{ minHeight: '100vh', background: 'white' }} />
   }
 
   return (
-    <div style={{ minHeight: '100vh', background: '#f1f0ee', fontFamily: 'system-ui, sans-serif' }}>
+    <div style={{ minHeight: '100vh', background: 'white', fontFamily: 'system-ui, sans-serif' }}>
       <style>{`
-        .nav-item:hover { background: #e8efea !important; }
+        .desk-nav-item:hover { background: #e8efea !important; }
         .desktop-sidebar { display: flex; }
         .mobile-nav { display: none; }
         .main-content { margin-left: 260px; }
         @media (max-width: 768px) {
           .desktop-sidebar { display: none !important; }
           .mobile-nav { display: flex !important; }
-          .main-content { margin-left: 0 !important; padding-bottom: 80px !important; }
+          .main-content { margin-left: 0 !important; padding-bottom: 84px !important; }
+          .main-content.no-nav { padding-bottom: 0 !important; }
         }
+        .mob-nav-btn {
+          display: flex; flex-direction: column; align-items: center;
+          justify-content: center; gap: 4px; flex: 1; padding: 10px 0 12px;
+          text-decoration: none; min-height: 60px;
+          -webkit-tap-highlight-color: transparent;
+        }
+        .mob-nav-btn span { font-size: 10px; font-weight: 400; }
+        .mob-nav-btn.active span { font-weight: 600; }
       `}</style>
 
+      {/* Desktop sidebar */}
       <aside className="desktop-sidebar" style={{
         position: 'fixed', top: 0, left: 0, width: '260px', height: '100vh',
         background: 'white', padding: '24px 16px', flexDirection: 'column',
         borderRight: '1px solid #e8e6e0', overflowY: 'auto', zIndex: 10,
       }}>
         <div style={{ textAlign: 'center', marginBottom: '32px' }}>
-          <div style={{ width: '70px', height: '70px', borderRadius: '50%', background: profile.picture_url ? `url(${profile.picture_url}) center/cover` : '#e8e6e0', margin: '0 auto 12px', border: '1px solid #e0ddd5' }} />
-          <p style={{ margin: '0 0 12px', fontSize: '15px', fontWeight: 600, color: '#0c2520' }}>{profile.first_name} {profile.last_name}</p>
-          <button style={{ background: 'white', border: '1px solid #e0ddd5', padding: '6px 16px', borderRadius: '6px', fontSize: '12px', cursor: 'pointer', color: '#0c2520', fontFamily: 'inherit', fontWeight: 500 }}>View Ident</button>
+          <div style={{
+            width: '70px', height: '70px', borderRadius: '50%',
+            background: profile.picture_url ? `url(${profile.picture_url}) center/cover` : '#e8e6e0',
+            margin: '0 auto 12px', border: '1px solid #e0ddd5',
+          }} />
+          <p style={{ margin: '0 0 12px', fontSize: '15px', fontWeight: 600, color: '#0c2520' }}>
+            {profile.first_name} {profile.last_name}
+          </p>
+          <button style={{ background: 'white', border: '1px solid #e0ddd5', padding: '6px 16px', borderRadius: '6px', fontSize: '12px', cursor: 'pointer', color: '#0c2520', fontFamily: 'inherit', fontWeight: 500 }}>
+            View Ident
+          </button>
         </div>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
@@ -104,29 +109,72 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         </div>
 
         <div style={{ marginTop: '32px', paddingTop: '20px', borderTop: '1px solid #e8e6e0' }}>
-          <p style={{ fontSize: '10px', color: '#999', textTransform: 'uppercase', letterSpacing: '0.08em', margin: '0 0 8px 14px', fontWeight: 600 }}>Your Settings</p>
+          <p style={{ fontSize: '10px', color: '#999', textTransform: 'uppercase', letterSpacing: '0.08em', margin: '0 0 8px 14px', fontWeight: 600 }}>Your settings</p>
           {navItem('/profile', 'Profile')}
-          {navItem('/wishlist', 'Wishlist')}
           {navItem('/billing', 'Billing')}
-          <button onClick={handleLogout} className="nav-item" style={{ display: 'block', width: '100%', padding: '12px 14px', background: 'transparent', border: 'none', borderRadius: '8px', textAlign: 'left', cursor: 'pointer', fontSize: '14px', color: '#0c2520', fontFamily: 'inherit' }}>
+          <button onClick={handleLogout} className="desk-nav-item" style={{ display: 'block', width: '100%', padding: '12px 14px', background: 'transparent', border: 'none', borderRadius: '8px', textAlign: 'left', cursor: 'pointer', fontSize: '14px', color: '#0c2520', fontFamily: 'inherit' }}>
             Logout
           </button>
         </div>
       </aside>
 
-      <nav className="mobile-nav" style={{
-        position: 'fixed', bottom: 0, left: 0, right: 0, background: 'white',
-        borderTop: '1px solid #e8e6e0', zIndex: 10,
-        justifyContent: 'space-around', alignItems: 'stretch',
-      }}>
-        {mobileNavItem('/dashboard', 'Jobs')}
-        {mobileNavItem('/saved', 'Saved')}
-        {mobileNavItem('/post-job', 'Post')}
-        {mobileNavItem('/browse', 'Talent')}
-        {mobileNavItem('/profile', 'Me')}
-      </nav>
+      {/* Mobile bottom nav — hidden on job detail */}
+      {!isJobDetail && (
+        <nav className="mobile-nav" style={{
+          position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 100,
+          background: 'white', borderTop: '1px solid #e8e6e0',
+          alignItems: 'stretch',
+          paddingBottom: 'env(safe-area-inset-bottom)',
+        }}>
+          <Link href="/dashboard" className={`mob-nav-btn${isActive('/dashboard') ? ' active' : ''}`} style={{ color: isActive('/dashboard') ? '#0c2520' : '#999' }}>
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+              <rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/>
+            </svg>
+            <span>Jobs</span>
+          </Link>
 
-      <main className="main-content" style={{ minHeight: '100vh' }}>
+          <Link href="/saved" className={`mob-nav-btn${isActive('/saved') ? ' active' : ''}`} style={{ color: isActive('/saved') ? '#0c2520' : '#999' }}>
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/>
+            </svg>
+            <span>Saved</span>
+          </Link>
+
+          {/* FAB */}
+          <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <Link href="/post-job" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <div style={{
+                width: '54px', height: '54px', borderRadius: '50%',
+                background: '#0c2520',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                transform: 'translateY(-10px)',
+                border: '4px solid white',
+                boxShadow: '0 4px 14px rgba(12,37,32,0.25)',
+              }}>
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.2" strokeLinecap="round">
+                  <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+                </svg>
+              </div>
+            </Link>
+          </div>
+
+          <Link href="/browse" className={`mob-nav-btn${isActive('/browse') ? ' active' : ''}`} style={{ color: isActive('/browse') ? '#0c2520' : '#999' }}>
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="9" cy="7" r="4"/><path d="M3 21v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2"/>
+            </svg>
+            <span>Talent</span>
+          </Link>
+
+          <Link href="/profile" className={`mob-nav-btn${isActive('/profile') ? ' active' : ''}`} style={{ color: isActive('/profile') ? '#0c2520' : '#999' }}>
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/>
+            </svg>
+            <span>Me</span>
+          </Link>
+        </nav>
+      )}
+
+      <main className={`main-content${isJobDetail ? ' no-nav' : ''}`} style={{ minHeight: '100vh' }}>
         {children}
       </main>
     </div>
