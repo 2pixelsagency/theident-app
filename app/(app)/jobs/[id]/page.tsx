@@ -37,7 +37,6 @@ type Job = {
   created_at: string
 }
 
-type ProductionType = { id: number; name: string }
 type Skill = { id: number; name: string; category_id: number | null }
 type SkillCategory = { id: number; name: string; color: string; text_color: string }
 
@@ -51,7 +50,6 @@ export default function JobDetail() {
   const [jobSkills, setJobSkills] = useState<Array<Skill & { category?: SkillCategory }>>([])
   const [loading, setLoading] = useState(true)
   const [saved, setSaved] = useState(false)
-  const [userId, setUserId] = useState<string | null>(null)
   const [toast, setToast] = useState<'saved' | 'unsaved' | null>(null)
 
   useEffect(() => {
@@ -71,19 +69,14 @@ export default function JobDetail() {
         const { data: skillsData } = await supabase.from('skills').select('id, name, category_id').in('id', skillIds)
         const { data: cats } = await supabase.from('skills_categories').select('id, name, color, text_color')
         if (skillsData) {
-          const enriched = skillsData.map(s => ({
-            ...s,
-            category: cats?.find(c => c.id === s.category_id),
-          }))
-          setJobSkills(enriched)
+          setJobSkills(skillsData.map(s => ({ ...s, category: cats?.find(c => c.id === s.category_id) })))
         }
       }
 
       const { data: { user } } = await supabase.auth.getUser()
       if (user) {
-        setUserId(user.id)
         const { data: sj } = await supabase.from('saved_jobs').select('job_id').eq('profile_id', user.id).eq('job_id', jobId).maybeSingle()
-        if (sj) { setSaved(true) }
+        if (sj) setSaved(true)
       }
 
       setLoading(false)
@@ -98,22 +91,20 @@ export default function JobDetail() {
 
   const toggleSaved = async () => {
     const { data: { user } } = await supabase.auth.getUser()
-    if (!user) { router.push('/signup'); return }
-
+    if (!user) { router.push('/login'); return }
     if (saved) {
       await supabase.from('saved_jobs').delete().eq('profile_id', user.id).eq('job_id', jobId)
       setSaved(false)
       showToast('unsaved')
     } else {
-      const { error } = await supabase.from('saved_jobs').insert({ profile_id: user.id, job_id: jobId })
-      if (!error) {
-        setSaved(true)
-        showToast('saved')
-      }
+      await supabase.from('saved_jobs').insert({ profile_id: user.id, job_id: jobId })
+      setSaved(true)
+      showToast('saved')
     }
   }
 
   const handleApply = () => {
+    // Full apply flow coming soon — name, video, description, NDA
     if (job?.submission_link) {
       window.open(job.submission_link, '_blank')
     } else if (job?.casting_email) {
@@ -121,113 +112,144 @@ export default function JobDetail() {
     }
   }
 
-  if (loading) return <div style={{ padding: '32px 40px' }}>Loading...</div>
-  if (!job) return <div style={{ padding: '32px 40px' }}>Job not found</div>
+  const formatRelativeDate = (dateStr: string) => {
+    const diffDays = Math.floor((new Date().getTime() - new Date(dateStr).getTime()) / 86400000)
+    if (diffDays === 0) return 'Today'
+    if (diffDays === 1) return 'Yesterday'
+    if (diffDays < 7) return `${diffDays} days ago`
+    if (diffDays < 14) return 'Last week'
+    return `${Math.floor(diffDays / 7)} weeks ago`
+  }
+
+  if (loading) return <div style={{ minHeight: '100vh', background: '#f1f0ee' }} />
+  if (!job) return (
+    <div style={{ minHeight: '100vh', background: '#f1f0ee', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <p style={{ fontFamily: 'Georgia, serif', fontSize: '17px', color: '#0c2520' }}>Job not found</p>
+    </div>
+  )
 
   const title = job.is_side_hustle ? job.job_title : job.project_role
   const subtitle = job.is_side_hustle ? job.company : job.project_in
 
   return (
-    <div style={{ padding: '32px 40px' }}>
+    <div style={{ minHeight: '100vh', background: '#f1f0ee', fontFamily: 'system-ui, sans-serif' }}>
       <style>{`
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
-        @keyframes toastIn { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
-        @keyframes toastOut { from { opacity: 1; transform: translateY(0); } to { opacity: 0; transform: translateY(12px); } }
-        .fade-in { animation: fadeIn 0.5s ease-out; }
-        .pill { display: inline-block; padding: 4px 12px; border-radius: 6px; font-size: 12px; font-weight: 500; }
-        .toast { animation: toastIn 0.25s ease-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes toastIn { from { opacity: 0; transform: translateX(-50%) translateY(8px); } to { opacity: 1; transform: translateX(-50%) translateY(0); } }
+        .fade-in { animation: fadeIn 0.4s ease-out; }
+        .toast-anim { animation: toastIn 0.25s ease-out; }
+        .save-icon-btn:hover { opacity: 0.7; }
+        .section-card { background: white; border-radius: 14px; padding: 20px; border: 1px solid #e8e6e0; margin-bottom: 12px; }
+        .apply-btn-main { transition: opacity 0.2s ease; -webkit-tap-highlight-color: transparent; }
+        .apply-btn-main:hover { opacity: 0.9; }
+        .apply-btn-main:active { opacity: 0.8; transform: scale(0.98); }
       `}</style>
 
       {/* Toast */}
       {toast && (
-        <div className="toast" style={{
-          position: 'fixed', bottom: '32px', left: '50%', transform: 'translateX(-50%)',
+        <div className="toast-anim" style={{
+          position: 'fixed', bottom: '100px', left: '50%', transform: 'translateX(-50%)',
           background: '#0c2520', color: '#f1f0ee', padding: '12px 24px',
           borderRadius: '30px', fontSize: '13px', fontWeight: 500,
-          zIndex: 1000, whiteSpace: 'nowrap', boxShadow: '0 4px 20px rgba(12,37,32,0.25)',
-          fontFamily: 'inherit',
+          zIndex: 200, whiteSpace: 'nowrap', fontFamily: 'inherit',
         }}>
-          {toast === 'saved' ? (
-            <>Job saved &mdash; <a href="/saved" style={{ color: '#92d7af', textDecoration: 'none', fontWeight: 600 }}>View saved jobs</a></>
-          ) : (
-            'Removed from saved jobs'
-          )}
+          {toast === 'saved' ? 'Job saved' : 'Removed from saved'}
         </div>
       )}
 
-      <div className="fade-in" style={{ maxWidth: '900px', margin: '0 auto' }}>
+      {/* Dark green header */}
+      <div style={{
+        background: '#0c2520',
+        padding: '0 20px 20px',
+        paddingTop: 'max(20px, env(safe-area-inset-top))',
+      }}>
+        {/* Top row — back + save */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+          <button
+            onClick={() => router.back()}
+            style={{ background: 'rgba(255,255,255,0.12)', border: 'none', borderRadius: '50%', width: '38px', height: '38px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', WebkitTapHighlightColor: 'transparent' }}
+          >
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#f1f0ee" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M19 12H5M12 5l-7 7 7 7"/>
+            </svg>
+          </button>
 
-        <button onClick={() => router.back()} style={{ background: 'transparent', border: 'none', padding: '0 0 16px', fontSize: '13px', color: '#666', cursor: 'pointer', fontFamily: 'inherit' }}>
-          Back
-        </button>
-
-        <div style={{ background: 'white', borderRadius: '16px', padding: '40px', border: '1px solid #e8e6e0', marginBottom: '20px' }}>
-          {job.is_spotlighted && (
-            <div style={{ display: 'inline-block', background: '#92d7af', color: '#0c2520', padding: '4px 12px', borderRadius: '6px', fontSize: '11px', fontWeight: 600, marginBottom: '12px', letterSpacing: '0.05em', textTransform: 'uppercase' }}>
-              Spotlight
-            </div>
-          )}
-
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '16px', marginBottom: '8px' }}>
-            <h1 style={{ fontFamily: 'Georgia, serif', fontSize: '32px', fontWeight: 500, color: '#0c2520', margin: 0, lineHeight: 1.2 }}>{title}</h1>
-            <button onClick={toggleSaved} style={{ background: saved ? '#0c2520' : 'white', color: saved ? '#f1f0ee' : '#0c2520', border: '1px solid #0c2520', padding: '10px 20px', borderRadius: '24px', fontSize: '13px', cursor: 'pointer', fontFamily: 'inherit', fontWeight: 500, whiteSpace: 'nowrap', flexShrink: 0 }}>
-              {saved ? 'Saved' : 'Save'}
-            </button>
-          </div>
-
-          {subtitle && <p style={{ fontFamily: 'Georgia, serif', fontSize: '18px', color: '#666', margin: '0 0 16px', fontStyle: 'italic' }}>In {subtitle}</p>}
-
-          {job.short_summary && <p style={{ fontSize: '15px', color: '#0c2520', margin: '0 0 20px', lineHeight: 1.5 }}>{job.short_summary}</p>}
-
-          <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginBottom: '24px' }}>
-            {job.location && <span className="pill" style={{ background: '#f1f0ee', color: '#0c2520' }}>{job.location}</span>}
-            {productionTypeName && <span className="pill" style={{ background: '#e8efea', color: '#0c2520' }}>{productionTypeName}</span>}
-            {job.production_company && <span className="pill" style={{ background: '#f1f0ee', color: '#0c2520' }}>{job.production_company}</span>}
-            {job.salary && <span className="pill" style={{ background: '#0c2520', color: '#f1f0ee' }}>{job.salary}</span>}
-            {job.is_side_hustle && <span className="pill" style={{ background: '#fde6c2', color: '#8a5a2e' }}>Side Hustle</span>}
-            {job.audition_friendly && <span className="pill" style={{ background: '#e8efea', color: '#0c2520' }}>Audition Friendly</span>}
-            {job.dbs_required && <span className="pill" style={{ background: '#fde6c2', color: '#8a5a2e' }}>DBS Required</span>}
-          </div>
-
-          <button onClick={handleApply} style={{ background: '#0c2520', color: '#f1f0ee', border: 'none', padding: '14px 40px', borderRadius: '30px', fontSize: '15px', fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit' }}>
-            Apply now
+          <button
+            onClick={toggleSaved}
+            className="save-icon-btn"
+            style={{ background: saved ? '#92d7af' : 'rgba(255,255,255,0.12)', border: 'none', borderRadius: '50%', width: '38px', height: '38px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', transition: 'background 0.2s ease', WebkitTapHighlightColor: 'transparent' }}
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill={saved ? '#0c2520' : 'none'} stroke={saved ? '#0c2520' : '#f1f0ee'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/>
+            </svg>
           </button>
         </div>
 
-        {!job.is_side_hustle && (job.age_range || job.gender_requirement || job.appearance || job.height || jobSkills.length > 0) && (
-          <div style={{ background: 'white', borderRadius: '16px', padding: '32px', border: '1px solid #e8e6e0', marginBottom: '20px' }}>
-            <h2 style={{ fontFamily: 'Georgia, serif', fontSize: '20px', fontWeight: 500, color: '#0c2520', margin: '0 0 20px' }}>Talent requirements</h2>
+        {/* Title block */}
+        <div>
+          {job.is_spotlighted && (
+            <span style={{ display: 'inline-block', background: '#92d7af', color: '#0c2520', padding: '3px 10px', borderRadius: '5px', fontSize: '10px', fontWeight: 600, letterSpacing: '0.05em', textTransform: 'uppercase', marginBottom: '10px' }}>
+              Spotlight
+            </span>
+          )}
+          <h1 style={{ fontFamily: 'Georgia, serif', fontSize: '24px', fontWeight: 500, color: '#f1f0ee', margin: '0 0 6px', lineHeight: 1.2 }}>{title}</h1>
+          {subtitle && <p style={{ fontSize: '14px', color: '#a8c4b4', margin: '0 0 14px', fontStyle: 'italic' }}>In {subtitle}</p>}
 
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '20px', marginBottom: jobSkills.length > 0 ? '24px' : 0 }}>
+          {/* Pills */}
+          <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+            {job.location && <span style={{ background: 'rgba(255,255,255,0.12)', color: '#f1f0ee', padding: '4px 10px', borderRadius: '6px', fontSize: '12px' }}>{job.location}</span>}
+            {productionTypeName && <span style={{ background: 'rgba(255,255,255,0.12)', color: '#f1f0ee', padding: '4px 10px', borderRadius: '6px', fontSize: '12px' }}>{productionTypeName}</span>}
+            {job.salary && <span style={{ background: '#92d7af', color: '#0c2520', padding: '4px 10px', borderRadius: '6px', fontSize: '12px', fontWeight: 600 }}>{job.salary}</span>}
+            {job.audition_friendly && <span style={{ background: 'rgba(255,255,255,0.12)', color: '#f1f0ee', padding: '4px 10px', borderRadius: '6px', fontSize: '12px' }}>Audition friendly</span>}
+            {job.dbs_required && <span style={{ background: 'rgba(255,165,0,0.25)', color: '#ffd580', padding: '4px 10px', borderRadius: '6px', fontSize: '12px' }}>DBS required</span>}
+          </div>
+        </div>
+      </div>
+
+      {/* Scrollable content */}
+      <div className="fade-in" style={{ padding: '16px 20px 120px' }}>
+
+        {/* Summary */}
+        {job.short_summary && (
+          <div className="section-card">
+            <p style={{ fontSize: '11px', color: '#888', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 600, margin: '0 0 8px' }}>About this role</p>
+            <p style={{ fontSize: '14px', color: '#0c2520', margin: 0, lineHeight: 1.6 }}>{job.short_summary}</p>
+          </div>
+        )}
+
+        {/* Talent requirements */}
+        {!job.is_side_hustle && (job.age_range || job.gender_requirement || job.appearance || job.height || jobSkills.length > 0) && (
+          <div className="section-card">
+            <p style={{ fontSize: '11px', color: '#888', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 600, margin: '0 0 14px' }}>Talent requirements</p>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px', marginBottom: jobSkills.length > 0 ? '16px' : 0 }}>
               {job.age_range && (
                 <div>
-                  <p style={{ fontSize: '11px', color: '#888', margin: '0 0 4px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Playing Age</p>
-                  <p style={{ fontSize: '14px', color: '#0c2520', margin: 0 }}>{job.age_range}</p>
+                  <p style={{ fontSize: '11px', color: '#888', margin: '0 0 3px' }}>Playing age</p>
+                  <p style={{ fontSize: '14px', color: '#0c2520', margin: 0, fontWeight: 500 }}>{job.age_range}</p>
                 </div>
               )}
               {job.gender_requirement && (
                 <div>
-                  <p style={{ fontSize: '11px', color: '#888', margin: '0 0 4px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Gender</p>
-                  <p style={{ fontSize: '14px', color: '#0c2520', margin: 0 }}>{job.gender_requirement}</p>
+                  <p style={{ fontSize: '11px', color: '#888', margin: '0 0 3px' }}>Gender</p>
+                  <p style={{ fontSize: '14px', color: '#0c2520', margin: 0, fontWeight: 500 }}>{job.gender_requirement}</p>
                 </div>
               )}
               {job.appearance && (
                 <div>
-                  <p style={{ fontSize: '11px', color: '#888', margin: '0 0 4px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Appearance</p>
-                  <p style={{ fontSize: '14px', color: '#0c2520', margin: 0 }}>{job.appearance}</p>
+                  <p style={{ fontSize: '11px', color: '#888', margin: '0 0 3px' }}>Appearance</p>
+                  <p style={{ fontSize: '14px', color: '#0c2520', margin: 0, fontWeight: 500 }}>{job.appearance}</p>
                 </div>
               )}
               {job.height && (
                 <div>
-                  <p style={{ fontSize: '11px', color: '#888', margin: '0 0 4px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Height</p>
-                  <p style={{ fontSize: '14px', color: '#0c2520', margin: 0 }}>{job.height}cm</p>
+                  <p style={{ fontSize: '11px', color: '#888', margin: '0 0 3px' }}>Height</p>
+                  <p style={{ fontSize: '14px', color: '#0c2520', margin: 0, fontWeight: 500 }}>{job.height}cm</p>
                 </div>
               )}
             </div>
-
             {jobSkills.length > 0 && (
               <div>
-                <p style={{ fontSize: '11px', color: '#888', margin: '0 0 8px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Required Skills</p>
+                <p style={{ fontSize: '11px', color: '#888', margin: '0 0 8px' }}>Required skills</p>
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
                   {jobSkills.map(skill => (
                     <span key={skill.id} style={{ background: skill.category?.color || '#e8efea', color: skill.category?.text_color || '#0c2520', padding: '4px 10px', borderRadius: '6px', fontSize: '12px' }}>
@@ -240,73 +262,104 @@ export default function JobDetail() {
           </div>
         )}
 
-        {job.is_side_hustle && (job.commitment_level || job.experience_level || job.schedule) && (
-          <div style={{ background: 'white', borderRadius: '16px', padding: '32px', border: '1px solid #e8e6e0', marginBottom: '20px' }}>
-            <h2 style={{ fontFamily: 'Georgia, serif', fontSize: '20px', fontWeight: 500, color: '#0c2520', margin: '0 0 20px' }}>Details</h2>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '20px' }}>
+        {/* Side hustle details */}
+        {job.is_side_hustle && (job.commitment_level || job.experience_level || job.schedule || job.start_date) && (
+          <div className="section-card">
+            <p style={{ fontSize: '11px', color: '#888', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 600, margin: '0 0 14px' }}>Details</p>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px' }}>
               {job.commitment_level && (
                 <div>
-                  <p style={{ fontSize: '11px', color: '#888', margin: '0 0 4px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Commitment</p>
-                  <p style={{ fontSize: '14px', color: '#0c2520', margin: 0 }}>{job.commitment_level}</p>
+                  <p style={{ fontSize: '11px', color: '#888', margin: '0 0 3px' }}>Commitment</p>
+                  <p style={{ fontSize: '14px', color: '#0c2520', margin: 0, fontWeight: 500 }}>{job.commitment_level}</p>
                 </div>
               )}
               {job.experience_level && (
                 <div>
-                  <p style={{ fontSize: '11px', color: '#888', margin: '0 0 4px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Experience</p>
-                  <p style={{ fontSize: '14px', color: '#0c2520', margin: 0 }}>{job.experience_level}</p>
+                  <p style={{ fontSize: '11px', color: '#888', margin: '0 0 3px' }}>Experience</p>
+                  <p style={{ fontSize: '14px', color: '#0c2520', margin: 0, fontWeight: 500 }}>{job.experience_level}</p>
                 </div>
               )}
               {job.schedule && (
                 <div>
-                  <p style={{ fontSize: '11px', color: '#888', margin: '0 0 4px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Schedule</p>
-                  <p style={{ fontSize: '14px', color: '#0c2520', margin: 0 }}>{job.schedule}</p>
+                  <p style={{ fontSize: '11px', color: '#888', margin: '0 0 3px' }}>Schedule</p>
+                  <p style={{ fontSize: '14px', color: '#0c2520', margin: 0, fontWeight: 500 }}>{job.schedule}</p>
                 </div>
               )}
               {job.start_date && (
                 <div>
-                  <p style={{ fontSize: '11px', color: '#888', margin: '0 0 4px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Start Date</p>
-                  <p style={{ fontSize: '14px', color: '#0c2520', margin: 0 }}>{new Date(job.start_date).toLocaleDateString('en-GB')}</p>
+                  <p style={{ fontSize: '11px', color: '#888', margin: '0 0 3px' }}>Start date</p>
+                  <p style={{ fontSize: '14px', color: '#0c2520', margin: 0, fontWeight: 500 }}>{new Date(job.start_date).toLocaleDateString('en-GB')}</p>
                 </div>
               )}
             </div>
           </div>
         )}
 
+        {/* Dates */}
         {(job.contract_dates || job.application_deadline) && (
-          <div style={{ background: 'white', borderRadius: '16px', padding: '32px', border: '1px solid #e8e6e0', marginBottom: '20px' }}>
-            <h2 style={{ fontFamily: 'Georgia, serif', fontSize: '20px', fontWeight: 500, color: '#0c2520', margin: '0 0 20px' }}>When and where</h2>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '20px' }}>
+          <div className="section-card">
+            <p style={{ fontSize: '11px', color: '#888', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 600, margin: '0 0 14px' }}>When</p>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px' }}>
               {job.contract_dates && (
                 <div>
-                  <p style={{ fontSize: '11px', color: '#888', margin: '0 0 4px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Contract Dates</p>
-                  <p style={{ fontSize: '14px', color: '#0c2520', margin: 0 }}>{job.contract_dates}</p>
+                  <p style={{ fontSize: '11px', color: '#888', margin: '0 0 3px' }}>Contract dates</p>
+                  <p style={{ fontSize: '14px', color: '#0c2520', margin: 0, fontWeight: 500 }}>{job.contract_dates}</p>
                 </div>
               )}
               {job.application_deadline && (
                 <div>
-                  <p style={{ fontSize: '11px', color: '#888', margin: '0 0 4px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Apply By</p>
-                  <p style={{ fontSize: '14px', color: '#0c2520', margin: 0 }}>{new Date(job.application_deadline).toLocaleDateString('en-GB')}</p>
+                  <p style={{ fontSize: '11px', color: '#888', margin: '0 0 3px' }}>Apply by</p>
+                  <p style={{ fontSize: '14px', color: '#0c2520', margin: 0, fontWeight: 500 }}>{new Date(job.application_deadline).toLocaleDateString('en-GB')}</p>
                 </div>
               )}
             </div>
           </div>
         )}
 
+        {/* Full description */}
         {job.description && (
-          <div style={{ background: 'white', borderRadius: '16px', padding: '32px', border: '1px solid #e8e6e0', marginBottom: '20px' }}>
-            <h2 style={{ fontFamily: 'Georgia, serif', fontSize: '20px', fontWeight: 500, color: '#0c2520', margin: '0 0 16px' }}>Full description</h2>
-            <p style={{ fontSize: '14px', color: '#0c2520', margin: 0, lineHeight: 1.6, whiteSpace: 'pre-wrap' }}>{job.description}</p>
+          <div className="section-card">
+            <p style={{ fontSize: '11px', color: '#888', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 600, margin: '0 0 10px' }}>Full description</p>
+            <p style={{ fontSize: '14px', color: '#0c2520', margin: 0, lineHeight: 1.7, whiteSpace: 'pre-wrap' }}>{job.description}</p>
           </div>
         )}
 
-        <div style={{ background: 'white', borderRadius: '16px', padding: '32px', border: '1px solid #e8e6e0' }}>
-          <h2 style={{ fontFamily: 'Georgia, serif', fontSize: '20px', fontWeight: 500, color: '#0c2520', margin: '0 0 16px' }}>How to apply</h2>
-          {job.casting_team && <p style={{ fontSize: '14px', color: '#0c2520', margin: '0 0 8px' }}><strong>Contact:</strong> {job.casting_team}</p>}
-          {job.casting_email && <p style={{ fontSize: '14px', color: '#0c2520', margin: '0 0 16px' }}><strong>Email:</strong> <a href={`mailto:${job.casting_email}`} style={{ color: '#0c2520' }}>{job.casting_email}</a></p>}
-          <button onClick={handleApply} style={{ background: '#0c2520', color: '#f1f0ee', border: 'none', padding: '14px 40px', borderRadius: '30px', fontSize: '15px', fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit' }}>
-            Apply now
-          </button>
-        </div>
+        {/* How to apply */}
+        {(job.casting_team || job.casting_email) && (
+          <div className="section-card">
+            <p style={{ fontSize: '11px', color: '#888', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 600, margin: '0 0 10px' }}>Contact</p>
+            {job.casting_team && <p style={{ fontSize: '14px', color: '#0c2520', margin: '0 0 4px' }}>{job.casting_team}</p>}
+            {job.casting_email && (
+              <a href={`mailto:${job.casting_email}`} style={{ fontSize: '14px', color: '#0c2520', textDecoration: 'underline' }}>{job.casting_email}</a>
+            )}
+          </div>
+        )}
+
+        {/* Posted */}
+        <p style={{ fontSize: '11px', color: '#aaa', textAlign: 'center', margin: '8px 0 0' }}>Posted {formatRelativeDate(job.created_at)}</p>
+      </div>
+
+      {/* Sticky apply bar */}
+      <div style={{
+        position: 'fixed', bottom: 0, left: 0, right: 0,
+        background: 'white', borderTop: '1px solid #e8e6e0',
+        padding: '12px 20px',
+        paddingBottom: 'max(12px, env(safe-area-inset-bottom))',
+        zIndex: 50,
+      }}>
+        <button
+          onClick={handleApply}
+          className="apply-btn-main"
+          style={{
+            width: '100%', padding: '16px',
+            background: '#0c2520', color: '#f1f0ee',
+            border: 'none', borderRadius: '30px',
+            fontSize: '16px', fontWeight: 500,
+            cursor: 'pointer', fontFamily: 'inherit',
+          }}
+        >
+          Apply now
+        </button>
       </div>
     </div>
   )
