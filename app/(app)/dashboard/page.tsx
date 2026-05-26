@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
@@ -58,7 +58,6 @@ export default function Dashboard() {
   const [userEyeColourId, setUserEyeColourId] = useState<number | null>(null)
   const [userSkillIds, setUserSkillIds] = useState<Set<number>>(new Set())
 
-  const [productionTypes2, setProductionTypes2] = useState<Lookup[]>([])
   const [selectedProductionTypes, setSelectedProductionTypes] = useState<number[]>([])
   const [minAge, setMinAge] = useState(0)
   const [maxAge, setMaxAge] = useState(100)
@@ -79,7 +78,6 @@ export default function Dashboard() {
       ])
 
       setProductionTypes(pt.data || [])
-      setProductionTypes2(pt.data || [])
       setSpotlightJobs(spot.data || [])
 
       if (user) {
@@ -208,7 +206,7 @@ export default function Dashboard() {
     setMatchFilter('all')
   }
 
-  const hasActiveFilters = selectedProductionTypes.length > 0 || minAge > 0 || maxAge < 100 || locationSearch || keywordSearch || matchFilter !== 'all'
+  const hasActiveFilters = selectedProductionTypes.length > 0 || minAge > 0 || maxAge < 100 || !!locationSearch || !!keywordSearch || matchFilter !== 'all'
   const activeFilterCount = selectedProductionTypes.length + (minAge > 0 || maxAge < 100 ? 1 : 0) + (locationSearch ? 1 : 0) + (matchFilter !== 'all' ? 1 : 0)
 
   const getProductionTypeName = (id: number | null) => productionTypes.find(pt => pt.id === id)?.name || null
@@ -245,10 +243,10 @@ export default function Dashboard() {
     return 'Good evening'
   }
 
-  if (loading) return <div style={{ minHeight: '100vh', background: '#f1f0ee' }} />
+  if (loading) return <div style={{ minHeight: '100vh', background: 'white' }} />
 
   return (
-    <div style={{ minHeight: '100vh', background: '#f1f0ee', fontFamily: 'system-ui, sans-serif' }}>
+    <div style={{ minHeight: '100vh', background: 'white', fontFamily: 'system-ui, sans-serif' }}>
       <style>{`
         @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
         .fade-in { animation: fadeIn 0.4s ease-out; }
@@ -266,10 +264,10 @@ export default function Dashboard() {
         input[type=text]:focus, input[type=search]:focus { border-color: #0c2520 !important; outline: none; box-shadow: 0 0 0 1px #0c2520; }
       `}</style>
 
-      <div className="fade-in" style={{ maxWidth: '1100px', margin: '0 auto' }}>
+      <div className="fade-in">
 
         {/* Greeting header */}
-        <div style={{ padding: '24px 20px 16px' }}>
+        <div style={{ padding: '24px 16px 16px' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <div>
               <p style={{ fontSize: '12px', color: '#888', margin: '0 0 3px' }}>{getGreeting()}</p>
@@ -288,7 +286,7 @@ export default function Dashboard() {
         </div>
 
         {/* Search */}
-        <div style={{ padding: '0 20px 20px' }}>
+        <div style={{ padding: '0 16px 20px' }}>
           <div style={{ position: 'relative' }}>
             <svg style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', color: '#888' }} width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
               <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
@@ -301,7 +299,7 @@ export default function Dashboard() {
               style={{
                 width: '100%', padding: '13px 14px 13px 42px',
                 border: '1px solid #e0ddd5', borderRadius: '12px',
-                fontSize: '14px', fontFamily: 'inherit', background: 'white',
+                fontSize: '14px', fontFamily: 'inherit', background: '#f9f8f6',
                 boxSizing: 'border-box', color: '#0c2520',
               }}
             />
@@ -309,12 +307,12 @@ export default function Dashboard() {
         </div>
 
         {/* Spotlight */}
-        <div style={{ padding: '0 20px 24px' }}>
+        <div style={{ padding: '0 16px 24px' }}>
           <p style={{ fontFamily: 'Georgia, serif', fontSize: '17px', color: '#0c2520', margin: '0 0 12px', fontWeight: 500 }}>In the spotlight</p>
           <div className="spot-scroll">
             {spotlightJobs.length === 0 ? (
               <Link href="/post-job" style={{ textDecoration: 'none', flexShrink: 0 }}>
-                <div style={{ width: '200px', minHeight: '150px', background: '#e8e6e0', borderRadius: '14px', padding: '20px', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', textAlign: 'center' }}>
+                <div style={{ width: '200px', minHeight: '150px', background: '#f0ede8', borderRadius: '14px', padding: '20px', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', textAlign: 'center' }}>
                   <p style={{ fontSize: '12px', color: '#666', margin: '0 0 4px' }}>Spotlight your job</p>
                   <p style={{ fontSize: '12px', color: '#0c2520', margin: 0, textDecoration: 'underline', fontWeight: 500 }}>Get booked in less than a week</p>
                 </div>
@@ -342,7 +340,7 @@ export default function Dashboard() {
                   )
                 })}
                 <Link href="/post-job" style={{ textDecoration: 'none', flexShrink: 0 }}>
-                  <div style={{ width: '170px', minHeight: '150px', background: '#e8e6e0', borderRadius: '14px', padding: '20px', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', textAlign: 'center' }}>
+                  <div style={{ width: '170px', minHeight: '150px', background: '#f0ede8', borderRadius: '14px', padding: '20px', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', textAlign: 'center' }}>
                     <p style={{ fontSize: '12px', color: '#666', margin: '0 0 4px' }}>Spotlight your job</p>
                     <p style={{ fontSize: '12px', color: '#0c2520', margin: 0, textDecoration: 'underline', fontWeight: 500 }}>Get booked in less than a week</p>
                   </div>
@@ -353,7 +351,7 @@ export default function Dashboard() {
         </div>
 
         {/* Jobs section */}
-        <div style={{ padding: '0 20px 100px' }}>
+        <div style={{ padding: '0 16px 100px' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
             <p style={{ fontFamily: 'Georgia, serif', fontSize: '17px', color: '#0c2520', margin: 0, fontWeight: 500 }}>Job opportunities</p>
             <button
@@ -382,19 +380,17 @@ export default function Dashboard() {
             <button className={`filter-pill${showSideHustle ? ' active' : ''}`} onClick={() => setShowSideHustle(!showSideHustle)}>Side hustles</button>
           </div>
 
-          {/* Expanded filters panel */}
+          {/* Expanded filters */}
           {showFilters && (
-            <div style={{ background: 'white', borderRadius: '14px', padding: '20px', border: '1px solid #e0ddd5', marginBottom: '16px' }}>
+            <div style={{ background: '#f9f8f6', borderRadius: '14px', padding: '20px', marginBottom: '16px' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
                 <p style={{ fontSize: '14px', fontWeight: 500, color: '#0c2520', margin: 0 }}>Filters</p>
-                {hasActiveFilters && (
-                  <button onClick={clearAllFilters} style={{ background: 'none', border: 'none', fontSize: '12px', color: '#888', textDecoration: 'underline', cursor: 'pointer', fontFamily: 'inherit' }}>Clear all</button>
-                )}
+                {hasActiveFilters && <button onClick={clearAllFilters} style={{ background: 'none', border: 'none', fontSize: '12px', color: '#888', textDecoration: 'underline', cursor: 'pointer', fontFamily: 'inherit' }}>Clear all</button>}
               </div>
 
               <p style={{ fontSize: '11px', color: '#888', textTransform: 'uppercase', letterSpacing: '0.05em', margin: '0 0 8px', fontWeight: 600 }}>Production type</p>
               <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', marginBottom: '20px' }}>
-                {productionTypes2.map(pt => (
+                {productionTypes.map(pt => (
                   <button key={pt.id}
                     onClick={() => setSelectedProductionTypes(prev => prev.includes(pt.id) ? prev.filter(x => x !== pt.id) : [...prev, pt.id])}
                     style={{ padding: '7px 12px', borderRadius: '20px', fontSize: '12px', cursor: 'pointer', fontFamily: 'inherit', border: selectedProductionTypes.includes(pt.id) ? '1px solid #0c2520' : '1px solid #e0ddd5', background: selectedProductionTypes.includes(pt.id) ? '#0c2520' : 'white', color: selectedProductionTypes.includes(pt.id) ? '#f1f0ee' : '#0c2520', WebkitTapHighlightColor: 'transparent' }}>
@@ -407,9 +403,7 @@ export default function Dashboard() {
               <div style={{ marginBottom: '20px' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
                   <span style={{ fontSize: '13px', color: '#0c2520', fontWeight: 500 }}>{minAge} – {maxAge}</span>
-                  {(minAge > 0 || maxAge < 100) && (
-                    <button onClick={() => { setMinAge(0); setMaxAge(100) }} style={{ background: 'none', border: 'none', fontSize: '11px', color: '#888', cursor: 'pointer', fontFamily: 'inherit', textDecoration: 'underline' }}>Clear</button>
-                  )}
+                  {(minAge > 0 || maxAge < 100) && <button onClick={() => { setMinAge(0); setMaxAge(100) }} style={{ background: 'none', border: 'none', fontSize: '11px', color: '#888', cursor: 'pointer', fontFamily: 'inherit', textDecoration: 'underline' }}>Clear</button>}
                 </div>
                 <input type="range" min="0" max="100" value={minAge} onChange={(e) => { const v = Number(e.target.value); if (v <= maxAge) setMinAge(v) }} className="range-slider" style={{ marginBottom: '10px' }} />
                 <input type="range" min="0" max="100" value={maxAge} onChange={(e) => { const v = Number(e.target.value); if (v >= minAge) setMaxAge(v) }} className="range-slider" />
@@ -417,7 +411,7 @@ export default function Dashboard() {
 
               <p style={{ fontSize: '11px', color: '#888', textTransform: 'uppercase', letterSpacing: '0.05em', margin: '0 0 8px', fontWeight: 600 }}>Location</p>
               <input type="text" placeholder="e.g. London" value={locationSearch} onChange={(e) => setLocationSearch(e.target.value)}
-                style={{ width: '100%', padding: '11px 12px', border: '1px solid #e0ddd5', borderRadius: '8px', fontSize: '13px', fontFamily: 'inherit', boxSizing: 'border-box', marginBottom: '20px' }} />
+                style={{ width: '100%', padding: '11px 12px', border: '1px solid #e0ddd5', borderRadius: '8px', fontSize: '13px', fontFamily: 'inherit', boxSizing: 'border-box', marginBottom: '20px', background: 'white' }} />
 
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <p style={{ fontSize: '11px', color: '#888', textTransform: 'uppercase', letterSpacing: '0.05em', margin: 0, fontWeight: 600 }}>Sort by</p>
@@ -437,7 +431,7 @@ export default function Dashboard() {
           </p>
 
           {jobs.length === 0 ? (
-            <div style={{ textAlign: 'center', padding: '48px 24px', background: 'white', borderRadius: '14px', border: '1px solid #e8e6e0' }}>
+            <div style={{ textAlign: 'center', padding: '48px 24px', background: '#f9f8f6', borderRadius: '14px' }}>
               <p style={{ fontFamily: 'Georgia, serif', fontSize: '17px', color: '#0c2520', margin: '0 0 6px' }}>No jobs found</p>
               <p style={{ fontSize: '13px', color: '#888', margin: 0 }}>Try adjusting your filters</p>
             </div>
@@ -453,7 +447,7 @@ export default function Dashboard() {
                 const isSaved = savedIds.has(job.id)
                 return (
                   <Link key={job.id} href={`/jobs/${job.id}`} style={{ textDecoration: 'none' }}>
-                    <div className="job-card" style={{ background: 'white', borderRadius: '14px', padding: '16px', border: isStrong ? '1.5px solid #92d7af' : '1px solid #e8e6e0', position: 'relative' }}>
+                    <div className="job-card" style={{ background: '#f9f8f6', borderRadius: '14px', padding: '16px', border: isStrong ? '1.5px solid #92d7af' : '1px solid #ede9e3', position: 'relative' }}>
                       <div style={{ position: 'absolute', top: '14px', right: '14px' }}>
                         <button
                           onClick={(e) => toggleSave(e, job.id)}
@@ -473,14 +467,14 @@ export default function Dashboard() {
                         <h3 style={{ fontFamily: 'Georgia, serif', fontSize: '16px', fontWeight: 500, color: '#0c2520', margin: '0 0 3px', lineHeight: 1.2 }}>{title}</h3>
                         {subtitle && <p style={{ fontSize: '12px', color: '#666', margin: '0 0 10px', fontStyle: 'italic' }}>In {subtitle}</p>}
                         <div style={{ display: 'flex', gap: '5px', flexWrap: 'wrap' }}>
-                          {job.location && <span style={{ background: '#f1f0ee', padding: '3px 9px', borderRadius: '5px', fontSize: '11px', color: '#0c2520' }}>{job.location}</span>}
+                          {job.location && <span style={{ background: 'white', padding: '3px 9px', borderRadius: '5px', fontSize: '11px', color: '#0c2520' }}>{job.location}</span>}
                           {productionTypeName && <span style={{ background: '#e8efea', padding: '3px 9px', borderRadius: '5px', fontSize: '11px', color: '#0c2520' }}>{productionTypeName}</span>}
                           {job.salary && <span style={{ background: '#0c2520', color: '#f1f0ee', padding: '3px 9px', borderRadius: '5px', fontSize: '11px', fontWeight: 500 }}>{job.salary}</span>}
                           {job.is_side_hustle && <span style={{ background: '#fde6c2', color: '#8a5a2e', padding: '3px 9px', borderRadius: '5px', fontSize: '11px' }}>Side hustle</span>}
                         </div>
                       </div>
 
-                      <div style={{ borderTop: '1px solid #f0ede5', paddingTop: '10px', marginTop: '12px', display: 'flex', justifyContent: 'space-between' }}>
+                      <div style={{ borderTop: '1px solid #e8e4de', paddingTop: '10px', marginTop: '12px', display: 'flex', justifyContent: 'space-between' }}>
                         <span style={{ fontSize: '11px', color: '#888' }}>{formatRelativeDate(job.created_at)}</span>
                         {sentBy && <span style={{ fontSize: '11px', color: '#888' }}>via {sentBy}</span>}
                       </div>
