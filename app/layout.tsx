@@ -56,7 +56,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         @media (max-width: 768px) {
           .desktop-sidebar { display: none !important; }
           .mobile-nav { display: flex !important; }
-          .main-content { margin-left: 0 !important; padding-bottom: 120px !important; }
+          .main-content { margin-left: 0 !important; padding-bottom: 100px !important; }
           .main-content.no-nav { padding-bottom: 0 !important; }
         }
         .mob-nav-btn {
@@ -70,10 +70,9 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           text-decoration: none;
           min-height: 76px;
           -webkit-tap-highlight-color: transparent;
-          border-radius: 18px;
-          transition: background 0.15s ease;
+          transition: opacity 0.15s ease;
         }
-        .mob-nav-btn:active { background: rgba(12,37,32,0.06); }
+        .mob-nav-btn:active { opacity: 0.6; }
         .mob-nav-btn span {
           font-size: 10px;
           font-weight: 400;
@@ -108,43 +107,36 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         </div>
       </aside>
 
-      {/* Floating mobile nav */}
+      {/* Mobile bottom nav */}
       {!isJobDetail && (
         <nav className="mobile-nav" style={{
           position: 'fixed',
-          bottom: '20px',
-          left: '16px',
-          right: '16px',
+          bottom: 0,
+          left: 0,
+          right: 0,
           zIndex: 100,
-          background: 'rgba(245,244,241,0.82)',
-          borderRadius: '26px',
-          border: '1px solid rgba(12,37,32,0.08)',
-          backdropFilter: 'blur(24px)',
-          WebkitBackdropFilter: 'blur(24px)',
-          boxShadow: '0 8px 32px rgba(12,37,32,0.10), 0 2px 8px rgba(12,37,32,0.06)',
-          padding: '4px',
-          alignItems: 'stretch',
+          background: '#f1f0ee',
+          borderTop: '1px solid #e0ddd5',
+          paddingBottom: 'env(safe-area-inset-bottom)',
         }}>
-          <div style={{ display: 'flex', width: '100%', alignItems: 'center', gap: '2px' }}>
+          <div style={{ display: 'flex', width: '100%', alignItems: 'stretch' }}>
 
-            {/* Jobs */}
             <Link href="/dashboard" className={`mob-nav-btn${isActive('/dashboard') ? ' active' : ''}`}>
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
                 <rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/>
               </svg>
               <span>Jobs</span>
             </Link>
 
-            {/* Saved */}
             <Link href="/saved" className={`mob-nav-btn${isActive('/saved') ? ' active' : ''}`}>
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/>
               </svg>
               <span>Saved</span>
             </Link>
 
             {/* FAB */}
-            <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', paddingBottom: '12px' }}>
               <Link href="/post-job" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                 <div style={{
                   width: '50px',
@@ -154,7 +146,9 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  boxShadow: '0 4px 14px rgba(12,37,32,0.3)',
+                  transform: 'translateY(-8px)',
+                  border: '4px solid #f1f0ee',
+                  boxShadow: '0 4px 14px rgba(12,37,32,0.25)',
                   WebkitTapHighlightColor: 'transparent',
                 }}>
                   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#f1f0ee" strokeWidth="2.4" strokeLinecap="round">
@@ -164,17 +158,15 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
               </Link>
             </div>
 
-            {/* Talent */}
             <Link href="/browse" className={`mob-nav-btn${isActive('/browse') ? ' active' : ''}`}>
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
                 <circle cx="9" cy="7" r="4"/><path d="M3 21v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2"/>
               </svg>
               <span>Talent</span>
             </Link>
 
-            {/* Me */}
             <Link href="/profile" className={`mob-nav-btn${isActive('/profile') ? ' active' : ''}`}>
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
                 <circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/>
               </svg>
               <span>Me</span>
