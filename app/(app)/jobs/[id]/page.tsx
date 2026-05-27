@@ -155,7 +155,7 @@ export default function JobDetail() {
 
       {/* Dark green header */}
       <div style={{
-        background: '#0c2520',
+        background: '#061410',
         padding: '0 20px 24px',
         paddingTop: 'max(56px, env(safe-area-inset-top))',
       }}>
