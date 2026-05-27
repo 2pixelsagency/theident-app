@@ -312,7 +312,7 @@ export default function Dashboard() {
           <div className="spot-scroll" style={{ paddingLeft: '16px', paddingRight: '16px' }}>
             {spotlightJobs.length === 0 ? (
               <Link href="/post-job" style={{ textDecoration: 'none', flexShrink: 0 }}>
-                <div style={{ width: '200px', minHeight: '150px', background: '#e8e4de', borderRadius: '14px', padding: '20px', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', textAlign: 'center' }}>
+                <div style={{ width: '200px', minHeight: '170px', background: '#e8e4de', borderRadius: '14px', padding: '18px', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', textAlign: 'center' }}>
                   <p style={{ fontSize: '12px', color: '#666', margin: '0 0 4px' }}>Spotlight your job</p>
                   <p style={{ fontSize: '12px', color: '#0c2520', margin: 0, textDecoration: 'underline', fontWeight: 500 }}>Get booked in less than a week</p>
                 </div>
@@ -323,16 +323,32 @@ export default function Dashboard() {
                   const isMint = i % 2 === 1
                   const title = job.is_side_hustle ? job.job_title : job.project_role
                   const subtitle = job.is_side_hustle ? job.company : job.project_in
+                  const prodTypeName = getProductionTypeName(job.production_type_id)
                   return (
                     <Link key={job.id} href={`/jobs/${job.id}`} style={{ textDecoration: 'none', flexShrink: 0 }}>
-                      <div className="job-card" style={{ width: '220px', minHeight: '150px', background: isMint ? '#92d7af' : '#0c2520', borderRadius: '14px', padding: '20px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+                      <div className="job-card" style={{ width: '220px', minHeight: '170px', background: isMint ? '#92d7af' : '#0c2520', borderRadius: '14px', padding: '18px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
                         <div>
-                          <p style={{ fontSize: '10px', color: isMint ? '#0c2520' : '#92d7af', margin: '0 0 6px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Spotlight</p>
+                          <p style={{ fontSize: '10px', color: isMint ? '#0c2520' : '#92d7af', margin: '0 0 8px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Spotlight</p>
                           <h3 style={{ fontFamily: 'Georgia, serif', fontSize: '15px', color: isMint ? '#0c2520' : '#f1f0ee', margin: '0 0 4px', fontWeight: 500, lineHeight: 1.2 }}>{title}</h3>
-                          {subtitle && <p style={{ fontSize: '11px', color: isMint ? '#0c2520' : '#a8c4b4', margin: 0, fontStyle: 'italic' }}>In {subtitle}</p>}
+                          {subtitle && <p style={{ fontSize: '11px', color: isMint ? '#0c2520' : '#a8c4b4', margin: '0 0 10px', fontStyle: 'italic' }}>In {subtitle}</p>}
+                          <div style={{ display: 'flex', gap: '5px', flexWrap: 'wrap' }}>
+                            {job.location && (
+                              <span style={{ background: isMint ? 'rgba(0,0,0,0.1)' : 'rgba(255,255,255,0.12)', color: isMint ? '#0c2520' : '#f1f0ee', padding: '3px 8px', borderRadius: '5px', fontSize: '10px' }}>
+                                {job.location}
+                              </span>
+                            )}
+                            {prodTypeName && (
+                              <span style={{ background: isMint ? 'rgba(0,0,0,0.1)' : 'rgba(255,255,255,0.12)', color: isMint ? '#0c2520' : '#f1f0ee', padding: '3px 8px', borderRadius: '5px', fontSize: '10px' }}>
+                                {prodTypeName}
+                              </span>
+                            )}
+                          </div>
                         </div>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '16px' }}>
-                          {job.salary && <span style={{ fontSize: '11px', background: isMint ? '#0c2520' : '#f1f0ee', color: isMint ? '#f1f0ee' : '#0c2520', padding: '3px 8px', borderRadius: '6px', fontWeight: 500 }}>{job.salary}</span>}
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '12px' }}>
+                          {job.salary
+                            ? <span style={{ fontSize: '11px', background: isMint ? '#0c2520' : '#f1f0ee', color: isMint ? '#f1f0ee' : '#0c2520', padding: '3px 8px', borderRadius: '6px', fontWeight: 600 }}>{job.salary}</span>
+                            : <span />
+                          }
                           <span style={{ fontSize: '11px', color: isMint ? '#0c2520' : '#a8c4b4' }}>{formatRelativeDate(job.created_at)}</span>
                         </div>
                       </div>
@@ -340,7 +356,7 @@ export default function Dashboard() {
                   )
                 })}
                 <Link href="/post-job" style={{ textDecoration: 'none', flexShrink: 0 }}>
-                  <div style={{ width: '170px', minHeight: '150px', background: '#e8e4de', borderRadius: '14px', padding: '20px', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', textAlign: 'center' }}>
+                  <div style={{ width: '170px', minHeight: '170px', background: '#e8e4de', borderRadius: '14px', padding: '18px', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', textAlign: 'center' }}>
                     <p style={{ fontSize: '12px', color: '#666', margin: '0 0 4px' }}>Spotlight your job</p>
                     <p style={{ fontSize: '12px', color: '#0c2520', margin: 0, textDecoration: 'underline', fontWeight: 500 }}>Get booked in less than a week</p>
                   </div>
@@ -352,19 +368,11 @@ export default function Dashboard() {
 
         {/* Jobs section */}
         <div>
-          {/* Heading + filters button */}
           <div style={{ padding: '0 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
             <p style={{ fontFamily: 'Georgia, serif', fontSize: '17px', color: '#0c2520', margin: 0, fontWeight: 500 }}>Job opportunities</p>
             <button
               onClick={() => setShowFilters(!showFilters)}
-              style={{
-                background: hasActiveFilters ? '#0c2520' : '#f1f0ee',
-                color: hasActiveFilters ? '#f1f0ee' : '#0c2520',
-                border: '1px solid #d8d5ce', padding: '9px 16px',
-                borderRadius: '20px', fontSize: '13px', cursor: 'pointer',
-                fontFamily: 'inherit', display: 'flex', alignItems: 'center', gap: '6px',
-                WebkitTapHighlightColor: 'transparent',
-              }}
+              style={{ background: hasActiveFilters ? '#0c2520' : '#f1f0ee', color: hasActiveFilters ? '#f1f0ee' : '#0c2520', border: '1px solid #d8d5ce', padding: '9px 16px', borderRadius: '20px', fontSize: '13px', cursor: 'pointer', fontFamily: 'inherit', display: 'flex', alignItems: 'center', gap: '6px', WebkitTapHighlightColor: 'transparent' }}
             >
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
                 <line x1="4" y1="6" x2="20" y2="6"/><line x1="8" y1="12" x2="16" y2="12"/><line x1="11" y1="18" x2="13" y2="18"/>
@@ -373,15 +381,15 @@ export default function Dashboard() {
             </button>
           </div>
 
-          {/* Filter pills — full bleed */}
+          {/* Filter pills */}
           <div className="pill-scroll" style={{ paddingLeft: '16px', paddingRight: '16px', marginBottom: '14px' }}>
-  <button className={`filter-pill${matchFilter === 'all' && !showSideHustle ? ' active' : ''}`} onClick={() => { setMatchFilter('all'); setShowSideHustle(false) }}>All jobs</button>
-  <button className={`filter-pill${showSideHustle ? ' active' : ''}`} onClick={() => setShowSideHustle(!showSideHustle)}>Side hustles</button>
-  <button className={`filter-pill${matchFilter === 'good_strong' ? ' active' : ''}`} onClick={() => setMatchFilter(matchFilter === 'good_strong' ? 'all' : 'good_strong')}>Good matches</button>
-  <button className={`filter-pill${matchFilter === 'strong' ? ' active' : ''}`} onClick={() => setMatchFilter(matchFilter === 'strong' ? 'all' : 'strong')}>Strong matches</button>
-</div>
+            <button className={`filter-pill${matchFilter === 'all' && !showSideHustle ? ' active' : ''}`} onClick={() => { setMatchFilter('all'); setShowSideHustle(false) }}>All jobs</button>
+            <button className={`filter-pill${showSideHustle ? ' active' : ''}`} onClick={() => setShowSideHustle(!showSideHustle)}>Side hustles</button>
+            <button className={`filter-pill${matchFilter === 'good_strong' ? ' active' : ''}`} onClick={() => setMatchFilter(matchFilter === 'good_strong' ? 'all' : 'good_strong')}>Good matches</button>
+            <button className={`filter-pill${matchFilter === 'strong' ? ' active' : ''}`} onClick={() => setMatchFilter(matchFilter === 'strong' ? 'all' : 'strong')}>Strong matches</button>
+          </div>
 
-          {/* Expanded filters panel */}
+          {/* Expanded filters */}
           {showFilters && (
             <div style={{ margin: '0 16px 16px', background: 'white', borderRadius: '14px', padding: '20px', border: '1px solid #e0ddd5' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
@@ -427,12 +435,10 @@ export default function Dashboard() {
             </div>
           )}
 
-          {/* Results count */}
           <p style={{ fontSize: '12px', color: '#888', margin: '0 0 12px', paddingLeft: '16px' }}>
             {jobs.length} {jobs.length === 1 ? 'result' : 'results'}
           </p>
 
-          {/* Job cards */}
           {jobs.length === 0 ? (
             <div style={{ margin: '0 16px', textAlign: 'center', padding: '48px 24px', background: 'white', borderRadius: '14px', border: '1px solid #e8e6e0' }}>
               <p style={{ fontFamily: 'Georgia, serif', fontSize: '17px', color: '#0c2520', margin: '0 0 6px' }}>No jobs found</p>
@@ -452,15 +458,10 @@ export default function Dashboard() {
                   <Link key={job.id} href={`/jobs/${job.id}`} style={{ textDecoration: 'none' }}>
                     <div className="job-card" style={{ background: 'white', borderRadius: '14px', padding: '16px', border: isStrong ? '1.5px solid #92d7af' : '1px solid #e8e4de', position: 'relative' }}>
                       <div style={{ position: 'absolute', top: '14px', right: '14px' }}>
-                        <button
-                          onClick={(e) => toggleSave(e, job.id)}
-                          className="save-btn"
-                          style={{ background: isSaved ? '#0c2520' : '#f1f0ee', color: isSaved ? '#f1f0ee' : '#0c2520', border: '1px solid #e0ddd5', padding: '6px 14px', borderRadius: '20px', fontSize: '11px', cursor: 'pointer', fontFamily: 'inherit', fontWeight: 500, WebkitTapHighlightColor: 'transparent' }}
-                        >
+                        <button onClick={(e) => toggleSave(e, job.id)} className="save-btn" style={{ background: isSaved ? '#0c2520' : '#f1f0ee', color: isSaved ? '#f1f0ee' : '#0c2520', border: '1px solid #e0ddd5', padding: '6px 14px', borderRadius: '20px', fontSize: '11px', cursor: 'pointer', fontFamily: 'inherit', fontWeight: 500, WebkitTapHighlightColor: 'transparent' }}>
                           {isSaved ? 'Saved' : 'Save'}
                         </button>
                       </div>
-
                       <div style={{ paddingRight: '72px' }}>
                         {(isStrong || isGood) && (
                           <span style={{ display: 'inline-block', background: isStrong ? '#92d7af' : '#e8efea', color: '#0c2520', padding: '2px 8px', borderRadius: '4px', fontSize: '10px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '6px' }}>
@@ -476,7 +477,6 @@ export default function Dashboard() {
                           {job.is_side_hustle && <span style={{ background: '#fde6c2', color: '#8a5a2e', padding: '3px 9px', borderRadius: '5px', fontSize: '11px' }}>Side hustle</span>}
                         </div>
                       </div>
-
                       <div style={{ borderTop: '1px solid #f0ede5', paddingTop: '10px', marginTop: '12px', display: 'flex', justifyContent: 'space-between' }}>
                         <span style={{ fontSize: '11px', color: '#888' }}>{formatRelativeDate(job.created_at)}</span>
                         {sentBy && <span style={{ fontSize: '11px', color: '#888' }}>via {sentBy}</span>}
