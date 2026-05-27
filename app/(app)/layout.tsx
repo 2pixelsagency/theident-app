@@ -50,14 +50,13 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   return (
     <div style={{ minHeight: '100vh', background: '#f1f0ee', fontFamily: 'system-ui, sans-serif' }}>
       <style>{`
-        .desk-nav-item:hover { background: #e8efea !important; }
         .desktop-sidebar { display: flex; }
         .mobile-nav { display: none; }
         .main-content { margin-left: 260px; }
         @media (max-width: 768px) {
           .desktop-sidebar { display: none !important; }
           .mobile-nav { display: flex !important; }
-          .main-content { margin-left: 0 !important; padding-bottom: 90px !important; }
+          .main-content { margin-left: 0 !important; padding-bottom: 100px !important; }
           .main-content.no-nav { padding-bottom: 0 !important; }
         }
         .mob-nav-btn {
@@ -67,35 +66,23 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           justify-content: center;
           gap: 5px;
           flex: 1;
-          padding: 12px 8px 6px;
+          padding: 10px 0 24px;
           text-decoration: none;
-          min-height: 64px;
+          min-height: 72px;
           -webkit-tap-highlight-color: transparent;
-          position: relative;
+          transition: opacity 0.15s ease;
         }
+        .mob-nav-btn:active { opacity: 0.5; }
         .mob-nav-btn span {
           font-size: 10px;
           font-weight: 400;
           color: #aaa;
+          font-family: system-ui, sans-serif;
+          line-height: 1;
         }
-        .mob-nav-btn.active span {
-          font-weight: 600;
-          color: #0c2520;
-        }
-        .mob-nav-btn svg {
-          color: #aaa;
-        }
-        .mob-nav-btn.active svg {
-          color: #0c2520;
-        }
-        .mob-nav-dot {
-          position: absolute;
-          top: 8px;
-          width: 4px;
-          height: 4px;
-          border-radius: 50%;
-          background: #0c2520;
-        }
+        .mob-nav-btn.active span { font-weight: 600; color: #0c2520; }
+        .mob-nav-btn svg { display: block; }
+        .desk-nav-item:hover { background: #e8efea !important; }
       `}</style>
 
       {/* Desktop sidebar */}
@@ -123,64 +110,66 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       {/* Mobile bottom nav */}
       {!isJobDetail && (
         <nav className="mobile-nav" style={{
-          position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 100,
-          background: 'rgba(241,240,238,0.96)',
+          position: 'fixed',
+          bottom: 0,
+          left: 0,
+          right: 0,
+          zIndex: 100,
+          background: '#f1f0ee',
           borderTop: '1px solid #e0ddd5',
-          backdropFilter: 'blur(12px)',
-          WebkitBackdropFilter: 'blur(12px)',
-          alignItems: 'stretch',
           paddingBottom: 'env(safe-area-inset-bottom)',
         }}>
           <div style={{ display: 'flex', width: '100%', alignItems: 'stretch' }}>
 
+            {/* Jobs */}
             <Link href="/dashboard" className={`mob-nav-btn${isActive('/dashboard') ? ' active' : ''}`}>
-              {isActive('/dashboard') && <div className="mob-nav-dot" />}
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
-                <rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/>
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={isActive('/dashboard') ? '#0c2520' : '#aaa'} strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
+                <rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/>
               </svg>
               <span>Jobs</span>
             </Link>
 
+            {/* Saved */}
             <Link href="/saved" className={`mob-nav-btn${isActive('/saved') ? ' active' : ''}`}>
-              {isActive('/saved') && <div className="mob-nav-dot" />}
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={isActive('/saved') ? '#0c2520' : '#aaa'} strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/>
               </svg>
               <span>Saved</span>
             </Link>
 
             {/* FAB */}
-            <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', paddingBottom: '8px' }}>
-              <Link href="/post-job" style={{ textDecoration: 'none' }}>
+            <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', paddingBottom: '12px' }}>
+              <Link href="/post-job" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                 <div style={{
-                  width: '56px', height: '56px', borderRadius: '50%',
+                  width: '50px', height: '50px', borderRadius: '50%',
                   background: '#0c2520',
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
                   transform: 'translateY(-8px)',
                   border: '4px solid #f1f0ee',
-                  boxShadow: '0 4px 16px rgba(12,37,32,0.25)',
+                  boxShadow: '0 4px 14px rgba(12,37,32,0.25)',
+                  WebkitTapHighlightColor: 'transparent',
                 }}>
-                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#f1f0ee" strokeWidth="2.2" strokeLinecap="round">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#f1f0ee" strokeWidth="2.4" strokeLinecap="round">
                     <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
                   </svg>
                 </div>
               </Link>
             </div>
 
+            {/* Talent */}
             <Link href="/browse" className={`mob-nav-btn${isActive('/browse') ? ' active' : ''}`}>
-              {isActive('/browse') && <div className="mob-nav-dot" />}
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
-                <circle cx="9" cy="7" r="4"/><path d="M3 21v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2"/>
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={isActive('/browse') ? '#0c2520' : '#aaa'} strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>
               </svg>
               <span>Talent</span>
             </Link>
 
+            {/* Ident */}
             <Link href="/profile" className={`mob-nav-btn${isActive('/profile') ? ' active' : ''}`}>
-              {isActive('/profile') && <div className="mob-nav-dot" />}
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
-                <circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/>
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={isActive('/profile') ? '#0c2520' : '#aaa'} strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
               </svg>
-              <span>Me</span>
+              <span>Ident</span>
             </Link>
 
           </div>
