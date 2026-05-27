@@ -375,11 +375,11 @@ export default function Dashboard() {
 
           {/* Filter pills — full bleed */}
           <div className="pill-scroll" style={{ paddingLeft: '16px', paddingRight: '16px', marginBottom: '14px' }}>
-            <button className={`filter-pill${matchFilter === 'all' ? ' active' : ''}`} onClick={() => setMatchFilter('all')}>All jobs</button>
-            <button className={`filter-pill${matchFilter === 'good_strong' ? ' active' : ''}`} onClick={() => setMatchFilter(matchFilter === 'good_strong' ? 'all' : 'good_strong')}>Good matches</button>
-            <button className={`filter-pill${matchFilter === 'strong' ? ' active' : ''}`} onClick={() => setMatchFilter(matchFilter === 'strong' ? 'all' : 'strong')}>Strong matches</button>
-            <button className={`filter-pill${showSideHustle ? ' active' : ''}`} onClick={() => setShowSideHustle(!showSideHustle)}>Side hustles</button>
-          </div>
+  <button className={`filter-pill${matchFilter === 'all' && !showSideHustle ? ' active' : ''}`} onClick={() => { setMatchFilter('all'); setShowSideHustle(false) }}>All jobs</button>
+  <button className={`filter-pill${showSideHustle ? ' active' : ''}`} onClick={() => setShowSideHustle(!showSideHustle)}>Side hustles</button>
+  <button className={`filter-pill${matchFilter === 'good_strong' ? ' active' : ''}`} onClick={() => setMatchFilter(matchFilter === 'good_strong' ? 'all' : 'good_strong')}>Good matches</button>
+  <button className={`filter-pill${matchFilter === 'strong' ? ' active' : ''}`} onClick={() => setMatchFilter(matchFilter === 'strong' ? 'all' : 'strong')}>Strong matches</button>
+</div>
 
           {/* Expanded filters panel */}
           {showFilters && (
