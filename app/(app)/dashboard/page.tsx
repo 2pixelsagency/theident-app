@@ -243,10 +243,10 @@ export default function Dashboard() {
     return 'Good evening'
   }
 
-  if (loading) return <div style={{ minHeight: '100vh', background: '#f1f0ee' }} />
+  if (loading) return <div />
 
   return (
-    <div style={{ minHeight: '100vh', background: '#f1f0ee', fontFamily: 'system-ui, sans-serif' }}>
+    <div style={{ fontFamily: 'system-ui, sans-serif' }}>
       <style>{`
         @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
         .fade-in { animation: fadeIn 0.4s ease-out; }
@@ -257,8 +257,6 @@ export default function Dashboard() {
         .spot-scroll::-webkit-scrollbar { display: none; }
         .pill-scroll { display: flex; gap: 8px; overflow-x: auto; scrollbar-width: none; -webkit-overflow-scrolling: touch; padding-bottom: 2px; }
         .pill-scroll::-webkit-scrollbar { display: none; }
-        .filter-pill { white-space: nowrap; padding: 9px 16px; border-radius: 20px; font-size: 13px; cursor: pointer; font-family: inherit; border: 1px solid #d8d5ce; background: #f1f0ee; color: #0c2520; transition: all 0.15s ease; -webkit-tap-highlight-color: transparent; }
-        .filter-pill.active { background: #0c2520; color: #f1f0ee; border-color: #0c2520; }
         .range-slider { -webkit-appearance: none; width: 100%; height: 4px; background: #d4d2cc; border-radius: 2px; outline: none; }
         .range-slider::-webkit-slider-thumb { -webkit-appearance: none; width: 22px; height: 22px; background: #0c2520; border-radius: 50%; cursor: pointer; }
         input[type=text]:focus, input[type=search]:focus { border-color: #0c2520 !important; outline: none; box-shadow: 0 0 0 1px #0c2520; }
@@ -306,7 +304,7 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* Spotlight — full bleed scroll */}
+        {/* Spotlight */}
         <div style={{ marginBottom: '24px' }}>
           <p style={{ fontFamily: 'Georgia, serif', fontSize: '17px', color: '#0c2520', margin: '0 0 12px', fontWeight: 500, paddingLeft: '16px' }}>In the spotlight</p>
           <div className="spot-scroll" style={{ paddingLeft: '16px', paddingRight: '16px' }}>
@@ -326,19 +324,24 @@ export default function Dashboard() {
                   const prodTypeName = getProductionTypeName(job.production_type_id)
                   return (
                     <Link key={job.id} href={`/jobs/${job.id}`} style={{ textDecoration: 'none', flexShrink: 0 }}>
-                      <div className="job-card" style={{ width: '220px', minHeight: '170px', background: isMint ? '#92d7af' : '#0c2520', borderRadius: '14px', padding: '18px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+                      <div className="job-card" style={{
+                        width: '220px', minHeight: '170px',
+                        background: isMint ? '#92d7af' : '#061410',
+                        borderRadius: '14px', padding: '18px',
+                        display: 'flex', flexDirection: 'column', justifyContent: 'space-between',
+                      }}>
                         <div>
-                          <p style={{ fontSize: '10px', color: isMint ? '#0c2520' : '#92d7af', margin: '0 0 8px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Spotlight</p>
+                          <p style={{ fontSize: '10px', color: isMint ? '#0c2520' : '#4ade80', margin: '0 0 8px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Spotlight</p>
                           <h3 style={{ fontFamily: 'Georgia, serif', fontSize: '15px', color: isMint ? '#0c2520' : '#f1f0ee', margin: '0 0 4px', fontWeight: 500, lineHeight: 1.2 }}>{title}</h3>
-                          {subtitle && <p style={{ fontSize: '11px', color: isMint ? '#0c2520' : '#a8c4b4', margin: '0 0 10px', fontStyle: 'italic' }}>In {subtitle}</p>}
+                          {subtitle && <p style={{ fontSize: '11px', color: isMint ? '#0c2520' : '#6b9e8a', margin: '0 0 10px', fontStyle: 'italic' }}>In {subtitle}</p>}
                           <div style={{ display: 'flex', gap: '5px', flexWrap: 'wrap' }}>
                             {job.location && (
-                              <span style={{ background: isMint ? 'rgba(0,0,0,0.1)' : 'rgba(255,255,255,0.12)', color: isMint ? '#0c2520' : '#f1f0ee', padding: '3px 8px', borderRadius: '5px', fontSize: '10px' }}>
+                              <span style={{ background: isMint ? 'rgba(0,0,0,0.1)' : 'rgba(255,255,255,0.08)', color: isMint ? '#0c2520' : '#e0f0e8', padding: '3px 8px', borderRadius: '5px', fontSize: '10px' }}>
                                 {job.location}
                               </span>
                             )}
                             {prodTypeName && (
-                              <span style={{ background: isMint ? 'rgba(0,0,0,0.1)' : 'rgba(255,255,255,0.12)', color: isMint ? '#0c2520' : '#f1f0ee', padding: '3px 8px', borderRadius: '5px', fontSize: '10px' }}>
+                              <span style={{ background: isMint ? 'rgba(0,0,0,0.1)' : 'rgba(255,255,255,0.08)', color: isMint ? '#0c2520' : '#e0f0e8', padding: '3px 8px', borderRadius: '5px', fontSize: '10px' }}>
                                 {prodTypeName}
                               </span>
                             )}
@@ -346,10 +349,10 @@ export default function Dashboard() {
                         </div>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '12px' }}>
                           {job.salary
-                            ? <span style={{ fontSize: '11px', background: isMint ? '#0c2520' : '#f1f0ee', color: isMint ? '#f1f0ee' : '#0c2520', padding: '3px 8px', borderRadius: '6px', fontWeight: 600 }}>{job.salary}</span>
+                            ? <span style={{ fontSize: '11px', background: isMint ? '#0c2520' : '#4ade80', color: isMint ? '#f1f0ee' : '#061410', padding: '3px 8px', borderRadius: '6px', fontWeight: 700 }}>{job.salary}</span>
                             : <span />
                           }
-                          <span style={{ fontSize: '11px', color: isMint ? '#0c2520' : '#a8c4b4' }}>{formatRelativeDate(job.created_at)}</span>
+                          <span style={{ fontSize: '11px', color: isMint ? '#0c2520' : '#6b9e8a' }}>{formatRelativeDate(job.created_at)}</span>
                         </div>
                       </div>
                     </Link>
@@ -383,10 +386,31 @@ export default function Dashboard() {
 
           {/* Filter pills */}
           <div className="pill-scroll" style={{ paddingLeft: '16px', paddingRight: '16px', marginBottom: '14px' }}>
-            <button className={`filter-pill${matchFilter === 'all' && !showSideHustle ? ' active' : ''}`} onClick={() => { setMatchFilter('all'); setShowSideHustle(false) }}>All jobs</button>
-            <button className={`filter-pill${showSideHustle ? ' active' : ''}`} onClick={() => setShowSideHustle(!showSideHustle)}>Side hustles</button>
-            <button className={`filter-pill${matchFilter === 'good_strong' ? ' active' : ''}`} onClick={() => setMatchFilter(matchFilter === 'good_strong' ? 'all' : 'good_strong')}>Good matches</button>
-            <button className={`filter-pill${matchFilter === 'strong' ? ' active' : ''}`} onClick={() => setMatchFilter(matchFilter === 'strong' ? 'all' : 'strong')}>Strong matches</button>
+            <button
+              onClick={() => { setMatchFilter('all'); setShowSideHustle(false) }}
+              style={{ whiteSpace: 'nowrap', padding: '9px 16px', borderRadius: '20px', fontSize: '13px', cursor: 'pointer', fontFamily: 'inherit', border: 'none', background: !showSideHustle ? '#0c2520' : '#e8e4de', color: !showSideHustle ? '#f1f0ee' : '#0c2520', fontWeight: !showSideHustle ? 600 : 400, WebkitTapHighlightColor: 'transparent', transition: 'all 0.15s ease' }}
+            >
+              Industry jobs
+            </button>
+            <button
+              onClick={() => setShowSideHustle(!showSideHustle)}
+              style={{ whiteSpace: 'nowrap', padding: '9px 16px', borderRadius: '20px', fontSize: '13px', cursor: 'pointer', fontFamily: 'inherit', border: 'none', background: showSideHustle ? '#0c2520' : '#e8e4de', color: showSideHustle ? '#f1f0ee' : '#0c2520', fontWeight: showSideHustle ? 600 : 400, WebkitTapHighlightColor: 'transparent', transition: 'all 0.15s ease' }}
+            >
+              Side hustles
+            </button>
+            <div style={{ width: '1px', background: '#d8d5ce', margin: '0 4px', alignSelf: 'stretch', flexShrink: 0 }} />
+            <button
+              onClick={() => setMatchFilter(matchFilter === 'good_strong' ? 'all' : 'good_strong')}
+              style={{ whiteSpace: 'nowrap', padding: '9px 16px', borderRadius: '20px', fontSize: '13px', cursor: 'pointer', fontFamily: 'inherit', border: `1px solid ${matchFilter === 'good_strong' ? '#4ade80' : '#d8d5ce'}`, background: matchFilter === 'good_strong' ? 'rgba(74,222,128,0.12)' : 'transparent', color: '#0c2520', fontWeight: matchFilter === 'good_strong' ? 600 : 400, WebkitTapHighlightColor: 'transparent', transition: 'all 0.15s ease' }}
+            >
+              Good matches
+            </button>
+            <button
+              onClick={() => setMatchFilter(matchFilter === 'strong' ? 'all' : 'strong')}
+              style={{ whiteSpace: 'nowrap', padding: '9px 16px', borderRadius: '20px', fontSize: '13px', cursor: 'pointer', fontFamily: 'inherit', border: `1px solid ${matchFilter === 'strong' ? '#4ade80' : '#d8d5ce'}`, background: matchFilter === 'strong' ? '#4ade80' : 'transparent', color: matchFilter === 'strong' ? '#061410' : '#0c2520', fontWeight: matchFilter === 'strong' ? 600 : 400, WebkitTapHighlightColor: 'transparent', transition: 'all 0.15s ease' }}
+            >
+              Strong matches
+            </button>
           </div>
 
           {/* Expanded filters */}
@@ -456,7 +480,7 @@ export default function Dashboard() {
                 const isSaved = savedIds.has(job.id)
                 return (
                   <Link key={job.id} href={`/jobs/${job.id}`} style={{ textDecoration: 'none' }}>
-                    <div className="job-card" style={{ background: 'white', borderRadius: '14px', padding: '16px', border: isStrong ? '1.5px solid #92d7af' : '1px solid #e8e4de', position: 'relative' }}>
+                    <div className="job-card" style={{ background: 'white', borderRadius: '14px', padding: '16px', border: isStrong ? '1.5px solid #4ade80' : '1px solid #e8e4de', position: 'relative' }}>
                       <div style={{ position: 'absolute', top: '14px', right: '14px' }}>
                         <button onClick={(e) => toggleSave(e, job.id)} className="save-btn" style={{ background: isSaved ? '#0c2520' : '#f1f0ee', color: isSaved ? '#f1f0ee' : '#0c2520', border: '1px solid #e0ddd5', padding: '6px 14px', borderRadius: '20px', fontSize: '11px', cursor: 'pointer', fontFamily: 'inherit', fontWeight: 500, WebkitTapHighlightColor: 'transparent' }}>
                           {isSaved ? 'Saved' : 'Save'}
@@ -464,7 +488,7 @@ export default function Dashboard() {
                       </div>
                       <div style={{ paddingRight: '72px' }}>
                         {(isStrong || isGood) && (
-                          <span style={{ display: 'inline-block', background: isStrong ? '#92d7af' : '#e8efea', color: '#0c2520', padding: '2px 8px', borderRadius: '4px', fontSize: '10px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '6px' }}>
+                          <span style={{ display: 'inline-block', background: isStrong ? '#4ade80' : 'rgba(74,222,128,0.15)', color: isStrong ? '#061410' : '#0c2520', padding: '2px 8px', borderRadius: '4px', fontSize: '10px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '6px' }}>
                             {isStrong ? 'Strong match' : 'Good match'}
                           </span>
                         )}
