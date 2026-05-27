@@ -66,9 +66,9 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           justify-content: center;
           gap: 4px;
           flex: 1;
-          padding: 12px 4px 10px;
+          padding: 12px 4px 24px;
           text-decoration: none;
-          min-height: 60px;
+          min-height: 76px;
           -webkit-tap-highlight-color: transparent;
           border-radius: 18px;
           transition: background 0.15s ease;
