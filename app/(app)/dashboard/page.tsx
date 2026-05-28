@@ -40,8 +40,64 @@ type ScoredJob = Job & {
 type SortOption = 'newest' | 'oldest' | 'az' | 'za'
 type MatchFilter = 'all' | 'good_strong' | 'strong'
 
+function CountLoader({ onDone }: { onDone: () => void }) {
+  const [step, setStep] = useState(0)
+  const counts = ['5', '6', '7', '8']
+
+  useEffect(() => {
+    if (step < counts.length) {
+      const t = setTimeout(() => setStep(s => s + 1), 320)
+      return () => clearTimeout(t)
+    } else {
+      const t = setTimeout(onDone, 200)
+      return () => clearTimeout(t)
+    }
+  }, [step, onDone])
+
+  return (
+    <div style={{
+      position: 'fixed', inset: 0, background: '#061410',
+      display: 'flex', alignItems: 'center', justifyContent: 'center',
+      zIndex: 999,
+    }}>
+      <style>{`
+        @keyframes countPop {
+          0% { opacity: 0; transform: scale(0.7); }
+          40% { opacity: 1; transform: scale(1.08); }
+          100% { opacity: 0.15; transform: scale(1); }
+        }
+        @keyframes loaderFadeOut {
+          from { opacity: 1; }
+          to { opacity: 0; }
+        }
+      `}</style>
+      <div style={{ display: 'flex', gap: '20px', alignItems: 'center' }}>
+        {counts.map((n, i) => (
+          <span
+            key={n}
+            style={{
+              fontFamily: 'Georgia, serif',
+              fontSize: '52px',
+              fontWeight: 500,
+              color: i === step - 1 ? '#4ade80' : '#f1f0ee',
+              opacity: i < step ? (i === step - 1 ? 1 : 0.12) : 0,
+              animation: i < step ? `countPop 0.32s ease-out forwards` : 'none',
+              transition: 'color 0.1s ease',
+              letterSpacing: '0.02em',
+            }}
+          >
+            {n}
+          </span>
+        ))}
+      </div>
+    </div>
+  )
+}
+
 export default function Dashboard() {
   const router = useRouter()
+  const [showLoader, setShowLoader] = useState(true)
+  const [loaderDone, setLoaderDone] = useState(false)
   const [productionTypes, setProductionTypes] = useState<Lookup[]>([])
   const [jobs, setJobs] = useState<ScoredJob[]>([])
   const [spotlightJobs, setSpotlightJobs] = useState<Job[]>([])
@@ -243,21 +299,18 @@ export default function Dashboard() {
     setProfile(prev => prev ? { ...prev, picture_url: publicUrl } : prev)
   }
 
-  const getGreeting = () => {
-    const h = new Date().getHours()
-    if (h < 12) return 'Good morning'
-    if (h < 18) return 'Good afternoon'
-    return 'Good evening'
+  if (showLoader) {
+    return <CountLoader onDone={() => setShowLoader(false)} />
   }
-
-  if (loading) return <div />
 
   return (
     <div style={{ fontFamily: 'system-ui, sans-serif' }}>
       <style>{`
         @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
         @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
-        .fade-in { animation: fadeIn 0.4s ease-out; }
+        @keyframes greetIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .fade-in { animation: fadeIn 0.5s ease-out; }
+        .greet-in { animation: greetIn 0.6s ease-out both; }
         .sheet { animation: slideUp 0.3s cubic-bezier(0.32, 0.72, 0, 1); }
         .job-card { transition: transform 0.2s ease, box-shadow 0.2s ease; }
         .job-card:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(12,37,32,0.08); }
@@ -270,14 +323,15 @@ export default function Dashboard() {
         .prod-chip { padding: 8px 14px; border-radius: 20px; font-size: 13px; cursor: pointer; font-family: inherit; border: 1px solid #e0ddd5; background: white; color: #0c2520; transition: all 0.15s ease; -webkit-tap-highlight-color: transparent; }
         .prod-chip.on { background: #0c2520; color: #f1f0ee; border-color: #0c2520; }
         .avatar-wrap:hover .avatar-overlay { opacity: 1 !important; }
+        .bell-btn:hover { background: #e8e4de !important; }
       `}</style>
 
-      {/* Filter sheet overlay */}
+      {/* Filter overlay */}
       {showFilters && (
         <div onClick={() => setShowFilters(false)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.4)', zIndex: 200 }} />
       )}
 
-      {/* Filter slide-up sheet */}
+      {/* Filter sheet */}
       {showFilters && (
         <div ref={sheetRef} className="sheet" style={{ position: 'fixed', bottom: 0, left: 0, right: 0, background: '#f1f0ee', borderRadius: '20px 20px 0 0', zIndex: 201, maxHeight: '85vh', overflowY: 'auto', paddingBottom: 'env(safe-area-inset-bottom)' }}>
           <div style={{ display: 'flex', justifyContent: 'center', padding: '12px 0 4px' }}>
@@ -297,7 +351,7 @@ export default function Dashboard() {
             <p style={{ fontSize: '11px', color: '#888', textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 600, margin: '0 0 10px' }}>Match</p>
             <div style={{ display: 'flex', gap: '8px', marginBottom: '24px', flexWrap: 'wrap' }}>
               {([['all', 'All jobs'], ['good_strong', 'Good matches'], ['strong', 'Strong matches']] as [MatchFilter, string][]).map(([val, label]) => (
-                <button key={val} onClick={() => setMatchFilter(val)} style={{ padding: '9px 16px', borderRadius: '20px', fontSize: '13px', cursor: 'pointer', fontFamily: 'inherit', WebkitTapHighlightColor: 'transparent', transition: 'all 0.15s ease', border: matchFilter === val ? 'none' : '1px solid #e0ddd5', background: matchFilter === val ? '#0c2520' : 'white', color: matchFilter === val ? '#f1f0ee' : '#0c2520', fontWeight: matchFilter === val ? 500 : 400 }}>
+                <button key={val} onClick={() => setMatchFilter(val)} style={{ padding: '9px 16px', borderRadius: '20px', fontSize: '13px', cursor: 'pointer', fontFamily: 'inherit', WebkitTapHighlightColor: 'transparent', border: matchFilter === val ? 'none' : '1px solid #e0ddd5', background: matchFilter === val ? '#0c2520' : 'white', color: matchFilter === val ? '#f1f0ee' : '#0c2520', fontWeight: matchFilter === val ? 500 : 400 }}>
                   {label}
                 </button>
               ))}
@@ -345,24 +399,38 @@ export default function Dashboard() {
 
       <div className="fade-in">
 
-        {/* Greeting */}
+        {/* Greeting header */}
         <div style={{ padding: '24px 16px 16px' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <div>
-              <p style={{ fontSize: '12px', color: '#888', margin: '0 0 3px' }}>{getGreeting()}</p>
-              <p style={{ fontFamily: 'Georgia, serif', fontSize: '22px', color: '#0c2520', margin: 0, fontWeight: 500 }}>
-                {profile?.first_name || 'Welcome back'}
+            <div className="greet-in">
+              <p style={{ fontSize: '12px', color: '#888', margin: '0 0 3px', letterSpacing: '0.02em' }}>
+                {new Date().toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' })}
+              </p>
+              <p style={{ fontFamily: 'Georgia, serif', fontSize: '20px', color: '#0c2520', margin: 0, fontWeight: 500, lineHeight: 1.2 }}>
+                Ready when you are,<br />{profile?.first_name || 'there'}
               </p>
             </div>
 
-            {/* Profile picture — tap to change */}
-            <label className="avatar-wrap" style={{ cursor: 'pointer', position: 'relative', flexShrink: 0 }}>
-              <div style={{ width: '42px', height: '42px', borderRadius: '50%', background: profile?.picture_url ? `url(${profile.picture_url}) center/cover` : '#e8efea', border: '2px solid #e0ddd5', overflow: 'hidden' }} />
-              <div className="avatar-overlay" style={{ position: 'absolute', inset: 0, borderRadius: '50%', background: 'rgba(12,37,32,0.45)', display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: 0, transition: 'opacity 0.2s ease' }}>
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#f1f0ee" strokeWidth="2" strokeLinecap="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
-              </div>
-              <input type="file" accept="image/*" style={{ display: 'none' }} onChange={handlePhotoChange} />
-            </label>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+              {/* Notification bell */}
+              <button className="bell-btn" style={{ width: '38px', height: '38px', borderRadius: '50%', background: 'white', border: '1px solid #e0ddd5', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', position: 'relative', flexShrink: 0, transition: 'background 0.15s ease', WebkitTapHighlightColor: 'transparent' }}>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#0c2520" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+                  <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+                </svg>
+                {/* Unread dot */}
+                <div style={{ position: 'absolute', top: '8px', right: '8px', width: '7px', height: '7px', borderRadius: '50%', background: '#4ade80', border: '1.5px solid #f1f0ee' }} />
+              </button>
+
+              {/* Profile picture */}
+              <label className="avatar-wrap" style={{ cursor: 'pointer', position: 'relative', flexShrink: 0 }}>
+                <div style={{ width: '38px', height: '38px', borderRadius: '50%', background: profile?.picture_url ? `url(${profile.picture_url}) center/cover` : '#e8efea', border: '2px solid #e0ddd5', overflow: 'hidden' }} />
+                <div className="avatar-overlay" style={{ position: 'absolute', inset: 0, borderRadius: '50%', background: 'rgba(12,37,32,0.45)', display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: 0, transition: 'opacity 0.2s ease' }}>
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#f1f0ee" strokeWidth="2" strokeLinecap="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+                </div>
+                <input type="file" accept="image/*" style={{ display: 'none' }} onChange={handlePhotoChange} />
+              </label>
+            </div>
           </div>
         </div>
 
@@ -438,7 +506,7 @@ export default function Dashboard() {
             </button>
           </div>
 
-          {/* Results + filter button */}
+          {/* Results + filter */}
           <div style={{ padding: '0 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
             <p style={{ fontSize: '13px', color: '#888', margin: 0 }}>
               {jobs.length} {jobs.length === 1 ? 'result' : 'results'}
