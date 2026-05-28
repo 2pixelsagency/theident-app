@@ -37,11 +37,20 @@ type ScoredJob = Job & {
   excluded: boolean
 }
 
+type Notification = {
+  id: string
+  type: 'match' | 'view' | 'application'
+  message: string
+  time: string
+  read: boolean
+}
+
 type SortOption = 'newest' | 'oldest' | 'az' | 'za'
 type MatchFilter = 'all' | 'good_strong' | 'strong'
 
 function CountLoader({ onDone }: { onDone: () => void }) {
   const [step, setStep] = useState(0)
+  const [fading, setFading] = useState(false)
   const counts = ['5', '6', '7', '8']
 
   useEffect(() => {
@@ -49,16 +58,24 @@ function CountLoader({ onDone }: { onDone: () => void }) {
       const t = setTimeout(() => setStep(s => s + 1), 320)
       return () => clearTimeout(t)
     } else {
-      const t = setTimeout(onDone, 200)
-      return () => clearTimeout(t)
+      const pause = setTimeout(() => setFading(true), 400)
+      return () => clearTimeout(pause)
     }
-  }, [step, onDone])
+  }, [step])
+
+  useEffect(() => {
+    if (!fading) return
+    const t = setTimeout(onDone, 700)
+    return () => clearTimeout(t)
+  }, [fading, onDone])
 
   return (
     <div style={{
       position: 'fixed', inset: 0, background: '#061410',
       display: 'flex', alignItems: 'center', justifyContent: 'center',
       zIndex: 999,
+      opacity: fading ? 0 : 1,
+      transition: fading ? 'opacity 0.7s ease' : 'none',
     }}>
       <style>{`
         @keyframes countPop {
@@ -66,26 +83,16 @@ function CountLoader({ onDone }: { onDone: () => void }) {
           40% { opacity: 1; transform: scale(1.08); }
           100% { opacity: 0.15; transform: scale(1); }
         }
-        @keyframes loaderFadeOut {
-          from { opacity: 1; }
-          to { opacity: 0; }
-        }
       `}</style>
       <div style={{ display: 'flex', gap: '20px', alignItems: 'center' }}>
         {counts.map((n, i) => (
-          <span
-            key={n}
-            style={{
-              fontFamily: 'Georgia, serif',
-              fontSize: '52px',
-              fontWeight: 500,
-              color: i === step - 1 ? '#4ade80' : '#f1f0ee',
-              opacity: i < step ? (i === step - 1 ? 1 : 0.12) : 0,
-              animation: i < step ? `countPop 0.32s ease-out forwards` : 'none',
-              transition: 'color 0.1s ease',
-              letterSpacing: '0.02em',
-            }}
-          >
+          <span key={n} style={{
+            fontFamily: 'Georgia, serif', fontSize: '52px', fontWeight: 500,
+            color: i === step - 1 ? '#4ade80' : '#f1f0ee',
+            opacity: i < step ? (i === step - 1 ? 1 : 0.12) : 0,
+            animation: i < step ? 'countPop 0.32s ease-out forwards' : 'none',
+            transition: 'color 0.1s ease', letterSpacing: '0.02em',
+          }}>
             {n}
           </span>
         ))}
@@ -96,14 +103,19 @@ function CountLoader({ onDone }: { onDone: () => void }) {
 
 export default function Dashboard() {
   const router = useRouter()
-  const [showLoader, setShowLoader] = useState(true)
-  const [loaderDone, setLoaderDone] = useState(false)
+  const [showLoader, setShowLoader] = useState(() => {
+    if (typeof window === 'undefined') return false
+    return !sessionStorage.getItem('ident_loader_seen')
+  })
   const [productionTypes, setProductionTypes] = useState<Lookup[]>([])
   const [jobs, setJobs] = useState<ScoredJob[]>([])
   const [spotlightJobs, setSpotlightJobs] = useState<Job[]>([])
   const [savedIds, setSavedIds] = useState<Set<string>>(new Set())
   const [loading, setLoading] = useState(true)
   const [profile, setProfile] = useState<{ first_name: string | null; picture_url: string | null; id: string } | null>(null)
+  const [showNotifications, setShowNotifications] = useState(false)
+  const [notifications, setNotifications] = useState<Notification[]>([])
+  const notifRef = useRef<HTMLDivElement>(null)
 
   const [userLocation, setUserLocation] = useState<string | null>(null)
   const [userMinAge, setUserMinAge] = useState<number | null>(null)
@@ -125,6 +137,16 @@ export default function Dashboard() {
   const [showFilters, setShowFilters] = useState(false)
 
   const sheetRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (notifRef.current && !notifRef.current.contains(e.target as Node)) {
+        setShowNotifications(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [])
 
   useEffect(() => {
     const load = async () => {
@@ -153,6 +175,15 @@ export default function Dashboard() {
           setUserEyeColourId(prof.eye_colour_id)
         }
         setUserSkillIds(new Set((userSkills || []).map(s => s.skill_id)))
+
+        // Load notifications — placeholder until notifications table exists
+        // Replace this with a real supabase query when ready
+        setNotifications([
+          // Uncomment to test with mock data:
+          // { id: '1', type: 'match', message: '3 new jobs match your profile', time: '2 hours ago', read: false },
+          // { id: '2', type: 'view', message: 'Someone viewed your profile', time: 'Yesterday', read: false },
+          // { id: '3', type: 'application', message: 'Update on your application for Guard/Dancer', time: '3 days ago', read: true },
+        ])
       }
       setLoading(false)
     }
@@ -260,6 +291,7 @@ export default function Dashboard() {
 
   const hasActiveFilters = selectedProductionTypes.length > 0 || minAge > 0 || maxAge < 100 || !!locationSearch || !!keywordSearch || matchFilter !== 'all'
   const activeFilterCount = selectedProductionTypes.length + (minAge > 0 || maxAge < 100 ? 1 : 0) + (locationSearch ? 1 : 0) + (matchFilter !== 'all' ? 1 : 0)
+  const unreadCount = notifications.filter(n => !n.read).length
 
   const getProductionTypeName = (id: number | null) => productionTypes.find(pt => pt.id === id)?.name || null
 
@@ -299,8 +331,25 @@ export default function Dashboard() {
     setProfile(prev => prev ? { ...prev, picture_url: publicUrl } : prev)
   }
 
+  const notifIcon = (type: Notification['type']) => {
+    if (type === 'match') return (
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#4ade80" strokeWidth="2" strokeLinecap="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+    )
+    if (type === 'view') return (
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#92d7af" strokeWidth="2" strokeLinecap="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+    )
+    return (
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#a8c4b4" strokeWidth="2" strokeLinecap="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+    )
+  }
+
   if (showLoader) {
-    return <CountLoader onDone={() => setShowLoader(false)} />
+    return (
+      <CountLoader onDone={() => {
+        sessionStorage.setItem('ident_loader_seen', '1')
+        setShowLoader(false)
+      }} />
+    )
   }
 
   return (
@@ -309,9 +358,11 @@ export default function Dashboard() {
         @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
         @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
         @keyframes greetIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes popIn { from { opacity: 0; transform: scale(0.92) translateY(-4px); } to { opacity: 1; transform: scale(1) translateY(0); } }
         .fade-in { animation: fadeIn 0.5s ease-out; }
         .greet-in { animation: greetIn 0.6s ease-out both; }
         .sheet { animation: slideUp 0.3s cubic-bezier(0.32, 0.72, 0, 1); }
+        .notif-popup { animation: popIn 0.2s ease-out; }
         .job-card { transition: transform 0.2s ease, box-shadow 0.2s ease; }
         .job-card:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(12,37,32,0.08); }
         .save-btn:hover { background: #0c2520 !important; color: #f1f0ee !important; }
@@ -323,15 +374,13 @@ export default function Dashboard() {
         .prod-chip { padding: 8px 14px; border-radius: 20px; font-size: 13px; cursor: pointer; font-family: inherit; border: 1px solid #e0ddd5; background: white; color: #0c2520; transition: all 0.15s ease; -webkit-tap-highlight-color: transparent; }
         .prod-chip.on { background: #0c2520; color: #f1f0ee; border-color: #0c2520; }
         .avatar-wrap:hover .avatar-overlay { opacity: 1 !important; }
-        .bell-btn:hover { background: #e8e4de !important; }
+        .notif-row:hover { background: #f5f3ee; }
       `}</style>
 
-      {/* Filter overlay */}
       {showFilters && (
         <div onClick={() => setShowFilters(false)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.4)', zIndex: 200 }} />
       )}
 
-      {/* Filter sheet */}
       {showFilters && (
         <div ref={sheetRef} className="sheet" style={{ position: 'fixed', bottom: 0, left: 0, right: 0, background: '#f1f0ee', borderRadius: '20px 20px 0 0', zIndex: 201, maxHeight: '85vh', overflowY: 'auto', paddingBottom: 'env(safe-area-inset-bottom)' }}>
           <div style={{ display: 'flex', justifyContent: 'center', padding: '12px 0 4px' }}>
@@ -399,7 +448,7 @@ export default function Dashboard() {
 
       <div className="fade-in">
 
-        {/* Greeting header */}
+        {/* Greeting */}
         <div style={{ padding: '24px 16px 16px' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <div className="greet-in">
@@ -412,19 +461,81 @@ export default function Dashboard() {
             </div>
 
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+
               {/* Notification bell */}
-              <button className="bell-btn" style={{ width: '38px', height: '38px', borderRadius: '50%', background: 'white', border: '1px solid #e0ddd5', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', position: 'relative', flexShrink: 0, transition: 'background 0.15s ease', WebkitTapHighlightColor: 'transparent' }}>
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#0c2520" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
-                  <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
-                </svg>
-                {/* Unread dot */}
-                <div style={{ position: 'absolute', top: '8px', right: '8px', width: '7px', height: '7px', borderRadius: '50%', background: '#4ade80', border: '1.5px solid #f1f0ee' }} />
-              </button>
+              <div ref={notifRef} style={{ position: 'relative' }}>
+                <button
+                  onClick={() => setShowNotifications(!showNotifications)}
+                  style={{ width: '38px', height: '38px', borderRadius: '50%', background: 'white', border: '1px solid #e0ddd5', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', position: 'relative', flexShrink: 0, WebkitTapHighlightColor: 'transparent' }}
+                >
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#0c2520" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+                    <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+                  </svg>
+                  {unreadCount > 0 && (
+                    <div style={{ position: 'absolute', top: '8px', right: '8px', width: '7px', height: '7px', borderRadius: '50%', background: '#4ade80', border: '1.5px solid #f1f0ee' }} />
+                  )}
+                </button>
+
+                {/* Notification popup */}
+                {showNotifications && (
+                  <div className="notif-popup" style={{
+                    position: 'absolute', top: 'calc(100% + 8px)', right: 0,
+                    width: '300px', background: 'white',
+                    borderRadius: '16px', border: '1px solid #e8e4de',
+                    boxShadow: '0 8px 32px rgba(12,37,32,0.12)',
+                    zIndex: 300, overflow: 'hidden',
+                  }}>
+                    <div style={{ padding: '14px 16px 10px', borderBottom: '1px solid #f0ede5', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <p style={{ fontFamily: 'Georgia, serif', fontSize: '15px', fontWeight: 500, color: '#0c2520', margin: 0 }}>Notifications</p>
+                      {unreadCount > 0 && (
+                        <button
+                          onClick={() => setNotifications(prev => prev.map(n => ({ ...n, read: true })))}
+                          style={{ background: 'none', border: 'none', fontSize: '11px', color: '#888', cursor: 'pointer', fontFamily: 'inherit', textDecoration: 'underline' }}
+                        >
+                          Mark all read
+                        </button>
+                      )}
+                    </div>
+
+                    {notifications.length === 0 ? (
+                      <div style={{ padding: '28px 16px', textAlign: 'center' }}>
+                        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#d4d2cc" strokeWidth="1.5" strokeLinecap="round" style={{ marginBottom: '10px' }}>
+                          <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+                          <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+                        </svg>
+                        <p style={{ fontSize: '13px', color: '#888', margin: 0 }}>No notifications yet</p>
+                      </div>
+                    ) : (
+                      <div>
+                        {notifications.map((n, i) => (
+                          <div key={n.id} className="notif-row" style={{ display: 'flex', gap: '12px', padding: '12px 16px', borderBottom: i < notifications.length - 1 ? '1px solid #f0ede5' : 'none', background: n.read ? 'white' : '#fafef9', cursor: 'pointer', transition: 'background 0.15s ease' }}>
+                            <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: '#f1f0ee', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                              {notifIcon(n.type)}
+                            </div>
+                            <div style={{ flex: 1 }}>
+                              <p style={{ fontSize: '13px', color: '#0c2520', margin: '0 0 2px', fontWeight: n.read ? 400 : 500, lineHeight: 1.3 }}>{n.message}</p>
+                              <p style={{ fontSize: '11px', color: '#aaa', margin: 0 }}>{n.time}</p>
+                            </div>
+                            {!n.read && (
+                              <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#4ade80', flexShrink: 0, marginTop: '6px' }} />
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
 
               {/* Profile picture */}
               <label className="avatar-wrap" style={{ cursor: 'pointer', position: 'relative', flexShrink: 0 }}>
-                <div style={{ width: '38px', height: '38px', borderRadius: '50%', background: profile?.picture_url ? `url(${profile.picture_url}) center/cover` : '#e8efea', border: '2px solid #e0ddd5', overflow: 'hidden' }} />
+                <div style={{
+                  width: '38px', height: '38px', borderRadius: '50%',
+                  background: profile?.picture_url ? `url(${profile.picture_url}) center/cover no-repeat` : '#e8efea',
+                  backgroundSize: 'cover',
+                  border: '2px solid #e0ddd5', overflow: 'hidden',
+                }} />
                 <div className="avatar-overlay" style={{ position: 'absolute', inset: 0, borderRadius: '50%', background: 'rgba(12,37,32,0.45)', display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: 0, transition: 'opacity 0.2s ease' }}>
                   <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#f1f0ee" strokeWidth="2" strokeLinecap="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
                 </div>
@@ -496,7 +607,6 @@ export default function Dashboard() {
 
         {/* Jobs section */}
         <div>
-          {/* Tab bar */}
           <div style={{ display: 'flex', margin: '0 16px 16px', background: '#e8e4de', borderRadius: '12px', padding: '4px', gap: '4px' }}>
             <button onClick={() => setShowSideHustle(false)} style={{ flex: 1, padding: '10px', borderRadius: '9px', border: 'none', background: !showSideHustle ? 'white' : 'transparent', color: '#0c2520', fontSize: '14px', fontWeight: !showSideHustle ? 600 : 400, cursor: 'pointer', fontFamily: 'inherit', transition: 'all 0.2s ease', boxShadow: !showSideHustle ? '0 1px 4px rgba(0,0,0,0.08)' : 'none', WebkitTapHighlightColor: 'transparent' }}>
               Industry jobs
@@ -506,7 +616,6 @@ export default function Dashboard() {
             </button>
           </div>
 
-          {/* Results + filter */}
           <div style={{ padding: '0 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
             <p style={{ fontSize: '13px', color: '#888', margin: 0 }}>
               {jobs.length} {jobs.length === 1 ? 'result' : 'results'}
