@@ -14,35 +14,36 @@ export async function GET(request: NextRequest) {
 
     let logo: string | null = null
 
-    // Priority 1 — dark theme (white/transparent logo, ideal for light backgrounds)
+    // Priority 1 — icon type, dark theme (black symbol on transparent)
     for (const logoObj of data.logos || []) {
-      if (logoObj.theme === 'dark') {
+      if (logoObj.type === 'icon' && logoObj.theme === 'dark') {
         for (const format of logoObj.formats || []) {
           if (format.src && (format.format === 'png' || format.format === 'svg')) {
-            logo = format.src
-            break
+            logo = format.src; break
           }
         }
       }
       if (logo) break
     }
 
-    // Priority 2 — icon type (just the symbol, cleaner)
+    // Priority 2 — icon type any theme
     if (!logo) {
       for (const logoObj of data.logos || []) {
         if (logoObj.type === 'icon') {
           for (const format of logoObj.formats || []) {
-            if (format.src) { logo = format.src; break }
+            if (format.src && (format.format === 'png' || format.format === 'svg')) {
+              logo = format.src; break
+            }
           }
         }
         if (logo) break
       }
     }
 
-    // Priority 3 — light theme
+    // Priority 3 — dark theme logo (white/transparent bg)
     if (!logo) {
       for (const logoObj of data.logos || []) {
-        if (logoObj.theme === 'light') {
+        if (logoObj.theme === 'dark') {
           for (const format of logoObj.formats || []) {
             if (format.src) { logo = format.src; break }
           }
@@ -51,7 +52,7 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    // Fallback — anything
+    // Fallback
     if (!logo) {
       logo = data.logos?.[0]?.formats?.[0]?.src || null
     }
