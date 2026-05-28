@@ -100,27 +100,21 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         </div>
         <div style={{ marginTop: '32px', paddingTop: '20px', borderTop: '1px solid #e8e6e0' }}>
           <p style={{ fontSize: '10px', color: '#999', textTransform: 'uppercase', letterSpacing: '0.08em', margin: '0 0 8px 14px', fontWeight: 600 }}>Your settings</p>
-          {navItem('/profile', 'Profile')}
+          {navItem('/profile', 'Account')}
           {navItem('/billing', 'Billing')}
           <button onClick={handleLogout} className="desk-nav-item" style={{ display: 'block', width: '100%', padding: '12px 14px', background: 'transparent', border: 'none', borderRadius: '8px', textAlign: 'left', cursor: 'pointer', fontSize: '14px', color: '#0c2520', fontFamily: 'inherit' }}>Logout</button>
         </div>
       </aside>
 
-      {/* Mobile bottom nav — single source of truth */}
+      {/* Mobile bottom nav */}
       {!isJobDetail && (
         <nav className="mobile-nav" style={{
-          position: 'fixed',
-          bottom: 0,
-          left: 0,
-          right: 0,
-          zIndex: 100,
-          background: '#f1f0ee',
-          borderTop: '1px solid #e0ddd5',
+          position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 100,
+          background: '#f1f0ee', borderTop: '1px solid #e0ddd5',
           paddingBottom: 'env(safe-area-inset-bottom)',
         }}>
           <div style={{ display: 'flex', width: '100%', alignItems: 'stretch' }}>
 
-            {/* Jobs */}
             <Link href="/dashboard" className={`mob-nav-btn${isActive('/dashboard') ? ' active' : ''}`}>
               <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={isActive('/dashboard') ? '#0c2520' : '#aaa'} strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
                 <rect x="3" y="3" width="7" height="7" rx="1"/>
@@ -131,7 +125,6 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
               <span>Jobs</span>
             </Link>
 
-            {/* Saved */}
             <Link href="/saved" className={`mob-nav-btn${isActive('/saved') ? ' active' : ''}`}>
               <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={isActive('/saved') ? '#0c2520' : '#aaa'} strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/>
@@ -159,7 +152,6 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
               </Link>
             </div>
 
-            {/* Talent */}
             <Link href="/browse" className={`mob-nav-btn${isActive('/browse') ? ' active' : ''}`}>
               <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={isActive('/browse') ? '#0c2520' : '#aaa'} strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
@@ -170,13 +162,12 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
               <span>Talent</span>
             </Link>
 
-            {/* Ident */}
             <Link href="/profile" className={`mob-nav-btn${isActive('/profile') ? ' active' : ''}`}>
               <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={isActive('/profile') ? '#0c2520' : '#aaa'} strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
-                <circle cx="12" cy="12" r="3"/>
-                <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+                <circle cx="12" cy="8" r="4"/>
+                <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/>
               </svg>
-              <span>Ident</span>
+              <span>Account</span>
             </Link>
 
           </div>
