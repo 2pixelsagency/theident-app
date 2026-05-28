@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
@@ -68,18 +68,17 @@ export default function Dashboard() {
   const [matchFilter, setMatchFilter] = useState<MatchFilter>('all')
   const [showFilters, setShowFilters] = useState(false)
 
+  const sheetRef = useRef<HTMLDivElement>(null)
+
   useEffect(() => {
     const load = async () => {
       const { data: { user } } = await supabase.auth.getUser()
-
       const [pt, spot] = await Promise.all([
         supabase.from('production_types').select('id, name').order('name'),
         supabase.from('jobs').select('*').eq('is_spotlighted', true).eq('is_published', true).order('created_at', { ascending: false }).limit(3),
       ])
-
       setProductionTypes(pt.data || [])
       setSpotlightJobs(spot.data || [])
-
       if (user) {
         const [{ data: saved }, { data: prof }, { data: userSkills }] = await Promise.all([
           supabase.from('saved_jobs').select('job_id').eq('profile_id', user.id),
@@ -99,7 +98,6 @@ export default function Dashboard() {
         }
         setUserSkillIds(new Set((userSkills || []).map(s => s.skill_id)))
       }
-
       setLoading(false)
     }
     load()
@@ -153,7 +151,6 @@ export default function Dashboard() {
         if (score >= 10) tier = 'strong'
         else if (score >= 6) tier = 'good'
       }
-
       return { ...job, matchScore: excluded ? 0 : score, matchTier: tier, matchReasons: reasons, excluded }
     }
 
@@ -192,7 +189,6 @@ export default function Dashboard() {
       } else if (matchFilter !== 'all') {
         filtered = [...filtered].sort((a, b) => b.matchScore - a.matchScore)
       }
-
       setJobs(filtered)
     }
 
@@ -249,18 +245,126 @@ export default function Dashboard() {
     <div style={{ fontFamily: 'system-ui, sans-serif' }}>
       <style>{`
         @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
         .fade-in { animation: fadeIn 0.4s ease-out; }
+        .sheet { animation: slideUp 0.3s cubic-bezier(0.32, 0.72, 0, 1); }
         .job-card { transition: transform 0.2s ease, box-shadow 0.2s ease; }
         .job-card:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(12,37,32,0.08); }
-        .save-btn:hover { background: #0c2520 !important; color: #f1f0ee !important; border-color: #0c2520 !important; }
+        .save-btn:hover { background: #0c2520 !important; color: #f1f0ee !important; }
         .spot-scroll { display: flex; gap: 12px; overflow-x: auto; padding-bottom: 8px; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
         .spot-scroll::-webkit-scrollbar { display: none; }
-        .pill-scroll { display: flex; gap: 8px; overflow-x: auto; scrollbar-width: none; -webkit-overflow-scrolling: touch; padding-bottom: 2px; }
-        .pill-scroll::-webkit-scrollbar { display: none; }
-        .range-slider { -webkit-appearance: none; width: 100%; height: 4px; background: #d4d2cc; border-radius: 2px; outline: none; }
+        .match-pill { display: flex; gap: 8px; overflow-x: auto; scrollbar-width: none; padding-bottom: 2px; }
+        .match-pill::-webkit-scrollbar { display: none; }
+        .range-slider { -webkit-appearance: none; width: 100%; height: 4px; background: #e0ddd5; border-radius: 2px; outline: none; }
         .range-slider::-webkit-slider-thumb { -webkit-appearance: none; width: 22px; height: 22px; background: #0c2520; border-radius: 50%; cursor: pointer; }
         input[type=text]:focus, input[type=search]:focus { border-color: #0c2520 !important; outline: none; box-shadow: 0 0 0 1px #0c2520; }
+        .prod-chip { padding: 8px 14px; border-radius: 20px; font-size: 13px; cursor: pointer; font-family: inherit; border: 1px solid #e0ddd5; background: white; color: #0c2520; transition: all 0.15s ease; -webkit-tap-highlight-color: transparent; }
+        .prod-chip.on { background: #0c2520; color: #f1f0ee; border-color: #0c2520; }
       `}</style>
+
+      {/* Filter sheet overlay */}
+      {showFilters && (
+        <div
+          onClick={() => setShowFilters(false)}
+          style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.4)', zIndex: 200 }}
+        />
+      )}
+
+      {/* Filter slide-up sheet */}
+      {showFilters && (
+        <div
+          ref={sheetRef}
+          className="sheet"
+          style={{
+            position: 'fixed', bottom: 0, left: 0, right: 0,
+            background: '#f1f0ee', borderRadius: '20px 20px 0 0',
+            zIndex: 201, maxHeight: '85vh', overflowY: 'auto',
+            paddingBottom: 'env(safe-area-inset-bottom)',
+          }}
+        >
+          {/* Handle */}
+          <div style={{ display: 'flex', justifyContent: 'center', padding: '12px 0 4px' }}>
+            <div style={{ width: '36px', height: '4px', borderRadius: '2px', background: '#d4d2cc' }} />
+          </div>
+
+          <div style={{ padding: '8px 20px 24px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+              <p style={{ fontFamily: 'Georgia, serif', fontSize: '18px', fontWeight: 500, color: '#0c2520', margin: 0 }}>Filters</p>
+              <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+                {hasActiveFilters && (
+                  <button onClick={clearAllFilters} style={{ background: 'none', border: 'none', fontSize: '13px', color: '#888', textDecoration: 'underline', cursor: 'pointer', fontFamily: 'inherit' }}>
+                    Clear all
+                  </button>
+                )}
+                <button onClick={() => setShowFilters(false)} style={{ background: '#0c2520', border: 'none', borderRadius: '50%', width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#f1f0ee" strokeWidth="2.5" strokeLinecap="round">
+                    <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+                  </svg>
+                </button>
+              </div>
+            </div>
+
+            {/* Match */}
+            <p style={{ fontSize: '11px', color: '#888', textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 600, margin: '0 0 10px' }}>Match</p>
+            <div style={{ display: 'flex', gap: '8px', marginBottom: '24px', flexWrap: 'wrap' }}>
+              {([['all', 'All jobs'], ['good_strong', 'Good matches'], ['strong', 'Strong matches']] as [MatchFilter, string][]).map(([val, label]) => (
+                <button key={val} onClick={() => setMatchFilter(val)}
+                  style={{ padding: '9px 16px', borderRadius: '20px', fontSize: '13px', cursor: 'pointer', fontFamily: 'inherit', WebkitTapHighlightColor: 'transparent', transition: 'all 0.15s ease', border: matchFilter === val ? 'none' : '1px solid #e0ddd5', background: matchFilter === val ? '#0c2520' : 'white', color: matchFilter === val ? '#f1f0ee' : '#0c2520', fontWeight: matchFilter === val ? 500 : 400 }}>
+                  {label}
+                </button>
+              ))}
+            </div>
+
+            {/* Production type */}
+            <p style={{ fontSize: '11px', color: '#888', textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 600, margin: '0 0 10px' }}>Production type</p>
+            <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginBottom: '24px' }}>
+              {productionTypes.map(pt => (
+                <button key={pt.id} className={`prod-chip${selectedProductionTypes.includes(pt.id) ? ' on' : ''}`}
+                  onClick={() => setSelectedProductionTypes(prev => prev.includes(pt.id) ? prev.filter(x => x !== pt.id) : [...prev, pt.id])}>
+                  {pt.name}
+                </button>
+              ))}
+            </div>
+
+            {/* Playing age */}
+            <p style={{ fontSize: '11px', color: '#888', textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 600, margin: '0 0 10px' }}>Playing age</p>
+            <div style={{ marginBottom: '24px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px' }}>
+                <span style={{ fontSize: '14px', color: '#0c2520', fontWeight: 500 }}>{minAge} – {maxAge}</span>
+                {(minAge > 0 || maxAge < 100) && (
+                  <button onClick={() => { setMinAge(0); setMaxAge(100) }} style={{ background: 'none', border: 'none', fontSize: '12px', color: '#888', cursor: 'pointer', fontFamily: 'inherit', textDecoration: 'underline' }}>Clear</button>
+                )}
+              </div>
+              <input type="range" min="0" max="100" value={minAge} onChange={(e) => { const v = Number(e.target.value); if (v <= maxAge) setMinAge(v) }} className="range-slider" style={{ marginBottom: '12px' }} />
+              <input type="range" min="0" max="100" value={maxAge} onChange={(e) => { const v = Number(e.target.value); if (v >= minAge) setMaxAge(v) }} className="range-slider" />
+            </div>
+
+            {/* Location */}
+            <p style={{ fontSize: '11px', color: '#888', textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 600, margin: '0 0 10px' }}>Location</p>
+            <input type="text" placeholder="e.g. London" value={locationSearch} onChange={(e) => setLocationSearch(e.target.value)}
+              style={{ width: '100%', padding: '13px 14px', border: '1px solid #e0ddd5', borderRadius: '12px', fontSize: '14px', fontFamily: 'inherit', boxSizing: 'border-box', marginBottom: '24px', background: 'white' }} />
+
+            {/* Sort */}
+            <p style={{ fontSize: '11px', color: '#888', textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 600, margin: '0 0 10px' }}>Sort by</p>
+            <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginBottom: '28px' }}>
+              {([['newest', 'Newest first'], ['oldest', 'Oldest first'], ['az', 'Name A–Z'], ['za', 'Name Z–A']] as [SortOption, string][]).map(([val, label]) => (
+                <button key={val} onClick={() => setSortBy(val)}
+                  style={{ padding: '9px 16px', borderRadius: '20px', fontSize: '13px', cursor: 'pointer', fontFamily: 'inherit', WebkitTapHighlightColor: 'transparent', border: sortBy === val ? 'none' : '1px solid #e0ddd5', background: sortBy === val ? '#0c2520' : 'white', color: sortBy === val ? '#f1f0ee' : '#0c2520', fontWeight: sortBy === val ? 500 : 400 }}>
+                  {label}
+                </button>
+              ))}
+            </div>
+
+            {/* Apply button */}
+            <button
+              onClick={() => setShowFilters(false)}
+              style={{ width: '100%', padding: '16px', background: '#0c2520', color: '#f1f0ee', border: 'none', borderRadius: '30px', fontSize: '15px', fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit' }}
+            >
+              {activeFilterCount > 0 ? `Apply (${activeFilterCount})` : 'Apply'}
+            </button>
+          </div>
+        </div>
+      )}
 
       <div className="fade-in">
 
@@ -274,11 +378,7 @@ export default function Dashboard() {
               </p>
             </div>
             <Link href="/profile">
-              <div style={{
-                width: '42px', height: '42px', borderRadius: '50%', flexShrink: 0,
-                background: profile?.picture_url ? `url(${profile.picture_url}) center/cover` : '#e8efea',
-                border: '2px solid #e0ddd5', cursor: 'pointer',
-              }} />
+              <div style={{ width: '42px', height: '42px', borderRadius: '50%', flexShrink: 0, background: profile?.picture_url ? `url(${profile.picture_url}) center/cover` : '#e8efea', border: '2px solid #e0ddd5', cursor: 'pointer' }} />
             </Link>
           </div>
         </div>
@@ -286,21 +386,11 @@ export default function Dashboard() {
         {/* Search */}
         <div style={{ padding: '0 16px 20px' }}>
           <div style={{ position: 'relative' }}>
-            <svg style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', color: '#888' }} width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+            <svg style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)' }} width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#aaa" strokeWidth="2" strokeLinecap="round">
               <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
             </svg>
-            <input
-              type="search"
-              placeholder="Search roles, projects, keywords..."
-              value={keywordSearch}
-              onChange={(e) => setKeywordSearch(e.target.value)}
-              style={{
-                width: '100%', padding: '13px 14px 13px 42px',
-                border: '1px solid #e0ddd5', borderRadius: '12px',
-                fontSize: '14px', fontFamily: 'inherit', background: 'white',
-                boxSizing: 'border-box', color: '#0c2520',
-              }}
-            />
+            <input type="search" placeholder="Search roles, projects, keywords..." value={keywordSearch} onChange={(e) => setKeywordSearch(e.target.value)}
+              style={{ width: '100%', padding: '13px 14px 13px 42px', border: '1px solid #e0ddd5', borderRadius: '12px', fontSize: '14px', fontFamily: 'inherit', background: 'white', boxSizing: 'border-box', color: '#0c2520' }} />
           </div>
         </div>
 
@@ -324,34 +414,18 @@ export default function Dashboard() {
                   const prodTypeName = getProductionTypeName(job.production_type_id)
                   return (
                     <Link key={job.id} href={`/jobs/${job.id}`} style={{ textDecoration: 'none', flexShrink: 0 }}>
-                      <div className="job-card" style={{
-                        width: '220px', minHeight: '170px',
-                        background: isMint ? '#92d7af' : '#061410',
-                        borderRadius: '14px', padding: '18px',
-                        display: 'flex', flexDirection: 'column', justifyContent: 'space-between',
-                      }}>
+                      <div className="job-card" style={{ width: '220px', minHeight: '170px', background: isMint ? '#92d7af' : '#061410', borderRadius: '14px', padding: '18px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
                         <div>
                           <p style={{ fontSize: '10px', color: isMint ? '#0c2520' : '#4ade80', margin: '0 0 8px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Spotlight</p>
                           <h3 style={{ fontFamily: 'Georgia, serif', fontSize: '15px', color: isMint ? '#0c2520' : '#f1f0ee', margin: '0 0 4px', fontWeight: 500, lineHeight: 1.2 }}>{title}</h3>
                           {subtitle && <p style={{ fontSize: '11px', color: isMint ? '#0c2520' : '#6b9e8a', margin: '0 0 10px', fontStyle: 'italic' }}>In {subtitle}</p>}
                           <div style={{ display: 'flex', gap: '5px', flexWrap: 'wrap' }}>
-                            {job.location && (
-                              <span style={{ background: isMint ? 'rgba(0,0,0,0.1)' : 'rgba(255,255,255,0.08)', color: isMint ? '#0c2520' : '#e0f0e8', padding: '3px 8px', borderRadius: '5px', fontSize: '10px' }}>
-                                {job.location}
-                              </span>
-                            )}
-                            {prodTypeName && (
-                              <span style={{ background: isMint ? 'rgba(0,0,0,0.1)' : 'rgba(255,255,255,0.08)', color: isMint ? '#0c2520' : '#e0f0e8', padding: '3px 8px', borderRadius: '5px', fontSize: '10px' }}>
-                                {prodTypeName}
-                              </span>
-                            )}
+                            {job.location && <span style={{ background: isMint ? 'rgba(0,0,0,0.1)' : 'rgba(255,255,255,0.08)', color: isMint ? '#0c2520' : '#e0f0e8', padding: '3px 8px', borderRadius: '5px', fontSize: '10px' }}>{job.location}</span>}
+                            {prodTypeName && <span style={{ background: isMint ? 'rgba(0,0,0,0.1)' : 'rgba(255,255,255,0.08)', color: isMint ? '#0c2520' : '#e0f0e8', padding: '3px 8px', borderRadius: '5px', fontSize: '10px' }}>{prodTypeName}</span>}
                           </div>
                         </div>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '12px' }}>
-                          {job.salary
-                            ? <span style={{ fontSize: '11px', background: isMint ? '#0c2520' : '#4ade80', color: isMint ? '#f1f0ee' : '#061410', padding: '3px 8px', borderRadius: '6px', fontWeight: 700 }}>{job.salary}</span>
-                            : <span />
-                          }
+                          {job.salary ? <span style={{ fontSize: '11px', background: isMint ? '#0c2520' : '#4ade80', color: isMint ? '#f1f0ee' : '#061410', padding: '3px 8px', borderRadius: '6px', fontWeight: 700 }}>{job.salary}</span> : <span />}
                           <span style={{ fontSize: '11px', color: isMint ? '#0c2520' : '#6b9e8a' }}>{formatRelativeDate(job.created_at)}</span>
                         </div>
                       </div>
@@ -371,11 +445,31 @@ export default function Dashboard() {
 
         {/* Jobs section */}
         <div>
-          <div style={{ padding: '0 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
-            <p style={{ fontFamily: 'Georgia, serif', fontSize: '17px', color: '#0c2520', margin: 0, fontWeight: 500 }}>Job opportunities</p>
+          {/* Tab bar — Industry / Side hustles */}
+          <div style={{ display: 'flex', margin: '0 16px 16px', background: '#e8e4de', borderRadius: '12px', padding: '4px', gap: '4px' }}>
             <button
-              onClick={() => setShowFilters(!showFilters)}
-              style={{ background: hasActiveFilters ? '#0c2520' : '#f1f0ee', color: hasActiveFilters ? '#f1f0ee' : '#0c2520', border: '1px solid #d8d5ce', padding: '9px 16px', borderRadius: '20px', fontSize: '13px', cursor: 'pointer', fontFamily: 'inherit', display: 'flex', alignItems: 'center', gap: '6px', WebkitTapHighlightColor: 'transparent' }}
+              onClick={() => setShowSideHustle(false)}
+              style={{ flex: 1, padding: '10px', borderRadius: '9px', border: 'none', background: !showSideHustle ? 'white' : 'transparent', color: '#0c2520', fontSize: '14px', fontWeight: !showSideHustle ? 600 : 400, cursor: 'pointer', fontFamily: 'inherit', transition: 'all 0.2s ease', boxShadow: !showSideHustle ? '0 1px 4px rgba(0,0,0,0.08)' : 'none', WebkitTapHighlightColor: 'transparent' }}
+            >
+              Industry jobs
+            </button>
+            <button
+              onClick={() => setShowSideHustle(true)}
+              style={{ flex: 1, padding: '10px', borderRadius: '9px', border: 'none', background: showSideHustle ? 'white' : 'transparent', color: '#0c2520', fontSize: '14px', fontWeight: showSideHustle ? 600 : 400, cursor: 'pointer', fontFamily: 'inherit', transition: 'all 0.2s ease', boxShadow: showSideHustle ? '0 1px 4px rgba(0,0,0,0.08)' : 'none', WebkitTapHighlightColor: 'transparent' }}
+            >
+              Side hustles
+            </button>
+          </div>
+
+          {/* Results row */}
+          <div style={{ padding: '0 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+            <p style={{ fontSize: '13px', color: '#888', margin: 0 }}>
+              {jobs.length} {jobs.length === 1 ? 'result' : 'results'}
+              {matchFilter !== 'all' && <span style={{ marginLeft: '6px', color: '#4ade80', fontWeight: 500 }}>· {matchFilter === 'strong' ? 'Strong matches' : 'Good & strong'}</span>}
+            </p>
+            <button
+              onClick={() => setShowFilters(true)}
+              style={{ background: hasActiveFilters ? '#0c2520' : 'white', color: hasActiveFilters ? '#f1f0ee' : '#0c2520', border: '1px solid #e0ddd5', padding: '8px 16px', borderRadius: '20px', fontSize: '13px', cursor: 'pointer', fontFamily: 'inherit', display: 'flex', alignItems: 'center', gap: '6px', WebkitTapHighlightColor: 'transparent' }}
             >
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
                 <line x1="4" y1="6" x2="20" y2="6"/><line x1="8" y1="12" x2="16" y2="12"/><line x1="11" y1="18" x2="13" y2="18"/>
@@ -383,85 +477,6 @@ export default function Dashboard() {
               Filters{activeFilterCount > 0 ? ` (${activeFilterCount})` : ''}
             </button>
           </div>
-
-          {/* Filter pills */}
-          <div className="pill-scroll" style={{ paddingLeft: '16px', paddingRight: '16px', marginBottom: '14px' }}>
-            <button
-              onClick={() => { setMatchFilter('all'); setShowSideHustle(false) }}
-              style={{ whiteSpace: 'nowrap', padding: '9px 16px', borderRadius: '20px', fontSize: '13px', cursor: 'pointer', fontFamily: 'inherit', border: 'none', background: !showSideHustle ? '#0c2520' : '#e8e4de', color: !showSideHustle ? '#f1f0ee' : '#0c2520', fontWeight: !showSideHustle ? 600 : 400, WebkitTapHighlightColor: 'transparent', transition: 'all 0.15s ease' }}
-            >
-              Industry jobs
-            </button>
-            <button
-              onClick={() => setShowSideHustle(!showSideHustle)}
-              style={{ whiteSpace: 'nowrap', padding: '9px 16px', borderRadius: '20px', fontSize: '13px', cursor: 'pointer', fontFamily: 'inherit', border: 'none', background: showSideHustle ? '#0c2520' : '#e8e4de', color: showSideHustle ? '#f1f0ee' : '#0c2520', fontWeight: showSideHustle ? 600 : 400, WebkitTapHighlightColor: 'transparent', transition: 'all 0.15s ease' }}
-            >
-              Side hustles
-            </button>
-            <div style={{ width: '1px', background: '#d8d5ce', margin: '0 4px', alignSelf: 'stretch', flexShrink: 0 }} />
-            <button
-              onClick={() => setMatchFilter(matchFilter === 'good_strong' ? 'all' : 'good_strong')}
-              style={{ whiteSpace: 'nowrap', padding: '9px 16px', borderRadius: '20px', fontSize: '13px', cursor: 'pointer', fontFamily: 'inherit', border: `1px solid ${matchFilter === 'good_strong' ? '#4ade80' : '#d8d5ce'}`, background: matchFilter === 'good_strong' ? 'rgba(74,222,128,0.12)' : 'transparent', color: '#0c2520', fontWeight: matchFilter === 'good_strong' ? 600 : 400, WebkitTapHighlightColor: 'transparent', transition: 'all 0.15s ease' }}
-            >
-              Good matches
-            </button>
-            <button
-              onClick={() => setMatchFilter(matchFilter === 'strong' ? 'all' : 'strong')}
-              style={{ whiteSpace: 'nowrap', padding: '9px 16px', borderRadius: '20px', fontSize: '13px', cursor: 'pointer', fontFamily: 'inherit', border: `1px solid ${matchFilter === 'strong' ? '#4ade80' : '#d8d5ce'}`, background: matchFilter === 'strong' ? '#4ade80' : 'transparent', color: matchFilter === 'strong' ? '#061410' : '#0c2520', fontWeight: matchFilter === 'strong' ? 600 : 400, WebkitTapHighlightColor: 'transparent', transition: 'all 0.15s ease' }}
-            >
-              Strong matches
-            </button>
-          </div>
-
-          {/* Expanded filters */}
-          {showFilters && (
-            <div style={{ margin: '0 16px 16px', background: 'white', borderRadius: '14px', padding: '20px', border: '1px solid #e0ddd5' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-                <p style={{ fontSize: '14px', fontWeight: 500, color: '#0c2520', margin: 0 }}>Filters</p>
-                {hasActiveFilters && <button onClick={clearAllFilters} style={{ background: 'none', border: 'none', fontSize: '12px', color: '#888', textDecoration: 'underline', cursor: 'pointer', fontFamily: 'inherit' }}>Clear all</button>}
-              </div>
-
-              <p style={{ fontSize: '11px', color: '#888', textTransform: 'uppercase', letterSpacing: '0.05em', margin: '0 0 8px', fontWeight: 600 }}>Production type</p>
-              <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', marginBottom: '20px' }}>
-                {productionTypes.map(pt => (
-                  <button key={pt.id}
-                    onClick={() => setSelectedProductionTypes(prev => prev.includes(pt.id) ? prev.filter(x => x !== pt.id) : [...prev, pt.id])}
-                    style={{ padding: '7px 12px', borderRadius: '20px', fontSize: '12px', cursor: 'pointer', fontFamily: 'inherit', border: selectedProductionTypes.includes(pt.id) ? '1px solid #0c2520' : '1px solid #e0ddd5', background: selectedProductionTypes.includes(pt.id) ? '#0c2520' : 'white', color: selectedProductionTypes.includes(pt.id) ? '#f1f0ee' : '#0c2520', WebkitTapHighlightColor: 'transparent' }}>
-                    {pt.name}
-                  </button>
-                ))}
-              </div>
-
-              <p style={{ fontSize: '11px', color: '#888', textTransform: 'uppercase', letterSpacing: '0.05em', margin: '0 0 8px', fontWeight: 600 }}>Playing age</p>
-              <div style={{ marginBottom: '20px' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
-                  <span style={{ fontSize: '13px', color: '#0c2520', fontWeight: 500 }}>{minAge} – {maxAge}</span>
-                  {(minAge > 0 || maxAge < 100) && <button onClick={() => { setMinAge(0); setMaxAge(100) }} style={{ background: 'none', border: 'none', fontSize: '11px', color: '#888', cursor: 'pointer', fontFamily: 'inherit', textDecoration: 'underline' }}>Clear</button>}
-                </div>
-                <input type="range" min="0" max="100" value={minAge} onChange={(e) => { const v = Number(e.target.value); if (v <= maxAge) setMinAge(v) }} className="range-slider" style={{ marginBottom: '10px' }} />
-                <input type="range" min="0" max="100" value={maxAge} onChange={(e) => { const v = Number(e.target.value); if (v >= minAge) setMaxAge(v) }} className="range-slider" />
-              </div>
-
-              <p style={{ fontSize: '11px', color: '#888', textTransform: 'uppercase', letterSpacing: '0.05em', margin: '0 0 8px', fontWeight: 600 }}>Location</p>
-              <input type="text" placeholder="e.g. London" value={locationSearch} onChange={(e) => setLocationSearch(e.target.value)}
-                style={{ width: '100%', padding: '11px 12px', border: '1px solid #e0ddd5', borderRadius: '8px', fontSize: '13px', fontFamily: 'inherit', boxSizing: 'border-box', marginBottom: '20px', background: '#f9f8f6' }} />
-
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <p style={{ fontSize: '11px', color: '#888', textTransform: 'uppercase', letterSpacing: '0.05em', margin: 0, fontWeight: 600 }}>Sort by</p>
-                <select value={sortBy} onChange={(e) => setSortBy(e.target.value as SortOption)}
-                  style={{ padding: '9px 12px', border: '1px solid #e0ddd5', borderRadius: '8px', fontSize: '13px', fontFamily: 'inherit', background: 'white', color: '#0c2520' }}>
-                  <option value="newest">Newest first</option>
-                  <option value="oldest">Oldest first</option>
-                  <option value="az">Name A–Z</option>
-                  <option value="za">Name Z–A</option>
-                </select>
-              </div>
-            </div>
-          )}
-
-          <p style={{ fontSize: '12px', color: '#888', margin: '0 0 12px', paddingLeft: '16px' }}>
-            {jobs.length} {jobs.length === 1 ? 'result' : 'results'}
-          </p>
 
           {jobs.length === 0 ? (
             <div style={{ margin: '0 16px', textAlign: 'center', padding: '48px 24px', background: 'white', borderRadius: '14px', border: '1px solid #e8e6e0' }}>
