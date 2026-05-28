@@ -11,7 +11,51 @@ export async function GET(request: NextRequest) {
     })
     if (!res.ok) return NextResponse.json({ logo: null })
     const data = await res.json()
-    const logo = data.logos?.[0]?.formats?.[0]?.src || null
+
+    let logo: string | null = null
+
+    // Priority 1 — dark theme (white/transparent logo, ideal for light backgrounds)
+    for (const logoObj of data.logos || []) {
+      if (logoObj.theme === 'dark') {
+        for (const format of logoObj.formats || []) {
+          if (format.src && (format.format === 'png' || format.format === 'svg')) {
+            logo = format.src
+            break
+          }
+        }
+      }
+      if (logo) break
+    }
+
+    // Priority 2 — icon type (just the symbol, cleaner)
+    if (!logo) {
+      for (const logoObj of data.logos || []) {
+        if (logoObj.type === 'icon') {
+          for (const format of logoObj.formats || []) {
+            if (format.src) { logo = format.src; break }
+          }
+        }
+        if (logo) break
+      }
+    }
+
+    // Priority 3 — light theme
+    if (!logo) {
+      for (const logoObj of data.logos || []) {
+        if (logoObj.theme === 'light') {
+          for (const format of logoObj.formats || []) {
+            if (format.src) { logo = format.src; break }
+          }
+        }
+        if (logo) break
+      }
+    }
+
+    // Fallback — anything
+    if (!logo) {
+      logo = data.logos?.[0]?.formats?.[0]?.src || null
+    }
+
     return NextResponse.json({ logo })
   } catch {
     return NextResponse.json({ logo: null })
