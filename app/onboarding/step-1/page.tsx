@@ -47,17 +47,67 @@ export default function OnboardingStep1() {
     setUploadingImage(false)
   }
 
+  const generateSlug = async (first: string, last: string, userId: string) => {
+    const base = `${first}-${last}`
+      .toLowerCase()
+      .trim()
+      .replace(/\s+/g, '-')
+      .replace(/[^a-z0-9-]/g, '')
+
+    // Check if slug already exists — if so append a number
+    const { data: existing } = await supabase
+      .from('profiles')
+      .select('id')
+      .eq('slug', base)
+      .neq('id', userId)
+      .maybeSingle()
+
+    if (!existing) return base
+
+    // Try base-2, base-3 etc until unique
+    let n = 2
+    while (true) {
+      const candidate = `${base}-${n}`
+      const { data: clash } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('slug', candidate)
+        .neq('id', userId)
+        .maybeSingle()
+      if (!clash) return candidate
+      n++
+    }
+  }
+
   const handleNext = async () => {
     setSaving(true)
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return
+
+    // Only generate slug if they have a name
+    let slug: string | undefined
+    if (firstName && lastName) {
+      // Check if they already have a slug — don't overwrite it
+      const { data: existing } = await supabase
+        .from('profiles')
+        .select('slug')
+        .eq('id', user.id)
+        .single()
+
+      if (!existing?.slug) {
+        slug = await generateSlug(firstName, lastName, user.id)
+      }
+    }
+
     await supabase.from('profiles').update({
       first_name: firstName,
       last_name: lastName,
       date_of_birth: dob || null,
       location,
       picture_url: pictureUrl,
+      ...(slug ? { slug } : {}),
     }).eq('id', user.id)
+
     router.push('/onboarding/step-2')
   }
 
@@ -74,41 +124,22 @@ export default function OnboardingStep1() {
         input:focus, textarea:focus { border-color: #0c2520 !important; box-shadow: 0 0 0 1px #0c2520 !important; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
         .fade-in { animation: fadeIn 0.5s ease-out; }
-
         .headshot-upload {
-          position: relative;
-          width: 140px;
-          height: 140px;
-          border-radius: 10px;
-          border: 1.5px dashed #c4c2bc;
-          background: transparent;
-          cursor: pointer;
-          transition: all 0.2s ease;
-          overflow: hidden;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          color: #0c2520;
-          font-size: 13px;
-          font-weight: 500;
+          position: relative; width: 140px; height: 140px; border-radius: 10px;
+          border: 1.5px dashed #c4c2bc; background: transparent; cursor: pointer;
+          transition: all 0.2s ease; overflow: hidden; display: flex;
+          align-items: center; justify-content: center; color: #0c2520;
+          font-size: 13px; font-weight: 500;
         }
-        .headshot-upload:hover {
-          transform: translateY(-2px);
-          border-color: #0c2520;
-          background: white;
-        }
-        .headshot-upload.has-image {
-          border: 1.5px solid #0c2520;
-          background-size: cover;
-          background-position: center;
-        }
+        .headshot-upload:hover { transform: translateY(-2px); border-color: #0c2520; background: white; }
+        .headshot-upload.has-image { border: 1.5px solid #0c2520; background-size: cover; background-position: center; }
       `}</style>
 
       <div className="fade-in" style={{ width: '100%', maxWidth: '520px' }}>
         <h1 style={{ fontFamily: 'Georgia, serif', fontSize: '28px', fontWeight: 500, color: '#0c2520', textAlign: 'center', margin: '0 0 8px' }}>Let&apos;s get to know you!</h1>
         <p style={{ textAlign: 'center', color: '#666', fontSize: '13px', margin: '0 0 32px' }}>Your headshot is the first thing casting directors see — make it count.</p>
 
-        {/* HEADSHOT */}
+        {/* Headshot */}
         <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '32px' }}>
           <label
             className={`headshot-upload ${pictureUrl ? 'has-image' : ''}`}
@@ -122,17 +153,17 @@ export default function OnboardingStep1() {
 
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '16px' }}>
           <div>
-            <label style={{ display: 'block', fontSize: '13px', color: '#0c2520', marginBottom: '6px', fontWeight: 500 }}>First Name</label>
+            <label style={{ display: 'block', fontSize: '13px', color: '#0c2520', marginBottom: '6px', fontWeight: 500 }}>First name</label>
             <input type="text" value={firstName} onChange={(e) => setFirstName(e.target.value)} style={inputStyle} />
           </div>
           <div>
-            <label style={{ display: 'block', fontSize: '13px', color: '#0c2520', marginBottom: '6px', fontWeight: 500 }}>Last Name</label>
+            <label style={{ display: 'block', fontSize: '13px', color: '#0c2520', marginBottom: '6px', fontWeight: 500 }}>Last name</label>
             <input type="text" value={lastName} onChange={(e) => setLastName(e.target.value)} style={inputStyle} />
           </div>
         </div>
 
         <div style={{ marginBottom: '16px' }}>
-          <label style={{ display: 'block', fontSize: '13px', color: '#0c2520', marginBottom: '6px', fontWeight: 500 }}>Date of Birth</label>
+          <label style={{ display: 'block', fontSize: '13px', color: '#0c2520', marginBottom: '6px', fontWeight: 500 }}>Date of birth</label>
           <input type="date" value={dob} onChange={(e) => setDob(e.target.value)} style={inputStyle} />
         </div>
 
