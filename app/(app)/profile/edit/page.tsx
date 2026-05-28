@@ -4,11 +4,11 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 
-type Reel = { id?: string; label: string; url: string; sort_order: number; file?: File }
-type Credit = { id?: string; title: string; role: string; year: string; logo_url: string }
+type Reel = { id?: string; label: string; url: string; sort_order: number }
+type Credit = { id?: string; title: string; role: string; year: string; thumbnail_url: string; director: string; production_company: string }
 type Brand = { id?: string; brand_name: string; logo_url: string | null; loading?: boolean }
 type Testimonial = { id?: string; quote: string; author_name: string; author_title: string }
-type GalleryImage = { id?: string; url: string; file?: File }
+type GalleryImage = { id?: string; url: string }
 type FAQ = { id?: string; question: string; answer: string }
 
 export default function EditProfile() {
@@ -55,7 +55,7 @@ export default function EditProfile() {
 
       if (prof) { setSlug(prof.slug || ''); setBio(prof.bio || '') }
       setReels(reelData?.map(r => ({ id: r.id, label: r.label, url: r.url, sort_order: r.sort_order })) || [])
-      setCredits(creditData?.map(c => ({ id: c.id, title: c.title || '', role: c.role || '', year: c.year?.toString() || '', logo_url: c.logo_url || '' })) || [])
+      setCredits(creditData?.map(c => ({ id: c.id, title: c.title || '', role: c.role || '', year: c.year?.toString() || '', thumbnail_url: c.thumbnail_url || '', director: c.director || '', production_company: c.production_company || '' })) || [])
       setBrands(brandData?.map(b => ({ id: b.id, brand_name: b.brand_name, logo_url: b.logo_url })) || [])
       setTestimonials(testimonialData?.map(t => ({ id: t.id, quote: t.quote, author_name: t.author_name, author_title: t.author_title || '' })) || [])
       setGallery(galleryData?.map(g => ({ id: g.id, url: g.url })) || [])
@@ -125,10 +125,18 @@ export default function EditProfile() {
     if (!profileId) return
     setSaving(true)
     for (const c of credits) {
+      const payload = {
+        title: c.title,
+        role: c.role || null,
+        year: c.year ? parseInt(c.year) : null,
+        thumbnail_url: c.thumbnail_url || null,
+        director: c.director || null,
+        production_company: c.production_company || null,
+      }
       if (c.id) {
-        await supabase.from('credits').update({ title: c.title, role: c.role, year: c.year ? parseInt(c.year) : null, logo_url: c.logo_url }).eq('id', c.id)
+        await supabase.from('credits').update(payload).eq('id', c.id)
       } else {
-        await supabase.from('credits').insert({ profile_id: profileId, title: c.title, role: c.role, year: c.year ? parseInt(c.year) : null, logo_url: c.logo_url })
+        await supabase.from('credits').insert({ profile_id: profileId, ...payload })
       }
     }
     setSaving(false)
@@ -178,6 +186,14 @@ export default function EditProfile() {
     showToast('FAQs saved')
   }
 
+  const uploadThumbnail = async (file: File, index: number) => {
+    if (!profileId) return
+    const path = `${profileId}/credits/${Date.now()}-${file.name}`
+    await supabase.storage.from('gallery').upload(path, file, { upsert: true })
+    const { data: { publicUrl } } = supabase.storage.from('gallery').getPublicUrl(path)
+    setCredits(prev => prev.map((item, idx) => idx === index ? { ...item, thumbnail_url: publicUrl } : item))
+  }
+
   const sections = ['basics', 'reels', 'brands', 'credits', 'testimonials', 'gallery', 'faqs']
   const sectionLabels: Record<string, string> = { basics: 'Basics', reels: 'Reels', brands: 'Brands', credits: 'Credits', testimonials: 'Testimonials', gallery: 'Gallery', faqs: 'FAQs' }
 
@@ -190,7 +206,11 @@ export default function EditProfile() {
 
   return (
     <div style={{ fontFamily: 'system-ui, sans-serif', maxWidth: '680px', margin: '0 auto', padding: '0 0 80px' }}>
-      <style>{`input:focus, textarea:focus { border-color: #0c2520 !important; outline: none; box-shadow: 0 0 0 1px #0c2520; } textarea { resize: vertical; }`}</style>
+      <style>{`
+        input:focus, textarea:focus { border-color: #0c2520 !important; outline: none; box-shadow: 0 0 0 1px #0c2520; }
+        textarea { resize: vertical; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+      `}</style>
 
       {toast && (
         <div style={{ position: 'fixed', bottom: '110px', left: '50%', transform: 'translateX(-50%)', background: '#0c2520', color: '#f1f0ee', padding: '12px 24px', borderRadius: '30px', fontSize: '13px', fontWeight: 500, zIndex: 300, whiteSpace: 'nowrap' }}>
@@ -275,7 +295,10 @@ export default function EditProfile() {
                     <img src={b.logo_url} alt={b.brand_name} style={{ width: '36px', height: '36px', objectFit: 'contain', flexShrink: 0 }} />
                   ) : (
                     <div style={{ width: '36px', height: '36px', borderRadius: '6px', background: '#f1f0ee', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                      {b.loading ? <div style={{ width: '12px', height: '12px', border: '1.5px solid #0c2520', borderTopColor: 'transparent', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} /> : <span style={{ fontSize: '10px', color: '#ccc' }}>?</span>}
+                      {b.loading
+                        ? <div style={{ width: '12px', height: '12px', border: '1.5px solid #0c2520', borderTopColor: 'transparent', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
+                        : <span style={{ fontSize: '10px', color: '#ccc' }}>?</span>
+                      }
                     </div>
                   )}
                   <input
@@ -305,34 +328,61 @@ export default function EditProfile() {
             <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '16px' }}>
               {credits.map((c, i) => (
                 <div key={i} style={{ background: 'white', borderRadius: '10px', padding: '16px', border: '1px solid #e8e4de' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
                     <p style={{ fontSize: '13px', fontWeight: 600, color: '#0c2520', margin: 0 }}>Credit {i + 1}</p>
                     <button onClick={() => setCredits(prev => prev.filter((_, idx) => idx !== i))} style={deleteBtn}>
                       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
                     </button>
                   </div>
+
+                  {/* Thumbnail */}
+                  <div style={{ marginBottom: '14px' }}>
+                    <label style={labelStyle}>Thumbnail</label>
+                    {c.thumbnail_url ? (
+                      <div style={{ position: 'relative', display: 'inline-block' }}>
+                        <img src={c.thumbnail_url} alt="" style={{ width: '120px', height: '80px', objectFit: 'cover', borderRadius: '8px', display: 'block' }} />
+                        <button
+                          onClick={() => setCredits(prev => prev.map((item, idx) => idx === i ? { ...item, thumbnail_url: '' } : item))}
+                          style={{ position: 'absolute', top: '4px', right: '4px', background: 'rgba(0,0,0,0.5)', border: 'none', borderRadius: '50%', width: '20px', height: '20px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                        >
+                          <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3" strokeLinecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                        </button>
+                      </div>
+                    ) : (
+                      <label style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '10px 16px', background: '#f9f8f6', border: '1px dashed #d4d2cc', borderRadius: '8px', cursor: 'pointer', fontSize: '13px', color: '#888' }}>
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                        Upload image
+                        <input type="file" accept="image/*" style={{ display: 'none' }} onChange={e => { const f = e.target.files?.[0]; if (f) uploadThumbnail(f, i) }} />
+                      </label>
+                    )}
+                  </div>
+
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
                     <div>
                       <label style={labelStyle}>Title</label>
-                      <input value={c.title} onChange={e => setCredits(prev => prev.map((item, idx) => idx === i ? { ...item, title: e.target.value } : item))} placeholder="Wicked" style={inputStyle} />
+                      <input value={c.title} onChange={e => setCredits(prev => prev.map((item, idx) => idx === i ? { ...item, title: e.target.value } : item))} placeholder="Casamigos" style={inputStyle} />
                     </div>
                     <div>
                       <label style={labelStyle}>Role</label>
-                      <input value={c.role} onChange={e => setCredits(prev => prev.map((item, idx) => idx === i ? { ...item, role: e.target.value } : item))} placeholder="Lead dancer" style={inputStyle} />
+                      <input value={c.role} onChange={e => setCredits(prev => prev.map((item, idx) => idx === i ? { ...item, role: e.target.value } : item))} placeholder="Featured twin" style={inputStyle} />
+                    </div>
+                    <div>
+                      <label style={labelStyle}>Director</label>
+                      <input value={c.director} onChange={e => setCredits(prev => prev.map((item, idx) => idx === i ? { ...item, director: e.target.value } : item))} placeholder="Jane Smith" style={inputStyle} />
+                    </div>
+                    <div>
+                      <label style={labelStyle}>Production company</label>
+                      <input value={c.production_company} onChange={e => setCredits(prev => prev.map((item, idx) => idx === i ? { ...item, production_company: e.target.value } : item))} placeholder="RSC / BBC" style={inputStyle} />
                     </div>
                     <div>
                       <label style={labelStyle}>Year</label>
                       <input value={c.year} onChange={e => setCredits(prev => prev.map((item, idx) => idx === i ? { ...item, year: e.target.value } : item))} placeholder="2024" style={inputStyle} />
                     </div>
-                    <div>
-                      <label style={labelStyle}>Logo URL</label>
-                      <input value={c.logo_url} onChange={e => setCredits(prev => prev.map((item, idx) => idx === i ? { ...item, logo_url: e.target.value } : item))} placeholder="https://..." style={inputStyle} />
-                    </div>
                   </div>
                 </div>
               ))}
             </div>
-            <button onClick={() => setCredits(prev => [...prev, { title: '', role: '', year: '', logo_url: '' }])} style={addBtn}>+ Add credit</button>
+            <button onClick={() => setCredits(prev => [...prev, { title: '', role: '', year: '', thumbnail_url: '', director: '', production_company: '' }])} style={addBtn}>+ Add credit</button>
             <div style={{ marginTop: '20px' }}>
               <button onClick={saveCredits} style={saveBtn} disabled={saving}>Save credits</button>
             </div>
