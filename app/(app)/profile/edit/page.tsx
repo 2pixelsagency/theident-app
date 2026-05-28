@@ -1,1 +1,437 @@
+'use client'
 
+import { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
+import { supabase } from '@/lib/supabase'
+
+type Reel = { id?: string; label: string; url: string; sort_order: number; file?: File }
+type Credit = { id?: string; title: string; role: string; year: string; logo_url: string }
+type Brand = { id?: string; brand_name: string; logo_url: string | null; loading?: boolean }
+type Testimonial = { id?: string; quote: string; author_name: string; author_title: string }
+type GalleryImage = { id?: string; url: string; file?: File }
+type FAQ = { id?: string; question: string; answer: string }
+
+export default function EditProfile() {
+  const router = useRouter()
+  const [profileId, setProfileId] = useState<string | null>(null)
+  const [slug, setSlug] = useState('')
+  const [bio, setBio] = useState('')
+  const [saving, setSaving] = useState(false)
+  const [toast, setToast] = useState<string | null>(null)
+  const [activeSection, setActiveSection] = useState('basics')
+
+  const [reels, setReels] = useState<Reel[]>([])
+  const [credits, setCredits] = useState<Credit[]>([])
+  const [brands, setBrands] = useState<Brand[]>([])
+  const [testimonials, setTestimonials] = useState<Testimonial[]>([])
+  const [gallery, setGallery] = useState<GalleryImage[]>([])
+  const [faqs, setFaqs] = useState<FAQ[]>([])
+  const [uploadingReel, setUploadingReel] = useState(false)
+  const [uploadingGallery, setUploadingGallery] = useState(false)
+
+  useEffect(() => {
+    const load = async () => {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) { router.push('/login'); return }
+      setProfileId(user.id)
+
+      const [
+        { data: prof },
+        { data: reelData },
+        { data: creditData },
+        { data: brandData },
+        { data: testimonialData },
+        { data: galleryData },
+        { data: faqData },
+      ] = await Promise.all([
+        supabase.from('profiles').select('slug, bio').eq('id', user.id).single(),
+        supabase.from('reels').select('*').eq('profile_id', user.id).order('sort_order'),
+        supabase.from('credits').select('*').eq('profile_id', user.id).order('year', { ascending: false }),
+        supabase.from('profile_brands').select('*').eq('profile_id', user.id).order('sort_order'),
+        supabase.from('testimonials').select('*').eq('profile_id', user.id).order('sort_order'),
+        supabase.from('gallery_images').select('*').eq('profile_id', user.id).order('sort_order'),
+        supabase.from('faqs').select('*').eq('profile_id', user.id).order('sort_order'),
+      ])
+
+      if (prof) { setSlug(prof.slug || ''); setBio(prof.bio || '') }
+      setReels(reelData?.map(r => ({ id: r.id, label: r.label, url: r.url, sort_order: r.sort_order })) || [])
+      setCredits(creditData?.map(c => ({ id: c.id, title: c.title || '', role: c.role || '', year: c.year?.toString() || '', logo_url: c.logo_url || '' })) || [])
+      setBrands(brandData?.map(b => ({ id: b.id, brand_name: b.brand_name, logo_url: b.logo_url })) || [])
+      setTestimonials(testimonialData?.map(t => ({ id: t.id, quote: t.quote, author_name: t.author_name, author_title: t.author_title || '' })) || [])
+      setGallery(galleryData?.map(g => ({ id: g.id, url: g.url })) || [])
+      setFaqs(faqData?.map(f => ({ id: f.id, question: f.question, answer: f.answer })) || [])
+    }
+    load()
+  }, [router])
+
+  const showToast = (msg: string) => { setToast(msg); setTimeout(() => setToast(null), 3000) }
+
+  const saveBasics = async () => {
+    if (!profileId) return
+    setSaving(true)
+    await supabase.from('profiles').update({ slug: slug.toLowerCase().replace(/\s+/g, '-'), bio }).eq('id', profileId)
+    setSaving(false)
+    showToast('Saved')
+  }
+
+  const uploadReel = async (file: File) => {
+    if (!profileId) return
+    setUploadingReel(true)
+    const path = `${profileId}/reels/${Date.now()}-${file.name}`
+    const { error } = await supabase.storage.from('reels').upload(path, file)
+    if (error) { setUploadingReel(false); showToast('Upload failed'); return }
+    const { data: { publicUrl } } = supabase.storage.from('reels').getPublicUrl(path)
+    const label = file.name.replace(/\.[^.]+$/, '')
+    const { data: newReel } = await supabase.from('reels').insert({ profile_id: profileId, label, url: publicUrl, sort_order: reels.length }).select().single()
+    if (newReel) setReels(prev => [...prev, { id: newReel.id, label: newReel.label, url: newReel.url, sort_order: newReel.sort_order }])
+    setUploadingReel(false)
+    showToast('Reel uploaded')
+  }
+
+  const deleteReel = async (id?: string, index?: number) => {
+    if (id) await supabase.from('reels').delete().eq('id', id)
+    setReels(prev => prev.filter((_, i) => i !== index))
+  }
+
+  const updateReelLabel = async (index: number, label: string) => {
+    const r = reels[index]
+    setReels(prev => prev.map((item, i) => i === index ? { ...item, label } : item))
+    if (r.id) await supabase.from('reels').update({ label }).eq('id', r.id)
+  }
+
+  const lookupBrandLogo = async (index: number, brandName: string) => {
+    setBrands(prev => prev.map((b, i) => i === index ? { ...b, loading: true } : b))
+    try {
+      const res = await fetch(`/api/brandfetch?brand=${encodeURIComponent(brandName)}`)
+      const { logo } = await res.json()
+      setBrands(prev => prev.map((b, i) => i === index ? { ...b, logo_url: logo, loading: false } : b))
+    } catch {
+      setBrands(prev => prev.map((b, i) => i === index ? { ...b, loading: false } : b))
+    }
+  }
+
+  const saveBrands = async () => {
+    if (!profileId) return
+    setSaving(true)
+    await supabase.from('profile_brands').delete().eq('profile_id', profileId)
+    if (brands.length > 0) {
+      await supabase.from('profile_brands').insert(brands.map((b, i) => ({ profile_id: profileId, brand_name: b.brand_name, logo_url: b.logo_url, sort_order: i })))
+    }
+    setSaving(false)
+    showToast('Brands saved')
+  }
+
+  const saveCredits = async () => {
+    if (!profileId) return
+    setSaving(true)
+    for (const c of credits) {
+      if (c.id) {
+        await supabase.from('credits').update({ title: c.title, role: c.role, year: c.year ? parseInt(c.year) : null, logo_url: c.logo_url }).eq('id', c.id)
+      } else {
+        await supabase.from('credits').insert({ profile_id: profileId, title: c.title, role: c.role, year: c.year ? parseInt(c.year) : null, logo_url: c.logo_url })
+      }
+    }
+    setSaving(false)
+    showToast('Credits saved')
+  }
+
+  const saveTestimonials = async () => {
+    if (!profileId) return
+    setSaving(true)
+    await supabase.from('testimonials').delete().eq('profile_id', profileId)
+    if (testimonials.length > 0) {
+      await supabase.from('testimonials').insert(testimonials.map((t, i) => ({ profile_id: profileId, quote: t.quote, author_name: t.author_name, author_title: t.author_title, sort_order: i })))
+    }
+    setSaving(false)
+    showToast('Testimonials saved')
+  }
+
+  const uploadGalleryImages = async (files: FileList) => {
+    if (!profileId) return
+    setUploadingGallery(true)
+    for (const file of Array.from(files)) {
+      const path = `${profileId}/gallery/${Date.now()}-${file.name}`
+      const { error } = await supabase.storage.from('gallery').upload(path, file)
+      if (!error) {
+        const { data: { publicUrl } } = supabase.storage.from('gallery').getPublicUrl(path)
+        const { data: img } = await supabase.from('gallery_images').insert({ profile_id: profileId, url: publicUrl, sort_order: gallery.length }).select().single()
+        if (img) setGallery(prev => [...prev, { id: img.id, url: img.url }])
+      }
+    }
+    setUploadingGallery(false)
+    showToast('Images uploaded')
+  }
+
+  const deleteGalleryImage = async (id?: string, index?: number) => {
+    if (id) await supabase.from('gallery_images').delete().eq('id', id)
+    setGallery(prev => prev.filter((_, i) => i !== index))
+  }
+
+  const saveFaqs = async () => {
+    if (!profileId) return
+    setSaving(true)
+    await supabase.from('faqs').delete().eq('profile_id', profileId)
+    if (faqs.length > 0) {
+      await supabase.from('faqs').insert(faqs.map((f, i) => ({ profile_id: profileId, question: f.question, answer: f.answer, sort_order: i })))
+    }
+    setSaving(false)
+    showToast('FAQs saved')
+  }
+
+  const sections = ['basics', 'reels', 'brands', 'credits', 'testimonials', 'gallery', 'faqs']
+  const sectionLabels: Record<string, string> = { basics: 'Basics', reels: 'Reels', brands: 'Brands', credits: 'Credits', testimonials: 'Testimonials', gallery: 'Gallery', faqs: 'FAQs' }
+
+  const inputStyle: React.CSSProperties = { width: '100%', padding: '12px 14px', border: '1px solid #e0ddd5', borderRadius: '10px', fontSize: '14px', fontFamily: 'inherit', background: 'white', boxSizing: 'border-box', color: '#0c2520' }
+  const labelStyle: React.CSSProperties = { fontSize: '12px', fontWeight: 600, color: '#0c2520', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block', marginBottom: '6px' }
+  const sectionTitle: React.CSSProperties = { fontFamily: 'Georgia, serif', fontSize: '20px', fontWeight: 500, color: '#0c2520', margin: '0 0 20px' }
+  const addBtn: React.CSSProperties = { background: 'transparent', border: '1px dashed #d4d2cc', borderRadius: '10px', padding: '12px', width: '100%', fontSize: '13px', color: '#888', cursor: 'pointer', fontFamily: 'inherit', textAlign: 'center' }
+  const saveBtn: React.CSSProperties = { background: '#0c2520', color: '#f1f0ee', border: 'none', borderRadius: '30px', padding: '13px 28px', fontSize: '14px', fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit', opacity: saving ? 0.7 : 1 }
+  const deleteBtn: React.CSSProperties = { background: 'none', border: 'none', cursor: 'pointer', color: '#ccc', padding: '4px', flexShrink: 0 }
+
+  return (
+    <div style={{ fontFamily: 'system-ui, sans-serif', maxWidth: '680px', margin: '0 auto', padding: '0 0 80px' }}>
+      <style>{`input:focus, textarea:focus { border-color: #0c2520 !important; outline: none; box-shadow: 0 0 0 1px #0c2520; } textarea { resize: vertical; }`}</style>
+
+      {toast && (
+        <div style={{ position: 'fixed', bottom: '110px', left: '50%', transform: 'translateX(-50%)', background: '#0c2520', color: '#f1f0ee', padding: '12px 24px', borderRadius: '30px', fontSize: '13px', fontWeight: 500, zIndex: 300, whiteSpace: 'nowrap' }}>
+          {toast}
+        </div>
+      )}
+
+      {/* Header */}
+      <div style={{ padding: '24px 20px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div>
+          <p style={{ fontSize: '12px', color: '#888', margin: '0 0 2px' }}>Your public profile</p>
+          <p style={{ fontFamily: 'Georgia, serif', fontSize: '20px', color: '#0c2520', margin: 0, fontWeight: 500 }}>Edit profile</p>
+        </div>
+        {slug && (
+          <a href={`/${slug}`} target="_blank" style={{ fontSize: '12px', color: '#0c2520', textDecoration: 'none', background: 'white', border: '1px solid #e0ddd5', padding: '8px 14px', borderRadius: '20px' }}>
+            View live
+          </a>
+        )}
+      </div>
+
+      {/* Section tabs */}
+      <div style={{ display: 'flex', gap: '4px', overflowX: 'auto', padding: '0 20px 16px', scrollbarWidth: 'none' }}>
+        {sections.map(s => (
+          <button key={s} onClick={() => setActiveSection(s)} style={{ padding: '8px 14px', borderRadius: '20px', border: 'none', background: activeSection === s ? '#0c2520' : 'white', color: activeSection === s ? '#f1f0ee' : '#0c2520', fontSize: '13px', cursor: 'pointer', fontFamily: 'inherit', fontWeight: activeSection === s ? 500 : 400, whiteSpace: 'nowrap', WebkitTapHighlightColor: 'transparent' }}>
+            {sectionLabels[s]}
+          </button>
+        ))}
+      </div>
+
+      <div style={{ padding: '0 20px' }}>
+
+        {/* BASICS */}
+        {activeSection === 'basics' && (
+          <div>
+            <p style={sectionTitle}>Basics</p>
+            <div style={{ marginBottom: '16px' }}>
+              <label style={labelStyle}>Profile URL slug</label>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <span style={{ fontSize: '13px', color: '#888', flexShrink: 0 }}>theident.me/</span>
+                <input value={slug} onChange={e => setSlug(e.target.value)} placeholder="sol-adlam" style={inputStyle} />
+              </div>
+            </div>
+            <div style={{ marginBottom: '24px' }}>
+              <label style={labelStyle}>Bio — one line, make it count</label>
+              <textarea value={bio} onChange={e => setBio(e.target.value)} placeholder="Identical twins who love to have a laugh and never take life too seriously." rows={3} style={{ ...inputStyle, lineHeight: 1.5 }} />
+            </div>
+            <button onClick={saveBasics} style={saveBtn} disabled={saving}>Save basics</button>
+          </div>
+        )}
+
+        {/* REELS */}
+        {activeSection === 'reels' && (
+          <div>
+            <p style={sectionTitle}>Reels</p>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '16px' }}>
+              {reels.map((r, i) => (
+                <div key={i} style={{ background: 'white', borderRadius: '10px', padding: '14px', border: '1px solid #e8e4de', display: 'flex', gap: '12px', alignItems: 'center' }}>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#92d7af" strokeWidth="2" strokeLinecap="round"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg>
+                  <input value={r.label} onChange={e => updateReelLabel(i, e.target.value)} style={{ ...inputStyle, flex: 1 }} />
+                  <button onClick={() => deleteReel(r.id, i)} style={deleteBtn}>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+                  </button>
+                </div>
+              ))}
+            </div>
+            <label style={{ ...addBtn, display: 'block', cursor: 'pointer' }}>
+              {uploadingReel ? 'Uploading...' : '+ Upload reel (MP4, MOV)'}
+              <input type="file" accept="video/*" style={{ display: 'none' }} onChange={e => { const f = e.target.files?.[0]; if (f) uploadReel(f) }} />
+            </label>
+          </div>
+        )}
+
+        {/* BRANDS */}
+        {activeSection === 'brands' && (
+          <div>
+            <p style={sectionTitle}>Brands</p>
+            <p style={{ fontSize: '13px', color: '#888', margin: '0 0 16px' }}>Type a brand name and we will find the logo automatically.</p>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '16px' }}>
+              {brands.map((b, i) => (
+                <div key={i} style={{ background: 'white', borderRadius: '10px', padding: '14px', border: '1px solid #e8e4de', display: 'flex', gap: '12px', alignItems: 'center' }}>
+                  {b.logo_url ? (
+                    <img src={b.logo_url} alt={b.brand_name} style={{ width: '36px', height: '36px', objectFit: 'contain', flexShrink: 0 }} />
+                  ) : (
+                    <div style={{ width: '36px', height: '36px', borderRadius: '6px', background: '#f1f0ee', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      {b.loading ? <div style={{ width: '12px', height: '12px', border: '1.5px solid #0c2520', borderTopColor: 'transparent', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} /> : <span style={{ fontSize: '10px', color: '#ccc' }}>?</span>}
+                    </div>
+                  )}
+                  <input
+                    value={b.brand_name}
+                    onChange={e => setBrands(prev => prev.map((item, idx) => idx === i ? { ...item, brand_name: e.target.value, logo_url: null } : item))}
+                    onBlur={() => { if (b.brand_name) lookupBrandLogo(i, b.brand_name) }}
+                    placeholder="e.g. Casamigos"
+                    style={{ ...inputStyle, flex: 1 }}
+                  />
+                  <button onClick={() => setBrands(prev => prev.filter((_, idx) => idx !== i))} style={deleteBtn}>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+                  </button>
+                </div>
+              ))}
+            </div>
+            <button onClick={() => setBrands(prev => [...prev, { brand_name: '', logo_url: null }])} style={addBtn}>+ Add brand</button>
+            <div style={{ marginTop: '20px' }}>
+              <button onClick={saveBrands} style={saveBtn} disabled={saving}>Save brands</button>
+            </div>
+          </div>
+        )}
+
+        {/* CREDITS */}
+        {activeSection === 'credits' && (
+          <div>
+            <p style={sectionTitle}>Credits</p>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '16px' }}>
+              {credits.map((c, i) => (
+                <div key={i} style={{ background: 'white', borderRadius: '10px', padding: '16px', border: '1px solid #e8e4de' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+                    <p style={{ fontSize: '13px', fontWeight: 600, color: '#0c2520', margin: 0 }}>Credit {i + 1}</p>
+                    <button onClick={() => setCredits(prev => prev.filter((_, idx) => idx !== i))} style={deleteBtn}>
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+                    </button>
+                  </div>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+                    <div>
+                      <label style={labelStyle}>Title</label>
+                      <input value={c.title} onChange={e => setCredits(prev => prev.map((item, idx) => idx === i ? { ...item, title: e.target.value } : item))} placeholder="Wicked" style={inputStyle} />
+                    </div>
+                    <div>
+                      <label style={labelStyle}>Role</label>
+                      <input value={c.role} onChange={e => setCredits(prev => prev.map((item, idx) => idx === i ? { ...item, role: e.target.value } : item))} placeholder="Lead dancer" style={inputStyle} />
+                    </div>
+                    <div>
+                      <label style={labelStyle}>Year</label>
+                      <input value={c.year} onChange={e => setCredits(prev => prev.map((item, idx) => idx === i ? { ...item, year: e.target.value } : item))} placeholder="2024" style={inputStyle} />
+                    </div>
+                    <div>
+                      <label style={labelStyle}>Logo URL</label>
+                      <input value={c.logo_url} onChange={e => setCredits(prev => prev.map((item, idx) => idx === i ? { ...item, logo_url: e.target.value } : item))} placeholder="https://..." style={inputStyle} />
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+            <button onClick={() => setCredits(prev => [...prev, { title: '', role: '', year: '', logo_url: '' }])} style={addBtn}>+ Add credit</button>
+            <div style={{ marginTop: '20px' }}>
+              <button onClick={saveCredits} style={saveBtn} disabled={saving}>Save credits</button>
+            </div>
+          </div>
+        )}
+
+        {/* TESTIMONIALS */}
+        {activeSection === 'testimonials' && (
+          <div>
+            <p style={sectionTitle}>Testimonials</p>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '16px' }}>
+              {testimonials.map((t, i) => (
+                <div key={i} style={{ background: 'white', borderRadius: '10px', padding: '16px', border: '1px solid #e8e4de' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '12px' }}>
+                    <p style={{ fontSize: '13px', fontWeight: 600, color: '#0c2520', margin: 0 }}>Testimonial {i + 1}</p>
+                    <button onClick={() => setTestimonials(prev => prev.filter((_, idx) => idx !== i))} style={deleteBtn}>
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+                    </button>
+                  </div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                    <div>
+                      <label style={labelStyle}>Quote</label>
+                      <textarea value={t.quote} onChange={e => setTestimonials(prev => prev.map((item, idx) => idx === i ? { ...item, quote: e.target.value } : item))} rows={3} placeholder="Working with them is always a highlight..." style={{ ...inputStyle, lineHeight: 1.5 }} />
+                    </div>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+                      <div>
+                        <label style={labelStyle}>Name</label>
+                        <input value={t.author_name} onChange={e => setTestimonials(prev => prev.map((item, idx) => idx === i ? { ...item, author_name: e.target.value } : item))} placeholder="David Leighton" style={inputStyle} />
+                      </div>
+                      <div>
+                        <label style={labelStyle}>Title</label>
+                        <input value={t.author_title} onChange={e => setTestimonials(prev => prev.map((item, idx) => idx === i ? { ...item, author_title: e.target.value } : item))} placeholder="Choreographer" style={inputStyle} />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+            <button onClick={() => setTestimonials(prev => [...prev, { quote: '', author_name: '', author_title: '' }])} style={addBtn}>+ Add testimonial</button>
+            <div style={{ marginTop: '20px' }}>
+              <button onClick={saveTestimonials} style={saveBtn} disabled={saving}>Save testimonials</button>
+            </div>
+          </div>
+        )}
+
+        {/* GALLERY */}
+        {activeSection === 'gallery' && (
+          <div>
+            <p style={sectionTitle}>Gallery</p>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '8px', marginBottom: '16px' }}>
+              {gallery.map((img, i) => (
+                <div key={i} style={{ position: 'relative', aspectRatio: '1', borderRadius: '8px', overflow: 'hidden', background: `url(${img.url}) center/cover` }}>
+                  <button onClick={() => deleteGalleryImage(img.id, i)} style={{ position: 'absolute', top: '6px', right: '6px', background: 'rgba(0,0,0,0.5)', border: 'none', borderRadius: '50%', width: '24px', height: '24px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                  </button>
+                </div>
+              ))}
+            </div>
+            <label style={{ ...addBtn, display: 'block', cursor: 'pointer' }}>
+              {uploadingGallery ? 'Uploading...' : '+ Upload photos'}
+              <input type="file" accept="image/*" multiple style={{ display: 'none' }} onChange={e => { if (e.target.files) uploadGalleryImages(e.target.files) }} />
+            </label>
+          </div>
+        )}
+
+        {/* FAQS */}
+        {activeSection === 'faqs' && (
+          <div>
+            <p style={sectionTitle}>FAQs</p>
+            <p style={{ fontSize: '13px', color: '#888', margin: '0 0 16px' }}>Add fun, personal questions that show who you are.</p>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '16px' }}>
+              {faqs.map((f, i) => (
+                <div key={i} style={{ background: 'white', borderRadius: '10px', padding: '16px', border: '1px solid #e8e4de' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '12px' }}>
+                    <p style={{ fontSize: '13px', fontWeight: 600, color: '#0c2520', margin: 0 }}>FAQ {i + 1}</p>
+                    <button onClick={() => setFaqs(prev => prev.filter((_, idx) => idx !== i))} style={deleteBtn}>
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+                    </button>
+                  </div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                    <div>
+                      <label style={labelStyle}>Question</label>
+                      <input value={f.question} onChange={e => setFaqs(prev => prev.map((item, idx) => idx === i ? { ...item, question: e.target.value } : item))} placeholder="What do you do in your free time?" style={inputStyle} />
+                    </div>
+                    <div>
+                      <label style={labelStyle}>Answer</label>
+                      <textarea value={f.answer} onChange={e => setFaqs(prev => prev.map((item, idx) => idx === i ? { ...item, answer: e.target.value } : item))} rows={2} placeholder="I love..." style={{ ...inputStyle, lineHeight: 1.5 }} />
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+            <button onClick={() => setFaqs(prev => [...prev, { question: '', answer: '' }])} style={addBtn}>+ Add FAQ</button>
+            <div style={{ marginTop: '20px' }}>
+              <button onClick={saveFaqs} style={saveBtn} disabled={saving}>Save FAQs</button>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
