@@ -225,7 +225,7 @@ export default function EditProfile() {
           <p style={{ fontFamily: 'Georgia, serif', fontSize: '20px', color: '#0c2520', margin: 0, fontWeight: 500 }}>Edit profile</p>
         </div>
         {slug && (
-          <a href={`/${slug}`} target="_blank" style={{ fontSize: '12px', color: '#0c2520', textDecoration: 'none', background: 'white', border: '1px solid #e0ddd5', padding: '8px 14px', borderRadius: '20px' }}>
+          <a href={`/${slug}?from=app`} target="_blank" style={{ fontSize: '12px', color: '#0c2520', textDecoration: 'none', background: 'white', border: '1px solid #e0ddd5', padding: '8px 14px', borderRadius: '20px' }}>
             View live
           </a>
         )}
