@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect } from 'react'
 import { useParams } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 
@@ -21,6 +21,33 @@ type Brand = { id: string; brand_name: string; logo_url: string | null }
 type Testimonial = { id: string; quote: string; author_name: string; author_title: string | null }
 type GalleryImage = { id: string; url: string }
 type FAQ = { id: string; question: string; answer: string }
+
+function NavButton() {
+  const [isLoggedIn, setIsLoggedIn] = useState(false)
+  const [fromApp, setFromApp] = useState(false)
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+    setFromApp(params.get('from') === 'app')
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      setIsLoggedIn(!!user)
+    })
+  }, [])
+
+  if (isLoggedIn || fromApp) {
+    return (
+      <a href="/dashboard" style={{ fontSize: '13px', color: '#0c2520', textDecoration: 'none', background: 'white', border: '1px solid #e0ddd5', padding: '8px 16px', borderRadius: '20px' }}>
+        Back to app
+      </a>
+    )
+  }
+
+  return (
+    <a href="/login" style={{ fontSize: '13px', color: '#0c2520', textDecoration: 'none', background: 'white', border: '1px solid #e0ddd5', padding: '8px 16px', borderRadius: '20px' }}>
+      Sign in
+    </a>
+  )
+}
 
 export default function PublicProfile() {
   const params = useParams()
@@ -146,7 +173,7 @@ export default function PublicProfile() {
       {/* Nav */}
       <div style={{ padding: '16px 24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #e0ddd5' }}>
         <a href="/" style={{ fontFamily: 'Georgia, serif', fontSize: '18px', color: '#0c2520', textDecoration: 'none', fontWeight: 500 }}>✦ theident</a>
-        <a href="/login" style={{ fontSize: '13px', color: '#0c2520', textDecoration: 'none', background: 'white', border: '1px solid #e0ddd5', padding: '8px 16px', borderRadius: '20px' }}>Sign in</a>
+        <NavButton />
       </div>
 
       <div className="fade-in" style={{ maxWidth: '680px', margin: '0 auto', padding: '0 0 80px' }}>
@@ -192,31 +219,31 @@ export default function PublicProfile() {
           </div>
         )}
 
-        {/* Brand carousel */}
+        {/* Brand carousel — colour, bigger */}
         {brands.length > 0 && (
           <div style={{ marginBottom: '48px' }}>
             <div className="marquee-wrap" style={{ overflow: 'hidden' }}>
               <div className="marquee-track">
                 {[...brands, ...brands].map((b, i) => (
-                  <div key={`${b.id}-${i}`} style={{ flexShrink: 0, margin: '0 28px', display: 'flex', alignItems: 'center', justifyContent: 'center', height: '48px' }}>
+                  <div key={`${b.id}-${i}`} style={{ flexShrink: 0, margin: '0 32px', display: 'flex', alignItems: 'center', justifyContent: 'center', height: '60px' }}>
                     {b.logo_url ? (
                       <>
                         <img
                           src={b.logo_url}
                           alt={b.brand_name}
-                          style={{ height: '28px', maxWidth: '120px', objectFit: 'contain', mixBlendMode: 'multiply', filter: 'grayscale(100%)', opacity: 0.5, display: 'block' }}
+                          style={{ height: '44px', maxWidth: '140px', objectFit: 'contain', display: 'block' }}
                           onError={(e) => {
                             e.currentTarget.style.display = 'none'
                             const next = e.currentTarget.nextElementSibling as HTMLElement
                             if (next) next.style.display = 'block'
                           }}
                         />
-                        <span style={{ fontSize: '13px', fontWeight: 700, color: '#bbb', letterSpacing: '0.08em', textTransform: 'uppercase', fontFamily: 'Georgia, serif', display: 'none' }}>
+                        <span style={{ fontSize: '14px', fontWeight: 700, color: '#bbb', letterSpacing: '0.08em', textTransform: 'uppercase', fontFamily: 'Georgia, serif', display: 'none' }}>
                           {b.brand_name}
                         </span>
                       </>
                     ) : (
-                      <span style={{ fontSize: '13px', fontWeight: 700, color: '#bbb', letterSpacing: '0.08em', textTransform: 'uppercase', fontFamily: 'Georgia, serif' }}>
+                      <span style={{ fontSize: '14px', fontWeight: 700, color: '#bbb', letterSpacing: '0.08em', textTransform: 'uppercase', fontFamily: 'Georgia, serif' }}>
                         {b.brand_name}
                       </span>
                     )}
