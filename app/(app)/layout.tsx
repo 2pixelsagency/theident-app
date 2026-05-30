@@ -10,6 +10,7 @@ type Profile = {
   first_name: string | null
   last_name: string | null
   picture_url: string | null
+  slug: string | null
 }
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
@@ -22,9 +23,32 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     const load = async () => {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) { router.push('/login'); return }
-      const { data: p } = await supabase.from('profiles').select('id, first_name, last_name, picture_url').eq('id', user.id).single()
+      const { data: p } = await supabase.from('profiles').select('id, first_name, last_name, picture_url, slug').eq('id', user.id).single()
       setProfile(p)
       setLoading(false)
+
+      // Register push notifications
+      if ('serviceWorker' in navigator && 'PushManager' in window) {
+        try {
+          const reg = await navigator.serviceWorker.ready
+          const existing = await reg.pushManager.getSubscription()
+          if (!existing) {
+            const vapidKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY
+            if (!vapidKey) return
+            const sub = await reg.pushManager.subscribe({
+              userVisibleOnly: true,
+              applicationServerKey: urlBase64ToUint8Array(vapidKey),
+            })
+            await fetch('/api/push-subscribe', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ subscription: sub, profile_id: user.id }),
+            })
+          }
+        } catch (err) {
+          console.log('Push registration skipped:', err)
+        }
+      }
     }
     load()
   }, [router])
@@ -89,14 +113,22 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         <div style={{ textAlign: 'center', marginBottom: '32px' }}>
           <div style={{ width: '70px', height: '70px', borderRadius: '50%', background: profile.picture_url ? `url(${profile.picture_url}) center/cover` : '#e8e6e0', margin: '0 auto 12px', border: '1px solid #e0ddd5' }} />
           <p style={{ margin: '0 0 12px', fontSize: '15px', fontWeight: 600, color: '#0c2520' }}>{profile.first_name} {profile.last_name}</p>
-          <button style={{ background: 'white', border: '1px solid #e0ddd5', padding: '6px 16px', borderRadius: '6px', fontSize: '12px', cursor: 'pointer', color: '#0c2520', fontFamily: 'inherit', fontWeight: 500 }}>View Ident</button>
+          {profile.slug && (
+            
+              href={`/${profile.slug}?from=app`}
+              target="_blank"
+              style={{ background: 'white', border: '1px solid #e0ddd5', padding: '6px 16px', borderRadius: '6px', fontSize: '12px', cursor: 'pointer', color: '#0c2520', fontFamily: 'inherit', fontWeight: 500, textDecoration: 'none', display: 'inline-block' }}
+            >
+              View Ident
+            </a>
+          )}
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
           {navItem('/dashboard', 'Jobs')}
           {navItem('/saved', 'Saved Jobs')}
           {navItem('/post-job', 'Post a job')}
           {navItem('/browse', 'Browse Talent')}
-          {navItem('/news', 'News')}
+          {navItem('/connections', 'Connections')}
         </div>
         <div style={{ marginTop: '32px', paddingTop: '20px', borderTop: '1px solid #e8e6e0' }}>
           <p style={{ fontSize: '10px', color: '#999', textTransform: 'uppercase', letterSpacing: '0.08em', margin: '0 0 8px 14px', fontWeight: 600 }}>Your settings</p>
@@ -179,4 +211,15 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       </main>
     </div>
   )
+}
+
+function urlBase64ToUint8Array(base64String: string) {
+  const padding = '='.repeat((4 - base64String.length % 4) % 4)
+  const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/')
+  const rawData = window.atob(base64)
+  const outputArray = new Uint8Array(rawData.length)
+  for (let i = 0; i < rawData.length; ++i) {
+    outputArray[i] = rawData.charCodeAt(i)
+  }
+  return outputArray
 }
