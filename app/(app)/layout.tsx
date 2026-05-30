@@ -27,7 +27,6 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       setProfile(p)
       setLoading(false)
 
-      // Register push notifications
       if ('serviceWorker' in navigator && 'PushManager' in window) {
         try {
           const reg = await navigator.serviceWorker.ready
@@ -111,11 +110,11 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       {/* Desktop sidebar */}
       <aside className="desktop-sidebar" style={{ position: 'fixed', top: 0, left: 0, width: '260px', height: '100vh', background: 'white', padding: '24px 16px', flexDirection: 'column', borderRight: '1px solid #e8e6e0', overflowY: 'auto', zIndex: 10 }}>
         <div style={{ textAlign: 'center', marginBottom: '32px' }}>
-          <div style={{ width: '70px', height: '70px', borderRadius: '50%', background: profile.picture_url ? `url(${profile.picture_url}) center/cover` : '#e8e6e0', margin: '0 auto 12px', border: '1px solid #e0ddd5' }} />
+          <div style={{ width: '70px', height: '70px', borderRadius: '50%', background: profile.picture_url ? 'url(' + profile.picture_url + ') center/cover' : '#e8e6e0', margin: '0 auto 12px', border: '1px solid #e0ddd5' }} />
           <p style={{ margin: '0 0 12px', fontSize: '15px', fontWeight: 600, color: '#0c2520' }}>{profile.first_name} {profile.last_name}</p>
           {profile.slug && (
             
-              href={`/${profile.slug}?from=app`}
+              href={'/' + profile.slug + '?from=app'}
               target="_blank"
               style={{ background: 'white', border: '1px solid #e0ddd5', padding: '6px 16px', borderRadius: '6px', fontSize: '12px', cursor: 'pointer', color: '#0c2520', fontFamily: 'inherit', fontWeight: 500, textDecoration: 'none', display: 'inline-block' }}
             >
@@ -147,7 +146,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         }}>
           <div style={{ display: 'flex', width: '100%', alignItems: 'stretch' }}>
 
-            <Link href="/dashboard" className={`mob-nav-btn${isActive('/dashboard') ? ' active' : ''}`}>
+            <Link href="/dashboard" className={'mob-nav-btn' + (isActive('/dashboard') ? ' active' : '')}>
               <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={isActive('/dashboard') ? '#0c2520' : '#aaa'} strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
                 <rect x="3" y="3" width="7" height="7" rx="1"/>
                 <rect x="14" y="3" width="7" height="7" rx="1"/>
@@ -157,25 +156,16 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
               <span>Jobs</span>
             </Link>
 
-            <Link href="/saved" className={`mob-nav-btn${isActive('/saved') ? ' active' : ''}`}>
+            <Link href="/saved" className={'mob-nav-btn' + (isActive('/saved') ? ' active' : '')}>
               <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={isActive('/saved') ? '#0c2520' : '#aaa'} strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/>
               </svg>
               <span>Saved</span>
             </Link>
 
-            {/* FAB */}
             <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', paddingBottom: '12px' }}>
               <Link href="/post-job" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <div style={{
-                  width: '50px', height: '50px', borderRadius: '50%',
-                  background: '#0c2520',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  transform: 'translateY(-8px)',
-                  border: '4px solid #f1f0ee',
-                  boxShadow: '0 4px 14px rgba(12,37,32,0.25)',
-                  WebkitTapHighlightColor: 'transparent',
-                }}>
+                <div style={{ width: '50px', height: '50px', borderRadius: '50%', background: '#0c2520', display: 'flex', alignItems: 'center', justifyContent: 'center', transform: 'translateY(-8px)', border: '4px solid #f1f0ee', boxShadow: '0 4px 14px rgba(12,37,32,0.25)', WebkitTapHighlightColor: 'transparent' }}>
                   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#f1f0ee" strokeWidth="2.4" strokeLinecap="round">
                     <line x1="12" y1="5" x2="12" y2="19"/>
                     <line x1="5" y1="12" x2="19" y2="12"/>
@@ -184,7 +174,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
               </Link>
             </div>
 
-            <Link href="/browse" className={`mob-nav-btn${isActive('/browse') ? ' active' : ''}`}>
+            <Link href="/browse" className={'mob-nav-btn' + (isActive('/browse') ? ' active' : '')}>
               <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={isActive('/browse') ? '#0c2520' : '#aaa'} strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
                 <circle cx="9" cy="7" r="4"/>
@@ -194,7 +184,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
               <span>Talent</span>
             </Link>
 
-            <Link href="/profile" className={`mob-nav-btn${isActive('/profile') ? ' active' : ''}`}>
+            <Link href="/profile" className={'mob-nav-btn' + (isActive('/profile') ? ' active' : '')}>
               <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={isActive('/profile') ? '#0c2520' : '#aaa'} strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
                 <circle cx="12" cy="8" r="4"/>
                 <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/>
@@ -206,7 +196,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         </nav>
       )}
 
-      <main className={`main-content${isJobDetail ? ' no-nav' : ''}`} style={{ minHeight: '100vh' }}>
+      <main className={'main-content' + (isJobDetail ? ' no-nav' : '')} style={{ minHeight: '100vh' }}>
         {children}
       </main>
     </div>
