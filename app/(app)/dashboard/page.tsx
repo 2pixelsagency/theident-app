@@ -39,10 +39,11 @@ type ScoredJob = Job & {
 
 type Notification = {
   id: string
-  type: 'match' | 'view' | 'application'
+  type: 'job_match' | 'profile_view' | 'connection_request' | 'connection_accepted'
   message: string
   time: string
   read: boolean
+  data?: any
 }
 
 type SortOption = 'newest' | 'oldest' | 'az' | 'za'
@@ -138,6 +139,16 @@ export default function Dashboard() {
 
   const sheetRef = useRef<HTMLDivElement>(null)
 
+  const formatRelativeDate = (dateStr: string) => {
+    const diffDays = Math.floor((new Date().getTime() - new Date(dateStr).getTime()) / 86400000)
+    if (diffDays === 0) return 'Today'
+    if (diffDays === 1) return 'Yesterday'
+    if (diffDays < 7) return `${diffDays} days ago`
+    if (diffDays < 14) return 'Last week'
+    if (diffDays < 30) return `${Math.floor(diffDays / 7)} weeks ago`
+    return 'Last month'
+  }
+
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
       if (notifRef.current && !notifRef.current.contains(e.target as Node)) {
@@ -158,10 +169,11 @@ export default function Dashboard() {
       setProductionTypes(pt.data || [])
       setSpotlightJobs(spot.data || [])
       if (user) {
-        const [{ data: saved }, { data: prof }, { data: userSkills }] = await Promise.all([
+        const [{ data: saved }, { data: prof }, { data: userSkills }, { data: notifData }] = await Promise.all([
           supabase.from('saved_jobs').select('job_id').eq('profile_id', user.id),
           supabase.from('profiles').select('id, first_name, picture_url, location, minimum_age, maximum_age, gender_id, ethnicity_id, hair_colour_id, eye_colour_id').eq('id', user.id).single(),
           supabase.from('profile_skills').select('skill_id').eq('profile_id', user.id),
+          supabase.from('notifications').select('*').eq('profile_id', user.id).order('created_at', { ascending: false }).limit(20),
         ])
         setSavedIds(new Set((saved || []).map(s => s.job_id)))
         if (prof) {
@@ -175,15 +187,14 @@ export default function Dashboard() {
           setUserEyeColourId(prof.eye_colour_id)
         }
         setUserSkillIds(new Set((userSkills || []).map(s => s.skill_id)))
-
-        // Load notifications — placeholder until notifications table exists
-        // Replace this with a real supabase query when ready
-        setNotifications([
-          // Uncomment to test with mock data:
-          // { id: '1', type: 'match', message: '3 new jobs match your profile', time: '2 hours ago', read: false },
-          // { id: '2', type: 'view', message: 'Someone viewed your profile', time: 'Yesterday', read: false },
-          // { id: '3', type: 'application', message: 'Update on your application for Guard/Dancer', time: '3 days ago', read: true },
-        ])
+        setNotifications((notifData || []).map(n => ({
+          id: n.id,
+          type: n.type,
+          message: n.body,
+          time: formatRelativeDate(n.created_at),
+          read: n.read,
+          data: n.data,
+        })))
       }
       setLoading(false)
     }
@@ -289,21 +300,28 @@ export default function Dashboard() {
     setMatchFilter('all')
   }
 
+  const markAllRead = async () => {
+    if (!profile) return
+    await supabase.from('notifications').update({ read: true }).eq('profile_id', profile.id).eq('read', false)
+    setNotifications(prev => prev.map(n => ({ ...n, read: true })))
+  }
+
+  const handleNotifClick = async (n: Notification) => {
+    if (!n.read) {
+      await supabase.from('notifications').update({ read: true }).eq('id', n.id)
+      setNotifications(prev => prev.map(x => x.id === n.id ? { ...x, read: true } : x))
+    }
+    if (n.data?.url) {
+      setShowNotifications(false)
+      router.push(n.data.url)
+    }
+  }
+
   const hasActiveFilters = selectedProductionTypes.length > 0 || minAge > 0 || maxAge < 100 || !!locationSearch || !!keywordSearch || matchFilter !== 'all'
   const activeFilterCount = selectedProductionTypes.length + (minAge > 0 || maxAge < 100 ? 1 : 0) + (locationSearch ? 1 : 0) + (matchFilter !== 'all' ? 1 : 0)
   const unreadCount = notifications.filter(n => !n.read).length
 
   const getProductionTypeName = (id: number | null) => productionTypes.find(pt => pt.id === id)?.name || null
-
-  const formatRelativeDate = (dateStr: string) => {
-    const diffDays = Math.floor((new Date().getTime() - new Date(dateStr).getTime()) / 86400000)
-    if (diffDays === 0) return 'Today'
-    if (diffDays === 1) return 'Yesterday'
-    if (diffDays < 7) return `${diffDays} days ago`
-    if (diffDays < 14) return 'Last week'
-    if (diffDays < 30) return `${Math.floor(diffDays / 7)} weeks ago`
-    return 'Last month'
-  }
 
   const getSentBy = (job: Job) => job.is_side_hustle ? job.company : (job.casting_team || job.production_company)
 
@@ -332,11 +350,14 @@ export default function Dashboard() {
   }
 
   const notifIcon = (type: Notification['type']) => {
-    if (type === 'match') return (
+    if (type === 'job_match') return (
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#4ade80" strokeWidth="2" strokeLinecap="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
     )
-    if (type === 'view') return (
+    if (type === 'profile_view') return (
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#92d7af" strokeWidth="2" strokeLinecap="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+    )
+    if (type === 'connection_request' || type === 'connection_accepted') return (
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#92d7af" strokeWidth="2" strokeLinecap="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
     )
     return (
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#a8c4b4" strokeWidth="2" strokeLinecap="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
@@ -477,7 +498,6 @@ export default function Dashboard() {
                   )}
                 </button>
 
-                {/* Notification popup */}
                 {showNotifications && (
                   <div className="notif-popup" style={{
                     position: 'absolute', top: 'calc(100% + 8px)', right: 0,
@@ -489,10 +509,7 @@ export default function Dashboard() {
                     <div style={{ padding: '14px 16px 10px', borderBottom: '1px solid #f0ede5', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                       <p style={{ fontFamily: 'Georgia, serif', fontSize: '15px', fontWeight: 500, color: '#0c2520', margin: 0 }}>Notifications</p>
                       {unreadCount > 0 && (
-                        <button
-                          onClick={() => setNotifications(prev => prev.map(n => ({ ...n, read: true })))}
-                          style={{ background: 'none', border: 'none', fontSize: '11px', color: '#888', cursor: 'pointer', fontFamily: 'inherit', textDecoration: 'underline' }}
-                        >
+                        <button onClick={markAllRead} style={{ background: 'none', border: 'none', fontSize: '11px', color: '#888', cursor: 'pointer', fontFamily: 'inherit', textDecoration: 'underline' }}>
                           Mark all read
                         </button>
                       )}
@@ -509,7 +526,8 @@ export default function Dashboard() {
                     ) : (
                       <div>
                         {notifications.map((n, i) => (
-                          <div key={n.id} className="notif-row" style={{ display: 'flex', gap: '12px', padding: '12px 16px', borderBottom: i < notifications.length - 1 ? '1px solid #f0ede5' : 'none', background: n.read ? 'white' : '#fafef9', cursor: 'pointer', transition: 'background 0.15s ease' }}>
+                          <div key={n.id} className="notif-row" onClick={() => handleNotifClick(n)}
+                            style={{ display: 'flex', gap: '12px', padding: '12px 16px', borderBottom: i < notifications.length - 1 ? '1px solid #f0ede5' : 'none', background: n.read ? 'white' : '#fafef9', cursor: 'pointer', transition: 'background 0.15s ease' }}>
                             <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: '#f1f0ee', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                               {notifIcon(n.type)}
                             </div>
