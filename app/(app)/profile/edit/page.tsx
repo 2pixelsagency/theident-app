@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 
 type Reel = { id?: string; label: string; url: string; sort_order: number }
-type Credit = { id?: string; title: string; role: string; year: string; thumbnail_url: string; director: string; production_company: string }
+type Credit = { id?: string; title: string; role: string; year: string; thumbnail_url: string; director: string; production_company: string; is_featured: boolean }
 type Brand = { id?: string; brand_name: string; logo_url: string | null; loading?: boolean }
 type Testimonial = { id?: string; quote: string; author_name: string; author_title: string }
 type GalleryImage = { id?: string; url: string }
@@ -16,6 +16,11 @@ export default function EditProfile() {
   const [profileId, setProfileId] = useState<string | null>(null)
   const [slug, setSlug] = useState('')
   const [bio, setBio] = useState('')
+  const [availabilityStatus, setAvailabilityStatus] = useState<'available' | 'in_production' | ''>('')
+  const [productionUntil, setProductionUntil] = useState('')
+  const [agentName, setAgentName] = useState('')
+  const [agentPhone, setAgentPhone] = useState('')
+  const [agentEmail, setAgentEmail] = useState('')
   const [saving, setSaving] = useState(false)
   const [toast, setToast] = useState<string | null>(null)
   const [activeSection, setActiveSection] = useState('basics')
@@ -44,7 +49,7 @@ export default function EditProfile() {
         { data: galleryData },
         { data: faqData },
       ] = await Promise.all([
-        supabase.from('profiles').select('slug, bio').eq('id', user.id).single(),
+        supabase.from('profiles').select('slug, bio, availability_status, production_until, agent_name, agent_phone, agent_email').eq('id', user.id).single(),
         supabase.from('reels').select('*').eq('profile_id', user.id).order('sort_order'),
         supabase.from('credits').select('*').eq('profile_id', user.id).order('year', { ascending: false }),
         supabase.from('profile_brands').select('*').eq('profile_id', user.id).order('sort_order'),
@@ -53,9 +58,17 @@ export default function EditProfile() {
         supabase.from('faqs').select('*').eq('profile_id', user.id).order('sort_order'),
       ])
 
-      if (prof) { setSlug(prof.slug || ''); setBio(prof.bio || '') }
+      if (prof) {
+        setSlug(prof.slug || '')
+        setBio(prof.bio || '')
+        setAvailabilityStatus(prof.availability_status || '')
+        setProductionUntil(prof.production_until || '')
+        setAgentName(prof.agent_name || '')
+        setAgentPhone(prof.agent_phone || '')
+        setAgentEmail(prof.agent_email || '')
+      }
       setReels(reelData?.map(r => ({ id: r.id, label: r.label, url: r.url, sort_order: r.sort_order })) || [])
-      setCredits(creditData?.map(c => ({ id: c.id, title: c.title || '', role: c.role || '', year: c.year?.toString() || '', thumbnail_url: c.thumbnail_url || '', director: c.director || '', production_company: c.production_company || '' })) || [])
+      setCredits(creditData?.map(c => ({ id: c.id, title: c.title || '', role: c.role || '', year: c.year?.toString() || '', thumbnail_url: c.thumbnail_url || '', director: c.director || '', production_company: c.production_company || '', is_featured: c.is_featured || false })) || [])
       setBrands(brandData?.map(b => ({ id: b.id, brand_name: b.brand_name, logo_url: b.logo_url })) || [])
       setTestimonials(testimonialData?.map(t => ({ id: t.id, quote: t.quote, author_name: t.author_name, author_title: t.author_title || '' })) || [])
       setGallery(galleryData?.map(g => ({ id: g.id, url: g.url })) || [])
@@ -69,7 +82,15 @@ export default function EditProfile() {
   const saveBasics = async () => {
     if (!profileId) return
     setSaving(true)
-    await supabase.from('profiles').update({ slug: slug.toLowerCase().replace(/\s+/g, '-'), bio }).eq('id', profileId)
+    await supabase.from('profiles').update({
+      slug: slug.toLowerCase().replace(/\s+/g, '-'),
+      bio,
+      availability_status: availabilityStatus || null,
+      production_until: productionUntil || null,
+      agent_name: agentName || null,
+      agent_phone: agentPhone || null,
+      agent_email: agentEmail || null,
+    }).eq('id', profileId)
     setSaving(false)
     showToast('Saved')
   }
@@ -132,6 +153,7 @@ export default function EditProfile() {
         thumbnail_url: c.thumbnail_url || null,
         director: c.director || null,
         production_company: c.production_company || null,
+        is_featured: c.is_featured,
       }
       if (c.id) {
         await supabase.from('credits').update(payload).eq('id', c.id)
@@ -207,9 +229,13 @@ export default function EditProfile() {
   return (
     <div style={{ fontFamily: 'system-ui, sans-serif', maxWidth: '680px', margin: '0 auto', padding: '0 0 80px' }}>
       <style>{`
-        input:focus, textarea:focus { border-color: #0c2520 !important; outline: none; box-shadow: 0 0 0 1px #0c2520; }
+        input:focus, textarea:focus, select:focus { border-color: #0c2520 !important; outline: none; box-shadow: 0 0 0 1px #0c2520; }
         textarea { resize: vertical; }
         @keyframes spin { to { transform: rotate(360deg); } }
+        .toggle-track { width: 40px; height: 22px; border-radius: 11px; background: #e0ddd5; position: relative; cursor: pointer; transition: background 0.2s ease; flex-shrink: 0; }
+        .toggle-track.on { background: #0c2520; }
+        .toggle-thumb { width: 18px; height: 18px; border-radius: 50%; background: white; position: absolute; top: 2px; left: 2px; transition: transform 0.2s ease; }
+        .toggle-track.on .toggle-thumb { transform: translateX(18px); }
       `}</style>
 
       {toast && (
@@ -246,17 +272,49 @@ export default function EditProfile() {
         {activeSection === 'basics' && (
           <div>
             <p style={sectionTitle}>Basics</p>
+
             <div style={{ marginBottom: '16px' }}>
-              <label style={labelStyle}>Profile URL slug</label>
+              <label style={labelStyle}>Profile URL</label>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <span style={{ fontSize: '13px', color: '#888', flexShrink: 0 }}>theident.me/</span>
                 <input value={slug} onChange={e => setSlug(e.target.value)} placeholder="sol-adlam" style={inputStyle} />
               </div>
             </div>
-            <div style={{ marginBottom: '24px' }}>
+
+            <div style={{ marginBottom: '16px' }}>
               <label style={labelStyle}>Bio — one line, make it count</label>
-              <textarea value={bio} onChange={e => setBio(e.target.value)} placeholder="Identical twins who love to have a laugh and never take life too seriously." rows={3} style={{ ...inputStyle, lineHeight: 1.5 }} />
+              <textarea value={bio} onChange={e => setBio(e.target.value)} placeholder="Identical twins who love to have a laugh..." rows={3} style={{ ...inputStyle, lineHeight: 1.5 }} />
             </div>
+
+            {/* Availability */}
+            <div style={{ marginBottom: '16px' }}>
+              <label style={labelStyle}>Availability</label>
+              <div style={{ display: 'flex', gap: '8px', marginBottom: '10px' }}>
+                {(['available', 'in_production'] as const).map(s => (
+                  <button key={s} onClick={() => setAvailabilityStatus(prev => prev === s ? '' : s)}
+                    style={{ padding: '9px 16px', borderRadius: '20px', border: availabilityStatus === s ? 'none' : '1px solid #e0ddd5', background: availabilityStatus === s ? (s === 'available' ? '#4ade80' : '#fde6c2') : 'white', color: availabilityStatus === s ? (s === 'available' ? '#061410' : '#8a5a2e') : '#0c2520', fontSize: '13px', cursor: 'pointer', fontFamily: 'inherit', fontWeight: availabilityStatus === s ? 600 : 400 }}>
+                    {s === 'available' ? 'Available now' : 'In production'}
+                  </button>
+                ))}
+              </div>
+              {availabilityStatus === 'in_production' && (
+                <div>
+                  <label style={{ ...labelStyle, marginTop: '8px' }}>In production until</label>
+                  <input type="date" value={productionUntil} onChange={e => setProductionUntil(e.target.value)} style={inputStyle} />
+                </div>
+              )}
+            </div>
+
+            {/* Agent info */}
+            <div style={{ marginBottom: '24px' }}>
+              <label style={labelStyle}>Agent details</label>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                <input value={agentName} onChange={e => setAgentName(e.target.value)} placeholder="Agent name" style={inputStyle} />
+                <input value={agentPhone} onChange={e => setAgentPhone(e.target.value)} placeholder="Phone number" style={inputStyle} />
+                <input value={agentEmail} onChange={e => setAgentEmail(e.target.value)} placeholder="Agent email" style={inputStyle} />
+              </div>
+            </div>
+
             <button onClick={saveBasics} style={saveBtn} disabled={saving}>Save basics</button>
           </div>
         )}
@@ -295,19 +353,10 @@ export default function EditProfile() {
                     <img src={b.logo_url} alt={b.brand_name} style={{ width: '36px', height: '36px', objectFit: 'contain', flexShrink: 0 }} />
                   ) : (
                     <div style={{ width: '36px', height: '36px', borderRadius: '6px', background: '#f1f0ee', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                      {b.loading
-                        ? <div style={{ width: '12px', height: '12px', border: '1.5px solid #0c2520', borderTopColor: 'transparent', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
-                        : <span style={{ fontSize: '10px', color: '#ccc' }}>?</span>
-                      }
+                      {b.loading ? <div style={{ width: '12px', height: '12px', border: '1.5px solid #0c2520', borderTopColor: 'transparent', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} /> : <span style={{ fontSize: '10px', color: '#ccc' }}>?</span>}
                     </div>
                   )}
-                  <input
-                    value={b.brand_name}
-                    onChange={e => setBrands(prev => prev.map((item, idx) => idx === i ? { ...item, brand_name: e.target.value, logo_url: null } : item))}
-                    onBlur={() => { if (b.brand_name) lookupBrandLogo(i, b.brand_name) }}
-                    placeholder="e.g. Casamigos"
-                    style={{ ...inputStyle, flex: 1 }}
-                  />
+                  <input value={b.brand_name} onChange={e => setBrands(prev => prev.map((item, idx) => idx === i ? { ...item, brand_name: e.target.value, logo_url: null } : item))} onBlur={() => { if (b.brand_name) lookupBrandLogo(i, b.brand_name) }} placeholder="e.g. Casamigos" style={{ ...inputStyle, flex: 1 }} />
                   <button onClick={() => setBrands(prev => prev.filter((_, idx) => idx !== i))} style={deleteBtn}>
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
                   </button>
@@ -325,26 +374,34 @@ export default function EditProfile() {
         {activeSection === 'credits' && (
           <div>
             <p style={sectionTitle}>Credits</p>
+            <p style={{ fontSize: '13px', color: '#888', margin: '0 0 16px' }}>Toggle featured to show a credit in the highlighted work slider on your profile.</p>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '16px' }}>
               {credits.map((c, i) => (
-                <div key={i} style={{ background: 'white', borderRadius: '10px', padding: '16px', border: '1px solid #e8e4de' }}>
+                <div key={i} style={{ background: 'white', borderRadius: '10px', padding: '16px', border: c.is_featured ? '1.5px solid #4ade80' : '1px solid #e8e4de' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
-                    <p style={{ fontSize: '13px', fontWeight: 600, color: '#0c2520', margin: 0 }}>Credit {i + 1}</p>
-                    <button onClick={() => setCredits(prev => prev.filter((_, idx) => idx !== i))} style={deleteBtn}>
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
-                    </button>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                      <p style={{ fontSize: '13px', fontWeight: 600, color: '#0c2520', margin: 0 }}>Credit {i + 1}</p>
+                      {c.is_featured && <span style={{ fontSize: '10px', background: '#4ade80', color: '#061410', padding: '2px 8px', borderRadius: '4px', fontWeight: 600 }}>Featured</span>}
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        <span style={{ fontSize: '11px', color: '#888' }}>Feature</span>
+                        <div className={`toggle-track${c.is_featured ? ' on' : ''}`} onClick={() => setCredits(prev => prev.map((item, idx) => idx === i ? { ...item, is_featured: !item.is_featured } : item))}>
+                          <div className="toggle-thumb" />
+                        </div>
+                      </div>
+                      <button onClick={() => setCredits(prev => prev.filter((_, idx) => idx !== i))} style={deleteBtn}>
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+                      </button>
+                    </div>
                   </div>
 
-                  {/* Thumbnail */}
                   <div style={{ marginBottom: '14px' }}>
                     <label style={labelStyle}>Thumbnail</label>
                     {c.thumbnail_url ? (
                       <div style={{ position: 'relative', display: 'inline-block' }}>
                         <img src={c.thumbnail_url} alt="" style={{ width: '120px', height: '80px', objectFit: 'cover', borderRadius: '8px', display: 'block' }} />
-                        <button
-                          onClick={() => setCredits(prev => prev.map((item, idx) => idx === i ? { ...item, thumbnail_url: '' } : item))}
-                          style={{ position: 'absolute', top: '4px', right: '4px', background: 'rgba(0,0,0,0.5)', border: 'none', borderRadius: '50%', width: '20px', height: '20px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-                        >
+                        <button onClick={() => setCredits(prev => prev.map((item, idx) => idx === i ? { ...item, thumbnail_url: '' } : item))} style={{ position: 'absolute', top: '4px', right: '4px', background: 'rgba(0,0,0,0.5)', border: 'none', borderRadius: '50%', width: '20px', height: '20px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                           <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3" strokeLinecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
                         </button>
                       </div>
@@ -358,31 +415,16 @@ export default function EditProfile() {
                   </div>
 
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
-                    <div>
-                      <label style={labelStyle}>Title</label>
-                      <input value={c.title} onChange={e => setCredits(prev => prev.map((item, idx) => idx === i ? { ...item, title: e.target.value } : item))} placeholder="Casamigos" style={inputStyle} />
-                    </div>
-                    <div>
-                      <label style={labelStyle}>Role</label>
-                      <input value={c.role} onChange={e => setCredits(prev => prev.map((item, idx) => idx === i ? { ...item, role: e.target.value } : item))} placeholder="Featured twin" style={inputStyle} />
-                    </div>
-                    <div>
-                      <label style={labelStyle}>Director</label>
-                      <input value={c.director} onChange={e => setCredits(prev => prev.map((item, idx) => idx === i ? { ...item, director: e.target.value } : item))} placeholder="Jane Smith" style={inputStyle} />
-                    </div>
-                    <div>
-                      <label style={labelStyle}>Production company</label>
-                      <input value={c.production_company} onChange={e => setCredits(prev => prev.map((item, idx) => idx === i ? { ...item, production_company: e.target.value } : item))} placeholder="RSC / BBC" style={inputStyle} />
-                    </div>
-                    <div>
-                      <label style={labelStyle}>Year</label>
-                      <input value={c.year} onChange={e => setCredits(prev => prev.map((item, idx) => idx === i ? { ...item, year: e.target.value } : item))} placeholder="2024" style={inputStyle} />
-                    </div>
+                    <div><label style={labelStyle}>Title</label><input value={c.title} onChange={e => setCredits(prev => prev.map((item, idx) => idx === i ? { ...item, title: e.target.value } : item))} placeholder="Casamigos" style={inputStyle} /></div>
+                    <div><label style={labelStyle}>Role</label><input value={c.role} onChange={e => setCredits(prev => prev.map((item, idx) => idx === i ? { ...item, role: e.target.value } : item))} placeholder="Featured twin" style={inputStyle} /></div>
+                    <div><label style={labelStyle}>Director</label><input value={c.director} onChange={e => setCredits(prev => prev.map((item, idx) => idx === i ? { ...item, director: e.target.value } : item))} placeholder="Jane Smith" style={inputStyle} /></div>
+                    <div><label style={labelStyle}>Production company</label><input value={c.production_company} onChange={e => setCredits(prev => prev.map((item, idx) => idx === i ? { ...item, production_company: e.target.value } : item))} placeholder="RSC / BBC" style={inputStyle} /></div>
+                    <div><label style={labelStyle}>Year</label><input value={c.year} onChange={e => setCredits(prev => prev.map((item, idx) => idx === i ? { ...item, year: e.target.value } : item))} placeholder="2024" style={inputStyle} /></div>
                   </div>
                 </div>
               ))}
             </div>
-            <button onClick={() => setCredits(prev => [...prev, { title: '', role: '', year: '', thumbnail_url: '', director: '', production_company: '' }])} style={addBtn}>+ Add credit</button>
+            <button onClick={() => setCredits(prev => [...prev, { title: '', role: '', year: '', thumbnail_url: '', director: '', production_company: '', is_featured: false }])} style={addBtn}>+ Add credit</button>
             <div style={{ marginTop: '20px' }}>
               <button onClick={saveCredits} style={saveBtn} disabled={saving}>Save credits</button>
             </div>
@@ -403,19 +445,10 @@ export default function EditProfile() {
                     </button>
                   </div>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                    <div>
-                      <label style={labelStyle}>Quote</label>
-                      <textarea value={t.quote} onChange={e => setTestimonials(prev => prev.map((item, idx) => idx === i ? { ...item, quote: e.target.value } : item))} rows={3} placeholder="Working with them is always a highlight..." style={{ ...inputStyle, lineHeight: 1.5 }} />
-                    </div>
+                    <div><label style={labelStyle}>Quote</label><textarea value={t.quote} onChange={e => setTestimonials(prev => prev.map((item, idx) => idx === i ? { ...item, quote: e.target.value } : item))} rows={3} placeholder="Working with them is always a highlight..." style={{ ...inputStyle, lineHeight: 1.5 }} /></div>
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
-                      <div>
-                        <label style={labelStyle}>Name</label>
-                        <input value={t.author_name} onChange={e => setTestimonials(prev => prev.map((item, idx) => idx === i ? { ...item, author_name: e.target.value } : item))} placeholder="David Leighton" style={inputStyle} />
-                      </div>
-                      <div>
-                        <label style={labelStyle}>Title</label>
-                        <input value={t.author_title} onChange={e => setTestimonials(prev => prev.map((item, idx) => idx === i ? { ...item, author_title: e.target.value } : item))} placeholder="Choreographer" style={inputStyle} />
-                      </div>
+                      <div><label style={labelStyle}>Name</label><input value={t.author_name} onChange={e => setTestimonials(prev => prev.map((item, idx) => idx === i ? { ...item, author_name: e.target.value } : item))} placeholder="David Leighton" style={inputStyle} /></div>
+                      <div><label style={labelStyle}>Title</label><input value={t.author_title} onChange={e => setTestimonials(prev => prev.map((item, idx) => idx === i ? { ...item, author_title: e.target.value } : item))} placeholder="Choreographer" style={inputStyle} /></div>
                     </div>
                   </div>
                 </div>
@@ -463,14 +496,8 @@ export default function EditProfile() {
                     </button>
                   </div>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                    <div>
-                      <label style={labelStyle}>Question</label>
-                      <input value={f.question} onChange={e => setFaqs(prev => prev.map((item, idx) => idx === i ? { ...item, question: e.target.value } : item))} placeholder="What do you do in your free time?" style={inputStyle} />
-                    </div>
-                    <div>
-                      <label style={labelStyle}>Answer</label>
-                      <textarea value={f.answer} onChange={e => setFaqs(prev => prev.map((item, idx) => idx === i ? { ...item, answer: e.target.value } : item))} rows={2} placeholder="I love..." style={{ ...inputStyle, lineHeight: 1.5 }} />
-                    </div>
+                    <div><label style={labelStyle}>Question</label><input value={f.question} onChange={e => setFaqs(prev => prev.map((item, idx) => idx === i ? { ...item, question: e.target.value } : item))} placeholder="What do you do in your free time?" style={inputStyle} /></div>
+                    <div><label style={labelStyle}>Answer</label><textarea value={f.answer} onChange={e => setFaqs(prev => prev.map((item, idx) => idx === i ? { ...item, answer: e.target.value } : item))} rows={2} placeholder="I love..." style={{ ...inputStyle, lineHeight: 1.5 }} /></div>
                   </div>
                 </div>
               ))}
