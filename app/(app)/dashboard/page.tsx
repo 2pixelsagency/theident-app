@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
@@ -74,8 +74,7 @@ function CountLoader({ onDone }: { onDone: () => void }) {
     <div style={{
       position: 'fixed', inset: 0, background: '#061410',
       display: 'flex', alignItems: 'center', justifyContent: 'center',
-      zIndex: 999,
-      opacity: fading ? 0 : 1,
+      zIndex: 999, opacity: fading ? 0 : 1,
       transition: fading ? 'opacity 0.7s ease' : 'none',
     }}>
       <style>{`
@@ -93,10 +92,95 @@ function CountLoader({ onDone }: { onDone: () => void }) {
             opacity: i < step ? (i === step - 1 ? 1 : 0.12) : 0,
             animation: i < step ? 'countPop 0.32s ease-out forwards' : 'none',
             transition: 'color 0.1s ease', letterSpacing: '0.02em',
-          }}>
-            {n}
-          </span>
+          }}>{n}</span>
         ))}
+      </div>
+    </div>
+  )
+}
+
+function CropModal({ file, onSave, onClose }: { file: File; onSave: (blob: Blob) => void; onClose: () => void }) {
+  const canvasRef = useRef<HTMLCanvasElement>(null)
+  const [img, setImg] = useState<HTMLImageElement | null>(null)
+  const [zoom, setZoom] = useState(1)
+  const [offset, setOffset] = useState({ x: 0, y: 0 })
+  const [dragging, setDragging] = useState(false)
+  const [dragStart, setDragStart] = useState({ x: 0, y: 0 })
+  const SIZE = 280
+
+  useEffect(() => {
+    const image = new Image()
+    image.onload = () => setImg(image)
+    image.src = URL.createObjectURL(file)
+    return () => URL.revokeObjectURL(image.src)
+  }, [file])
+
+  useEffect(() => {
+    if (!img || !canvasRef.current) return
+    const ctx = canvasRef.current.getContext('2d')
+    if (!ctx) return
+    ctx.clearRect(0, 0, SIZE, SIZE)
+    const scale = Math.max(SIZE / img.width, SIZE / img.height) * zoom
+    const w = img.width * scale
+    const h = img.height * scale
+    const x = (SIZE - w) / 2 + offset.x
+    const y = (SIZE - h) / 2 + offset.y
+    ctx.drawImage(img, x, y, w, h)
+  }, [img, zoom, offset])
+
+  const handlePointerDown = (e: React.PointerEvent) => {
+    setDragging(true)
+    setDragStart({ x: e.clientX - offset.x, y: e.clientY - offset.y })
+  }
+
+  const handlePointerMove = (e: React.PointerEvent) => {
+    if (!dragging) return
+    setOffset({ x: e.clientX - dragStart.x, y: e.clientY - dragStart.y })
+  }
+
+  const handlePointerUp = () => setDragging(false)
+
+  const handleSave = () => {
+    if (!canvasRef.current) return
+    canvasRef.current.toBlob(blob => { if (blob) onSave(blob) }, 'image/jpeg', 0.9)
+  }
+
+  return (
+    <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', zIndex: 500, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px' }}>
+      <div style={{ background: '#f1f0ee', borderRadius: '20px', padding: '24px', maxWidth: '340px', width: '100%' }}>
+        <p style={{ fontFamily: 'Georgia, serif', fontSize: '18px', fontWeight: 500, color: '#0c2520', margin: '0 0 16px', textAlign: 'center' }}>Crop photo</p>
+
+        <div style={{ width: SIZE + 'px', height: SIZE + 'px', margin: '0 auto 16px', position: 'relative', borderRadius: '50%', overflow: 'hidden', border: '3px solid #e0ddd5', touchAction: 'none' }}>
+          <canvas
+            ref={canvasRef}
+            width={SIZE}
+            height={SIZE}
+            onPointerDown={handlePointerDown}
+            onPointerMove={handlePointerMove}
+            onPointerUp={handlePointerUp}
+            onPointerLeave={handlePointerUp}
+            style={{ width: '100%', height: '100%', cursor: dragging ? 'grabbing' : 'grab' }}
+          />
+        </div>
+
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '20px', padding: '0 8px' }}>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#888" strokeWidth="2" strokeLinecap="round"><circle cx="12" cy="12" r="3"/></svg>
+          <input
+            type="range" min="1" max="3" step="0.05" value={zoom}
+            onChange={e => setZoom(parseFloat(e.target.value))}
+            style={{ flex: 1, accentColor: '#0c2520' }}
+          />
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#888" strokeWidth="2" strokeLinecap="round"><circle cx="12" cy="12" r="5"/></svg>
+        </div>
+
+        <div style={{ display: 'flex', gap: '10px' }}>
+          <button onClick={onClose} style={{ flex: 1, padding: '14px', borderRadius: '30px', border: '1px solid #e0ddd5', background: 'white', color: '#0c2520', fontSize: '14px', fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit' }}>
+            Cancel
+          </button>
+          <button onClick={handleSave} style={{ flex: 1, padding: '14px', borderRadius: '30px', border: 'none', background: '#0c2520', color: '#f1f0ee', fontSize: '14px', fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit' }}>
+            Save
+          </button>
+        </div>
       </div>
     </div>
   )
@@ -117,6 +201,8 @@ export default function Dashboard() {
   const [showNotifications, setShowNotifications] = useState(false)
   const [notifications, setNotifications] = useState<Notification[]>([])
   const notifRef = useRef<HTMLDivElement>(null)
+  const [cropFile, setCropFile] = useState<File | null>(null)
+  const [uploading, setUploading] = useState(false)
 
   const [userLocation, setUserLocation] = useState<string | null>(null)
   const [userMinAge, setUserMinAge] = useState<number | null>(null)
@@ -143,17 +229,15 @@ export default function Dashboard() {
     const diffDays = Math.floor((new Date().getTime() - new Date(dateStr).getTime()) / 86400000)
     if (diffDays === 0) return 'Today'
     if (diffDays === 1) return 'Yesterday'
-    if (diffDays < 7) return `${diffDays} days ago`
+    if (diffDays < 7) return diffDays + ' days ago'
     if (diffDays < 14) return 'Last week'
-    if (diffDays < 30) return `${Math.floor(diffDays / 7)} weeks ago`
+    if (diffDays < 30) return Math.floor(diffDays / 7) + ' weeks ago'
     return 'Last month'
   }
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
-      if (notifRef.current && !notifRef.current.contains(e.target as Node)) {
-        setShowNotifications(false)
-      }
+      if (notifRef.current && !notifRef.current.contains(e.target as Node)) setShowNotifications(false)
     }
     document.addEventListener('mousedown', handleClickOutside)
     return () => document.removeEventListener('mousedown', handleClickOutside)
@@ -169,11 +253,10 @@ export default function Dashboard() {
       setProductionTypes(pt.data || [])
       setSpotlightJobs(spot.data || [])
       if (user) {
-        const [{ data: saved }, { data: prof }, { data: userSkills }, { data: notifData }] = await Promise.all([
+        const [{ data: saved }, { data: prof }, { data: userSkills }] = await Promise.all([
           supabase.from('saved_jobs').select('job_id').eq('profile_id', user.id),
           supabase.from('profiles').select('id, first_name, picture_url, location, minimum_age, maximum_age, gender_id, ethnicity_id, hair_colour_id, eye_colour_id').eq('id', user.id).single(),
           supabase.from('profile_skills').select('skill_id').eq('profile_id', user.id),
-          supabase.from('notifications').select('*').eq('profile_id', user.id).order('created_at', { ascending: false }).limit(20),
         ])
         setSavedIds(new Set((saved || []).map(s => s.job_id)))
         if (prof) {
@@ -187,7 +270,24 @@ export default function Dashboard() {
           setUserEyeColourId(prof.eye_colour_id)
         }
         setUserSkillIds(new Set((userSkills || []).map(s => s.skill_id)))
-        setNotifications((notifData || []).map(n => ({
+      }
+      setLoading(false)
+    }
+    load()
+  }, [])
+
+  // Load notifications separately
+  useEffect(() => {
+    if (!profile) return
+    const loadNotifs = async () => {
+      const { data } = await supabase
+        .from('notifications')
+        .select('*')
+        .eq('profile_id', profile.id)
+        .order('created_at', { ascending: false })
+        .limit(20)
+      if (data && data.length > 0) {
+        setNotifications(data.map(n => ({
           id: n.id,
           type: n.type,
           message: n.body,
@@ -196,10 +296,9 @@ export default function Dashboard() {
           data: n.data,
         })))
       }
-      setLoading(false)
     }
-    load()
-  }, [])
+    loadNotifs()
+  }, [profile])
 
   useEffect(() => {
     const scoreJob = (job: Job, jobSkills: Set<number>): ScoredJob => {
@@ -216,7 +315,7 @@ export default function Dashboard() {
         const m = job.age_range.match(/(\d+)\s*-\s*(\d+)/)
         if (m && userMinAge !== null && userMaxAge !== null) {
           const jobMin = parseInt(m[1]); const jobMax = parseInt(m[2])
-          if (userMinAge <= jobMax && userMaxAge >= jobMin) { score += 5; reasons.push(`Age ${jobMin}–${jobMax} fits`) }
+          if (userMinAge <= jobMax && userMaxAge >= jobMin) { score += 5; reasons.push('Age ' + jobMin + '-' + jobMax + ' fits') }
           else { excluded = true }
         }
       } else if (!excluded) { score += 5 }
@@ -225,7 +324,7 @@ export default function Dashboard() {
       jobSkills.forEach(sid => { if (userSkillIds.has(sid)) matchingSkillCount++ })
       if (matchingSkillCount > 0) {
         score += Math.min(matchingSkillCount * 3, 12)
-        reasons.push(`${matchingSkillCount} skill${matchingSkillCount === 1 ? '' : 's'} match`)
+        reasons.push(matchingSkillCount + ' skill' + (matchingSkillCount === 1 ? '' : 's') + ' match')
       }
 
       if (job.ethnicity_ids && job.ethnicity_ids.length > 0) {
@@ -241,7 +340,7 @@ export default function Dashboard() {
       } else { score += 1 }
 
       if (userLocation && job.location && job.location.toLowerCase().includes(userLocation.toLowerCase())) {
-        score += 1; reasons.push(`Based in ${userLocation}`)
+        score += 1; reasons.push('Based in ' + userLocation)
       }
 
       let tier: 'strong' | 'good' | 'none' = 'none'
@@ -255,8 +354,8 @@ export default function Dashboard() {
     const loadJobs = async () => {
       let query = supabase.from('jobs').select('*').eq('is_published', true).eq('is_side_hustle', showSideHustle)
       if (selectedProductionTypes.length > 0) query = query.in('production_type_id', selectedProductionTypes)
-      if (locationSearch) query = query.ilike('location', `%${locationSearch}%`)
-      if (keywordSearch) query = query.or(`project_role.ilike.%${keywordSearch}%,project_in.ilike.%${keywordSearch}%,short_summary.ilike.%${keywordSearch}%,job_title.ilike.%${keywordSearch}%`)
+      if (locationSearch) query = query.ilike('location', '%' + locationSearch + '%')
+      if (keywordSearch) query = query.or('project_role.ilike.%' + keywordSearch + '%,project_in.ilike.%' + keywordSearch + '%,short_summary.ilike.%' + keywordSearch + '%,job_title.ilike.%' + keywordSearch + '%')
       if (sortBy === 'newest') query = query.order('created_at', { ascending: false })
       if (sortBy === 'oldest') query = query.order('created_at', { ascending: true })
 
@@ -311,8 +410,8 @@ export default function Dashboard() {
       await supabase.from('notifications').update({ read: true }).eq('id', n.id)
       setNotifications(prev => prev.map(x => x.id === n.id ? { ...x, read: true } : x))
     }
-    if (n.data?.url) {
-      setShowNotifications(false)
+    setShowNotifications(false)
+    if (n.data && n.data.url) {
       router.push(n.data.url)
     }
   }
@@ -322,7 +421,6 @@ export default function Dashboard() {
   const unreadCount = notifications.filter(n => !n.read).length
 
   const getProductionTypeName = (id: number | null) => productionTypes.find(pt => pt.id === id)?.name || null
-
   const getSentBy = (job: Job) => job.is_side_hustle ? job.company : (job.casting_team || job.production_company)
 
   const toggleSave = async (e: React.MouseEvent, jobId: string) => {
@@ -338,15 +436,24 @@ export default function Dashboard() {
     }
   }
 
-  const handlePhotoChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
-    if (!file || !profile) return
-    const ext = file.name.split('.').pop()
-    const path = `${profile.id}/avatar.${ext}`
-    await supabase.storage.from('headshots').upload(path, file, { upsert: true })
-    const { data: { publicUrl } } = supabase.storage.from('headshots').getPublicUrl(path)
-    await supabase.from('profiles').update({ picture_url: publicUrl }).eq('id', profile.id)
-    setProfile(prev => prev ? { ...prev, picture_url: publicUrl } : prev)
+    if (file) setCropFile(file)
+    e.target.value = ''
+  }
+
+  const handleCropSave = async (blob: Blob) => {
+    if (!profile) return
+    setUploading(true)
+    setCropFile(null)
+    const path = profile.id + '/headshot-' + Date.now() + '.jpg'
+    const { error } = await supabase.storage.from('headshots').upload(path, blob, { upsert: true, contentType: 'image/jpeg' })
+    if (!error) {
+      const { data: { publicUrl } } = supabase.storage.from('headshots').getPublicUrl(path)
+      await supabase.from('profiles').update({ picture_url: publicUrl }).eq('id', profile.id)
+      setProfile(prev => prev ? { ...prev, picture_url: publicUrl } : prev)
+    }
+    setUploading(false)
   }
 
   const notifIcon = (type: Notification['type']) => {
@@ -394,9 +501,13 @@ export default function Dashboard() {
         input[type=text]:focus, input[type=search]:focus { border-color: #0c2520 !important; outline: none; box-shadow: 0 0 0 1px #0c2520; }
         .prod-chip { padding: 8px 14px; border-radius: 20px; font-size: 13px; cursor: pointer; font-family: inherit; border: 1px solid #e0ddd5; background: white; color: #0c2520; transition: all 0.15s ease; -webkit-tap-highlight-color: transparent; }
         .prod-chip.on { background: #0c2520; color: #f1f0ee; border-color: #0c2520; }
-        .avatar-wrap:hover .avatar-overlay { opacity: 1 !important; }
         .notif-row:hover { background: #f5f3ee; }
       `}</style>
+
+      {/* Crop modal */}
+      {cropFile && (
+        <CropModal file={cropFile} onSave={handleCropSave} onClose={() => setCropFile(null)} />
+      )}
 
       {showFilters && (
         <div onClick={() => setShowFilters(false)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.4)', zIndex: 200 }} />
@@ -430,7 +541,7 @@ export default function Dashboard() {
             <p style={{ fontSize: '11px', color: '#888', textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 600, margin: '0 0 10px' }}>Production type</p>
             <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginBottom: '24px' }}>
               {productionTypes.map(pt => (
-                <button key={pt.id} className={`prod-chip${selectedProductionTypes.includes(pt.id) ? ' on' : ''}`}
+                <button key={pt.id} className={'prod-chip' + (selectedProductionTypes.includes(pt.id) ? ' on' : '')}
                   onClick={() => setSelectedProductionTypes(prev => prev.includes(pt.id) ? prev.filter(x => x !== pt.id) : [...prev, pt.id])}>
                   {pt.name}
                 </button>
@@ -453,7 +564,7 @@ export default function Dashboard() {
 
             <p style={{ fontSize: '11px', color: '#888', textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 600, margin: '0 0 10px' }}>Sort by</p>
             <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginBottom: '28px' }}>
-              {([['newest', 'Newest first'], ['oldest', 'Oldest first'], ['az', 'Name A–Z'], ['za', 'Name Z–A']] as [SortOption, string][]).map(([val, label]) => (
+              {([['newest', 'Newest first'], ['oldest', 'Oldest first'], ['az', 'Name A-Z'], ['za', 'Name Z-A']] as [SortOption, string][]).map(([val, label]) => (
                 <button key={val} onClick={() => setSortBy(val)} style={{ padding: '9px 16px', borderRadius: '20px', fontSize: '13px', cursor: 'pointer', fontFamily: 'inherit', WebkitTapHighlightColor: 'transparent', border: sortBy === val ? 'none' : '1px solid #e0ddd5', background: sortBy === val ? '#0c2520' : 'white', color: sortBy === val ? '#f1f0ee' : '#0c2520', fontWeight: sortBy === val ? 500 : 400 }}>
                   {label}
                 </button>
@@ -461,7 +572,7 @@ export default function Dashboard() {
             </div>
 
             <button onClick={() => setShowFilters(false)} style={{ width: '100%', padding: '16px', background: '#0c2520', color: '#f1f0ee', border: 'none', borderRadius: '30px', fontSize: '15px', fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit' }}>
-              {activeFilterCount > 0 ? `Apply (${activeFilterCount})` : 'Apply'}
+              {activeFilterCount > 0 ? 'Apply (' + activeFilterCount + ')' : 'Apply'}
             </button>
           </div>
         </div>
@@ -481,45 +592,35 @@ export default function Dashboard() {
               </p>
             </div>
 
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
 
-              {/* Notification bell */}
+              {/* Notification bell — smaller */}
               <div ref={notifRef} style={{ position: 'relative' }}>
                 <button
                   onClick={() => setShowNotifications(!showNotifications)}
-                  style={{ width: '38px', height: '38px', borderRadius: '50%', background: 'white', border: '1px solid #e0ddd5', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', position: 'relative', flexShrink: 0, WebkitTapHighlightColor: 'transparent' }}
+                  style={{ width: '34px', height: '34px', borderRadius: '50%', background: 'white', border: '1px solid #e0ddd5', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', position: 'relative', flexShrink: 0, WebkitTapHighlightColor: 'transparent' }}
                 >
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#0c2520" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#0c2520" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
                     <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
                     <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
                   </svg>
                   {unreadCount > 0 && (
-                    <div style={{ position: 'absolute', top: '8px', right: '8px', width: '7px', height: '7px', borderRadius: '50%', background: '#4ade80', border: '1.5px solid #f1f0ee' }} />
+                    <div style={{ position: 'absolute', top: '6px', right: '6px', width: '7px', height: '7px', borderRadius: '50%', background: '#4ade80', border: '1.5px solid #f1f0ee' }} />
                   )}
                 </button>
 
                 {showNotifications && (
-                  <div className="notif-popup" style={{
-                    position: 'absolute', top: 'calc(100% + 8px)', right: 0,
-                    width: '300px', background: 'white',
-                    borderRadius: '16px', border: '1px solid #e8e4de',
-                    boxShadow: '0 8px 32px rgba(12,37,32,0.12)',
-                    zIndex: 300, overflow: 'hidden',
-                  }}>
+                  <div className="notif-popup" style={{ position: 'absolute', top: 'calc(100% + 8px)', right: 0, width: '300px', background: 'white', borderRadius: '16px', border: '1px solid #e8e4de', boxShadow: '0 8px 32px rgba(12,37,32,0.12)', zIndex: 300, overflow: 'hidden' }}>
                     <div style={{ padding: '14px 16px 10px', borderBottom: '1px solid #f0ede5', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                       <p style={{ fontFamily: 'Georgia, serif', fontSize: '15px', fontWeight: 500, color: '#0c2520', margin: 0 }}>Notifications</p>
                       {unreadCount > 0 && (
-                        <button onClick={markAllRead} style={{ background: 'none', border: 'none', fontSize: '11px', color: '#888', cursor: 'pointer', fontFamily: 'inherit', textDecoration: 'underline' }}>
-                          Mark all read
-                        </button>
+                        <button onClick={markAllRead} style={{ background: 'none', border: 'none', fontSize: '11px', color: '#888', cursor: 'pointer', fontFamily: 'inherit', textDecoration: 'underline' }}>Mark all read</button>
                       )}
                     </div>
-
                     {notifications.length === 0 ? (
                       <div style={{ padding: '28px 16px', textAlign: 'center' }}>
                         <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#d4d2cc" strokeWidth="1.5" strokeLinecap="round" style={{ marginBottom: '10px' }}>
-                          <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
-                          <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+                          <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/>
                         </svg>
                         <p style={{ fontSize: '13px', color: '#888', margin: 0 }}>No notifications yet</p>
                       </div>
@@ -546,18 +647,21 @@ export default function Dashboard() {
                 )}
               </div>
 
-              {/* Profile picture */}
-              <label className="avatar-wrap" style={{ cursor: 'pointer', position: 'relative', flexShrink: 0 }}>
+              {/* Profile picture — bigger */}
+              <label style={{ cursor: 'pointer', position: 'relative', flexShrink: 0 }}>
                 <div style={{
-                  width: '38px', height: '38px', borderRadius: '50%',
-                  background: profile?.picture_url ? `url(${profile.picture_url}) center/cover no-repeat` : '#e8efea',
+                  width: '42px', height: '42px', borderRadius: '50%',
+                  background: profile?.picture_url ? 'url(' + profile.picture_url + ') center/cover no-repeat' : '#e8efea',
                   backgroundSize: 'cover',
                   border: '2px solid #e0ddd5', overflow: 'hidden',
-                }} />
-                <div className="avatar-overlay" style={{ position: 'absolute', inset: 0, borderRadius: '50%', background: 'rgba(12,37,32,0.45)', display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: 0, transition: 'opacity 0.2s ease' }}>
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#f1f0ee" strokeWidth="2" strokeLinecap="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+                }}>
+                  {uploading && (
+                    <div style={{ width: '100%', height: '100%', background: 'rgba(12,37,32,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      <div style={{ width: '14px', height: '14px', border: '2px solid #f1f0ee', borderTopColor: 'transparent', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
+                    </div>
+                  )}
                 </div>
-                <input type="file" accept="image/*" style={{ display: 'none' }} onChange={handlePhotoChange} />
+                <input type="file" accept="image/*" style={{ display: 'none' }} onChange={handleFileSelect} />
               </label>
             </div>
           </div>
@@ -593,7 +697,7 @@ export default function Dashboard() {
                   const subtitle = job.is_side_hustle ? job.company : job.project_in
                   const prodTypeName = getProductionTypeName(job.production_type_id)
                   return (
-                    <Link key={job.id} href={`/jobs/${job.id}`} style={{ textDecoration: 'none', flexShrink: 0 }}>
+                    <Link key={job.id} href={'/jobs/' + job.id} style={{ textDecoration: 'none', flexShrink: 0 }}>
                       <div className="job-card" style={{ width: '220px', minHeight: '170px', background: isMint ? '#92d7af' : '#061410', borderRadius: '14px', padding: '18px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
                         <div>
                           <p style={{ fontSize: '10px', color: isMint ? '#0c2520' : '#4ade80', margin: '0 0 8px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Spotlight</p>
@@ -623,7 +727,7 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* Jobs section */}
+        {/* Jobs */}
         <div>
           <div style={{ display: 'flex', margin: '0 16px 16px', background: '#e8e4de', borderRadius: '12px', padding: '4px', gap: '4px' }}>
             <button onClick={() => setShowSideHustle(false)} style={{ flex: 1, padding: '10px', borderRadius: '9px', border: 'none', background: !showSideHustle ? 'white' : 'transparent', color: '#0c2520', fontSize: '14px', fontWeight: !showSideHustle ? 600 : 400, cursor: 'pointer', fontFamily: 'inherit', transition: 'all 0.2s ease', boxShadow: !showSideHustle ? '0 1px 4px rgba(0,0,0,0.08)' : 'none', WebkitTapHighlightColor: 'transparent' }}>
@@ -637,13 +741,13 @@ export default function Dashboard() {
           <div style={{ padding: '0 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
             <p style={{ fontSize: '13px', color: '#888', margin: 0 }}>
               {jobs.length} {jobs.length === 1 ? 'result' : 'results'}
-              {matchFilter !== 'all' && <span style={{ marginLeft: '6px', color: '#4ade80', fontWeight: 500 }}>· {matchFilter === 'strong' ? 'Strong matches' : 'Good & strong'}</span>}
+              {matchFilter !== 'all' && <span style={{ marginLeft: '6px', color: '#4ade80', fontWeight: 500 }}>{matchFilter === 'strong' ? '· Strong matches' : '· Good & strong'}</span>}
             </p>
             <button onClick={() => setShowFilters(true)} style={{ background: hasActiveFilters ? '#0c2520' : 'white', color: hasActiveFilters ? '#f1f0ee' : '#0c2520', border: '1px solid #e0ddd5', padding: '8px 16px', borderRadius: '20px', fontSize: '13px', cursor: 'pointer', fontFamily: 'inherit', display: 'flex', alignItems: 'center', gap: '6px', WebkitTapHighlightColor: 'transparent' }}>
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
                 <line x1="4" y1="6" x2="20" y2="6"/><line x1="8" y1="12" x2="16" y2="12"/><line x1="11" y1="18" x2="13" y2="18"/>
               </svg>
-              Filters{activeFilterCount > 0 ? ` (${activeFilterCount})` : ''}
+              Filters{activeFilterCount > 0 ? ' (' + activeFilterCount + ')' : ''}
             </button>
           </div>
 
@@ -663,7 +767,7 @@ export default function Dashboard() {
                 const isGood = job.matchTier === 'good'
                 const isSaved = savedIds.has(job.id)
                 return (
-                  <Link key={job.id} href={`/jobs/${job.id}`} style={{ textDecoration: 'none' }}>
+                  <Link key={job.id} href={'/jobs/' + job.id} style={{ textDecoration: 'none' }}>
                     <div className="job-card" style={{ background: 'white', borderRadius: '14px', padding: '16px', border: isStrong ? '1.5px solid #4ade80' : '1px solid #e8e4de', position: 'relative' }}>
                       <div style={{ position: 'absolute', top: '14px', right: '14px' }}>
                         <button onClick={(e) => toggleSave(e, job.id)} className="save-btn" style={{ background: isSaved ? '#0c2520' : '#f1f0ee', color: isSaved ? '#f1f0ee' : '#0c2520', border: '1px solid #e0ddd5', padding: '6px 14px', borderRadius: '20px', fontSize: '11px', cursor: 'pointer', fontFamily: 'inherit', fontWeight: 500, WebkitTapHighlightColor: 'transparent' }}>
