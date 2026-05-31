@@ -343,8 +343,8 @@ export default function Dashboard() {
     if (!file || !profile) return
     const ext = file.name.split('.').pop()
     const path = `${profile.id}/avatar.${ext}`
-    await supabase.storage.from('avatars').upload(path, file, { upsert: true })
-    const { data: { publicUrl } } = supabase.storage.from('avatars').getPublicUrl(path)
+    await supabase.storage.from('headshots').upload(path, file, { upsert: true })
+    const { data: { publicUrl } } = supabase.storage.from('headshots').getPublicUrl(path)
     await supabase.from('profiles').update({ picture_url: publicUrl }).eq('id', profile.id)
     setProfile(prev => prev ? { ...prev, picture_url: publicUrl } : prev)
   }
