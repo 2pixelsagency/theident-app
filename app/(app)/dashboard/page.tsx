@@ -598,9 +598,9 @@ export default function Dashboard() {
               <div ref={notifRef} style={{ position: 'relative' }}>
                 <button
                   onClick={() => setShowNotifications(!showNotifications)}
-                  style={{ width: '34px', height: '34px', borderRadius: '50%', background: 'white', border: '1px solid #e0ddd5', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', position: 'relative', flexShrink: 0, WebkitTapHighlightColor: 'transparent' }}
+                  style={{ width: '30px', height: '30px', borderRadius: '50%', background: 'white', border: '1px solid #e0ddd5', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', position: 'relative', flexShrink: 0, WebkitTapHighlightColor: 'transparent' }}
                 >
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#0c2520" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#0c2520" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
                     <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
                     <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
                   </svg>
@@ -650,7 +650,7 @@ export default function Dashboard() {
               {/* Profile picture — bigger */}
               <label style={{ cursor: 'pointer', position: 'relative', flexShrink: 0 }}>
                 <div style={{
-                  width: '42px', height: '42px', borderRadius: '50%',
+                  width: '46px', height: '46px', borderRadius: '50%',
                   background: profile?.picture_url ? 'url(' + profile.picture_url + ') center/cover no-repeat' : '#e8efea',
                   backgroundSize: 'cover',
                   border: '2px solid #e0ddd5', overflow: 'hidden',
