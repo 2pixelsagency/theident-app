@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
 
+type GalleryImg = { url: string }
 type TalentProfile = {
   id: string
   first_name: string | null
@@ -17,11 +18,72 @@ type TalentProfile = {
   minimum_age: number | null
   maximum_age: number | null
   gender_id: number | null
+  last_active: string | null
   skills: { name: string; color: string; text_color: string }[]
+  gallery: string[]
 }
 
 type Gender = { id: number; name: string }
 type Skill = { id: number; name: string }
+
+function ImageCarousel({ images, slug }: { images: string[]; slug: string | null }) {
+  const [active, setActive] = useState(0)
+  const startX = useRef(0)
+  const scrollRef = useRef<HTMLDivElement>(null)
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    startX.current = e.touches[0].clientX
+  }
+
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    const diff = startX.current - e.changedTouches[0].clientX
+    if (Math.abs(diff) > 40) {
+      if (diff > 0 && active < images.length - 1) setActive(active + 1)
+      if (diff < 0 && active > 0) setActive(active - 1)
+    }
+  }
+
+  if (images.length === 0) return (
+    <Link href={slug ? '/' + slug : '#'} style={{ textDecoration: 'none' }}>
+      <div style={{ width: '100%', aspectRatio: '3/4', background: '#e8efea', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#d4d2cc" strokeWidth="1.5" strokeLinecap="round">
+          <circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/>
+        </svg>
+      </div>
+    </Link>
+  )
+
+  return (
+    <div
+      style={{ width: '100%', aspectRatio: '3/4', position: 'relative', overflow: 'hidden' }}
+      onTouchStart={handleTouchStart}
+      onTouchEnd={handleTouchEnd}
+    >
+      <Link href={slug ? '/' + slug : '#'} style={{ textDecoration: 'none' }}>
+        <div style={{
+          width: '100%', height: '100%',
+          background: 'url(' + images[active] + ') center/cover',
+          backgroundSize: 'cover',
+          transition: 'background-image 0.3s ease',
+        }} />
+      </Link>
+
+      {images.length > 1 && (
+        <div style={{ position: 'absolute', bottom: '10px', left: 0, right: 0, display: 'flex', justifyContent: 'center', gap: '4px' }}>
+          {images.map((_, i) => (
+            <div key={i} style={{
+              width: i === active ? '14px' : '5px',
+              height: '5px',
+              borderRadius: '3px',
+              background: i === active ? 'white' : 'rgba(255,255,255,0.5)',
+              transition: 'all 0.2s ease',
+            }} />
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
 
 export default function BrowseTalent() {
   const router = useRouter()
@@ -31,7 +93,11 @@ export default function BrowseTalent() {
   const [searchQuery, setSearchQuery] = useState('')
   const [showFilters, setShowFilters] = useState(false)
   const [currentUserId, setCurrentUserId] = useState<string | null>(null)
+  const [currentProfile, setCurrentProfile] = useState<{ first_name: string | null; picture_url: string | null } | null>(null)
   const [connectionStatuses, setConnectionStatuses] = useState<Record<string, string>>({})
+  const [notifications, setNotifications] = useState<any[]>([])
+  const [showNotifications, setShowNotifications] = useState(false)
+  const notifRef = useRef<HTMLDivElement>(null)
 
   const [genders, setGenders] = useState<Gender[]>([])
   const [allSkills, setAllSkills] = useState<Skill[]>([])
@@ -44,10 +110,33 @@ export default function BrowseTalent() {
 
   const sheetRef = useRef<HTMLDivElement>(null)
 
+  const isOnline = (lastActive: string | null) => {
+    if (!lastActive) return false
+    return (Date.now() - new Date(lastActive).getTime()) < 15 * 60 * 1000
+  }
+
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (notifRef.current && !notifRef.current.contains(e.target as Node)) setShowNotifications(false)
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [])
+
   useEffect(() => {
     const load = async () => {
       const { data: { user } } = await supabase.auth.getUser()
-      if (user) setCurrentUserId(user.id)
+      if (user) {
+        setCurrentUserId(user.id)
+        // Update last_active
+        await supabase.from('profiles').update({ last_active: new Date().toISOString() }).eq('id', user.id)
+        const { data: myProf } = await supabase.from('profiles').select('first_name, picture_url').eq('id', user.id).single()
+        if (myProf) setCurrentProfile(myProf)
+
+        // Load notifications
+        const { data: notifData } = await supabase.from('notifications').select('*').eq('profile_id', user.id).eq('read', false).order('created_at', { ascending: false }).limit(10)
+        setNotifications(notifData || [])
+      }
 
       const [{ data: genderData }, { data: skillData }] = await Promise.all([
         supabase.from('genders').select('id, name').order('id'),
@@ -58,38 +147,47 @@ export default function BrowseTalent() {
 
       const { data: profileData } = await supabase
         .from('profiles')
-        .select('id, first_name, last_name, picture_url, location, slug, availability_status, production_until, minimum_age, maximum_age, gender_id')
+        .select('id, first_name, last_name, picture_url, location, slug, availability_status, production_until, minimum_age, maximum_age, gender_id, last_active')
         .not('first_name', 'is', null)
         .order('first_name')
 
       if (profileData) {
         const profileIds = profileData.map(p => p.id)
-        const { data: skillLinks } = await supabase
-          .from('profile_skills')
-          .select('profile_id, skills(name, skills_categories(color, text_color))')
-          .in('profile_id', profileIds)
+
+        const [{ data: skillLinks }, { data: galleryData }] = await Promise.all([
+          supabase.from('profile_skills').select('profile_id, skills(name, skills_categories(color, text_color))').in('profile_id', profileIds),
+          supabase.from('gallery_images').select('profile_id, url').in('profile_id', profileIds).order('sort_order'),
+        ])
 
         const skillMap = new Map<string, { name: string; color: string; text_color: string }[]>()
         ;(skillLinks || []).forEach((link: any) => {
           if (!link.skills) return
-          const pid = link.profile_id
-          if (!skillMap.has(pid)) skillMap.set(pid, [])
-          skillMap.get(pid)!.push({
+          if (!skillMap.has(link.profile_id)) skillMap.set(link.profile_id, [])
+          skillMap.get(link.profile_id)!.push({
             name: link.skills.name,
             color: link.skills.skills_categories?.color || '#e8efea',
             text_color: link.skills.skills_categories?.text_color || '#0c2520',
           })
         })
 
+        const galleryMap = new Map<string, string[]>()
+        ;(galleryData || []).forEach((g: any) => {
+          if (!galleryMap.has(g.profile_id)) galleryMap.set(g.profile_id, [])
+          galleryMap.get(g.profile_id)!.push(g.url)
+        })
+
         const enriched = profileData.map(p => ({
           ...p,
           skills: skillMap.get(p.id) || [],
+          gallery: [
+            ...(p.picture_url ? [p.picture_url] : []),
+            ...(galleryMap.get(p.id) || []),
+          ],
         }))
 
         setAllProfiles(enriched)
         setProfiles(enriched)
 
-        // Load connection statuses
         if (user) {
           const { data: conns } = await supabase
             .from('connections')
@@ -112,9 +210,7 @@ export default function BrowseTalent() {
   useEffect(() => {
     let filtered = [...allProfiles]
 
-    if (currentUserId) {
-      filtered = filtered.filter(p => p.id !== currentUserId)
-    }
+    if (currentUserId) filtered = filtered.filter(p => p.id !== currentUserId)
 
     if (searchQuery) {
       const q = searchQuery.toLowerCase()
@@ -126,9 +222,7 @@ export default function BrowseTalent() {
       })
     }
 
-    if (selectedGender !== null) {
-      filtered = filtered.filter(p => p.gender_id === selectedGender)
-    }
+    if (selectedGender !== null) filtered = filtered.filter(p => p.gender_id === selectedGender)
 
     if (selectedSkills.length > 0) {
       filtered = filtered.filter(p =>
@@ -144,9 +238,7 @@ export default function BrowseTalent() {
       filtered = filtered.filter(p => (p.location || '').toLowerCase().includes(loc))
     }
 
-    if (availabilityFilter) {
-      filtered = filtered.filter(p => p.availability_status === availabilityFilter)
-    }
+    if (availabilityFilter) filtered = filtered.filter(p => p.availability_status === availabilityFilter)
 
     if (minAge > 0 || maxAge < 100) {
       filtered = filtered.filter(p => {
@@ -160,8 +252,7 @@ export default function BrowseTalent() {
 
   const handleConnect = async (profileId: string) => {
     if (!currentUserId) { router.push('/login'); return }
-    const status = connectionStatuses[profileId]
-    if (status) return
+    if (connectionStatuses[profileId]) return
     await supabase.from('connections').insert({ requester_id: currentUserId, receiver_id: profileId })
     setConnectionStatuses(prev => ({ ...prev, [profileId]: 'pending' }))
   }
@@ -177,6 +268,7 @@ export default function BrowseTalent() {
 
   const hasActiveFilters = selectedGender !== null || selectedSkills.length > 0 || !!locationFilter || !!availabilityFilter || minAge > 0 || maxAge < 100
   const activeFilterCount = (selectedGender !== null ? 1 : 0) + (selectedSkills.length > 0 ? 1 : 0) + (locationFilter ? 1 : 0) + (availabilityFilter ? 1 : 0) + (minAge > 0 || maxAge < 100 ? 1 : 0)
+  const unreadCount = notifications.length
 
   if (loading) return <div style={{ minHeight: '100vh', background: '#f1f0ee' }} />
 
@@ -185,16 +277,18 @@ export default function BrowseTalent() {
       <style>{`
         @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
         @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+        @keyframes popIn { from { opacity: 0; transform: scale(0.92) translateY(-4px); } to { opacity: 1; transform: scale(1) translateY(0); } }
         .fade-in { animation: fadeIn 0.5s ease-out; }
         .sheet { animation: slideUp 0.3s cubic-bezier(0.32, 0.72, 0, 1); }
-        .talent-card { transition: transform 0.2s ease, box-shadow 0.2s ease; }
-        .talent-card:active { transform: scale(0.98); }
+        .notif-popup { animation: popIn 0.2s ease-out; }
+        .talent-card { transition: transform 0.15s ease; -webkit-tap-highlight-color: transparent; }
+        .talent-card:active { transform: scale(0.97); }
         .range-slider { -webkit-appearance: none; width: 100%; height: 4px; background: #e0ddd5; border-radius: 2px; outline: none; }
         .range-slider::-webkit-slider-thumb { -webkit-appearance: none; width: 22px; height: 22px; background: #0c2520; border-radius: 50%; cursor: pointer; }
         input[type=text]:focus, input[type=search]:focus { border-color: #0c2520 !important; outline: none; box-shadow: 0 0 0 1px #0c2520; }
         .filter-chip { padding: 8px 14px; border-radius: 20px; font-size: 13px; cursor: pointer; font-family: inherit; border: 1px solid #e0ddd5; background: white; color: #0c2520; transition: all 0.15s ease; -webkit-tap-highlight-color: transparent; }
         .filter-chip.on { background: #0c2520; color: #f1f0ee; border-color: #0c2520; }
-        .connect-btn:active { opacity: 0.7; }
+        .notif-row:hover { background: #f5f3ee; }
       `}</style>
 
       {/* Filter overlay */}
@@ -219,28 +313,21 @@ export default function BrowseTalent() {
               </div>
             </div>
 
-            {/* Gender */}
             <p style={{ fontSize: '11px', color: '#888', textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 600, margin: '0 0 10px' }}>Gender</p>
             <div style={{ display: 'flex', gap: '8px', marginBottom: '24px', flexWrap: 'wrap' }}>
               {genders.map(g => (
-                <button key={g.id} className={'filter-chip' + (selectedGender === g.id ? ' on' : '')} onClick={() => setSelectedGender(selectedGender === g.id ? null : g.id)}>
-                  {g.name}
-                </button>
+                <button key={g.id} className={'filter-chip' + (selectedGender === g.id ? ' on' : '')} onClick={() => setSelectedGender(selectedGender === g.id ? null : g.id)}>{g.name}</button>
               ))}
             </div>
 
-            {/* Skills */}
             <p style={{ fontSize: '11px', color: '#888', textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 600, margin: '0 0 10px' }}>Skills</p>
             <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginBottom: '24px', maxHeight: '120px', overflowY: 'auto' }}>
               {allSkills.map(s => (
                 <button key={s.id} className={'filter-chip' + (selectedSkills.includes(s.id) ? ' on' : '')}
-                  onClick={() => setSelectedSkills(prev => prev.includes(s.id) ? prev.filter(x => x !== s.id) : [...prev, s.id])}>
-                  {s.name}
-                </button>
+                  onClick={() => setSelectedSkills(prev => prev.includes(s.id) ? prev.filter(x => x !== s.id) : [...prev, s.id])}>{s.name}</button>
               ))}
             </div>
 
-            {/* Playing age */}
             <p style={{ fontSize: '11px', color: '#888', textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 600, margin: '0 0 10px' }}>Playing age</p>
             <div style={{ marginBottom: '24px' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px' }}>
@@ -251,12 +338,10 @@ export default function BrowseTalent() {
               <input type="range" min="0" max="100" value={maxAge} onChange={(e) => { const v = Number(e.target.value); if (v >= minAge) setMaxAge(v) }} className="range-slider" />
             </div>
 
-            {/* Location */}
             <p style={{ fontSize: '11px', color: '#888', textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 600, margin: '0 0 10px' }}>Location</p>
             <input type="text" placeholder="e.g. London" value={locationFilter} onChange={(e) => setLocationFilter(e.target.value)}
               style={{ width: '100%', padding: '13px 14px', border: '1px solid #e0ddd5', borderRadius: '12px', fontSize: '14px', fontFamily: 'inherit', boxSizing: 'border-box', marginBottom: '24px', background: 'white' }} />
 
-            {/* Availability */}
             <p style={{ fontSize: '11px', color: '#888', textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 600, margin: '0 0 10px' }}>Availability</p>
             <div style={{ display: 'flex', gap: '8px', marginBottom: '28px' }}>
               <button className={'filter-chip' + (availabilityFilter === 'available' ? ' on' : '')} onClick={() => setAvailabilityFilter(availabilityFilter === 'available' ? '' : 'available')}>Available now</button>
@@ -272,9 +357,62 @@ export default function BrowseTalent() {
 
       <div className="fade-in">
 
-        {/* Header */}
+        {/* Header — same style as dashboard */}
         <div style={{ padding: '24px 16px 16px' }}>
-          <p style={{ fontFamily: 'Georgia, serif', fontSize: '22px', color: '#0c2520', margin: 0, fontWeight: 500 }}>Browse talent</p>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div>
+              <p style={{ fontSize: '12px', color: '#888', margin: '0 0 3px', letterSpacing: '0.02em' }}>
+                {new Date().toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' })}
+              </p>
+              <p style={{ fontFamily: 'Georgia, serif', fontSize: '20px', color: '#0c2520', margin: 0, fontWeight: 500, lineHeight: 1.2 }}>
+                Browse talent
+              </p>
+            </div>
+
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              {/* Bell */}
+              <div ref={notifRef} style={{ position: 'relative' }}>
+                <button onClick={() => setShowNotifications(!showNotifications)}
+                  style={{ width: '34px', height: '34px', borderRadius: '50%', background: 'white', border: '1px solid #e0ddd5', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', position: 'relative', flexShrink: 0, WebkitTapHighlightColor: 'transparent' }}>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#0c2520" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+                  </svg>
+                  {unreadCount > 0 && (
+                    <div style={{ position: 'absolute', top: '6px', right: '6px', width: '7px', height: '7px', borderRadius: '50%', background: '#4ade80', border: '1.5px solid #f1f0ee' }} />
+                  )}
+                </button>
+                {showNotifications && (
+                  <div className="notif-popup" style={{ position: 'absolute', top: 'calc(100% + 8px)', right: 0, width: '280px', background: 'white', borderRadius: '16px', border: '1px solid #e8e4de', boxShadow: '0 8px 32px rgba(12,37,32,0.12)', zIndex: 300, overflow: 'hidden' }}>
+                    <div style={{ padding: '14px 16px 10px', borderBottom: '1px solid #f0ede5' }}>
+                      <p style={{ fontFamily: 'Georgia, serif', fontSize: '15px', fontWeight: 500, color: '#0c2520', margin: 0 }}>Notifications</p>
+                    </div>
+                    {notifications.length === 0 ? (
+                      <div style={{ padding: '24px 16px', textAlign: 'center' }}>
+                        <p style={{ fontSize: '13px', color: '#888', margin: 0 }}>No new notifications</p>
+                      </div>
+                    ) : (
+                      <div>
+                        {notifications.slice(0, 5).map((n: any) => (
+                          <div key={n.id} className="notif-row" style={{ padding: '10px 16px', borderBottom: '1px solid #f0ede5', cursor: 'pointer' }}>
+                            <p style={{ fontSize: '13px', color: '#0c2520', margin: '0 0 2px', fontWeight: 500 }}>{n.body}</p>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              {/* Headshot */}
+              <Link href="/profile" style={{ textDecoration: 'none', flexShrink: 0 }}>
+                <div style={{
+                  width: '42px', height: '42px', borderRadius: '50%',
+                  background: currentProfile?.picture_url ? 'url(' + currentProfile.picture_url + ') center/cover' : '#e8efea',
+                  backgroundSize: 'cover', border: '2px solid #e0ddd5',
+                }} />
+              </Link>
+            </div>
+          </div>
         </div>
 
         {/* Search */}
@@ -305,51 +443,46 @@ export default function BrowseTalent() {
         {profiles.length === 0 ? (
           <div style={{ margin: '0 16px', textAlign: 'center', padding: '48px 24px', background: 'white', borderRadius: '14px', border: '1px solid #e8e6e0' }}>
             <p style={{ fontFamily: 'Georgia, serif', fontSize: '17px', color: '#0c2520', margin: '0 0 6px' }}>No talent found</p>
-            <p style={{ fontSize: '13px', color: '#888', margin: 0 }}>Try adjusting your filters</p>
+            <p style={{ fontSize: '13px', color: '#888', margin: 0 }}>Try adjusting your search or filters</p>
           </div>
         ) : (
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', padding: '0 16px 100px' }}>
             {profiles.map(p => {
               const fullName = ((p.first_name || '') + ' ' + (p.last_name || '')).trim()
               const connStatus = connectionStatuses[p.id]
+              const online = isOnline(p.last_active)
               return (
                 <div key={p.id} className="talent-card" style={{ background: 'white', borderRadius: '14px', overflow: 'hidden', border: '1px solid #e8e4de' }}>
-                  <Link href={p.slug ? '/' + p.slug : '#'} style={{ textDecoration: 'none' }}>
-                    <div style={{
-                      width: '100%', aspectRatio: '3/4',
-                      background: p.picture_url ? 'url(' + p.picture_url + ') center/cover' : '#e8efea',
-                      backgroundSize: 'cover',
-                      position: 'relative',
-                    }}>
-                      {/* Availability badge */}
-                      {p.availability_status && (
-                        <div style={{
-                          position: 'absolute', top: '8px', left: '8px',
-                          background: p.availability_status === 'available' ? '#4ade80' : '#fde6c2',
-                          padding: '3px 8px', borderRadius: '6px',
-                          display: 'flex', alignItems: 'center', gap: '4px',
-                        }}>
-                          <div style={{ width: '5px', height: '5px', borderRadius: '50%', background: p.availability_status === 'available' ? '#061410' : '#8a5a2e' }} />
-                          <span style={{ fontSize: '9px', fontWeight: 600, color: p.availability_status === 'available' ? '#061410' : '#8a5a2e' }}>
-                            {p.availability_status === 'available' ? 'Available' : 'In production'}
-                          </span>
-                        </div>
-                      )}
 
-                      {/* No photo fallback */}
-                      {!p.picture_url && (
-                        <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                          <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#d4d2cc" strokeWidth="1.5" strokeLinecap="round">
-                            <circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/>
-                          </svg>
-                        </div>
-                      )}
-                    </div>
-                  </Link>
+                  {/* Swipeable image carousel */}
+                  <div style={{ position: 'relative' }}>
+                    <ImageCarousel images={p.gallery} slug={p.slug} />
+
+                    {/* Online dot */}
+                    {online && (
+                      <div style={{ position: 'absolute', top: '10px', right: '10px', display: 'flex', alignItems: 'center', gap: '4px', background: 'rgba(0,0,0,0.5)', padding: '3px 8px', borderRadius: '10px' }}>
+                        <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#4ade80' }} />
+                        <span style={{ fontSize: '9px', color: '#f1f0ee', fontWeight: 500 }}>Online</span>
+                      </div>
+                    )}
+
+                    {/* Availability */}
+                    {p.availability_status && !online && (
+                      <div style={{
+                        position: 'absolute', top: '10px', right: '10px',
+                        background: p.availability_status === 'available' ? '#4ade80' : '#fde6c2',
+                        padding: '3px 8px', borderRadius: '10px',
+                      }}>
+                        <span style={{ fontSize: '9px', fontWeight: 600, color: p.availability_status === 'available' ? '#061410' : '#8a5a2e' }}>
+                          {p.availability_status === 'available' ? 'Available' : 'In production'}
+                        </span>
+                      </div>
+                    )}
+                  </div>
 
                   <div style={{ padding: '12px' }}>
                     <Link href={p.slug ? '/' + p.slug : '#'} style={{ textDecoration: 'none' }}>
-                      <p style={{ fontFamily: 'Georgia, serif', fontSize: '14px', fontWeight: 500, color: '#0c2520', margin: '0 0 4px', lineHeight: 1.2 }}>{fullName}</p>
+                      <p style={{ fontFamily: 'Georgia, serif', fontSize: '15px', fontWeight: 500, color: '#0c2520', margin: '0 0 2px', lineHeight: 1.2 }}>{fullName}</p>
                     </Link>
 
                     {p.location && (
@@ -370,21 +503,32 @@ export default function BrowseTalent() {
                       </div>
                     )}
 
-                    {/* Connect button */}
+                    {/* Collaborate button */}
                     {currentUserId && currentUserId !== p.id && (
                       <button
-                        className="connect-btn"
                         onClick={() => handleConnect(p.id)}
                         disabled={!!connStatus}
                         style={{
-                          width: '100%', padding: '7px', borderRadius: '20px', fontSize: '11px', fontWeight: 500, cursor: connStatus ? 'default' : 'pointer', fontFamily: 'inherit',
-                          background: connStatus === 'accepted' ? '#4ade80' : connStatus === 'pending' ? '#e8e4de' : '#0c2520',
+                          width: '100%', padding: '8px', borderRadius: '20px', fontSize: '12px', fontWeight: 500,
+                          cursor: connStatus ? 'default' : 'pointer', fontFamily: 'inherit',
+                          background: connStatus === 'accepted' ? '#4ade80' : connStatus === 'pending' ? '#f1f0ee' : '#061410',
                           color: connStatus === 'accepted' ? '#061410' : connStatus === 'pending' ? '#888' : '#f1f0ee',
-                          border: 'none',
+                          border: connStatus === 'pending' ? '1px solid #e0ddd5' : 'none',
                           WebkitTapHighlightColor: 'transparent',
+                          display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px',
                         }}
                       >
-                        {connStatus === 'accepted' ? 'Connected' : connStatus === 'pending' ? 'Requested' : connStatus === 'declined' ? 'Declined' : 'Connect'}
+                        {connStatus === 'accepted' ? (
+                          <>
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><polyline points="20 6 9 17 4 12"/></svg>
+                            Collaborator
+                          </>
+                        ) : connStatus === 'pending' ? 'Invite sent' : (
+                          <>
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><line x1="20" y1="8" x2="20" y2="14"/><line x1="23" y1="11" x2="17" y2="11"/></svg>
+                            Collaborate
+                          </>
+                        )}
                       </button>
                     )}
                   </div>
