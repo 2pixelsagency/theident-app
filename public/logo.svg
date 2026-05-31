@@ -1,0 +1,2 @@
+<img src="/logo.svg" alt="The Ident" style={{ width: '60px', height: 'auto', marginBottom: '8px' }} />
+<p style={{ fontFamily: 'Georgia, serif', fontSize: '22px', fontWeight: 500, color: '#0c2520', margin: '0 0 4px' }}>The Ident</p>
