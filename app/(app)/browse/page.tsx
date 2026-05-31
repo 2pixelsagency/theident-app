@@ -1,8 +1,399 @@
-export default function Browse() {
+'use client'
+
+import { useState, useEffect, useRef } from 'react'
+import { useRouter } from 'next/navigation'
+import Link from 'next/link'
+import { supabase } from '@/lib/supabase'
+
+type TalentProfile = {
+  id: string
+  first_name: string | null
+  last_name: string | null
+  picture_url: string | null
+  location: string | null
+  slug: string | null
+  availability_status: string | null
+  production_until: string | null
+  minimum_age: number | null
+  maximum_age: number | null
+  gender_id: number | null
+  skills: { name: string; color: string; text_color: string }[]
+}
+
+type Gender = { id: number; name: string }
+type Skill = { id: number; name: string }
+
+export default function BrowseTalent() {
+  const router = useRouter()
+  const [profiles, setProfiles] = useState<TalentProfile[]>([])
+  const [allProfiles, setAllProfiles] = useState<TalentProfile[]>([])
+  const [loading, setLoading] = useState(true)
+  const [searchQuery, setSearchQuery] = useState('')
+  const [showFilters, setShowFilters] = useState(false)
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null)
+  const [connectionStatuses, setConnectionStatuses] = useState<Record<string, string>>({})
+
+  const [genders, setGenders] = useState<Gender[]>([])
+  const [allSkills, setAllSkills] = useState<Skill[]>([])
+  const [selectedGender, setSelectedGender] = useState<number | null>(null)
+  const [selectedSkills, setSelectedSkills] = useState<number[]>([])
+  const [locationFilter, setLocationFilter] = useState('')
+  const [availabilityFilter, setAvailabilityFilter] = useState<string>('')
+  const [minAge, setMinAge] = useState(0)
+  const [maxAge, setMaxAge] = useState(100)
+
+  const sheetRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    const load = async () => {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (user) setCurrentUserId(user.id)
+
+      const [{ data: genderData }, { data: skillData }] = await Promise.all([
+        supabase.from('genders').select('id, name').order('id'),
+        supabase.from('skills').select('id, name').order('name'),
+      ])
+      setGenders(genderData || [])
+      setAllSkills(skillData || [])
+
+      const { data: profileData } = await supabase
+        .from('profiles')
+        .select('id, first_name, last_name, picture_url, location, slug, availability_status, production_until, minimum_age, maximum_age, gender_id')
+        .not('first_name', 'is', null)
+        .order('first_name')
+
+      if (profileData) {
+        const profileIds = profileData.map(p => p.id)
+        const { data: skillLinks } = await supabase
+          .from('profile_skills')
+          .select('profile_id, skills(name, skills_categories(color, text_color))')
+          .in('profile_id', profileIds)
+
+        const skillMap = new Map<string, { name: string; color: string; text_color: string }[]>()
+        ;(skillLinks || []).forEach((link: any) => {
+          if (!link.skills) return
+          const pid = link.profile_id
+          if (!skillMap.has(pid)) skillMap.set(pid, [])
+          skillMap.get(pid)!.push({
+            name: link.skills.name,
+            color: link.skills.skills_categories?.color || '#e8efea',
+            text_color: link.skills.skills_categories?.text_color || '#0c2520',
+          })
+        })
+
+        const enriched = profileData.map(p => ({
+          ...p,
+          skills: skillMap.get(p.id) || [],
+        }))
+
+        setAllProfiles(enriched)
+        setProfiles(enriched)
+
+        // Load connection statuses
+        if (user) {
+          const { data: conns } = await supabase
+            .from('connections')
+            .select('requester_id, receiver_id, status')
+            .or('requester_id.eq.' + user.id + ',receiver_id.eq.' + user.id)
+          const statuses: Record<string, string> = {}
+          ;(conns || []).forEach(c => {
+            const otherId = c.requester_id === user.id ? c.receiver_id : c.requester_id
+            statuses[otherId] = c.status
+          })
+          setConnectionStatuses(statuses)
+        }
+      }
+
+      setLoading(false)
+    }
+    load()
+  }, [])
+
+  useEffect(() => {
+    let filtered = [...allProfiles]
+
+    if (currentUserId) {
+      filtered = filtered.filter(p => p.id !== currentUserId)
+    }
+
+    if (searchQuery) {
+      const q = searchQuery.toLowerCase()
+      filtered = filtered.filter(p => {
+        const name = ((p.first_name || '') + ' ' + (p.last_name || '')).toLowerCase()
+        const skillMatch = p.skills.some(s => s.name.toLowerCase().includes(q))
+        const locMatch = (p.location || '').toLowerCase().includes(q)
+        return name.includes(q) || skillMatch || locMatch
+      })
+    }
+
+    if (selectedGender !== null) {
+      filtered = filtered.filter(p => p.gender_id === selectedGender)
+    }
+
+    if (selectedSkills.length > 0) {
+      filtered = filtered.filter(p =>
+        selectedSkills.every(skillId => {
+          const skillName = allSkills.find(s => s.id === skillId)?.name
+          return p.skills.some(s => s.name === skillName)
+        })
+      )
+    }
+
+    if (locationFilter) {
+      const loc = locationFilter.toLowerCase()
+      filtered = filtered.filter(p => (p.location || '').toLowerCase().includes(loc))
+    }
+
+    if (availabilityFilter) {
+      filtered = filtered.filter(p => p.availability_status === availabilityFilter)
+    }
+
+    if (minAge > 0 || maxAge < 100) {
+      filtered = filtered.filter(p => {
+        if (p.minimum_age === null || p.maximum_age === null) return true
+        return p.minimum_age <= maxAge && p.maximum_age >= minAge
+      })
+    }
+
+    setProfiles(filtered)
+  }, [searchQuery, selectedGender, selectedSkills, locationFilter, availabilityFilter, minAge, maxAge, allProfiles, currentUserId, allSkills])
+
+  const handleConnect = async (profileId: string) => {
+    if (!currentUserId) { router.push('/login'); return }
+    const status = connectionStatuses[profileId]
+    if (status) return
+    await supabase.from('connections').insert({ requester_id: currentUserId, receiver_id: profileId })
+    setConnectionStatuses(prev => ({ ...prev, [profileId]: 'pending' }))
+  }
+
+  const clearAllFilters = () => {
+    setSelectedGender(null)
+    setSelectedSkills([])
+    setLocationFilter('')
+    setAvailabilityFilter('')
+    setMinAge(0)
+    setMaxAge(100)
+  }
+
+  const hasActiveFilters = selectedGender !== null || selectedSkills.length > 0 || !!locationFilter || !!availabilityFilter || minAge > 0 || maxAge < 100
+  const activeFilterCount = (selectedGender !== null ? 1 : 0) + (selectedSkills.length > 0 ? 1 : 0) + (locationFilter ? 1 : 0) + (availabilityFilter ? 1 : 0) + (minAge > 0 || maxAge < 100 ? 1 : 0)
+
+  if (loading) return <div style={{ minHeight: '100vh', background: '#f1f0ee' }} />
+
   return (
-    <div style={{ padding: '24px 16px', fontFamily: 'system-ui, sans-serif' }}>
-      <p style={{ fontFamily: 'Georgia, serif', fontSize: '22px', color: '#0c2520', margin: '0 0 8px', fontWeight: 500 }}>Browse talent</p>
-      <p style={{ fontSize: '13px', color: '#888', margin: 0 }}>Coming soon.</p>
+    <div style={{ fontFamily: 'system-ui, sans-serif' }}>
+      <style>{`
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+        .fade-in { animation: fadeIn 0.5s ease-out; }
+        .sheet { animation: slideUp 0.3s cubic-bezier(0.32, 0.72, 0, 1); }
+        .talent-card { transition: transform 0.2s ease, box-shadow 0.2s ease; }
+        .talent-card:active { transform: scale(0.98); }
+        .range-slider { -webkit-appearance: none; width: 100%; height: 4px; background: #e0ddd5; border-radius: 2px; outline: none; }
+        .range-slider::-webkit-slider-thumb { -webkit-appearance: none; width: 22px; height: 22px; background: #0c2520; border-radius: 50%; cursor: pointer; }
+        input[type=text]:focus, input[type=search]:focus { border-color: #0c2520 !important; outline: none; box-shadow: 0 0 0 1px #0c2520; }
+        .filter-chip { padding: 8px 14px; border-radius: 20px; font-size: 13px; cursor: pointer; font-family: inherit; border: 1px solid #e0ddd5; background: white; color: #0c2520; transition: all 0.15s ease; -webkit-tap-highlight-color: transparent; }
+        .filter-chip.on { background: #0c2520; color: #f1f0ee; border-color: #0c2520; }
+        .connect-btn:active { opacity: 0.7; }
+      `}</style>
+
+      {/* Filter overlay */}
+      {showFilters && (
+        <div onClick={() => setShowFilters(false)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.4)', zIndex: 200 }} />
+      )}
+
+      {/* Filter sheet */}
+      {showFilters && (
+        <div ref={sheetRef} className="sheet" style={{ position: 'fixed', bottom: 0, left: 0, right: 0, background: '#f1f0ee', borderRadius: '20px 20px 0 0', zIndex: 201, maxHeight: '85vh', overflowY: 'auto', paddingBottom: 'env(safe-area-inset-bottom)' }}>
+          <div style={{ display: 'flex', justifyContent: 'center', padding: '12px 0 4px' }}>
+            <div style={{ width: '36px', height: '4px', borderRadius: '2px', background: '#d4d2cc' }} />
+          </div>
+          <div style={{ padding: '8px 20px 24px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+              <p style={{ fontFamily: 'Georgia, serif', fontSize: '18px', fontWeight: 500, color: '#0c2520', margin: 0 }}>Filters</p>
+              <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+                {hasActiveFilters && <button onClick={clearAllFilters} style={{ background: 'none', border: 'none', fontSize: '13px', color: '#888', textDecoration: 'underline', cursor: 'pointer', fontFamily: 'inherit' }}>Clear all</button>}
+                <button onClick={() => setShowFilters(false)} style={{ background: '#0c2520', border: 'none', borderRadius: '50%', width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#f1f0ee" strokeWidth="2.5" strokeLinecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                </button>
+              </div>
+            </div>
+
+            {/* Gender */}
+            <p style={{ fontSize: '11px', color: '#888', textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 600, margin: '0 0 10px' }}>Gender</p>
+            <div style={{ display: 'flex', gap: '8px', marginBottom: '24px', flexWrap: 'wrap' }}>
+              {genders.map(g => (
+                <button key={g.id} className={'filter-chip' + (selectedGender === g.id ? ' on' : '')} onClick={() => setSelectedGender(selectedGender === g.id ? null : g.id)}>
+                  {g.name}
+                </button>
+              ))}
+            </div>
+
+            {/* Skills */}
+            <p style={{ fontSize: '11px', color: '#888', textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 600, margin: '0 0 10px' }}>Skills</p>
+            <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginBottom: '24px', maxHeight: '120px', overflowY: 'auto' }}>
+              {allSkills.map(s => (
+                <button key={s.id} className={'filter-chip' + (selectedSkills.includes(s.id) ? ' on' : '')}
+                  onClick={() => setSelectedSkills(prev => prev.includes(s.id) ? prev.filter(x => x !== s.id) : [...prev, s.id])}>
+                  {s.name}
+                </button>
+              ))}
+            </div>
+
+            {/* Playing age */}
+            <p style={{ fontSize: '11px', color: '#888', textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 600, margin: '0 0 10px' }}>Playing age</p>
+            <div style={{ marginBottom: '24px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px' }}>
+                <span style={{ fontSize: '14px', color: '#0c2520', fontWeight: 500 }}>{minAge} - {maxAge}</span>
+                {(minAge > 0 || maxAge < 100) && <button onClick={() => { setMinAge(0); setMaxAge(100) }} style={{ background: 'none', border: 'none', fontSize: '12px', color: '#888', cursor: 'pointer', fontFamily: 'inherit', textDecoration: 'underline' }}>Clear</button>}
+              </div>
+              <input type="range" min="0" max="100" value={minAge} onChange={(e) => { const v = Number(e.target.value); if (v <= maxAge) setMinAge(v) }} className="range-slider" style={{ marginBottom: '12px' }} />
+              <input type="range" min="0" max="100" value={maxAge} onChange={(e) => { const v = Number(e.target.value); if (v >= minAge) setMaxAge(v) }} className="range-slider" />
+            </div>
+
+            {/* Location */}
+            <p style={{ fontSize: '11px', color: '#888', textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 600, margin: '0 0 10px' }}>Location</p>
+            <input type="text" placeholder="e.g. London" value={locationFilter} onChange={(e) => setLocationFilter(e.target.value)}
+              style={{ width: '100%', padding: '13px 14px', border: '1px solid #e0ddd5', borderRadius: '12px', fontSize: '14px', fontFamily: 'inherit', boxSizing: 'border-box', marginBottom: '24px', background: 'white' }} />
+
+            {/* Availability */}
+            <p style={{ fontSize: '11px', color: '#888', textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 600, margin: '0 0 10px' }}>Availability</p>
+            <div style={{ display: 'flex', gap: '8px', marginBottom: '28px' }}>
+              <button className={'filter-chip' + (availabilityFilter === 'available' ? ' on' : '')} onClick={() => setAvailabilityFilter(availabilityFilter === 'available' ? '' : 'available')}>Available now</button>
+              <button className={'filter-chip' + (availabilityFilter === 'in_production' ? ' on' : '')} onClick={() => setAvailabilityFilter(availabilityFilter === 'in_production' ? '' : 'in_production')}>In production</button>
+            </div>
+
+            <button onClick={() => setShowFilters(false)} style={{ width: '100%', padding: '16px', background: '#0c2520', color: '#f1f0ee', border: 'none', borderRadius: '30px', fontSize: '15px', fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit' }}>
+              {activeFilterCount > 0 ? 'Apply (' + activeFilterCount + ')' : 'Apply'}
+            </button>
+          </div>
+        </div>
+      )}
+
+      <div className="fade-in">
+
+        {/* Header */}
+        <div style={{ padding: '24px 16px 16px' }}>
+          <p style={{ fontFamily: 'Georgia, serif', fontSize: '22px', color: '#0c2520', margin: 0, fontWeight: 500 }}>Browse talent</p>
+        </div>
+
+        {/* Search */}
+        <div style={{ padding: '0 16px 16px' }}>
+          <div style={{ position: 'relative' }}>
+            <svg style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)' }} width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#aaa" strokeWidth="2" strokeLinecap="round">
+              <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+            </svg>
+            <input type="search" placeholder="Search by name, skill, location..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)}
+              style={{ width: '100%', padding: '13px 14px 13px 42px', border: '1px solid #e0ddd5', borderRadius: '12px', fontSize: '14px', fontFamily: 'inherit', background: 'white', boxSizing: 'border-box', color: '#0c2520' }} />
+          </div>
+        </div>
+
+        {/* Results + filter */}
+        <div style={{ padding: '0 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
+          <p style={{ fontSize: '13px', color: '#888', margin: 0 }}>
+            {profiles.length} {profiles.length === 1 ? 'performer' : 'performers'}
+          </p>
+          <button onClick={() => setShowFilters(true)} style={{ background: hasActiveFilters ? '#0c2520' : 'white', color: hasActiveFilters ? '#f1f0ee' : '#0c2520', border: '1px solid #e0ddd5', padding: '8px 16px', borderRadius: '20px', fontSize: '13px', cursor: 'pointer', fontFamily: 'inherit', display: 'flex', alignItems: 'center', gap: '6px', WebkitTapHighlightColor: 'transparent' }}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+              <line x1="4" y1="6" x2="20" y2="6"/><line x1="8" y1="12" x2="16" y2="12"/><line x1="11" y1="18" x2="13" y2="18"/>
+            </svg>
+            Filters{activeFilterCount > 0 ? ' (' + activeFilterCount + ')' : ''}
+          </button>
+        </div>
+
+        {/* Grid */}
+        {profiles.length === 0 ? (
+          <div style={{ margin: '0 16px', textAlign: 'center', padding: '48px 24px', background: 'white', borderRadius: '14px', border: '1px solid #e8e6e0' }}>
+            <p style={{ fontFamily: 'Georgia, serif', fontSize: '17px', color: '#0c2520', margin: '0 0 6px' }}>No talent found</p>
+            <p style={{ fontSize: '13px', color: '#888', margin: 0 }}>Try adjusting your filters</p>
+          </div>
+        ) : (
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', padding: '0 16px 100px' }}>
+            {profiles.map(p => {
+              const fullName = ((p.first_name || '') + ' ' + (p.last_name || '')).trim()
+              const connStatus = connectionStatuses[p.id]
+              return (
+                <div key={p.id} className="talent-card" style={{ background: 'white', borderRadius: '14px', overflow: 'hidden', border: '1px solid #e8e4de' }}>
+                  <Link href={p.slug ? '/' + p.slug : '#'} style={{ textDecoration: 'none' }}>
+                    <div style={{
+                      width: '100%', aspectRatio: '3/4',
+                      background: p.picture_url ? 'url(' + p.picture_url + ') center/cover' : '#e8efea',
+                      backgroundSize: 'cover',
+                      position: 'relative',
+                    }}>
+                      {/* Availability badge */}
+                      {p.availability_status && (
+                        <div style={{
+                          position: 'absolute', top: '8px', left: '8px',
+                          background: p.availability_status === 'available' ? '#4ade80' : '#fde6c2',
+                          padding: '3px 8px', borderRadius: '6px',
+                          display: 'flex', alignItems: 'center', gap: '4px',
+                        }}>
+                          <div style={{ width: '5px', height: '5px', borderRadius: '50%', background: p.availability_status === 'available' ? '#061410' : '#8a5a2e' }} />
+                          <span style={{ fontSize: '9px', fontWeight: 600, color: p.availability_status === 'available' ? '#061410' : '#8a5a2e' }}>
+                            {p.availability_status === 'available' ? 'Available' : 'In production'}
+                          </span>
+                        </div>
+                      )}
+
+                      {/* No photo fallback */}
+                      {!p.picture_url && (
+                        <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                          <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#d4d2cc" strokeWidth="1.5" strokeLinecap="round">
+                            <circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/>
+                          </svg>
+                        </div>
+                      )}
+                    </div>
+                  </Link>
+
+                  <div style={{ padding: '12px' }}>
+                    <Link href={p.slug ? '/' + p.slug : '#'} style={{ textDecoration: 'none' }}>
+                      <p style={{ fontFamily: 'Georgia, serif', fontSize: '14px', fontWeight: 500, color: '#0c2520', margin: '0 0 4px', lineHeight: 1.2 }}>{fullName}</p>
+                    </Link>
+
+                    {p.location && (
+                      <p style={{ fontSize: '11px', color: '#888', margin: '0 0 8px' }}>{p.location}</p>
+                    )}
+
+                    {/* Skills */}
+                    {p.skills.length > 0 && (
+                      <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap', marginBottom: '10px' }}>
+                        {p.skills.slice(0, 3).map((s, i) => (
+                          <span key={i} style={{ background: s.color, color: s.text_color, padding: '2px 7px', borderRadius: '4px', fontSize: '9px', fontWeight: 500 }}>
+                            {s.name}
+                          </span>
+                        ))}
+                        {p.skills.length > 3 && (
+                          <span style={{ fontSize: '9px', color: '#aaa', padding: '2px 4px' }}>+{p.skills.length - 3}</span>
+                        )}
+                      </div>
+                    )}
+
+                    {/* Connect button */}
+                    {currentUserId && currentUserId !== p.id && (
+                      <button
+                        className="connect-btn"
+                        onClick={() => handleConnect(p.id)}
+                        disabled={!!connStatus}
+                        style={{
+                          width: '100%', padding: '7px', borderRadius: '20px', fontSize: '11px', fontWeight: 500, cursor: connStatus ? 'default' : 'pointer', fontFamily: 'inherit',
+                          background: connStatus === 'accepted' ? '#4ade80' : connStatus === 'pending' ? '#e8e4de' : '#0c2520',
+                          color: connStatus === 'accepted' ? '#061410' : connStatus === 'pending' ? '#888' : '#f1f0ee',
+                          border: 'none',
+                          WebkitTapHighlightColor: 'transparent',
+                        }}
+                      >
+                        {connStatus === 'accepted' ? 'Connected' : connStatus === 'pending' ? 'Requested' : connStatus === 'declined' ? 'Declined' : 'Connect'}
+                      </button>
+                    )}
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        )}
+      </div>
     </div>
   )
 }
