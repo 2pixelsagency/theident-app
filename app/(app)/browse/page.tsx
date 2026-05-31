@@ -5,7 +5,6 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
 
-type GalleryImg = { url: string }
 type TalentProfile = {
   id: string
   first_name: string | null
@@ -29,7 +28,6 @@ type Skill = { id: number; name: string }
 function ImageCarousel({ images, slug }: { images: string[]; slug: string | null }) {
   const [active, setActive] = useState(0)
   const startX = useRef(0)
-  const scrollRef = useRef<HTMLDivElement>(null)
 
   const handleTouchStart = (e: React.TouchEvent) => {
     startX.current = e.touches[0].clientX
@@ -67,14 +65,11 @@ function ImageCarousel({ images, slug }: { images: string[]; slug: string | null
           transition: 'background-image 0.3s ease',
         }} />
       </Link>
-
       {images.length > 1 && (
         <div style={{ position: 'absolute', bottom: '10px', left: 0, right: 0, display: 'flex', justifyContent: 'center', gap: '4px' }}>
           {images.map((_, i) => (
             <div key={i} style={{
-              width: i === active ? '14px' : '5px',
-              height: '5px',
-              borderRadius: '3px',
+              width: i === active ? '14px' : '5px', height: '5px', borderRadius: '3px',
               background: i === active ? 'white' : 'rgba(255,255,255,0.5)',
               transition: 'all 0.2s ease',
             }} />
@@ -128,12 +123,9 @@ export default function BrowseTalent() {
       const { data: { user } } = await supabase.auth.getUser()
       if (user) {
         setCurrentUserId(user.id)
-        // Update last_active
         await supabase.from('profiles').update({ last_active: new Date().toISOString() }).eq('id', user.id)
         const { data: myProf } = await supabase.from('profiles').select('first_name, picture_url').eq('id', user.id).single()
         if (myProf) setCurrentProfile(myProf)
-
-        // Load notifications
         const { data: notifData } = await supabase.from('notifications').select('*').eq('profile_id', user.id).eq('read', false).order('created_at', { ascending: false }).limit(10)
         setNotifications(notifData || [])
       }
@@ -153,7 +145,6 @@ export default function BrowseTalent() {
 
       if (profileData) {
         const profileIds = profileData.map(p => p.id)
-
         const [{ data: skillLinks }, { data: galleryData }] = await Promise.all([
           supabase.from('profile_skills').select('profile_id, skills(name, skills_categories(color, text_color))').in('profile_id', profileIds),
           supabase.from('gallery_images').select('profile_id, url').in('profile_id', profileIds).order('sort_order'),
@@ -179,10 +170,7 @@ export default function BrowseTalent() {
         const enriched = profileData.map(p => ({
           ...p,
           skills: skillMap.get(p.id) || [],
-          gallery: [
-            ...(p.picture_url ? [p.picture_url] : []),
-            ...(galleryMap.get(p.id) || []),
-          ],
+          gallery: [...(p.picture_url ? [p.picture_url] : []), ...(galleryMap.get(p.id) || [])],
         }))
 
         setAllProfiles(enriched)
@@ -209,44 +197,29 @@ export default function BrowseTalent() {
 
   useEffect(() => {
     let filtered = [...allProfiles]
-
     if (currentUserId) filtered = filtered.filter(p => p.id !== currentUserId)
-
     if (searchQuery) {
       const q = searchQuery.toLowerCase()
       filtered = filtered.filter(p => {
         const name = ((p.first_name || '') + ' ' + (p.last_name || '')).toLowerCase()
-        const skillMatch = p.skills.some(s => s.name.toLowerCase().includes(q))
-        const locMatch = (p.location || '').toLowerCase().includes(q)
-        return name.includes(q) || skillMatch || locMatch
+        return name.includes(q) || p.skills.some(s => s.name.toLowerCase().includes(q)) || (p.location || '').toLowerCase().includes(q)
       })
     }
-
     if (selectedGender !== null) filtered = filtered.filter(p => p.gender_id === selectedGender)
-
     if (selectedSkills.length > 0) {
-      filtered = filtered.filter(p =>
-        selectedSkills.every(skillId => {
-          const skillName = allSkills.find(s => s.id === skillId)?.name
-          return p.skills.some(s => s.name === skillName)
-        })
-      )
+      filtered = filtered.filter(p => selectedSkills.every(skillId => {
+        const skillName = allSkills.find(s => s.id === skillId)?.name
+        return p.skills.some(s => s.name === skillName)
+      }))
     }
-
-    if (locationFilter) {
-      const loc = locationFilter.toLowerCase()
-      filtered = filtered.filter(p => (p.location || '').toLowerCase().includes(loc))
-    }
-
+    if (locationFilter) filtered = filtered.filter(p => (p.location || '').toLowerCase().includes(locationFilter.toLowerCase()))
     if (availabilityFilter) filtered = filtered.filter(p => p.availability_status === availabilityFilter)
-
     if (minAge > 0 || maxAge < 100) {
       filtered = filtered.filter(p => {
         if (p.minimum_age === null || p.maximum_age === null) return true
         return p.minimum_age <= maxAge && p.maximum_age >= minAge
       })
     }
-
     setProfiles(filtered)
   }, [searchQuery, selectedGender, selectedSkills, locationFilter, availabilityFilter, minAge, maxAge, allProfiles, currentUserId, allSkills])
 
@@ -258,12 +231,7 @@ export default function BrowseTalent() {
   }
 
   const clearAllFilters = () => {
-    setSelectedGender(null)
-    setSelectedSkills([])
-    setLocationFilter('')
-    setAvailabilityFilter('')
-    setMinAge(0)
-    setMaxAge(100)
+    setSelectedGender(null); setSelectedSkills([]); setLocationFilter(''); setAvailabilityFilter(''); setMinAge(0); setMaxAge(100)
   }
 
   const hasActiveFilters = selectedGender !== null || selectedSkills.length > 0 || !!locationFilter || !!availabilityFilter || minAge > 0 || maxAge < 100
@@ -291,12 +259,8 @@ export default function BrowseTalent() {
         .notif-row:hover { background: #f5f3ee; }
       `}</style>
 
-      {/* Filter overlay */}
-      {showFilters && (
-        <div onClick={() => setShowFilters(false)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.4)', zIndex: 200 }} />
-      )}
+      {showFilters && <div onClick={() => setShowFilters(false)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.4)', zIndex: 200 }} />}
 
-      {/* Filter sheet */}
       {showFilters && (
         <div ref={sheetRef} className="sheet" style={{ position: 'fixed', bottom: 0, left: 0, right: 0, background: '#f1f0ee', borderRadius: '20px 20px 0 0', zIndex: 201, maxHeight: '85vh', overflowY: 'auto', paddingBottom: 'env(safe-area-inset-bottom)' }}>
           <div style={{ display: 'flex', justifyContent: 'center', padding: '12px 0 4px' }}>
@@ -357,7 +321,7 @@ export default function BrowseTalent() {
 
       <div className="fade-in">
 
-        {/* Header — same style as dashboard */}
+        {/* Header */}
         <div style={{ padding: '24px 16px 16px' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <div>
@@ -370,15 +334,15 @@ export default function BrowseTalent() {
             </div>
 
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              {/* Bell */}
+              {/* Bell — small */}
               <div ref={notifRef} style={{ position: 'relative' }}>
                 <button onClick={() => setShowNotifications(!showNotifications)}
-                  style={{ width: '34px', height: '34px', borderRadius: '50%', background: 'white', border: '1px solid #e0ddd5', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', position: 'relative', flexShrink: 0, WebkitTapHighlightColor: 'transparent' }}>
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#0c2520" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                  style={{ width: '30px', height: '30px', borderRadius: '50%', background: 'white', border: '1px solid #e0ddd5', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', position: 'relative', flexShrink: 0, WebkitTapHighlightColor: 'transparent' }}>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#0c2520" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
                     <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/>
                   </svg>
                   {unreadCount > 0 && (
-                    <div style={{ position: 'absolute', top: '6px', right: '6px', width: '7px', height: '7px', borderRadius: '50%', background: '#4ade80', border: '1.5px solid #f1f0ee' }} />
+                    <div style={{ position: 'absolute', top: '5px', right: '5px', width: '6px', height: '6px', borderRadius: '50%', background: '#4ade80', border: '1.5px solid #f1f0ee' }} />
                   )}
                 </button>
                 {showNotifications && (
@@ -393,7 +357,8 @@ export default function BrowseTalent() {
                     ) : (
                       <div>
                         {notifications.slice(0, 5).map((n: any) => (
-                          <div key={n.id} className="notif-row" style={{ padding: '10px 16px', borderBottom: '1px solid #f0ede5', cursor: 'pointer' }}>
+                          <div key={n.id} className="notif-row" style={{ padding: '10px 16px', borderBottom: '1px solid #f0ede5', cursor: 'pointer' }}
+                            onClick={() => { if (n.data && n.data.url) router.push(n.data.url) }}>
                             <p style={{ fontSize: '13px', color: '#0c2520', margin: '0 0 2px', fontWeight: 500 }}>{n.body}</p>
                           </div>
                         ))}
@@ -403,13 +368,14 @@ export default function BrowseTalent() {
                 )}
               </div>
 
-              {/* Headshot */}
-              <Link href="/profile" style={{ textDecoration: 'none', flexShrink: 0 }}>
+              {/* Headshot — bigger with online dot */}
+              <Link href="/profile" style={{ textDecoration: 'none', flexShrink: 0, position: 'relative' }}>
                 <div style={{
-                  width: '42px', height: '42px', borderRadius: '50%',
+                  width: '46px', height: '46px', borderRadius: '50%',
                   background: currentProfile?.picture_url ? 'url(' + currentProfile.picture_url + ') center/cover' : '#e8efea',
                   backgroundSize: 'cover', border: '2px solid #e0ddd5',
                 }} />
+                <div style={{ position: 'absolute', bottom: '1px', right: '1px', width: '10px', height: '10px', borderRadius: '50%', background: '#4ade80', border: '2px solid #f1f0ee' }} />
               </Link>
             </div>
           </div>
@@ -454,11 +420,10 @@ export default function BrowseTalent() {
               return (
                 <div key={p.id} className="talent-card" style={{ background: 'white', borderRadius: '14px', overflow: 'hidden', border: '1px solid #e8e4de' }}>
 
-                  {/* Swipeable image carousel */}
                   <div style={{ position: 'relative' }}>
                     <ImageCarousel images={p.gallery} slug={p.slug} />
 
-                    {/* Online dot */}
+                    {/* Online badge */}
                     {online && (
                       <div style={{ position: 'absolute', top: '10px', right: '10px', display: 'flex', alignItems: 'center', gap: '4px', background: 'rgba(0,0,0,0.5)', padding: '3px 8px', borderRadius: '10px' }}>
                         <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#4ade80' }} />
@@ -466,7 +431,7 @@ export default function BrowseTalent() {
                       </div>
                     )}
 
-                    {/* Availability */}
+                    {/* Availability badge when not online */}
                     {p.availability_status && !online && (
                       <div style={{
                         position: 'absolute', top: '10px', right: '10px',
@@ -480,18 +445,21 @@ export default function BrowseTalent() {
                     )}
                   </div>
 
-                  <div style={{ padding: '12px' }}>
+                  <div style={{ padding: '12px 12px 14px' }}>
                     <Link href={p.slug ? '/' + p.slug : '#'} style={{ textDecoration: 'none' }}>
                       <p style={{ fontFamily: 'Georgia, serif', fontSize: '15px', fontWeight: 500, color: '#0c2520', margin: '0 0 2px', lineHeight: 1.2 }}>{fullName}</p>
                     </Link>
 
                     {p.location && (
-                      <p style={{ fontSize: '11px', color: '#888', margin: '0 0 8px' }}>{p.location}</p>
+                      <p style={{ fontSize: '11px', color: '#888', margin: '0 0 8px', display: 'flex', alignItems: 'center', gap: '3px' }}>
+                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#aaa" strokeWidth="2" strokeLinecap="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                        {p.location}
+                      </p>
                     )}
 
                     {/* Skills */}
                     {p.skills.length > 0 && (
-                      <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap', marginBottom: '10px' }}>
+                      <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap', marginBottom: '12px' }}>
                         {p.skills.slice(0, 3).map((s, i) => (
                           <span key={i} style={{ background: s.color, color: s.text_color, padding: '2px 7px', borderRadius: '4px', fontSize: '9px', fontWeight: 500 }}>
                             {s.name}
@@ -509,7 +477,7 @@ export default function BrowseTalent() {
                         onClick={() => handleConnect(p.id)}
                         disabled={!!connStatus}
                         style={{
-                          width: '100%', padding: '8px', borderRadius: '20px', fontSize: '12px', fontWeight: 500,
+                          width: '100%', padding: '10px 12px', borderRadius: '22px', fontSize: '12px', fontWeight: 500,
                           cursor: connStatus ? 'default' : 'pointer', fontFamily: 'inherit',
                           background: connStatus === 'accepted' ? '#4ade80' : connStatus === 'pending' ? '#f1f0ee' : '#061410',
                           color: connStatus === 'accepted' ? '#061410' : connStatus === 'pending' ? '#888' : '#f1f0ee',
