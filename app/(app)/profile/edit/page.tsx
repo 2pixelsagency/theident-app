@@ -83,7 +83,6 @@ export default function EditProfile() {
     if (!profileId) return
     setSaving(true)
     await supabase.from('profiles').update({
-      slug: slug.toLowerCase().replace(/\s+/g, '-'),
       bio,
       availability_status: availabilityStatus || null,
       production_until: productionUntil || null,
@@ -273,13 +272,7 @@ export default function EditProfile() {
           <div>
             <p style={sectionTitle}>Basics</p>
 
-            <div style={{ marginBottom: '16px' }}>
-              <label style={labelStyle}>Profile URL</label>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <span style={{ fontSize: '13px', color: '#888', flexShrink: 0 }}>theident.me/</span>
-                <input value={slug} onChange={e => setSlug(e.target.value)} placeholder="sol-adlam" style={inputStyle} />
-              </div>
-            </div>
+          
 
             <div style={{ marginBottom: '16px' }}>
               <label style={labelStyle}>Bio — one line, make it count</label>
