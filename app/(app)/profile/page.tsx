@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
@@ -14,12 +14,78 @@ type Profile = {
   bio: string | null
 }
 
+function CropModal({ file, onSave, onClose }: { file: File; onSave: (blob: Blob) => void; onClose: () => void }) {
+  const canvasRef = useRef<HTMLCanvasElement>(null)
+  const [img, setImg] = useState<HTMLImageElement | null>(null)
+  const [zoom, setZoom] = useState(1)
+  const [offset, setOffset] = useState({ x: 0, y: 0 })
+  const [dragging, setDragging] = useState(false)
+  const [dragStart, setDragStart] = useState({ x: 0, y: 0 })
+  const SIZE = 280
+
+  useEffect(() => {
+    const image = new Image()
+    image.onload = () => setImg(image)
+    image.src = URL.createObjectURL(file)
+    return () => URL.revokeObjectURL(image.src)
+  }, [file])
+
+  useEffect(() => {
+    if (!img || !canvasRef.current) return
+    const ctx = canvasRef.current.getContext('2d')
+    if (!ctx) return
+    ctx.clearRect(0, 0, SIZE, SIZE)
+    const scale = Math.max(SIZE / img.width, SIZE / img.height) * zoom
+    const w = img.width * scale
+    const h = img.height * scale
+    const x = (SIZE - w) / 2 + offset.x
+    const y = (SIZE - h) / 2 + offset.y
+    ctx.drawImage(img, x, y, w, h)
+  }, [img, zoom, offset])
+
+  const handlePointerDown = (e: React.PointerEvent) => {
+    setDragging(true)
+    setDragStart({ x: e.clientX - offset.x, y: e.clientY - offset.y })
+  }
+  const handlePointerMove = (e: React.PointerEvent) => {
+    if (!dragging) return
+    setOffset({ x: e.clientX - dragStart.x, y: e.clientY - dragStart.y })
+  }
+  const handlePointerUp = () => setDragging(false)
+
+  const handleSave = () => {
+    if (!canvasRef.current) return
+    canvasRef.current.toBlob(blob => { if (blob) onSave(blob) }, 'image/jpeg', 0.9)
+  }
+
+  return (
+    <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', zIndex: 500, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px' }}>
+      <div style={{ background: '#f1f0ee', borderRadius: '20px', padding: '24px', maxWidth: '340px', width: '100%' }}>
+        <p style={{ fontFamily: 'Georgia, serif', fontSize: '18px', fontWeight: 500, color: '#0c2520', margin: '0 0 16px', textAlign: 'center' }}>Crop photo</p>
+        <div style={{ width: SIZE + 'px', height: SIZE + 'px', margin: '0 auto 16px', position: 'relative', borderRadius: '50%', overflow: 'hidden', border: '3px solid #e0ddd5', touchAction: 'none' }}>
+          <canvas ref={canvasRef} width={SIZE} height={SIZE} onPointerDown={handlePointerDown} onPointerMove={handlePointerMove} onPointerUp={handlePointerUp} onPointerLeave={handlePointerUp} style={{ width: '100%', height: '100%', cursor: dragging ? 'grabbing' : 'grab' }} />
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '20px', padding: '0 8px' }}>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#888" strokeWidth="2" strokeLinecap="round"><circle cx="12" cy="12" r="3"/></svg>
+          <input type="range" min="1" max="3" step="0.05" value={zoom} onChange={e => setZoom(parseFloat(e.target.value))} style={{ flex: 1, accentColor: '#0c2520' }} />
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#888" strokeWidth="2" strokeLinecap="round"><circle cx="12" cy="12" r="5"/></svg>
+        </div>
+        <div style={{ display: 'flex', gap: '10px' }}>
+          <button onClick={onClose} style={{ flex: 1, padding: '14px', borderRadius: '30px', border: '1px solid #e0ddd5', background: 'white', color: '#0c2520', fontSize: '14px', fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit' }}>Cancel</button>
+          <button onClick={handleSave} style={{ flex: 1, padding: '14px', borderRadius: '30px', border: 'none', background: '#0c2520', color: '#f1f0ee', fontSize: '14px', fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit' }}>Save</button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 export default function AccountPage() {
   const router = useRouter()
   const [profile, setProfile] = useState<Profile | null>(null)
   const [loading, setLoading] = useState(true)
   const [uploading, setUploading] = useState(false)
   const [toast, setToast] = useState<string | null>(null)
+  const [cropFile, setCropFile] = useState<File | null>(null)
 
   useEffect(() => {
     const load = async () => {
@@ -32,19 +98,25 @@ export default function AccountPage() {
     load()
   }, [])
 
-  const handlePhotoChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
-    if (!file || !profile) return
+    if (file) setCropFile(file)
+    e.target.value = ''
+  }
+
+  const handleCropSave = async (blob: Blob) => {
+    if (!profile) return
     setUploading(true)
-    const ext = file.name.split('.').pop()
-    const path = `${profile.id}/avatar.${ext}`
-    const { error: uploadError } = await supabase.storage.from('avatars').upload(path, file, { upsert: true })
-    if (uploadError) { setUploading(false); return }
-    const { data: { publicUrl } } = supabase.storage.from('avatars').getPublicUrl(path)
-    await supabase.from('profiles').update({ picture_url: publicUrl }).eq('id', profile.id)
-    setProfile({ ...profile, picture_url: publicUrl })
+    setCropFile(null)
+    const path = profile.id + '/headshot-' + Date.now() + '.jpg'
+    const { error } = await supabase.storage.from('headshots').upload(path, blob, { upsert: true, contentType: 'image/jpeg' })
+    if (!error) {
+      const { data: { publicUrl } } = supabase.storage.from('headshots').getPublicUrl(path)
+      await supabase.from('profiles').update({ picture_url: publicUrl }).eq('id', profile.id)
+      setProfile({ ...profile, picture_url: publicUrl })
+      showToast('Profile photo updated')
+    }
     setUploading(false)
-    showToast('Profile photo updated')
   }
 
   const handleLogout = async () => {
@@ -105,9 +177,15 @@ export default function AccountPage() {
     <div style={{ fontFamily: 'system-ui, sans-serif', paddingBottom: '100px' }}>
       <style>{`
         @keyframes toastIn { from { opacity: 0; transform: translateX(-50%) translateY(8px); } to { opacity: 1; transform: translateX(-50%) translateY(0); } }
+        @keyframes spin { to { transform: rotate(360deg); } }
         .toast-anim { animation: toastIn 0.25s ease-out; }
         .menu-row:active { background: #e8e4de !important; }
       `}</style>
+
+      {/* Crop modal */}
+      {cropFile && (
+        <CropModal file={cropFile} onSave={handleCropSave} onClose={() => setCropFile(null)} />
+      )}
 
       {toast && (
         <div className="toast-anim" style={{ position: 'fixed', bottom: '110px', left: '50%', transform: 'translateX(-50%)', background: '#0c2520', color: '#f1f0ee', padding: '12px 24px', borderRadius: '30px', fontSize: '13px', fontWeight: 500, zIndex: 300, whiteSpace: 'nowrap' }}>
@@ -118,17 +196,19 @@ export default function AccountPage() {
       {/* Profile header */}
       <div style={{ padding: '32px 20px 24px', display: 'flex', alignItems: 'center', gap: '16px' }}>
         <label style={{ position: 'relative', cursor: 'pointer', flexShrink: 0 }}>
-          <div style={{ width: '72px', height: '72px', borderRadius: '50%', background: profile?.picture_url ? `url(${profile.picture_url}) center/cover` : '#e8efea', border: '2px solid #e0ddd5', overflow: 'hidden' }} />
-          <div style={{ position: 'absolute', bottom: 0, right: 0, width: '24px', height: '24px', borderRadius: '50%', background: '#0c2520', border: '2px solid #f1f0ee', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            {uploading ? (
-              <div style={{ width: '10px', height: '10px', border: '1.5px solid #f1f0ee', borderTopColor: 'transparent', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
-            ) : (
-              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#f1f0ee" strokeWidth="2.5" strokeLinecap="round">
-                <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/>
-              </svg>
+          <div style={{ width: '72px', height: '72px', borderRadius: '50%', background: profile?.picture_url ? 'url(' + profile.picture_url + ') center/cover' : '#e8efea', backgroundSize: 'cover', border: '2px solid #e0ddd5', overflow: 'hidden' }}>
+            {uploading && (
+              <div style={{ width: '100%', height: '100%', background: 'rgba(12,37,32,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <div style={{ width: '16px', height: '16px', border: '2px solid #f1f0ee', borderTopColor: 'transparent', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
+              </div>
             )}
           </div>
-          <input type="file" accept="image/*" onChange={handlePhotoChange} style={{ display: 'none' }} />
+          <div style={{ position: 'absolute', bottom: 0, right: 0, width: '24px', height: '24px', borderRadius: '50%', background: '#0c2520', border: '2px solid #f1f0ee', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#f1f0ee" strokeWidth="2.5" strokeLinecap="round">
+              <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/>
+            </svg>
+          </div>
+          <input type="file" accept="image/*" onChange={handleFileSelect} style={{ display: 'none' }} />
         </label>
         <div>
           <p style={{ fontFamily: 'Georgia, serif', fontSize: '20px', fontWeight: 500, color: '#0c2520', margin: '0 0 2px' }}>
