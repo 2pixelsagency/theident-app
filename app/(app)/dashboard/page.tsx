@@ -534,7 +534,7 @@ export default function Dashboard() {
                 {new Date().toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' })}
               </p>
               <p style={{ fontFamily: 'Georgia, serif', fontSize: '20px', color: '#0c2520', margin: 0, fontWeight: 500, lineHeight: 1.2 }}>
-                Ready when you are,{profile?.first_name ? <><br />{profile.first_name}</> : null}
+              Hey, {profile?.first_name || ''}
               </p>
             </div>
 
