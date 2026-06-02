@@ -9,15 +9,15 @@ type Profile = {
   location: string | null; bio: string | null; slug: string | null
   availability_status: string | null; production_until: string | null
   agent_name: string | null; agent_phone: string | null; agent_email: string | null
-  section_settings: any
+  section_settings: any; vid_1: string | null; vid_2: string | null; vid_3: string | null; vid_4: string | null
 }
-type Reel = { id?: string; label: string; url: string; sort_order: number }
 type Brand = { id?: string; brand_name: string; logo_url: string | null; sort_order: number }
-type Credit = { id?: string; title: string; role: string; year: number | null; director: string | null; production_company: string | null; is_featured: boolean; production_type_id: number | null }
+type Credit = { id?: string; title: string; role: string; year: number | null; director: string | null; production_company: string | null; is_featured: boolean; production_type_id: number | null; description: string | null; thumbnail_url: string | null }
 type Testimonial = { id?: string; quote: string; author_name: string; author_title: string | null; sort_order: number }
 type GalleryImage = { id?: string; url: string; sort_order: number }
 type FAQ = { id?: string; question: string; answer: string; sort_order: number }
 type Skill = { id: number; name: string }
+type ProdType = { id: number; name: string }
 
 function CropModal({ file, onSave, onClose }: { file: File; onSave: (blob: Blob) => void; onClose: () => void }) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
@@ -78,9 +78,7 @@ function Sheet({ title, onClose, children }: { title: string; onClose: () => voi
     <>
       <div onClick={onClose} style={{ position:'fixed',inset:0,background:'rgba(0,0,0,0.4)',zIndex:500 }} />
       <div className="edit-sheet" style={{ position:'fixed',bottom:0,left:0,right:0,background:'#f1f0ee',borderRadius:'20px 20px 0 0',zIndex:501,maxHeight:'90vh',overflowY:'auto',paddingBottom:'env(safe-area-inset-bottom)' }}>
-        <div style={{ display:'flex',justifyContent:'center',padding:'12px 0 4px' }}>
-          <div style={{ width:'36px',height:'4px',borderRadius:'2px',background:'#d4d2cc' }} />
-        </div>
+        <div style={{ display:'flex',justifyContent:'center',padding:'12px 0 4px' }}><div style={{ width:'36px',height:'4px',borderRadius:'2px',background:'#d4d2cc' }} /></div>
         <div style={{ padding:'8px 20px 24px' }}>
           <div style={{ display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:'20px' }}>
             <p style={{ fontFamily:'Georgia,serif',fontSize:'18px',fontWeight:500,color:'#0c2520',margin:0 }}>{title}</p>
@@ -97,6 +95,7 @@ function Sheet({ title, onClose, children }: { title: string; onClose: () => voi
 
 const inputStyle: React.CSSProperties = { width:'100%',padding:'13px 14px',border:'1px solid #e0ddd5',borderRadius:'12px',fontSize:'14px',fontFamily:'inherit',boxSizing:'border-box',background:'white',color:'#0c2520' }
 const labelStyle: React.CSSProperties = { fontSize:'11px',color:'#888',textTransform:'uppercase',letterSpacing:'0.06em',fontWeight:600,display:'block',marginBottom:'6px' }
+const selectStyle: React.CSSProperties = { ...inputStyle, appearance:'none' as any, backgroundImage:'url("data:image/svg+xml,%3Csvg width=\'10\' height=\'6\' viewBox=\'0 0 10 6\' fill=\'none\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cpath d=\'M1 1l4 4 4-4\' stroke=\'%23888\' stroke-width=\'1.5\' stroke-linecap=\'round\'/%3E%3C/svg%3E")', backgroundRepeat:'no-repeat', backgroundPosition:'right 14px center' }
 
 export default function EditProfile() {
   const router = useRouter()
@@ -106,8 +105,15 @@ export default function EditProfile() {
   const [saving, setSaving] = useState(false)
   const [toast, setToast] = useState<string | null>(null)
   const [cropFile, setCropFile] = useState<File | null>(null)
+  const [showContactPopup, setShowContactPopup] = useState(false)
+  const [connectionCount, setConnectionCount] = useState(0)
 
-  const [reels, setReels] = useState<Reel[]>([])
+  const [vid1, setVid1] = useState('')
+  const [vid2, setVid2] = useState('')
+  const [vid3, setVid3] = useState('')
+  const [vid4, setVid4] = useState('')
+  const [uploadingVideo, setUploadingVideo] = useState<string | null>(null)
+
   const [brands, setBrands] = useState<Brand[]>([])
   const [credits, setCredits] = useState<Credit[]>([])
   const [testimonials, setTestimonials] = useState<Testimonial[]>([])
@@ -115,16 +121,14 @@ export default function EditProfile() {
   const [faqs, setFaqs] = useState<FAQ[]>([])
   const [allSkills, setAllSkills] = useState<Skill[]>([])
   const [userSkillIds, setUserSkillIds] = useState<number[]>([])
-  const [productionTypes, setProductionTypes] = useState<{id:number;name:string}[]>([])
+  const [productionTypes, setProductionTypes] = useState<ProdType[]>([])
 
-  // Edit form state
   const [editBio, setEditBio] = useState('')
   const [editAgentName, setEditAgentName] = useState('')
   const [editAgentPhone, setEditAgentPhone] = useState('')
   const [editAgentEmail, setEditAgentEmail] = useState('')
   const [editAvailability, setEditAvailability] = useState('')
   const [editProductionUntil, setEditProductionUntil] = useState('')
-  const [editReels, setEditReels] = useState<Reel[]>([])
   const [editBrands, setEditBrands] = useState<Brand[]>([])
   const [editCredits, setEditCredits] = useState<Credit[]>([])
   const [editTestimonials, setEditTestimonials] = useState<Testimonial[]>([])
@@ -137,9 +141,8 @@ export default function EditProfile() {
     const load = async () => {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) { router.push('/login'); return }
-      const [{ data: p }, { data: r }, { data: b }, { data: c }, { data: t }, { data: g }, { data: f }, { data: sk }, { data: usk }, { data: pt }] = await Promise.all([
+      const [{ data: p }, { data: b }, { data: c }, { data: t }, { data: g }, { data: f }, { data: sk }, { data: usk }, { data: pt }, { data: conns }] = await Promise.all([
         supabase.from('profiles').select('*').eq('id', user.id).single(),
-        supabase.from('reels').select('*').eq('profile_id', user.id).order('sort_order'),
         supabase.from('profile_brands').select('*').eq('profile_id', user.id).order('sort_order'),
         supabase.from('credits').select('*').eq('profile_id', user.id).order('year', { ascending: false }),
         supabase.from('testimonials').select('*').eq('profile_id', user.id).order('sort_order'),
@@ -148,8 +151,11 @@ export default function EditProfile() {
         supabase.from('skills').select('id, name').order('name'),
         supabase.from('profile_skills').select('skill_id').eq('profile_id', user.id),
         supabase.from('production_types').select('id, name').order('name'),
+        supabase.from('connections').select('id').or('requester_id.eq.' + user.id + ',receiver_id.eq.' + user.id).eq('status', 'accepted'),
       ])
-      setProfile(p); setReels(r||[]); setBrands(b||[]); setCredits(c||[]); setTestimonials(t||[]); setGallery(g||[]); setFaqs(f||[]); setAllSkills(sk||[]); setUserSkillIds((usk||[]).map(s=>s.skill_id)); setProductionTypes(pt||[])
+      setProfile(p); setBrands(b||[]); setCredits(c||[]); setTestimonials(t||[]); setGallery(g||[]); setFaqs(f||[]); setAllSkills(sk||[]); setUserSkillIds((usk||[]).map(s=>s.skill_id)); setProductionTypes(pt||[])
+      setConnectionCount((conns||[]).length)
+      if (p) { setVid1(p.vid_1||''); setVid2(p.vid_2||''); setVid3(p.vid_3||''); setVid4(p.vid_4||'') }
       setLoading(false)
     }
     load()
@@ -159,9 +165,8 @@ export default function EditProfile() {
     if (section === 'bio') setEditBio(profile?.bio || '')
     if (section === 'agent') { setEditAgentName(profile?.agent_name||''); setEditAgentPhone(profile?.agent_phone||''); setEditAgentEmail(profile?.agent_email||'') }
     if (section === 'availability') { setEditAvailability(profile?.availability_status||'available'); setEditProductionUntil(profile?.production_until||'') }
-    if (section === 'reels') setEditReels(reels.length > 0 ? [...reels] : [{ label:'', url:'', sort_order:1 }])
     if (section === 'brands') setEditBrands(brands.length > 0 ? [...brands] : [{ brand_name:'', logo_url:null, sort_order:1 }])
-    if (section === 'credits') setEditCredits(credits.length > 0 ? [...credits] : [{ title:'', role:'', year:null, director:null, production_company:null, is_featured:false, production_type_id:null }])
+    if (section === 'credits') setEditCredits(credits.length > 0 ? credits.map(c => ({...c})) : [{ title:'', role:'', year:null, director:null, production_company:null, is_featured:false, production_type_id:null, description:null, thumbnail_url:null }])
     if (section === 'testimonials') setEditTestimonials(testimonials.length > 0 ? [...testimonials] : [{ quote:'', author_name:'', author_title:null, sort_order:1 }])
     if (section === 'faqs') setEditFaqs(faqs.length > 0 ? [...faqs] : [{ question:'', answer:'', sort_order:1 }])
     if (section === 'skills') setEditSkillIds([...userSkillIds])
@@ -169,73 +174,58 @@ export default function EditProfile() {
   }
 
   const save = async (section: string) => {
-    if (!profile) return
-    setSaving(true)
-    if (section === 'bio') {
-      await supabase.from('profiles').update({ bio: editBio }).eq('id', profile.id)
-      setProfile({ ...profile, bio: editBio })
-    }
-    if (section === 'agent') {
-      await supabase.from('profiles').update({ agent_name: editAgentName, agent_phone: editAgentPhone, agent_email: editAgentEmail }).eq('id', profile.id)
-      setProfile({ ...profile, agent_name: editAgentName, agent_phone: editAgentPhone, agent_email: editAgentEmail })
-    }
-    if (section === 'availability') {
-      await supabase.from('profiles').update({ availability_status: editAvailability, production_until: editProductionUntil || null }).eq('id', profile.id)
-      setProfile({ ...profile, availability_status: editAvailability, production_until: editProductionUntil || null })
-    }
-    if (section === 'reels') {
-      const valid = editReels.filter(r => r.label && r.url)
-      await supabase.from('reels').delete().eq('profile_id', profile.id)
-      if (valid.length > 0) await supabase.from('reels').insert(valid.map((r,i) => ({ profile_id: profile.id, label: r.label, url: r.url, sort_order: i+1 })))
-      setReels(valid)
-    }
-    if (section === 'brands') {
-      const valid = editBrands.filter(b => b.brand_name)
-      await supabase.from('profile_brands').delete().eq('profile_id', profile.id)
-      if (valid.length > 0) await supabase.from('profile_brands').insert(valid.map((b,i) => ({ profile_id: profile.id, brand_name: b.brand_name, logo_url: b.logo_url, sort_order: i+1 })))
-      setBrands(valid)
-    }
-    if (section === 'credits') {
-      const valid = editCredits.filter(c => c.title && c.role)
-      await supabase.from('credits').delete().eq('profile_id', profile.id)
-      if (valid.length > 0) await supabase.from('credits').insert(valid.map(c => ({ profile_id: profile.id, title: c.title, role: c.role, year: c.year, director: c.director, production_company: c.production_company, is_featured: c.is_featured, production_type_id: c.production_type_id })))
-      setCredits(valid)
-    }
-    if (section === 'testimonials') {
-      const valid = editTestimonials.filter(t => t.quote && t.author_name)
-      await supabase.from('testimonials').delete().eq('profile_id', profile.id)
-      if (valid.length > 0) await supabase.from('testimonials').insert(valid.map((t,i) => ({ profile_id: profile.id, quote: t.quote, author_name: t.author_name, author_title: t.author_title, sort_order: i+1 })))
-      setTestimonials(valid)
-    }
-    if (section === 'faqs') {
-      const valid = editFaqs.filter(f => f.question && f.answer)
-      await supabase.from('faqs').delete().eq('profile_id', profile.id)
-      if (valid.length > 0) await supabase.from('faqs').insert(valid.map((f,i) => ({ profile_id: profile.id, question: f.question, answer: f.answer, sort_order: i+1 })))
-      setFaqs(valid)
-    }
-    if (section === 'skills') {
-      await supabase.from('profile_skills').delete().eq('profile_id', profile.id)
-      if (editSkillIds.length > 0) await supabase.from('profile_skills').insert(editSkillIds.map(sid => ({ profile_id: profile.id, skill_id: sid })))
-      setUserSkillIds(editSkillIds)
-    }
+    if (!profile) return; setSaving(true)
+    if (section === 'bio') { await supabase.from('profiles').update({ bio: editBio }).eq('id', profile.id); setProfile({ ...profile, bio: editBio }) }
+    if (section === 'agent') { await supabase.from('profiles').update({ agent_name: editAgentName, agent_phone: editAgentPhone, agent_email: editAgentEmail }).eq('id', profile.id); setProfile({ ...profile, agent_name: editAgentName, agent_phone: editAgentPhone, agent_email: editAgentEmail }) }
+    if (section === 'availability') { await supabase.from('profiles').update({ availability_status: editAvailability, production_until: editProductionUntil || null }).eq('id', profile.id); setProfile({ ...profile, availability_status: editAvailability, production_until: editProductionUntil || null }) }
+    if (section === 'brands') { const valid = editBrands.filter(b => b.brand_name); await supabase.from('profile_brands').delete().eq('profile_id', profile.id); if (valid.length > 0) await supabase.from('profile_brands').insert(valid.map((b,i) => ({ profile_id: profile.id, brand_name: b.brand_name, logo_url: b.logo_url, sort_order: i+1 }))); setBrands(valid) }
+    if (section === 'credits') { const valid = editCredits.filter(c => c.title && c.role); await supabase.from('credits').delete().eq('profile_id', profile.id); if (valid.length > 0) await supabase.from('credits').insert(valid.map(c => ({ profile_id: profile.id, title: c.title, role: c.role, year: c.year, director: c.director, production_company: c.production_company, is_featured: c.is_featured, production_type_id: c.production_type_id, description: c.description, thumbnail_url: c.thumbnail_url }))); setCredits(valid) }
+    if (section === 'testimonials') { const valid = editTestimonials.filter(t => t.quote && t.author_name); await supabase.from('testimonials').delete().eq('profile_id', profile.id); if (valid.length > 0) await supabase.from('testimonials').insert(valid.map((t,i) => ({ profile_id: profile.id, quote: t.quote, author_name: t.author_name, author_title: t.author_title, sort_order: i+1 }))); setTestimonials(valid) }
+    if (section === 'faqs') { const valid = editFaqs.filter(f => f.question && f.answer); await supabase.from('faqs').delete().eq('profile_id', profile.id); if (valid.length > 0) await supabase.from('faqs').insert(valid.map((f,i) => ({ profile_id: profile.id, question: f.question, answer: f.answer, sort_order: i+1 }))); setFaqs(valid) }
+    if (section === 'skills') { await supabase.from('profile_skills').delete().eq('profile_id', profile.id); if (editSkillIds.length > 0) await supabase.from('profile_skills').insert(editSkillIds.map(sid => ({ profile_id: profile.id, skill_id: sid }))); setUserSkillIds(editSkillIds) }
     setSaving(false); setEditing(null); showToast('Saved')
   }
 
   const handleCropSave = async (blob: Blob) => {
-    if (!profile) return
-    setCropFile(null); setSaving(true)
+    if (!profile) return; setCropFile(null); setSaving(true)
     const path = profile.id + '/headshot-' + Date.now() + '.jpg'
     const { error } = await supabase.storage.from('headshots').upload(path, blob, { upsert: true, contentType: 'image/jpeg' })
+    if (!error) { const { data: { publicUrl } } = supabase.storage.from('headshots').getPublicUrl(path); await supabase.from('profiles').update({ picture_url: publicUrl }).eq('id', profile.id); setProfile({ ...profile, picture_url: publicUrl }) }
+    setSaving(false); showToast('Photo updated')
+  }
+
+  const handleVideoUpload = async (slot: string, file: File) => {
+    if (!profile) return; setUploadingVideo(slot)
+    if (file.size > 200 * 1024 * 1024) { alert('Video too large. Max 200MB.'); setUploadingVideo(null); return }
+    const ext = file.name.split('.').pop()
+    const path = profile.id + '/' + slot + '-' + Date.now() + '.' + ext
+    const { error } = await supabase.storage.from('reels').upload(path, file, { upsert: true })
+    if (error) { alert('Upload failed'); setUploadingVideo(null); return }
+    const { data: { publicUrl } } = supabase.storage.from('reels').getPublicUrl(path)
+    const col = slot === 'vid1' ? 'vid_1' : slot === 'vid2' ? 'vid_2' : slot === 'vid3' ? 'vid_3' : 'vid_4'
+    await supabase.from('profiles').update({ [col]: publicUrl }).eq('id', profile.id)
+    if (slot === 'vid1') setVid1(publicUrl)
+    if (slot === 'vid2') setVid2(publicUrl)
+    if (slot === 'vid3') setVid3(publicUrl)
+    if (slot === 'vid4') setVid4(publicUrl)
+    setUploadingVideo(null); showToast('Reel uploaded')
+  }
+
+  const handleThumbnailUpload = async (creditIndex: number, file: File) => {
+    if (!profile) return
+    const path = profile.id + '/credit-thumb-' + Date.now() + '.' + file.name.split('.').pop()
+    const { error } = await supabase.storage.from('headshots').upload(path, file, { contentType: file.type })
     if (!error) {
       const { data: { publicUrl } } = supabase.storage.from('headshots').getPublicUrl(path)
-      await supabase.from('profiles').update({ picture_url: publicUrl }).eq('id', profile.id)
-      setProfile({ ...profile, picture_url: publicUrl })
+      const n = [...editCredits]; n[creditIndex] = { ...n[creditIndex], thumbnail_url: publicUrl }; setEditCredits(n)
     }
-    setSaving(false); showToast('Photo updated')
   }
 
   const userSkillNames = allSkills.filter(s => userSkillIds.includes(s.id)).map(s => s.name)
   const featuredCredits = credits.filter(c => c.is_featured)
+  const getProdTypeName = (id: number | null) => productionTypes.find(pt => pt.id === id)?.name || null
+  const creditsByType = productionTypes.filter(pt => credits.some(c => c.production_type_id === pt.id)).map(pt => ({ type: pt.name, credits: credits.filter(c => c.production_type_id === pt.id) }))
+  const uncategorized = credits.filter(c => !c.production_type_id)
 
   if (loading || !profile) return <div style={{ minHeight:'100vh',background:'#f1f0ee' }} />
 
@@ -250,16 +240,42 @@ export default function EditProfile() {
       <style>{`
         @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
         @keyframes toastIn { from { opacity:0;transform:translateX(-50%) translateY(8px); } to { opacity:1;transform:translateX(-50%) translateY(0); } }
+        @keyframes popIn { from { opacity:0;transform:scale(0.92); } to { opacity:1;transform:scale(1); } }
         .edit-sheet { animation: slideUp 0.3s cubic-bezier(0.32, 0.72, 0, 1); }
         .toast-anim { animation: toastIn 0.25s ease-out; }
+        .contact-popup { animation: popIn 0.2s ease-out; }
         .skill-chip { padding:8px 14px;border-radius:20px;font-size:13px;cursor:pointer;font-family:inherit;border:1px solid #e0ddd5;background:white;color:#0c2520;transition:all 0.15s ease;-webkit-tap-highlight-color:transparent; }
         .skill-chip.on { background:#0c2520;color:#f1f0ee;border-color:#0c2520; }
       `}</style>
 
       {cropFile && <CropModal file={cropFile} onSave={handleCropSave} onClose={() => setCropFile(null)} />}
 
-      {toast && (
-        <div className="toast-anim" style={{ position:'fixed',bottom:'100px',left:'50%',transform:'translateX(-50%)',background:'#0c2520',color:'#f1f0ee',padding:'12px 24px',borderRadius:'30px',fontSize:'13px',fontWeight:500,zIndex:700,whiteSpace:'nowrap' }}>{toast}</div>
+      {toast && <div className="toast-anim" style={{ position:'fixed',bottom:'100px',left:'50%',transform:'translateX(-50%)',background:'#0c2520',color:'#f1f0ee',padding:'12px 24px',borderRadius:'30px',fontSize:'13px',fontWeight:500,zIndex:700,whiteSpace:'nowrap' }}>{toast}</div>}
+
+      {/* Contact info floating button */}
+      <button onClick={() => setShowContactPopup(!showContactPopup)} style={{ position:'fixed',right:0,top:'50%',transform:'translateY(-50%)',background:'#0c2520',color:'#f1f0ee',border:'none',padding:'12px 6px',borderRadius:'8px 0 0 8px',cursor:'pointer',writingMode:'vertical-rl',fontSize:'11px',fontWeight:600,letterSpacing:'0.05em',zIndex:400,fontFamily:'inherit' }}>
+        Contact Info
+      </button>
+
+      {showContactPopup && (
+        <>
+          <div onClick={() => setShowContactPopup(false)} style={{ position:'fixed',inset:0,zIndex:450 }} />
+          <div className="contact-popup" style={{ position:'fixed',right:'16px',top:'50%',transform:'translateY(-50%)',background:'white',borderRadius:'16px',padding:'20px',boxShadow:'0 8px 32px rgba(0,0,0,0.15)',zIndex:460,width:'260px',border:'1px solid #e8e4de' }}>
+            <div style={{ display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:'14px' }}>
+              <p style={{ fontFamily:'Georgia,serif',fontSize:'16px',fontWeight:500,color:'#0c2520',margin:0 }}>Agent</p>
+              <Pencil onClick={() => { setShowContactPopup(false); openEdit('agent') }} />
+            </div>
+            {profile.agent_name ? (
+              <div>
+                <p style={{ fontSize:'14px',color:'#0c2520',margin:'0 0 4px',fontWeight:500 }}>{profile.agent_name}</p>
+                {profile.agent_phone && <p style={{ fontSize:'13px',color:'#888',margin:'0 0 2px' }}>{profile.agent_phone}</p>}
+                {profile.agent_email && <p style={{ fontSize:'13px',color:'#888',margin:0 }}>{profile.agent_email}</p>}
+              </div>
+            ) : (
+              <p style={{ fontSize:'13px',color:'#aaa',margin:0 }}>No agent details added</p>
+            )}
+          </div>
+        </>
       )}
 
       {/* Top bar */}
@@ -269,13 +285,11 @@ export default function EditProfile() {
           Back
         </button>
         {profile.slug && (
-          <button onClick={() => window.open('/' + profile.slug + '?from=app', '_blank')} style={{ background:'#0c2520',color:'#f1f0ee',border:'none',padding:'8px 18px',borderRadius:'20px',fontSize:'12px',fontWeight:500,cursor:'pointer',fontFamily:'inherit' }}>
-            View live
-          </button>
+          <button onClick={() => window.open('/' + profile.slug + '?from=app', '_blank')} style={{ background:'#0c2520',color:'#f1f0ee',border:'none',padding:'8px 18px',borderRadius:'20px',fontSize:'12px',fontWeight:500,cursor:'pointer',fontFamily:'inherit' }}>View live</button>
         )}
       </div>
 
-      {/* === HERO === */}
+      {/* HERO */}
       <div style={{ padding:'16px',textAlign:'center' }}>
         <div style={{ position:'relative',display:'inline-block',marginBottom:'14px' }}>
           <label style={{ cursor:'pointer' }}>
@@ -287,15 +301,18 @@ export default function EditProfile() {
           </label>
         </div>
         <p style={{ fontFamily:'Georgia,serif',fontSize:'24px',fontWeight:500,color:'#0c2520',margin:'0 0 4px' }}>{profile.first_name} {profile.last_name}</p>
-        {profile.location && <p style={{ fontSize:'13px',color:'#888',margin:'0 0 10px' }}>{profile.location}</p>}
+        {profile.location && <p style={{ fontSize:'13px',color:'#888',margin:'0 0 6px' }}>{profile.location}</p>}
+
+        {/* Connection count */}
+        <p style={{ fontSize:'12px',color:'#888',margin:'0 0 12px' }}>
+          <span style={{ fontWeight:600,color:'#0c2520' }}>{connectionCount}</span> connection{connectionCount !== 1 ? 's' : ''}
+        </p>
 
         {/* Skills */}
         <div style={{ display:'flex',justifyContent:'center',alignItems:'center',gap:'6px',flexWrap:'wrap',marginBottom:'12px' }}>
           {userSkillNames.length > 0 ? userSkillNames.map(s => (
             <span key={s} style={{ background:'#e8efea',color:'#0c2520',padding:'4px 12px',borderRadius:'20px',fontSize:'12px',fontWeight:500 }}>{s}</span>
-          )) : (
-            <span style={{ color:'#ccc',fontSize:'13px' }}>No skills added</span>
-          )}
+          )) : <span style={{ color:'#ccc',fontSize:'13px' }}>No skills added</span>}
           <Pencil onClick={() => openEdit('skills')} />
         </div>
 
@@ -307,45 +324,61 @@ export default function EditProfile() {
             <span style={{ background:'#fde6c2',color:'#8a5a2e',padding:'5px 14px',borderRadius:'20px',fontSize:'12px',fontWeight:600 }}>
               {'In production' + (profile.production_until ? ' until ' + new Date(profile.production_until).toLocaleDateString('en-GB',{month:'short',year:'numeric'}) : '')}
             </span>
-          ) : (
-            <span style={{ color:'#ccc',fontSize:'12px' }}>Set availability</span>
-          )}
+          ) : <span style={{ color:'#ccc',fontSize:'12px' }}>Set availability</span>}
           <Pencil onClick={() => openEdit('availability')} />
         </div>
       </div>
 
       <div style={{ padding:'0 16px 120px' }}>
 
-        {/* === BIO === */}
+        {/* BIO */}
         <div style={{ marginBottom:'24px' }}>
           <div style={{ display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:'10px' }}>
             <p style={{ fontFamily:'Georgia,serif',fontSize:'17px',fontWeight:500,color:'#0c2520',margin:0 }}>About</p>
             <Pencil onClick={() => openEdit('bio')} />
           </div>
-          {profile.bio ? (
-            <p style={{ fontSize:'14px',color:'#444',lineHeight:1.6,margin:0 }}>{profile.bio}</p>
-          ) : (
-            <Empty text="Tell casting directors about yourself" onClick={() => openEdit('bio')} />
-          )}
+          {profile.bio ? <p style={{ fontSize:'14px',color:'#444',lineHeight:1.6,margin:0 }}>{profile.bio}</p> : <Empty text="Tell casting directors about yourself" onClick={() => openEdit('bio')} />}
         </div>
 
-        {/* === REELS === */}
+        {/* REELS — 4 slot upload */}
         <div style={{ marginBottom:'24px' }}>
           <div style={{ display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:'10px' }}>
             <p style={{ fontFamily:'Georgia,serif',fontSize:'17px',fontWeight:500,color:'#0c2520',margin:0 }}>Showreels</p>
-            <Pencil onClick={() => openEdit('reels')} />
+            <Pencil onClick={() => setEditing('reels')} />
           </div>
-          {reels.length > 0 ? reels.map(r => (
-            <div key={r.id || r.label} style={{ background:'white',borderRadius:'12px',padding:'14px',border:'1px solid #e8e4de',marginBottom:'8px' }}>
-              <p style={{ fontSize:'14px',color:'#0c2520',margin:'0 0 2px',fontWeight:500 }}>{r.label}</p>
-              <p style={{ fontSize:'12px',color:'#888',margin:0,wordBreak:'break-all' }}>{r.url}</p>
+          {(vid1 || vid2 || vid3 || vid4) ? (
+            <div style={{ display:'grid',gridTemplateColumns:'1fr 1fr',gap:'8px' }}>
+              {[{ label:'Ident',value:vid1 },{ label:'Dance Reel',value:vid2 },{ label:'Acting Reel',value:vid3 },{ label:'Singing Reel',value:vid4 }].filter(v=>v.value).map(v => (
+                <div key={v.label} style={{ background:'#e8f0eb',borderRadius:'10px',padding:'14px',border:'1px solid #d4e8dc',textAlign:'center' }}>
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#0c2520" strokeWidth="1.8" strokeLinecap="round" style={{ marginBottom:'4px' }}><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg>
+                  <p style={{ fontSize:'12px',color:'#0c2520',margin:0,fontWeight:500 }}>{v.label}</p>
+                </div>
+              ))}
             </div>
-          )) : (
-            <Empty text="Add your showreels and demo videos" onClick={() => openEdit('reels')} />
-          )}
+          ) : <Empty text="Upload your showreels and demo videos" onClick={() => setEditing('reels')} />}
         </div>
 
-        {/* === CREDITS === */}
+        {/* FEATURED WORK */}
+        {featuredCredits.length > 0 && (
+          <div style={{ marginBottom:'24px' }}>
+            <p style={{ fontFamily:'Georgia,serif',fontSize:'17px',fontWeight:500,color:'#0c2520',margin:'0 0 10px' }}>Featured work</p>
+            <div style={{ display:'flex',gap:'10px',overflowX:'auto',paddingBottom:'8px' }}>
+              {featuredCredits.map(c => (
+                <div key={c.id || c.title} style={{ minWidth:'200px',borderRadius:'14px',overflow:'hidden',border:'1px solid #e8e4de',background:'white',flexShrink:0 }}>
+                  {c.thumbnail_url && <div style={{ width:'100%',height:'120px',background:'url('+c.thumbnail_url+') center/cover',backgroundSize:'cover' }} />}
+                  <div style={{ padding:'12px' }}>
+                    {c.year && <span style={{ fontSize:'10px',color:'#888',fontWeight:600 }}>{c.year}</span>}
+                    <p style={{ fontSize:'14px',color:'#0c2520',margin:'2px 0',fontWeight:500 }}>{c.title}</p>
+                    <p style={{ fontSize:'11px',color:'#666',margin:0 }}>{c.role}</p>
+                    {c.description && <p style={{ fontSize:'11px',color:'#888',margin:'4px 0 0',lineHeight:1.4 }}>{c.description}</p>}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* CREDITS — grouped by type */}
         <div style={{ marginBottom:'24px' }}>
           <div style={{ display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:'10px' }}>
             <p style={{ fontFamily:'Georgia,serif',fontSize:'17px',fontWeight:500,color:'#0c2520',margin:0 }}>Credits</p>
@@ -353,26 +386,37 @@ export default function EditProfile() {
           </div>
           {credits.length > 0 ? (
             <div>
-              {featuredCredits.length > 0 && (
-                <p style={{ fontSize:'10px',color:'#4ade80',fontWeight:600,textTransform:'uppercase',letterSpacing:'0.06em',margin:'0 0 8px' }}>Featured</p>
-              )}
-              {credits.map(c => (
-                <div key={c.id || c.title} style={{ background:'white',borderRadius:'12px',padding:'14px',border:c.is_featured?'1.5px solid #4ade80':'1px solid #e8e4de',marginBottom:'8px',display:'flex',justifyContent:'space-between',alignItems:'start' }}>
-                  <div>
-                    <p style={{ fontSize:'14px',color:'#0c2520',margin:'0 0 2px',fontWeight:500 }}>{c.title}</p>
-                    <p style={{ fontSize:'12px',color:'#666',margin:'0 0 2px' }}>{c.role}{c.director ? ' · Dir. ' + c.director : ''}</p>
-                    <p style={{ fontSize:'11px',color:'#aaa',margin:0 }}>{c.production_company}{c.year ? ' · ' + c.year : ''}</p>
-                  </div>
-                  {c.is_featured && <span style={{ background:'#4ade80',color:'#061410',padding:'2px 8px',borderRadius:'4px',fontSize:'9px',fontWeight:600,flexShrink:0 }}>FEATURED</span>}
+              {creditsByType.map(group => (
+                <div key={group.type} style={{ marginBottom:'16px' }}>
+                  <p style={{ fontSize:'11px',color:'#888',textTransform:'uppercase',letterSpacing:'0.06em',fontWeight:600,margin:'0 0 8px' }}>{group.type}</p>
+                  {group.credits.map(c => (
+                    <div key={c.id || c.title} style={{ background:'white',borderRadius:'12px',padding:'14px',border:'1px solid #e8e4de',marginBottom:'6px',display:'flex',gap:'10px',alignItems:'start' }}>
+                      {c.thumbnail_url && <div style={{ width:'50px',height:'36px',borderRadius:'6px',background:'url('+c.thumbnail_url+') center/cover',backgroundSize:'cover',flexShrink:0 }} />}
+                      <div style={{ flex:1 }}>
+                        <p style={{ fontSize:'14px',color:'#0c2520',margin:'0 0 2px',fontWeight:500 }}>{c.title}</p>
+                        <p style={{ fontSize:'12px',color:'#666',margin:0 }}>{c.role}{c.director ? ' · Dir. ' + c.director : ''}{c.year ? ' · ' + c.year : ''}</p>
+                      </div>
+                      {c.is_featured && <span style={{ background:'#4ade80',color:'#061410',padding:'2px 8px',borderRadius:'4px',fontSize:'9px',fontWeight:600,flexShrink:0 }}>FEATURED</span>}
+                    </div>
+                  ))}
                 </div>
               ))}
+              {uncategorized.length > 0 && (
+                <div style={{ marginBottom:'16px' }}>
+                  <p style={{ fontSize:'11px',color:'#888',textTransform:'uppercase',letterSpacing:'0.06em',fontWeight:600,margin:'0 0 8px' }}>Other</p>
+                  {uncategorized.map(c => (
+                    <div key={c.id || c.title} style={{ background:'white',borderRadius:'12px',padding:'14px',border:'1px solid #e8e4de',marginBottom:'6px' }}>
+                      <p style={{ fontSize:'14px',color:'#0c2520',margin:'0 0 2px',fontWeight:500 }}>{c.title}</p>
+                      <p style={{ fontSize:'12px',color:'#666',margin:0 }}>{c.role}{c.year ? ' · ' + c.year : ''}</p>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
-          ) : (
-            <Empty text="Add your stage and screen credits" onClick={() => openEdit('credits')} />
-          )}
+          ) : <Empty text="Add your stage and screen credits" onClick={() => openEdit('credits')} />}
         </div>
 
-        {/* === BRANDS === */}
+        {/* BRANDS */}
         <div style={{ marginBottom:'24px' }}>
           <div style={{ display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:'10px' }}>
             <p style={{ fontFamily:'Georgia,serif',fontSize:'17px',fontWeight:500,color:'#0c2520',margin:0 }}>Brands & companies</p>
@@ -387,12 +431,10 @@ export default function EditProfile() {
                 </div>
               ))}
             </div>
-          ) : (
-            <Empty text="Add brands and companies you have worked with" onClick={() => openEdit('brands')} />
-          )}
+          ) : <Empty text="Add brands and companies you have worked with" onClick={() => openEdit('brands')} />}
         </div>
 
-        {/* === TESTIMONIALS === */}
+        {/* TESTIMONIALS */}
         <div style={{ marginBottom:'24px' }}>
           <div style={{ display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:'10px' }}>
             <p style={{ fontFamily:'Georgia,serif',fontSize:'17px',fontWeight:500,color:'#0c2520',margin:0 }}>Testimonials</p>
@@ -404,29 +446,23 @@ export default function EditProfile() {
               <p style={{ fontSize:'12px',color:'#0c2520',margin:'0 0 1px',fontWeight:500 }}>{t.author_name}</p>
               {t.author_title && <p style={{ fontSize:'11px',color:'#888',margin:0 }}>{t.author_title}</p>}
             </div>
-          )) : (
-            <Empty text="Add testimonials from directors and colleagues" onClick={() => openEdit('testimonials')} />
-          )}
+          )) : <Empty text="Add testimonials from directors and colleagues" onClick={() => openEdit('testimonials')} />}
         </div>
 
-        {/* === GALLERY === */}
+        {/* GALLERY */}
         <div style={{ marginBottom:'24px' }}>
           <div style={{ display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:'10px' }}>
             <p style={{ fontFamily:'Georgia,serif',fontSize:'17px',fontWeight:500,color:'#0c2520',margin:0 }}>Gallery</p>
-            <Pencil onClick={() => openEdit('gallery')} />
+            <Pencil onClick={() => setEditing('gallery')} />
           </div>
           {gallery.length > 0 ? (
             <div style={{ display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:'6px' }}>
-              {gallery.map(g => (
-                <div key={g.id || g.url} style={{ aspectRatio:'1',borderRadius:'10px',background:'url('+g.url+') center/cover',backgroundSize:'cover',border:'1px solid #e8e4de' }} />
-              ))}
+              {gallery.map(g => <div key={g.id || g.url} style={{ aspectRatio:'1',borderRadius:'10px',background:'url('+g.url+') center/cover',backgroundSize:'cover',border:'1px solid #e8e4de' }} />)}
             </div>
-          ) : (
-            <Empty text="Add photos to your gallery" onClick={() => openEdit('gallery')} />
-          )}
+          ) : <Empty text="Add photos to your gallery" onClick={() => setEditing('gallery')} />}
         </div>
 
-        {/* === FAQs === */}
+        {/* FAQs */}
         <div style={{ marginBottom:'24px' }}>
           <div style={{ display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:'10px' }}>
             <p style={{ fontFamily:'Georgia,serif',fontSize:'17px',fontWeight:500,color:'#0c2520',margin:0 }}>FAQs</p>
@@ -437,45 +473,18 @@ export default function EditProfile() {
               <p style={{ fontSize:'14px',color:'#0c2520',margin:'0 0 4px',fontWeight:500 }}>{f.question}</p>
               <p style={{ fontSize:'13px',color:'#666',margin:0,lineHeight:1.5 }}>{f.answer}</p>
             </div>
-          )) : (
-            <Empty text="Add frequently asked questions" onClick={() => openEdit('faqs')} />
-          )}
-        </div>
-
-        {/* === AGENT === */}
-        <div style={{ marginBottom:'24px' }}>
-          <div style={{ display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:'10px' }}>
-            <p style={{ fontFamily:'Georgia,serif',fontSize:'17px',fontWeight:500,color:'#0c2520',margin:0 }}>Agent</p>
-            <Pencil onClick={() => openEdit('agent')} />
-          </div>
-          {profile.agent_name ? (
-            <div style={{ background:'white',borderRadius:'12px',padding:'14px',border:'1px solid #e8e4de' }}>
-              <p style={{ fontSize:'14px',color:'#0c2520',margin:'0 0 2px',fontWeight:500 }}>{profile.agent_name}</p>
-              {profile.agent_phone && <p style={{ fontSize:'12px',color:'#888',margin:'0 0 1px' }}>{profile.agent_phone}</p>}
-              {profile.agent_email && <p style={{ fontSize:'12px',color:'#888',margin:0 }}>{profile.agent_email}</p>}
-            </div>
-          ) : (
-            <Empty text="Add your agent details" onClick={() => openEdit('agent')} />
-          )}
+          )) : <Empty text="Add frequently asked questions" onClick={() => openEdit('faqs')} />}
         </div>
       </div>
 
       {/* ============== EDIT SHEETS ============== */}
 
-      {editing === 'bio' && (
-        <Sheet title="Edit bio" onClose={() => setEditing(null)}>
-          <textarea value={editBio} onChange={e => setEditBio(e.target.value)} rows={6} placeholder="Tell casting directors about yourself..." style={{ ...inputStyle, resize:'vertical',minHeight:'120px' }} />
-          <SaveBtn section="bio" />
-        </Sheet>
-      )}
+      {editing === 'bio' && <Sheet title="Edit bio" onClose={() => setEditing(null)}><textarea value={editBio} onChange={e => setEditBio(e.target.value)} rows={6} placeholder="Tell casting directors about yourself..." style={{ ...inputStyle, resize:'vertical',minHeight:'120px' }} /><SaveBtn section="bio" /></Sheet>}
 
       {editing === 'skills' && (
         <Sheet title="Edit skills" onClose={() => setEditing(null)}>
           <div style={{ display:'flex',gap:'8px',flexWrap:'wrap',marginBottom:'16px' }}>
-            {allSkills.map(s => (
-              <button key={s.id} className={'skill-chip' + (editSkillIds.includes(s.id) ? ' on' : '')}
-                onClick={() => setEditSkillIds(prev => prev.includes(s.id) ? prev.filter(x=>x!==s.id) : [...prev,s.id])}>{s.name}</button>
-            ))}
+            {allSkills.map(s => <button key={s.id} className={'skill-chip' + (editSkillIds.includes(s.id) ? ' on' : '')} onClick={() => setEditSkillIds(prev => prev.includes(s.id) ? prev.filter(x=>x!==s.id) : [...prev,s.id])}>{s.name}</button>)}
           </div>
           <SaveBtn section="skills" />
         </Sheet>
@@ -487,12 +496,7 @@ export default function EditProfile() {
             <button onClick={() => setEditAvailability('available')} style={{ flex:1,padding:'12px',borderRadius:'12px',border:editAvailability==='available'?'2px solid #4ade80':'1px solid #e0ddd5',background:'white',cursor:'pointer',fontFamily:'inherit',fontSize:'13px',fontWeight:500,color:'#0c2520' }}>Available now</button>
             <button onClick={() => setEditAvailability('in_production')} style={{ flex:1,padding:'12px',borderRadius:'12px',border:editAvailability==='in_production'?'2px solid #f59e0b':'1px solid #e0ddd5',background:'white',cursor:'pointer',fontFamily:'inherit',fontSize:'13px',fontWeight:500,color:'#0c2520' }}>In production</button>
           </div>
-          {editAvailability === 'in_production' && (
-            <div style={{ marginBottom:'16px' }}>
-              <label style={labelStyle}>Until when?</label>
-              <input type="date" value={editProductionUntil} onChange={e => setEditProductionUntil(e.target.value)} style={inputStyle} />
-            </div>
-          )}
+          {editAvailability === 'in_production' && <div style={{ marginBottom:'16px' }}><label style={labelStyle}>Until when?</label><input type="date" value={editProductionUntil} onChange={e => setEditProductionUntil(e.target.value)} style={inputStyle} /></div>}
           <SaveBtn section="availability" />
         </Sheet>
       )}
@@ -508,32 +512,15 @@ export default function EditProfile() {
 
       {editing === 'reels' && (
         <Sheet title="Edit showreels" onClose={() => setEditing(null)}>
-          {editReels.map((r,i) => (
-            <div key={i} style={{ background:'white',borderRadius:'12px',padding:'14px',border:'1px solid #e8e4de',marginBottom:'10px' }}>
-              <div style={{ display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:'10px' }}>
-                <span style={{ fontSize:'12px',color:'#888',fontWeight:600 }}>Reel {i+1}</span>
-                {editReels.length > 1 && <button onClick={() => setEditReels(prev => prev.filter((_,j) => j!==i))} style={{ background:'none',border:'none',fontSize:'12px',color:'#c0392b',cursor:'pointer',fontFamily:'inherit' }}>Remove</button>}
-              </div>
-              <input value={r.label} onChange={e => { const n=[...editReels]; n[i]={...n[i],label:e.target.value}; setEditReels(n) }} placeholder="Label (e.g. Acting Showreel)" style={{ ...inputStyle,marginBottom:'8px' }} />
-              <input value={r.url} onChange={e => { const n=[...editReels]; n[i]={...n[i],url:e.target.value}; setEditReels(n) }} placeholder="YouTube or Vimeo URL" style={inputStyle} />
-            </div>
-          ))}
-          <button onClick={() => setEditReels(prev => [...prev,{label:'',url:'',sort_order:prev.length+1}])} style={{ width:'100%',padding:'12px',borderRadius:'12px',border:'2px dashed #d4d2cc',background:'transparent',fontSize:'13px',color:'#888',cursor:'pointer',fontFamily:'inherit',marginBottom:'8px' }}>+ Add reel</button>
-          <SaveBtn section="reels" />
-        </Sheet>
-      )}
-
-      {editing === 'brands' && (
-        <Sheet title="Edit brands" onClose={() => setEditing(null)}>
-          {editBrands.map((b,i) => (
-            <div key={i} style={{ display:'flex',gap:'8px',alignItems:'center',marginBottom:'10px' }}>
-              <input value={b.brand_name} onChange={e => { const n=[...editBrands]; n[i]={...n[i],brand_name:e.target.value}; setEditBrands(n) }} placeholder="Brand name" style={{ ...inputStyle,flex:1 }}
-                onBlur={async () => { if(!b.brand_name) return; try { const r = await fetch('/api/brandfetch?name='+encodeURIComponent(b.brand_name)); const d = await r.json(); if(d.logo) { const n=[...editBrands]; n[i]={...n[i],logo_url:d.logo}; setEditBrands(n) } } catch {} }} />
-              {editBrands.length > 1 && <button onClick={() => setEditBrands(prev => prev.filter((_,j)=>j!==i))} style={{ background:'none',border:'none',fontSize:'18px',color:'#c0392b',cursor:'pointer' }}>x</button>}
-            </div>
-          ))}
-          <button onClick={() => setEditBrands(prev => [...prev,{brand_name:'',logo_url:null,sort_order:prev.length+1}])} style={{ width:'100%',padding:'12px',borderRadius:'12px',border:'2px dashed #d4d2cc',background:'transparent',fontSize:'13px',color:'#888',cursor:'pointer',fontFamily:'inherit',marginBottom:'8px' }}>+ Add brand</button>
-          <SaveBtn section="brands" />
+          <p style={{ fontSize:'12px',color:'#888',margin:'0 0 16px' }}>Upload your reels (max 200MB each)</p>
+          <div style={{ display:'grid',gridTemplateColumns:'1fr 1fr',gap:'10px' }}>
+            {[{ label:'Ident',slot:'vid1',value:vid1 },{ label:'Dance Reel',slot:'vid2',value:vid2 },{ label:'Acting Reel',slot:'vid3',value:vid3 },{ label:'Singing Reel',slot:'vid4',value:vid4 }].map(v => (
+              <label key={v.slot} style={{ padding:'18px 10px',border:v.value?'1.5px solid #0c2520':'1.5px dashed #c4c2bc',borderRadius:'10px',fontSize:'13px',background:v.value?'#e8f0eb':'white',textAlign:'center',color:'#0c2520',cursor:uploadingVideo===v.slot?'not-allowed':'pointer',display:'block',fontWeight:500,transition:'all 0.2s ease' }}>
+                {uploadingVideo === v.slot ? 'Uploading...' : (v.value ? '✓ ' + v.label + ' uploaded' : '+ ' + v.label)}
+                <input type="file" accept="video/*" disabled={uploadingVideo===v.slot} onChange={e => { const f=e.target.files?.[0]; if(f)handleVideoUpload(v.slot,f); e.target.value='' }} style={{ display:'none' }} />
+              </label>
+            ))}
+          </div>
         </Sheet>
       )}
 
@@ -556,11 +543,53 @@ export default function EditProfile() {
                 <input value={c.director||''} onChange={e => { const n=[...editCredits]; n[i]={...n[i],director:e.target.value}; setEditCredits(n) }} placeholder="Director" style={{ ...inputStyle,flex:1 }} />
                 <input value={c.year||''} onChange={e => { const n=[...editCredits]; n[i]={...n[i],year:parseInt(e.target.value)||null}; setEditCredits(n) }} placeholder="Year" style={{ ...inputStyle,width:'80px' }} />
               </div>
-              <input value={c.production_company||''} onChange={e => { const n=[...editCredits]; n[i]={...n[i],production_company:e.target.value}; setEditCredits(n) }} placeholder="Production company" style={inputStyle} />
+              <input value={c.production_company||''} onChange={e => { const n=[...editCredits]; n[i]={...n[i],production_company:e.target.value}; setEditCredits(n) }} placeholder="Production company" style={{ ...inputStyle,marginBottom:'8px' }} />
+              {/* Category dropdown */}
+              <label style={labelStyle}>Category</label>
+              <select value={c.production_type_id||''} onChange={e => { const n=[...editCredits]; n[i]={...n[i],production_type_id:parseInt(e.target.value)||null}; setEditCredits(n) }} style={{ ...selectStyle,marginBottom:'8px' }}>
+                <option value="">Select category</option>
+                {productionTypes.map(pt => <option key={pt.id} value={pt.id}>{pt.name}</option>)}
+              </select>
+
+              {/* Featured extras */}
+              {c.is_featured && (
+                <div style={{ borderTop:'1px solid #f0ede5',paddingTop:'10px',marginTop:'6px' }}>
+                  <label style={labelStyle}>Featured description</label>
+                  <textarea value={c.description||''} onChange={e => { const n=[...editCredits]; n[i]={...n[i],description:e.target.value}; setEditCredits(n) }} placeholder="Brief description for the featured slider" rows={2} style={{ ...inputStyle,resize:'vertical',marginBottom:'8px' }} />
+                  <label style={labelStyle}>Hero image</label>
+                  {c.thumbnail_url ? (
+                    <div style={{ position:'relative',marginBottom:'8px' }}>
+                      <div style={{ width:'100%',height:'120px',borderRadius:'10px',background:'url('+c.thumbnail_url+') center/cover',backgroundSize:'cover' }} />
+                      <button onClick={() => { const n=[...editCredits]; n[i]={...n[i],thumbnail_url:null}; setEditCredits(n) }} style={{ position:'absolute',top:'6px',right:'6px',width:'24px',height:'24px',borderRadius:'50%',background:'rgba(0,0,0,0.5)',border:'none',display:'flex',alignItems:'center',justifyContent:'center',cursor:'pointer' }}>
+                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3" strokeLinecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                      </button>
+                    </div>
+                  ) : (
+                    <label style={{ display:'block',padding:'16px',borderRadius:'10px',border:'2px dashed #d4d2cc',textAlign:'center',fontSize:'13px',color:'#888',cursor:'pointer',marginBottom:'8px' }}>
+                      + Upload hero image
+                      <input type="file" accept="image/*" style={{ display:'none' }} onChange={e => { const f=e.target.files?.[0]; if(f) handleThumbnailUpload(i,f); e.target.value='' }} />
+                    </label>
+                  )}
+                </div>
+              )}
             </div>
           ))}
-          <button onClick={() => setEditCredits(prev => [...prev,{title:'',role:'',year:null,director:null,production_company:null,is_featured:false,production_type_id:null}])} style={{ width:'100%',padding:'12px',borderRadius:'12px',border:'2px dashed #d4d2cc',background:'transparent',fontSize:'13px',color:'#888',cursor:'pointer',fontFamily:'inherit',marginBottom:'8px' }}>+ Add credit</button>
+          <button onClick={() => setEditCredits(prev => [...prev,{title:'',role:'',year:null,director:null,production_company:null,is_featured:false,production_type_id:null,description:null,thumbnail_url:null}])} style={{ width:'100%',padding:'12px',borderRadius:'12px',border:'2px dashed #d4d2cc',background:'transparent',fontSize:'13px',color:'#888',cursor:'pointer',fontFamily:'inherit',marginBottom:'8px' }}>+ Add credit</button>
           <SaveBtn section="credits" />
+        </Sheet>
+      )}
+
+      {editing === 'brands' && (
+        <Sheet title="Edit brands" onClose={() => setEditing(null)}>
+          {editBrands.map((b,i) => (
+            <div key={i} style={{ display:'flex',gap:'8px',alignItems:'center',marginBottom:'10px' }}>
+              <input value={b.brand_name} onChange={e => { const n=[...editBrands]; n[i]={...n[i],brand_name:e.target.value}; setEditBrands(n) }} placeholder="Brand name" style={{ ...inputStyle,flex:1 }}
+                onBlur={async () => { if(!b.brand_name) return; try { const r = await fetch('/api/brandfetch?name='+encodeURIComponent(b.brand_name)); const d = await r.json(); if(d.logo) { const n=[...editBrands]; n[i]={...n[i],logo_url:d.logo}; setEditBrands(n) } } catch {} }} />
+              {editBrands.length > 1 && <button onClick={() => setEditBrands(prev => prev.filter((_,j)=>j!==i))} style={{ background:'none',border:'none',fontSize:'18px',color:'#c0392b',cursor:'pointer' }}>x</button>}
+            </div>
+          ))}
+          <button onClick={() => setEditBrands(prev => [...prev,{brand_name:'',logo_url:null,sort_order:prev.length+1}])} style={{ width:'100%',padding:'12px',borderRadius:'12px',border:'2px dashed #d4d2cc',background:'transparent',fontSize:'13px',color:'#888',cursor:'pointer',fontFamily:'inherit',marginBottom:'8px' }}>+ Add brand</button>
+          <SaveBtn section="brands" />
         </Sheet>
       )}
 
@@ -572,7 +601,7 @@ export default function EditProfile() {
                 <span style={{ fontSize:'12px',color:'#888',fontWeight:600 }}>Testimonial {i+1}</span>
                 {editTestimonials.length > 1 && <button onClick={() => setEditTestimonials(prev => prev.filter((_,j)=>j!==i))} style={{ background:'none',border:'none',fontSize:'12px',color:'#c0392b',cursor:'pointer',fontFamily:'inherit' }}>Remove</button>}
               </div>
-              <textarea value={t.quote} onChange={e => { const n=[...editTestimonials]; n[i]={...n[i],quote:e.target.value}; setEditTestimonials(n) }} placeholder="What did they say about you?" rows={3} style={{ ...inputStyle,resize:'vertical',marginBottom:'8px' }} />
+              <textarea value={t.quote} onChange={e => { const n=[...editTestimonials]; n[i]={...n[i],quote:e.target.value}; setEditTestimonials(n) }} placeholder="What did they say?" rows={3} style={{ ...inputStyle,resize:'vertical',marginBottom:'8px' }} />
               <input value={t.author_name} onChange={e => { const n=[...editTestimonials]; n[i]={...n[i],author_name:e.target.value}; setEditTestimonials(n) }} placeholder="Their name" style={{ ...inputStyle,marginBottom:'8px' }} />
               <input value={t.author_title||''} onChange={e => { const n=[...editTestimonials]; n[i]={...n[i],author_title:e.target.value}; setEditTestimonials(n) }} placeholder="Their title (e.g. Director)" style={inputStyle} />
             </div>
@@ -601,16 +630,11 @@ export default function EditProfile() {
 
       {editing === 'gallery' && (
         <Sheet title="Edit gallery" onClose={() => setEditing(null)}>
-          <p style={{ fontSize:'13px',color:'#888',margin:'0 0 12px' }}>Gallery images are managed through your gallery uploads. Tap photos to remove them.</p>
+          <p style={{ fontSize:'13px',color:'#888',margin:'0 0 12px' }}>Tap photos to remove them.</p>
           <div style={{ display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:'6px',marginBottom:'16px' }}>
             {gallery.map(g => (
               <div key={g.id || g.url} style={{ aspectRatio:'1',borderRadius:'10px',background:'url('+g.url+') center/cover',backgroundSize:'cover',position:'relative',cursor:'pointer' }}
-                onClick={async () => {
-                  if (g.id && confirm('Remove this image?')) {
-                    await supabase.from('gallery_images').delete().eq('id', g.id)
-                    setGallery(prev => prev.filter(x => x.id !== g.id))
-                  }
-                }}>
+                onClick={async () => { if (g.id && confirm('Remove this image?')) { await supabase.from('gallery_images').delete().eq('id', g.id); setGallery(prev => prev.filter(x => x.id !== g.id)) } }}>
                 <div style={{ position:'absolute',top:'4px',right:'4px',width:'20px',height:'20px',borderRadius:'50%',background:'rgba(0,0,0,0.5)',display:'flex',alignItems:'center',justifyContent:'center' }}>
                   <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3" strokeLinecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
                 </div>
@@ -620,15 +644,10 @@ export default function EditProfile() {
           <label style={{ display:'block',width:'100%',padding:'12px',borderRadius:'12px',border:'2px dashed #d4d2cc',background:'transparent',fontSize:'13px',color:'#888',cursor:'pointer',fontFamily:'inherit',textAlign:'center' }}>
             + Upload image
             <input type="file" accept="image/*" style={{ display:'none' }} onChange={async e => {
-              const file = e.target.files?.[0]
-              if (!file || !profile) return
+              const file = e.target.files?.[0]; if (!file || !profile) return
               const path = profile.id + '/gallery-' + Date.now() + '.' + file.name.split('.').pop()
               const { error } = await supabase.storage.from('headshots').upload(path, file, { contentType: file.type })
-              if (!error) {
-                const { data: { publicUrl } } = supabase.storage.from('headshots').getPublicUrl(path)
-                await supabase.from('gallery_images').insert({ profile_id: profile.id, url: publicUrl, sort_order: gallery.length + 1 })
-                setGallery(prev => [...prev, { url: publicUrl, sort_order: prev.length + 1 }])
-              }
+              if (!error) { const { data: { publicUrl } } = supabase.storage.from('headshots').getPublicUrl(path); await supabase.from('gallery_images').insert({ profile_id: profile.id, url: publicUrl, sort_order: gallery.length + 1 }); setGallery(prev => [...prev, { url: publicUrl, sort_order: prev.length + 1 }]) }
               e.target.value = ''
             }} />
           </label>
