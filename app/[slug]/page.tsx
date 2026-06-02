@@ -27,35 +27,8 @@ function NavButton() {
     setFromApp(p.get('from') === 'app')
     supabase.auth.getUser().then(({ data: { user } }) => setIsLoggedIn(!!user))
   }, [])
-  if (isLoggedIn || fromApp) return <a href="/dashboard" style={{ fontSize:'13px',color:'white',textDecoration:'none',background:'rgba(0,0,0,0.35)',backdropFilter:'blur(10px)',WebkitBackdropFilter:'blur(10px)',border:'1px solid rgba(255,255,255,0.15)',padding:'8px 18px',borderRadius:'20px' }}>Back to app</a>
-  return <a href="/login" style={{ fontSize:'13px',color:'white',textDecoration:'none',background:'rgba(0,0,0,0.35)',backdropFilter:'blur(10px)',WebkitBackdropFilter:'blur(10px)',border:'1px solid rgba(255,255,255,0.15)',padding:'8px 18px',borderRadius:'20px' }}>Sign in</a>
-}
-
-function ReelCard({ label, url }: { label: string; url: string }) {
-  const [playing, setPlaying] = useState(false)
-  const vidRef = useRef<HTMLVideoElement>(null)
-  return (
-    <div style={{ borderRadius:'14px',overflow:'hidden',background:'#061410' }}>
-      <div style={{ position:'relative',aspectRatio:'9/14' }}>
-        <video ref={vidRef} playsInline preload="metadata"
-          onPlay={() => setPlaying(true)} onPause={() => setPlaying(false)} onEnded={() => setPlaying(false)}
-          style={{ width:'100%',height:'100%',objectFit:'cover' }}>
-          <source src={url + '#t=0.5'} />
-        </video>
-        {!playing && (
-          <div onClick={() => { if (vidRef.current) { vidRef.current.controls = true; vidRef.current.play() } }}
-            style={{ position:'absolute',inset:0,background:'rgba(0,0,0,0.25)',display:'flex',alignItems:'center',justifyContent:'center',cursor:'pointer' }}>
-            <div style={{ width:'48px',height:'48px',borderRadius:'50%',background:'rgba(255,255,255,0.9)',display:'flex',alignItems:'center',justifyContent:'center' }}>
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="#0c2520" stroke="none"><polygon points="6 3 20 12 6 21 6 3"/></svg>
-            </div>
-          </div>
-        )}
-      </div>
-      <div style={{ padding:'10px 12px' }}>
-        <p style={{ fontSize:'13px',fontWeight:600,color:'#f1f0ee',margin:0 }}>{label}</p>
-      </div>
-    </div>
-  )
+  if (isLoggedIn || fromApp) return <a href="/dashboard" style={{ width:'38px',height:'38px',borderRadius:'50%',background:'rgba(0,0,0,0.35)',backdropFilter:'blur(10px)',WebkitBackdropFilter:'blur(10px)',border:'1px solid rgba(255,255,255,0.15)',display:'flex',alignItems:'center',justifyContent:'center',textDecoration:'none' }}><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round"><path d="M19 12H5"/><path d="M12 19l-7-7 7-7"/></svg></a>
+  return <a href="/login" style={{ width:'38px',height:'38px',borderRadius:'50%',background:'rgba(0,0,0,0.35)',backdropFilter:'blur(10px)',WebkitBackdropFilter:'blur(10px)',border:'1px solid rgba(255,255,255,0.15)',display:'flex',alignItems:'center',justifyContent:'center',textDecoration:'none' }}><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg></a>
 }
 
 export default function PublicProfile() {
@@ -203,9 +176,15 @@ export default function PublicProfile() {
         </div>
       )}
 
-      {/* Nav */}
-      <div style={{ position:'absolute',top:0,left:0,right:0,padding:'16px 32px',display:'flex',justifyContent:'flex-end',alignItems:'center',zIndex:10 }}>
+      {/* Nav — arrow left, availability right */}
+      <div style={{ position:'absolute',top:0,left:0,right:0,padding:'16px 20px',display:'flex',justifyContent:'space-between',alignItems:'center',zIndex:10 }}>
         <NavButton />
+        {profile?.availability_status === 'available' && (
+          <div style={{ background:'rgba(0,0,0,0.35)',backdropFilter:'blur(10px)',WebkitBackdropFilter:'blur(10px)',border:'1px solid rgba(255,255,255,0.15)',padding:'8px 16px',borderRadius:'20px',display:'flex',alignItems:'center',gap:'6px' }}>
+            <div style={{ width:'7px',height:'7px',borderRadius:'50%',background:'#4ade80' }} />
+            <span style={{ fontSize:'12px',color:'white',fontWeight:500 }}>Available</span>
+          </div>
+        )}
       </div>
 
       <div style={{ maxWidth:'680px',margin:'0 auto',padding:'0 0 100px' }}>
@@ -213,7 +192,7 @@ export default function PublicProfile() {
         {/* Hero */}
         <div style={{ textAlign:'center',background:'#f1f0ee' }}>
           {profile?.vid_1 && (
-            <div style={{ width:'100%',height:'300px',overflow:'hidden' }}>
+            <div style={{ width:'100%',height:'240px',overflow:'hidden' }}>
               <video autoPlay muted loop playsInline style={{ width:'100%',height:'100%',objectFit:'cover' }}>
                 <source src={profile.vid_1} />
               </video>
@@ -226,25 +205,12 @@ export default function PublicProfile() {
               <div style={{ width:'110px',height:'110px',borderRadius:'50%',background:'url(' + profile.picture_url + ') center/cover',backgroundSize:'cover',margin:'0 auto 24px',border:'4px solid #f1f0ee',boxShadow:'0 4px 24px rgba(12,37,32,0.15)' }} />
             )}
 
-            <div style={{ display:'flex',alignItems:'center',justifyContent:'center',gap:'10px',margin:'0 0 10px',padding:'0 32px' }}>
-              <h1 style={{ fontFamily:'Georgia,serif',fontSize:'36px',fontWeight:500,color:'#0c2520',margin:0,lineHeight:1.1 }}>{fullName}</h1>
-              {profile?.availability_status === 'available' && (
-                <div title="Available for work" style={{ width:'12px',height:'12px',borderRadius:'50%',background:'#4ade80',border:'2px solid #f1f0ee',flexShrink:0 }} />
-              )}
-            </div>
+            <h1 style={{ fontFamily:'Georgia,serif',fontSize:'36px',fontWeight:500,color:'#0c2520',margin:'0 0 10px',lineHeight:1.1,padding:'0 32px' }}>{fullName}</h1>
 
             <div style={{ display:'flex',alignItems:'center',justifyContent:'center',gap:'6px',marginBottom:'16px',flexWrap:'wrap' }}>
               {profile?.location && <span style={{ fontSize:'13px',color:'#888' }}>{profile.location}</span>}
               {profile?.location && connectionCount > 0 && <span style={{ fontSize:'13px',color:'#d4d2cc' }}>·</span>}
               {connectionCount > 0 && <span style={{ fontSize:'13px',color:'#888' }}>{connectionCount} connection{connectionCount !== 1 ? 's' : ''}</span>}
-              {profile?.availability_status === 'in_production' && (
-                <>
-                  <span style={{ fontSize:'13px',color:'#d4d2cc' }}>·</span>
-                  <span style={{ fontSize:'13px',color:'#c8913a',fontWeight:500 }}>
-                    {'In production' + (profile.production_until ? ' until ' + new Date(profile.production_until).toLocaleDateString('en-GB',{month:'short',year:'numeric'}) : '')}
-                  </span>
-                </>
-              )}
             </div>
 
             {skills.length > 0 && (
@@ -277,9 +243,10 @@ export default function PublicProfile() {
 
         <div style={{ height:'52px' }} />
 
-        {/* Featured work */}
+        {/* Highlights / Featured work */}
         {featuredCredits.length > 0 && (
           <div style={{ marginBottom:'56px' }}>
+            <p style={{ fontSize:'11px',color:'#888',textTransform:'uppercase',letterSpacing:'0.08em',fontWeight:600,margin:'0 0 12px',paddingLeft:'32px' }}>Highlights</p>
             <div className="feat-scroll" style={{ paddingLeft:'32px',paddingRight:'32px' }}>
               {featuredCredits.map(c => (
                 <div key={c.id} style={{ flexShrink:0,width:'280px',height:'360px',borderRadius:'14px',overflow:'hidden',position:'relative' }}>
@@ -290,7 +257,11 @@ export default function PublicProfile() {
                       <span style={{ fontFamily:'Georgia,serif',fontSize:'48px',color:'#2a5040' }}>{c.title?.[0]}</span>
                     </div>
                   )}
-                  {c.year && <div style={{ position:'absolute',top:'14px',right:'14px',background:'white',padding:'4px 12px',borderRadius:'6px' }}><span style={{ fontSize:'13px',fontWeight:600,color:'#0c2520' }}>{c.year}</span></div>}
+                  {c.year && (
+                    <div style={{ position:'absolute',top:'14px',right:'14px',background:'rgba(0,0,0,0.3)',backdropFilter:'blur(10px)',WebkitBackdropFilter:'blur(10px)',padding:'4px 12px',borderRadius:'6px',border:'1px solid rgba(255,255,255,0.15)' }}>
+                      <span style={{ fontSize:'13px',fontWeight:600,color:'white' }}>{c.year}</span>
+                    </div>
+                  )}
                   <div style={{ position:'absolute',bottom:0,left:0,right:0,background:'linear-gradient(transparent, rgba(0,0,0,0.75))',padding:'48px 18px 20px' }}>
                     <p style={{ fontFamily:'Georgia,serif',fontSize:'22px',color:'white',margin:'0 0 4px',fontWeight:500,lineHeight:1.2 }}>{c.title}</p>
                     {c.role && <p style={{ fontSize:'14px',color:'rgba(255,255,255,0.8)',margin:0 }}>{c.role}</p>}
@@ -368,9 +339,14 @@ export default function PublicProfile() {
                 {/* Reels panel */}
                 <div style={{ width:'50%',padding:'0 32px 48px',boxSizing:'border-box' }}>
                   {hasReels && (
-                    <div style={{ display:'grid',gridTemplateColumns:'1fr 1fr',gap:'12px' }}>
+                    <div style={{ display:'flex',flexDirection:'column',gap:'16px' }}>
                       {reelsList.map(r => (
-                        <ReelCard key={r.label} label={r.label} url={r.url || ''} />
+                        <div key={r.label}>
+                          <p style={{ fontSize:'13px',fontWeight:600,color:'#0c2520',margin:'0 0 8px' }}>{r.label}</p>
+                          <video controls playsInline preload="metadata" style={{ width:'100%',borderRadius:'12px',background:'#061410',aspectRatio:'16/9',objectFit:'cover' }}>
+                            <source src={(r.url || '') + '#t=0.5'} />
+                          </video>
+                        </div>
                       ))}
                     </div>
                   )}
@@ -380,9 +356,9 @@ export default function PublicProfile() {
           </>
         )}
 
-        {/* Brand marquee */}
+        {/* Brand logos */}
         {brands.length > 0 && (
-          <div style={{ marginBottom:'56px' }}>
+          <div style={{ margin:'0 32px 56px',paddingTop:'8px',paddingBottom:'8px',borderTop:'1px solid #e8e4de',borderBottom:'1px solid #e8e4de' }}>
             <div className="marquee-wrap" style={{ overflow:'hidden' }}>
               <div className="marquee-track">
                 {[...brands,...brands,...brands].map((b, i) => (
@@ -413,10 +389,10 @@ export default function PublicProfile() {
           </div>
         )}
 
-        {/* Gallery */}
+        {/* Gallery — portrait, swipeable */}
         {gallery.length > 0 && (
           <div style={{ padding:'0 32px 56px' }}>
-            <div style={{ position:'relative',borderRadius:'14px',overflow:'hidden',aspectRatio:'4/3' }}>
+            <div style={{ position:'relative',borderRadius:'14px',overflow:'hidden',aspectRatio:'3/4' }}>
               <div style={{ display:'flex',width:gallery.length * 100 + '%',transform:'translateX(-' + (activeGallery * (100 / gallery.length)) + '%)',transition:'transform 0.4s cubic-bezier(0.4,0,0.2,1)',height:'100%' }}
                 onTouchStart={e => { (e.currentTarget as any)._startX = e.touches[0].clientX }}
                 onTouchEnd={e => {
