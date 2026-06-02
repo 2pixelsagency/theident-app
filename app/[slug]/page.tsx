@@ -11,7 +11,7 @@ type Profile = {
   agent_name: string | null; agent_phone: string | null; agent_email: string | null
   vid_1: string | null; vid_2: string | null; vid_3: string | null; vid_4: string | null
 }
-type Skill = { id: number; name: string; color: string; text_color: string }
+type Skill = { id: number; name: string }
 type Credit = { id: string; title: string; role: string | null; year: number | null; thumbnail_url: string | null; director: string | null; production_company: string | null; is_featured: boolean; production_type_id: number | null; description: string | null }
 type Brand = { id: string; brand_name: string; logo_url: string | null }
 type Testimonial = { id: string; quote: string; author_name: string; author_title: string | null }
@@ -29,6 +29,33 @@ function NavButton() {
   }, [])
   if (isLoggedIn || fromApp) return <a href="/dashboard" style={{ fontSize:'13px',color:'white',textDecoration:'none',background:'rgba(0,0,0,0.35)',backdropFilter:'blur(10px)',WebkitBackdropFilter:'blur(10px)',border:'1px solid rgba(255,255,255,0.15)',padding:'8px 18px',borderRadius:'20px' }}>Back to app</a>
   return <a href="/login" style={{ fontSize:'13px',color:'white',textDecoration:'none',background:'rgba(0,0,0,0.35)',backdropFilter:'blur(10px)',WebkitBackdropFilter:'blur(10px)',border:'1px solid rgba(255,255,255,0.15)',padding:'8px 18px',borderRadius:'20px' }}>Sign in</a>
+}
+
+function ReelCard({ label, url }: { label: string; url: string }) {
+  const [playing, setPlaying] = useState(false)
+  const vidRef = useRef<HTMLVideoElement>(null)
+  return (
+    <div style={{ borderRadius:'14px',overflow:'hidden',background:'#061410' }}>
+      <div style={{ position:'relative',aspectRatio:'9/14' }}>
+        <video ref={vidRef} playsInline preload="metadata"
+          onPlay={() => setPlaying(true)} onPause={() => setPlaying(false)} onEnded={() => setPlaying(false)}
+          style={{ width:'100%',height:'100%',objectFit:'cover' }}>
+          <source src={url + '#t=0.5'} />
+        </video>
+        {!playing && (
+          <div onClick={() => { if (vidRef.current) { vidRef.current.controls = true; vidRef.current.play() } }}
+            style={{ position:'absolute',inset:0,background:'rgba(0,0,0,0.25)',display:'flex',alignItems:'center',justifyContent:'center',cursor:'pointer' }}>
+            <div style={{ width:'48px',height:'48px',borderRadius:'50%',background:'rgba(255,255,255,0.9)',display:'flex',alignItems:'center',justifyContent:'center' }}>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="#0c2520" stroke="none"><polygon points="6 3 20 12 6 21 6 3"/></svg>
+            </div>
+          </div>
+        )}
+      </div>
+      <div style={{ padding:'10px 12px' }}>
+        <p style={{ fontSize:'13px',fontWeight:600,color:'#f1f0ee',margin:0 }}>{label}</p>
+      </div>
+    </div>
+  )
 }
 
 export default function PublicProfile() {
@@ -69,7 +96,7 @@ export default function PublicProfile() {
       if (!prof) { setNotFound(true); setLoading(false); return }
       setProfile(prof)
       const [{ data: skillData }, { data: creditData }, { data: brandData }, { data: testimonialData }, { data: galleryData }, { data: faqData }, { data: ptData }, { data: conns }] = await Promise.all([
-        supabase.from('profile_skills').select('skills(id, name, skills_categories(color, text_color))').eq('profile_id', prof.id),
+        supabase.from('profile_skills').select('skills(id, name)').eq('profile_id', prof.id),
         supabase.from('credits').select('*').eq('profile_id', prof.id).order('year', { ascending: false }),
         supabase.from('profile_brands').select('*').eq('profile_id', prof.id).order('sort_order'),
         supabase.from('testimonials').select('*').eq('profile_id', prof.id).order('sort_order'),
@@ -78,7 +105,7 @@ export default function PublicProfile() {
         supabase.from('production_types').select('id, name').order('name'),
         supabase.from('connections').select('id, status, requester_id, receiver_id').or('requester_id.eq.' + prof.id + ',receiver_id.eq.' + prof.id),
       ])
-      setSkills((skillData || []).map((s: any) => ({ id: s.skills?.id, name: s.skills?.name, color: s.skills?.skills_categories?.color || '#e8efea', text_color: s.skills?.skills_categories?.text_color || '#0c2520' })).filter((s: any) => s.name))
+      setSkills((skillData || []).map((s: any) => ({ id: s.skills?.id, name: s.skills?.name })).filter((s: any) => s.name))
       const allCredits = creditData || []
       setCredits(allCredits)
       setFeaturedCredits(allCredits.filter((c: Credit) => c.is_featured))
@@ -157,9 +184,6 @@ export default function PublicProfile() {
         .cat-tab.on { background:#0c2520;color:#f1f0ee;border-color:#0c2520; }
         input[type=search]:focus { border-color:#0c2520 !important;outline:none;box-shadow:0 0 0 1px #0c2520; }
         .tab-slide { transition:transform 0.35s cubic-bezier(0.4,0,0.2,1); }
-        .reel-card { position:relative;border-radius:14px;overflow:hidden;aspect-ratio:16/9;cursor:pointer;background:#061410; }
-        .reel-card:hover .reel-overlay { opacity:0.9; }
-        .reel-overlay { position:absolute;inset:0;background:rgba(0,0,0,0.3);display:flex;align-items:center;justify-content:center;transition:opacity 0.2s ease;opacity:0.5; }
       `}</style>
 
       {lightbox && <div className="lightbox-overlay" onClick={() => setLightbox(null)}><img src={lightbox} alt="" style={{ maxWidth:'90vw',maxHeight:'90vh',borderRadius:'8px',objectFit:'contain' }} /></div>}
@@ -202,7 +226,6 @@ export default function PublicProfile() {
               <div style={{ width:'110px',height:'110px',borderRadius:'50%',background:'url(' + profile.picture_url + ') center/cover',backgroundSize:'cover',margin:'0 auto 24px',border:'4px solid #f1f0ee',boxShadow:'0 4px 24px rgba(12,37,32,0.15)' }} />
             )}
 
-            {/* Name + availability dot */}
             <div style={{ display:'flex',alignItems:'center',justifyContent:'center',gap:'10px',margin:'0 0 10px',padding:'0 32px' }}>
               <h1 style={{ fontFamily:'Georgia,serif',fontSize:'36px',fontWeight:500,color:'#0c2520',margin:0,lineHeight:1.1 }}>{fullName}</h1>
               {profile?.availability_status === 'available' && (
@@ -210,8 +233,7 @@ export default function PublicProfile() {
               )}
             </div>
 
-            {/* Location + connections + availability inline */}
-            <div style={{ display:'flex',alignItems:'center',justifyContent:'center',gap:'6px',marginBottom:'14px',flexWrap:'wrap' }}>
+            <div style={{ display:'flex',alignItems:'center',justifyContent:'center',gap:'6px',marginBottom:'16px',flexWrap:'wrap' }}>
               {profile?.location && <span style={{ fontSize:'13px',color:'#888' }}>{profile.location}</span>}
               {profile?.location && connectionCount > 0 && <span style={{ fontSize:'13px',color:'#d4d2cc' }}>·</span>}
               {connectionCount > 0 && <span style={{ fontSize:'13px',color:'#888' }}>{connectionCount} connection{connectionCount !== 1 ? 's' : ''}</span>}
@@ -226,7 +248,7 @@ export default function PublicProfile() {
             </div>
 
             {skills.length > 0 && (
-              <div style={{ display:'flex',gap:'6px',flexWrap:'wrap',justifyContent:'center',marginBottom:'20px',padding:'0 32px' }}>
+              <div style={{ display:'flex',gap:'6px',flexWrap:'wrap',justifyContent:'center',marginBottom:'24px',padding:'0 32px' }}>
                 {skills.map(s => <span key={s.id} style={{ padding:'5px 14px',borderRadius:'20px',fontSize:'12px',fontWeight:500,background:'#e8e4de',color:'#0c2520' }}>{s.name}</span>)}
               </div>
             )}
@@ -241,20 +263,19 @@ export default function PublicProfile() {
           </div>
         </div>
 
-        {/* Bio — headline + summary */}
+        {/* Bio + Summary */}
         {(profile?.bio || profile?.summary) && (
-          <div style={{ padding:'32px 32px 0' }}>
+          <div style={{ padding:'36px 32px 0' }}>
             {profile?.bio && (
               <p style={{ fontFamily:'Georgia,serif',fontSize:'26px',color:'#0c2520',lineHeight:1.45,margin:0,fontWeight:400 }}>{profile.bio}</p>
             )}
             {profile?.summary && (
-              <p style={{ fontSize:'15px',color:'#666',lineHeight:1.7,margin:'16px 0 0' }}>{profile.summary}</p>
+              <p style={{ fontSize:'15px',color:'#666',lineHeight:1.7,margin:'18px 0 0' }}>{profile.summary}</p>
             )}
           </div>
         )}
 
-        {/* Spacer */}
-        <div style={{ height:'48px' }} />
+        <div style={{ height:'52px' }} />
 
         {/* Featured work */}
         {featuredCredits.length > 0 && (
@@ -290,7 +311,6 @@ export default function PublicProfile() {
               </div>
             </div>
 
-            {/* Sliding tab panels */}
             <div style={{ overflow:'hidden' }}>
               <div className="tab-slide" style={{ display:'flex',width:'200%',transform:mainTab === 'credits' ? 'translateX(0)' : 'translateX(-50%)' }}>
 
@@ -345,35 +365,13 @@ export default function PublicProfile() {
                   )}
                 </div>
 
-                {/* Reels panel — thumbnail cards */}
+                {/* Reels panel */}
                 <div style={{ width:'50%',padding:'0 32px 48px',boxSizing:'border-box' }}>
                   {hasReels && (
                     <div style={{ display:'grid',gridTemplateColumns:'1fr 1fr',gap:'12px' }}>
-                      {reelsList.map((r, i) => {
-                        const [playing, setPlaying] = useState(false)
-                        const vidRef = useRef<HTMLVideoElement>(null)
-                        return (
-                          <div key={r.label} style={{ borderRadius:'14px',overflow:'hidden',background:'#061410' }}>
-                            <div style={{ position:'relative',aspectRatio:'9/14' }}>
-                              <video ref={vidRef} playsInline preload="metadata"
-                                onPlay={() => setPlaying(true)} onPause={() => setPlaying(false)} onEnded={() => setPlaying(false)}
-                                style={{ width:'100%',height:'100%',objectFit:'cover' }}>
-                                <source src={(r.url || '') + '#t=0.5'} />
-                              </video>
-                              {!playing && (
-                                <div onClick={() => { if(vidRef.current) { vidRef.current.controls = true; vidRef.current.play() } }} style={{ position:'absolute',inset:0,background:'rgba(0,0,0,0.25)',display:'flex',alignItems:'center',justifyContent:'center',cursor:'pointer' }}>
-                                  <div style={{ width:'48px',height:'48px',borderRadius:'50%',background:'rgba(255,255,255,0.9)',display:'flex',alignItems:'center',justifyContent:'center' }}>
-                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="#0c2520" stroke="none"><polygon points="6 3 20 12 6 21 6 3"/></svg>
-                                  </div>
-                                </div>
-                              )}
-                            </div>
-                            <div style={{ padding:'10px 12px' }}>
-                              <p style={{ fontSize:'13px',fontWeight:600,color:'#f1f0ee',margin:0 }}>{r.label}</p>
-                            </div>
-                          </div>
-                        )
-                      })}
+                      {reelsList.map(r => (
+                        <ReelCard key={r.label} label={r.label} url={r.url || ''} />
+                      ))}
                     </div>
                   )}
                 </div>
@@ -415,7 +413,7 @@ export default function PublicProfile() {
           </div>
         )}
 
-        {/* Gallery — swipeable */}
+        {/* Gallery */}
         {gallery.length > 0 && (
           <div style={{ padding:'0 32px 56px' }}>
             <div style={{ position:'relative',borderRadius:'14px',overflow:'hidden',aspectRatio:'4/3' }}>
