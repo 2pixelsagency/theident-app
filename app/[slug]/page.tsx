@@ -48,6 +48,7 @@ export default function PublicProfile() {
   const [notFound, setNotFound] = useState(false)
   const [activeTestimonial, setActiveTestimonial] = useState(0)
   const [openFaq, setOpenFaq] = useState<string | null>(null)
+  const [activeGallery, setActiveGallery] = useState(0)
   const [lightbox, setLightbox] = useState<string | null>(null)
   const [showContact, setShowContact] = useState(false)
   const [connectStatus, setConnectStatus] = useState<'none' | 'pending' | 'connected'>('none')
@@ -64,11 +65,9 @@ export default function PublicProfile() {
     const load = async () => {
       const { data: { user } } = await supabase.auth.getUser()
       if (user) setCurrentUserId(user.id)
-
       const { data: prof } = await supabase.from('profiles').select('id, first_name, last_name, picture_url, bio, location, slug, availability_status, production_until, agent_name, agent_phone, agent_email, vid_1, vid_2, vid_3, vid_4').eq('slug', slug).single()
       if (!prof) { setNotFound(true); setLoading(false); return }
       setProfile(prof)
-
       const [{ data: skillData }, { data: creditData }, { data: brandData }, { data: testimonialData }, { data: galleryData }, { data: faqData }, { data: ptData }, { data: conns }] = await Promise.all([
         supabase.from('profile_skills').select('skills(id, name, skills_categories(color, text_color))').eq('profile_id', prof.id),
         supabase.from('credits').select('*').eq('profile_id', prof.id).order('year', { ascending: false }),
@@ -79,7 +78,6 @@ export default function PublicProfile() {
         supabase.from('production_types').select('id, name').order('name'),
         supabase.from('connections').select('id, status, requester_id, receiver_id').or('requester_id.eq.' + prof.id + ',receiver_id.eq.' + prof.id),
       ])
-
       setSkills((skillData || []).map((s: any) => ({ id: s.skills?.id, name: s.skills?.name, color: s.skills?.skills_categories?.color || '#e8efea', text_color: s.skills?.skills_categories?.text_color || '#0c2520' })).filter((s: any) => s.name))
       const allCredits = creditData || []
       setCredits(allCredits)
@@ -90,12 +88,10 @@ export default function PublicProfile() {
       setFaqs(faqData || [])
       setProductionTypes(ptData || [])
       setConnectionCount((conns || []).filter((c: any) => c.status === 'accepted').length)
-
       if (user && prof.id !== user.id) {
         const match = (conns || []).find((c: any) => (c.requester_id === user.id || c.receiver_id === user.id) && (c.requester_id === prof.id || c.receiver_id === prof.id))
         if (match) setConnectStatus(match.status === 'accepted' ? 'connected' : 'pending')
       }
-
       setLoading(false)
     }
     load()
@@ -132,17 +128,11 @@ export default function PublicProfile() {
   if (creditYearFilter) filteredCredits = filteredCredits.filter(c => c.year === creditYearFilter)
   if (creditSearch) {
     const q = creditSearch.toLowerCase()
-    filteredCredits = filteredCredits.filter(c =>
-      (c.title || '').toLowerCase().includes(q) ||
-      (c.role || '').toLowerCase().includes(q) ||
-      (c.director || '').toLowerCase().includes(q) ||
-      (c.production_company || '').toLowerCase().includes(q)
-    )
+    filteredCredits = filteredCredits.filter(c => (c.title || '').toLowerCase().includes(q) || (c.role || '').toLowerCase().includes(q) || (c.director || '').toLowerCase().includes(q) || (c.production_company || '').toLowerCase().includes(q))
   }
   const creditCategories = productionTypes.filter(pt => credits.some(c => c.production_type_id === pt.id))
   const creditYears = [...new Set(credits.map(c => c.year).filter(Boolean))].sort((a, b) => (b || 0) - (a || 0)) as number[]
   const hasActiveCredFilter = creditFilter !== null || creditYearFilter !== null || creditSearch !== ''
-
   const isOwnProfile = currentUserId === profile?.id
   const fullName = ((profile?.first_name || '') + ' ' + (profile?.last_name || '')).trim()
 
@@ -153,12 +143,10 @@ export default function PublicProfile() {
     <div style={{ fontFamily:'system-ui, sans-serif',background:'#f1f0ee',minHeight:'100vh',position:'relative' }}>
       <style>{`
         @keyframes spin { to { transform: rotate(360deg); } }
-        @keyframes marquee { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+        @keyframes marquee { from { transform: translateX(0); } to { transform: translateX(-33.333%); } }
         @keyframes popIn { from { opacity:0;transform:scale(0.95) translateY(-4px); } to { opacity:1;transform:scale(1) translateY(0); } }
-        .marquee-track { display:flex;animation:marquee 30s linear infinite; }
+        .marquee-track { display:flex;animation:marquee 15s linear infinite; }
         .marquee-wrap:hover .marquee-track { animation-play-state:paused; }
-        .gallery-img { cursor:pointer;transition:transform 0.2s ease;flex-shrink:0; }
-        .gallery-img:hover { transform:scale(1.03); }
         .faq-row { cursor:pointer;transition:background 0.15s ease; }
         .faq-row:hover { background:#eae8e3; }
         .lightbox-overlay { position:fixed;inset:0;background:rgba(0,0,0,0.92);z-index:1000;display:flex;align-items:center;justify-content:center;cursor:zoom-out; }
@@ -172,7 +160,7 @@ export default function PublicProfile() {
 
       {lightbox && <div className="lightbox-overlay" onClick={() => setLightbox(null)}><img src={lightbox} alt="" style={{ maxWidth:'90vw',maxHeight:'90vh',borderRadius:'8px',objectFit:'contain' }} /></div>}
 
-      {/* Contact info — fixed right side */}
+      {/* Contact info — fixed right */}
       {(profile?.agent_name || profile?.agent_email) && (
         <div ref={contactRef}>
           <button onClick={() => setShowContact(!showContact)} style={{ position:'fixed',right:0,top:'50%',transform:'translateY(-50%)',background:'#0c2520',color:'#f1f0ee',border:'none',padding:'16px 10px',borderRadius:'10px 0 0 10px',cursor:'pointer',writingMode:'vertical-rl',fontSize:'12px',fontWeight:600,letterSpacing:'0.05em',zIndex:400,fontFamily:'inherit' }}>Contact Info</button>
@@ -188,15 +176,14 @@ export default function PublicProfile() {
       )}
 
       {/* Nav — floating over video */}
-      <div style={{ position:'absolute',top:0,left:0,right:0,padding:'16px 24px',display:'flex',justifyContent:'flex-end',alignItems:'center',zIndex:10 }}>
+      <div style={{ position:'absolute',top:0,left:0,right:0,padding:'16px 32px',display:'flex',justifyContent:'flex-end',alignItems:'center',zIndex:10 }}>
         <NavButton />
       </div>
 
       <div style={{ maxWidth:'680px',margin:'0 auto',padding:'0 0 80px' }}>
 
-        {/* Hero — video full top, sharp cut, headshot overlaps */}
+        {/* Hero */}
         <div style={{ textAlign:'center',background:'#f1f0ee' }}>
-          {/* Video background — sharp bottom edge */}
           {profile?.vid_1 && (
             <div style={{ width:'100%',height:'280px',overflow:'hidden' }}>
               <video autoPlay muted loop playsInline style={{ width:'100%',height:'100%',objectFit:'cover' }}>
@@ -206,21 +193,19 @@ export default function PublicProfile() {
           )}
           {!profile?.vid_1 && <div style={{ height:'80px' }} />}
 
-          {/* Headshot overlapping the video edge */}
           <div style={{ marginTop:profile?.vid_1 ? '-50px' : '0',position:'relative',zIndex:2 }}>
             {profile?.picture_url && (
               <div style={{ width:'100px',height:'100px',borderRadius:'50%',background:'url(' + profile.picture_url + ') center/cover',backgroundSize:'cover',margin:'0 auto 20px',border:'4px solid #f1f0ee',boxShadow:'0 4px 20px rgba(12,37,32,0.12)' }} />
             )}
-            <h1 style={{ fontFamily:'Georgia,serif',fontSize:'36px',fontWeight:500,color:'#0c2520',margin:'0 0 8px',lineHeight:1.1,padding:'0 24px' }}>{fullName}</h1>
+            <h1 style={{ fontFamily:'Georgia,serif',fontSize:'36px',fontWeight:500,color:'#0c2520',margin:'0 0 8px',lineHeight:1.1,padding:'0 32px' }}>{fullName}</h1>
             {skills.length > 0 && (
-              <div style={{ display:'flex',gap:'6px',flexWrap:'wrap',justifyContent:'center',marginBottom:'8px',padding:'0 24px' }}>
-                {skills.map(s => <span key={s.id} style={{ padding:'5px 12px',borderRadius:'20px',fontSize:'12px',fontWeight:500,background:s.color,color:s.text_color }}>{s.name}</span>)}
+              <div style={{ display:'flex',gap:'6px',flexWrap:'wrap',justifyContent:'center',marginBottom:'8px',padding:'0 32px' }}>
+                {skills.map(s => <span key={s.id} style={{ padding:'5px 12px',borderRadius:'20px',fontSize:'12px',fontWeight:500,background:'#e8e4de',color:'#0c2520' }}>{s.name}</span>)}
               </div>
             )}
             {profile?.location && <p style={{ fontSize:'13px',color:'#888',margin:'0 0 4px' }}>{profile.location}</p>}
             <p style={{ fontSize:'12px',color:'#aaa',margin:'0 0 8px' }}>{connectionCount} connection{connectionCount !== 1 ? 's' : ''}</p>
 
-            {/* Availability pill */}
             {profile?.availability_status && (
               <div style={{ marginBottom:'16px' }}>
                 {profile.availability_status === 'available' ? (
@@ -247,7 +232,7 @@ export default function PublicProfile() {
 
         {/* Bio */}
         {profile?.bio && (
-          <div style={{ padding:'0 24px 40px' }}>
+          <div style={{ padding:'0 32px 40px' }}>
             <p style={{ fontFamily:'Georgia,serif',fontSize:'26px',color:'#0c2520',lineHeight:1.5,margin:0,fontWeight:400 }}>{profile.bio}</p>
           </div>
         )}
@@ -255,7 +240,7 @@ export default function PublicProfile() {
         {/* Featured work */}
         {featuredCredits.length > 0 && (
           <div style={{ marginBottom:'40px' }}>
-            <div className="feat-scroll" style={{ paddingLeft:'24px',paddingRight:'24px' }}>
+            <div className="feat-scroll" style={{ paddingLeft:'32px',paddingRight:'32px' }}>
               {featuredCredits.map(c => (
                 <div key={c.id} style={{ flexShrink:0,width:'280px',height:'360px',borderRadius:'14px',overflow:'hidden',position:'relative' }}>
                   {c.thumbnail_url ? (
@@ -276,9 +261,9 @@ export default function PublicProfile() {
           </div>
         )}
 
-        {/* Credits / Reels tab switcher */}
+        {/* Credits / Reels tabs */}
         {(credits.length > 0 || hasReels) && (
-          <div style={{ padding:'0 24px' }}>
+          <div style={{ padding:'0 32px' }}>
             <div style={{ display:'flex',background:'#e8e4de',borderRadius:'12px',padding:'4px',gap:'4px',marginBottom:'20px' }}>
               <button onClick={() => setMainTab('credits')} style={{ flex:1,padding:'12px',borderRadius:'9px',border:'none',background:mainTab === 'credits' ? '#0c2520' : 'transparent',color:mainTab === 'credits' ? '#f1f0ee' : '#888',fontSize:'15px',fontWeight:mainTab === 'credits' ? 600 : 400,cursor:'pointer',fontFamily:'inherit',transition:'all 0.2s ease' }}>Credits</button>
               <button onClick={() => setMainTab('reels')} style={{ flex:1,padding:'12px',borderRadius:'9px',border:'none',background:mainTab === 'reels' ? '#0c2520' : 'transparent',color:mainTab === 'reels' ? '#f1f0ee' : '#888',fontSize:'15px',fontWeight:mainTab === 'reels' ? 600 : 400,cursor:'pointer',fontFamily:'inherit',transition:'all 0.2s ease' }}>Reels</button>
@@ -288,14 +273,11 @@ export default function PublicProfile() {
 
         {/* Credits tab */}
         {mainTab === 'credits' && credits.length > 0 && (
-          <div style={{ padding:'0 24px 40px' }}>
-            {/* Search */}
+          <div style={{ padding:'0 32px 40px' }}>
             <div style={{ position:'relative',marginBottom:'12px' }}>
               <svg style={{ position:'absolute',left:'12px',top:'50%',transform:'translateY(-50%)' }} width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#aaa" strokeWidth="2" strokeLinecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
               <input type="search" placeholder="Search credits..." value={creditSearch} onChange={e => setCreditSearch(e.target.value)} style={{ width:'100%',padding:'10px 12px 10px 36px',border:'1px solid #e0ddd5',borderRadius:'10px',fontSize:'13px',fontFamily:'inherit',background:'white',boxSizing:'border-box',color:'#0c2520' }} />
             </div>
-
-            {/* Filters row */}
             <div style={{ display:'flex',gap:'8px',alignItems:'center',overflowX:'auto',marginBottom:'16px',paddingBottom:'4px' }}>
               <button className={'cat-tab' + (creditFilter === null ? ' on' : '')} onClick={() => setCreditFilter(null)}>All</button>
               {creditCategories.map(pt => (
@@ -311,11 +293,7 @@ export default function PublicProfile() {
                 <button onClick={() => { setCreditFilter(null); setCreditYearFilter(null); setCreditSearch('') }} style={{ padding:'6px 12px',borderRadius:'20px',fontSize:'11px',fontFamily:'inherit',border:'none',background:'#c0392b',color:'white',cursor:'pointer',whiteSpace:'nowrap' }}>Clear</button>
               )}
             </div>
-
-            {hasActiveCredFilter && (
-              <p style={{ fontSize:'12px',color:'#aaa',margin:'0 0 12px' }}>{filteredCredits.length} credit{filteredCredits.length !== 1 ? 's' : ''} found</p>
-            )}
-
+            {hasActiveCredFilter && <p style={{ fontSize:'12px',color:'#aaa',margin:'0 0 12px' }}>{filteredCredits.length} credit{filteredCredits.length !== 1 ? 's' : ''} found</p>}
             {filteredCredits.length === 0 ? (
               <p style={{ fontSize:'13px',color:'#aaa',textAlign:'center',padding:'24px 0' }}>No credits match your filters</p>
             ) : (
@@ -346,7 +324,7 @@ export default function PublicProfile() {
 
         {/* Reels tab */}
         {mainTab === 'reels' && hasReels && (
-          <div style={{ padding:'0 24px 40px' }}>
+          <div style={{ padding:'0 32px 40px' }}>
             <div style={{ display:'flex',flexDirection:'column',gap:'16px' }}>
               {reelsList.map(r => (
                 <div key={r.label}>
@@ -360,12 +338,12 @@ export default function PublicProfile() {
           </div>
         )}
 
-        {/* Brand carousel */}
+        {/* Brand marquee — fast, seamless */}
         {brands.length > 0 && (
           <div style={{ marginBottom:'40px' }}>
             <div className="marquee-wrap" style={{ overflow:'hidden' }}>
               <div className="marquee-track">
-                {[...brands,...brands].map((b, i) => (
+                {[...brands,...brands,...brands].map((b, i) => (
                   <div key={b.id + '-' + i} style={{ flexShrink:0,margin:'0 32px',display:'flex',alignItems:'center',justifyContent:'center',height:'60px' }}>
                     {b.logo_url ? (
                       <img src={b.logo_url} alt={b.brand_name} style={{ height:'44px',maxWidth:'140px',objectFit:'contain' }} onError={e => { (e.target as HTMLImageElement).style.display='none'; const n = (e.target as HTMLImageElement).nextElementSibling as HTMLElement; if(n) n.style.display='block' }} />
@@ -380,7 +358,7 @@ export default function PublicProfile() {
 
         {/* Testimonials */}
         {testimonials.length > 0 && (
-          <div style={{ padding:'0 24px 40px' }}>
+          <div style={{ padding:'0 32px 40px' }}>
             <div style={{ fontSize:'48px',color:'#e8e4de',fontFamily:'Georgia,serif',lineHeight:1,marginBottom:'8px' }}>"</div>
             <p style={{ fontFamily:'Georgia,serif',fontSize:'18px',color:'#0c2520',lineHeight:1.6,margin:'0 0 20px',fontStyle:'italic' }}>{testimonials[activeTestimonial]?.quote}</p>
             <p style={{ fontSize:'13px',fontWeight:600,color:'#0c2520',margin:'0 0 2px',textTransform:'uppercase',letterSpacing:'0.06em' }}>{testimonials[activeTestimonial]?.author_name}</p>
@@ -393,20 +371,37 @@ export default function PublicProfile() {
           </div>
         )}
 
-        {/* Gallery */}
+        {/* Gallery — swipeable full images */}
         {gallery.length > 0 && (
-          <div style={{ marginBottom:'40px' }}>
-            <div className="marquee-wrap" style={{ overflow:'hidden' }}>
-              <div className="marquee-track" style={{ gap:'10px' }}>
-                {[...gallery,...gallery].map((img, i) => <div key={img.id + '-' + i} className="gallery-img" onClick={() => setLightbox(img.url)} style={{ width:'200px',height:'150px',flexShrink:0,borderRadius:'10px',background:'url(' + img.url + ') center/cover',backgroundSize:'cover' }} />)}
+          <div style={{ padding:'0 32px 40px' }}>
+            <div style={{ position:'relative',borderRadius:'14px',overflow:'hidden',aspectRatio:'4/3' }}>
+              <div style={{ display:'flex',width:gallery.length * 100 + '%',transform:'translateX(-' + (activeGallery * (100 / gallery.length)) + '%)',transition:'transform 0.4s ease',height:'100%' }}
+                onTouchStart={e => { (e.currentTarget as any)._startX = e.touches[0].clientX }}
+                onTouchEnd={e => {
+                  const start = (e.currentTarget as any)._startX
+                  const end = e.changedTouches[0].clientX
+                  const diff = start - end
+                  if (diff > 50 && activeGallery < gallery.length - 1) setActiveGallery(activeGallery + 1)
+                  if (diff < -50 && activeGallery > 0) setActiveGallery(activeGallery - 1)
+                }}>
+                {gallery.map(img => (
+                  <div key={img.id} onClick={() => setLightbox(img.url)} style={{ width:100 / gallery.length + '%',height:'100%',flexShrink:0,background:'url(' + img.url + ') center/cover',backgroundSize:'cover',cursor:'pointer' }} />
+                ))}
               </div>
+              {gallery.length > 1 && (
+                <div style={{ position:'absolute',bottom:'12px',left:'50%',transform:'translateX(-50%)',display:'flex',gap:'6px' }}>
+                  {gallery.map((_, i) => (
+                    <button key={i} onClick={() => setActiveGallery(i)} style={{ width:i === activeGallery ? '20px' : '6px',height:'6px',borderRadius:'3px',background:i === activeGallery ? 'white' : 'rgba(255,255,255,0.5)',border:'none',cursor:'pointer',transition:'all 0.3s ease',padding:0 }} />
+                  ))}
+                </div>
+              )}
             </div>
           </div>
         )}
 
         {/* FAQs */}
         {faqs.length > 0 && (
-          <div style={{ padding:'0 24px 40px' }}>
+          <div style={{ padding:'0 32px 40px' }}>
             <h2 style={{ fontFamily:'Georgia,serif',fontSize:'28px',fontWeight:500,color:'#0c2520',margin:'0 0 16px' }}>Questions</h2>
             {faqs.map(faq => (
               <div key={faq.id} style={{ borderBottom:'1px solid #e8e4de' }}>
@@ -421,7 +416,7 @@ export default function PublicProfile() {
         )}
 
         {/* Footer */}
-        <div style={{ textAlign:'center',padding:'0 24px' }}>
+        <div style={{ textAlign:'center',padding:'0 32px' }}>
           <a href="/" style={{ fontFamily:'Georgia,serif',fontSize:'15px',color:'#0c2520',textDecoration:'none' }}>theident</a>
           <p style={{ fontSize:'11px',color:'#aaa',margin:'6px 0 0' }}>The performing arts platform</p>
         </div>
