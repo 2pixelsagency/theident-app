@@ -6,7 +6,7 @@ import { supabase } from '@/lib/supabase'
 
 type Profile = {
   id: string; first_name: string | null; last_name: string | null; picture_url: string | null
-  location: string | null; bio: string | null; slug: string | null
+  location: string | null; bio: string | null; summary: string | null; slug: string | null
   availability_status: string | null; production_until: string | null
   agent_name: string | null; agent_phone: string | null; agent_email: string | null
   section_settings: any; vid_1: string | null; vid_2: string | null; vid_3: string | null; vid_4: string | null
@@ -124,6 +124,7 @@ export default function EditProfile() {
   const [productionTypes, setProductionTypes] = useState<ProdType[]>([])
 
   const [editBio, setEditBio] = useState('')
+  const [editSummary, setEditSummary] = useState('')
   const [editAgentName, setEditAgentName] = useState('')
   const [editAgentPhone, setEditAgentPhone] = useState('')
   const [editAgentEmail, setEditAgentEmail] = useState('')
@@ -163,6 +164,7 @@ export default function EditProfile() {
 
   const openEdit = (section: string) => {
     if (section === 'bio') setEditBio(profile?.bio || '')
+    if (section === 'summary') setEditSummary(profile?.summary || '')
     if (section === 'agent') { setEditAgentName(profile?.agent_name||''); setEditAgentPhone(profile?.agent_phone||''); setEditAgentEmail(profile?.agent_email||'') }
     if (section === 'availability') { setEditAvailability(profile?.availability_status||'available'); setEditProductionUntil(profile?.production_until||'') }
     if (section === 'brands') setEditBrands(brands.length > 0 ? [...brands] : [{ brand_name:'', logo_url:null, sort_order:1 }])
@@ -176,6 +178,7 @@ export default function EditProfile() {
   const save = async (section: string) => {
     if (!profile) return; setSaving(true)
     if (section === 'bio') { await supabase.from('profiles').update({ bio: editBio }).eq('id', profile.id); setProfile({ ...profile, bio: editBio }) }
+    if (section === 'summary') { await supabase.from('profiles').update({ summary: editSummary }).eq('id', profile.id); setProfile({ ...profile, summary: editSummary }) }
     if (section === 'agent') { await supabase.from('profiles').update({ agent_name: editAgentName, agent_phone: editAgentPhone, agent_email: editAgentEmail }).eq('id', profile.id); setProfile({ ...profile, agent_name: editAgentName, agent_phone: editAgentPhone, agent_email: editAgentEmail }) }
     if (section === 'availability') { await supabase.from('profiles').update({ availability_status: editAvailability, production_until: editProductionUntil || null }).eq('id', profile.id); setProfile({ ...profile, availability_status: editAvailability, production_until: editProductionUntil || null }) }
     if (section === 'brands') { const valid = editBrands.filter(b => b.brand_name); await supabase.from('profile_brands').delete().eq('profile_id', profile.id); if (valid.length > 0) await supabase.from('profile_brands').insert(valid.map((b,i) => ({ profile_id: profile.id, brand_name: b.brand_name, logo_url: b.logo_url, sort_order: i+1 }))); setBrands(valid) }
@@ -223,7 +226,6 @@ export default function EditProfile() {
 
   const userSkillNames = allSkills.filter(s => userSkillIds.includes(s.id)).map(s => s.name)
   const featuredCredits = credits.filter(c => c.is_featured)
-  const getProdTypeName = (id: number | null) => productionTypes.find(pt => pt.id === id)?.name || null
   const creditsByType = productionTypes.filter(pt => credits.some(c => c.production_type_id === pt.id)).map(pt => ({ type: pt.name, credits: credits.filter(c => c.production_type_id === pt.id) }))
   const uncategorized = credits.filter(c => !c.production_type_id)
 
@@ -249,18 +251,14 @@ export default function EditProfile() {
       `}</style>
 
       {cropFile && <CropModal file={cropFile} onSave={handleCropSave} onClose={() => setCropFile(null)} />}
-
       {toast && <div className="toast-anim" style={{ position:'fixed',bottom:'100px',left:'50%',transform:'translateX(-50%)',background:'#0c2520',color:'#f1f0ee',padding:'12px 24px',borderRadius:'30px',fontSize:'13px',fontWeight:500,zIndex:700,whiteSpace:'nowrap' }}>{toast}</div>}
 
-      {/* Contact info floating button */}
-      <button onClick={() => setShowContactPopup(!showContactPopup)} style={{ position:'fixed',right:0,top:'50%',transform:'translateY(-50%)',background:'#0c2520',color:'#f1f0ee',border:'none',padding:'12px 6px',borderRadius:'8px 0 0 8px',cursor:'pointer',writingMode:'vertical-rl',fontSize:'11px',fontWeight:600,letterSpacing:'0.05em',zIndex:400,fontFamily:'inherit' }}>
-        Contact Info
-      </button>
-
+      {/* Contact info */}
+      <button onClick={() => setShowContactPopup(!showContactPopup)} style={{ position:'fixed',right:0,top:'50%',transform:'translateY(-50%)',background:'#0c2520',color:'#f1f0ee',border:'none',padding:'16px 10px',borderRadius:'10px 0 0 10px',cursor:'pointer',writingMode:'vertical-rl',fontSize:'12px',fontWeight:600,letterSpacing:'0.05em',zIndex:400,fontFamily:'inherit' }}>Contact Info</button>
       {showContactPopup && (
         <>
           <div onClick={() => setShowContactPopup(false)} style={{ position:'fixed',inset:0,zIndex:450 }} />
-          <div className="contact-popup" style={{ position:'fixed',right:'16px',top:'50%',transform:'translateY(-50%)',background:'white',borderRadius:'16px',padding:'20px',boxShadow:'0 8px 32px rgba(0,0,0,0.15)',zIndex:460,width:'260px',border:'1px solid #e8e4de' }}>
+          <div className="contact-popup" style={{ position:'fixed',right:'16px',top:'50%',transform:'translateY(-50%)',background:'white',borderRadius:'16px',padding:'24px',boxShadow:'0 8px 32px rgba(0,0,0,0.15)',zIndex:460,width:'280px',border:'1px solid #e8e4de' }}>
             <div style={{ display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:'14px' }}>
               <p style={{ fontFamily:'Georgia,serif',fontSize:'16px',fontWeight:500,color:'#0c2520',margin:0 }}>Agent</p>
               <Pencil onClick={() => { setShowContactPopup(false); openEdit('agent') }} />
@@ -271,9 +269,7 @@ export default function EditProfile() {
                 {profile.agent_phone && <p style={{ fontSize:'13px',color:'#888',margin:'0 0 2px' }}>{profile.agent_phone}</p>}
                 {profile.agent_email && <p style={{ fontSize:'13px',color:'#888',margin:0 }}>{profile.agent_email}</p>}
               </div>
-            ) : (
-              <p style={{ fontSize:'13px',color:'#aaa',margin:0 }}>No agent details added</p>
-            )}
+            ) : <p style={{ fontSize:'13px',color:'#aaa',margin:0 }}>No agent details added</p>}
           </div>
         </>
       )}
@@ -284,9 +280,7 @@ export default function EditProfile() {
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#0c2520" strokeWidth="2" strokeLinecap="round"><path d="M19 12H5"/><path d="M12 19l-7-7 7-7"/></svg>
           Back
         </button>
-        {profile.slug && (
-          <button onClick={() => window.open('/' + profile.slug + '?from=app', '_blank')} style={{ background:'#0c2520',color:'#f1f0ee',border:'none',padding:'8px 18px',borderRadius:'20px',fontSize:'12px',fontWeight:500,cursor:'pointer',fontFamily:'inherit' }}>View live</button>
-        )}
+        {profile.slug && <button onClick={() => window.open('/' + profile.slug + '?from=app', '_blank')} style={{ background:'#0c2520',color:'#f1f0ee',border:'none',padding:'8px 18px',borderRadius:'20px',fontSize:'12px',fontWeight:500,cursor:'pointer',fontFamily:'inherit' }}>View live</button>}
       </div>
 
       {/* HERO */}
@@ -302,13 +296,8 @@ export default function EditProfile() {
         </div>
         <p style={{ fontFamily:'Georgia,serif',fontSize:'24px',fontWeight:500,color:'#0c2520',margin:'0 0 4px' }}>{profile.first_name} {profile.last_name}</p>
         {profile.location && <p style={{ fontSize:'13px',color:'#888',margin:'0 0 6px' }}>{profile.location}</p>}
+        <p style={{ fontSize:'12px',color:'#888',margin:'0 0 12px' }}><span style={{ fontWeight:600,color:'#0c2520' }}>{connectionCount}</span> connection{connectionCount !== 1 ? 's' : ''}</p>
 
-        {/* Connection count */}
-        <p style={{ fontSize:'12px',color:'#888',margin:'0 0 12px' }}>
-          <span style={{ fontWeight:600,color:'#0c2520' }}>{connectionCount}</span> connection{connectionCount !== 1 ? 's' : ''}
-        </p>
-
-        {/* Skills */}
         <div style={{ display:'flex',justifyContent:'center',alignItems:'center',gap:'6px',flexWrap:'wrap',marginBottom:'12px' }}>
           {userSkillNames.length > 0 ? userSkillNames.map(s => (
             <span key={s} style={{ background:'#e8efea',color:'#0c2520',padding:'4px 12px',borderRadius:'20px',fontSize:'12px',fontWeight:500 }}>{s}</span>
@@ -316,7 +305,6 @@ export default function EditProfile() {
           <Pencil onClick={() => openEdit('skills')} />
         </div>
 
-        {/* Availability */}
         <div style={{ display:'flex',justifyContent:'center',alignItems:'center',gap:'8px' }}>
           {profile.availability_status === 'available' ? (
             <span style={{ background:'#4ade80',color:'#061410',padding:'5px 14px',borderRadius:'20px',fontSize:'12px',fontWeight:600 }}>Available for work</span>
@@ -334,13 +322,22 @@ export default function EditProfile() {
         {/* BIO */}
         <div style={{ marginBottom:'24px' }}>
           <div style={{ display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:'10px' }}>
-            <p style={{ fontFamily:'Georgia,serif',fontSize:'17px',fontWeight:500,color:'#0c2520',margin:0 }}>About</p>
+            <p style={{ fontFamily:'Georgia,serif',fontSize:'17px',fontWeight:500,color:'#0c2520',margin:0 }}>Headline</p>
             <Pencil onClick={() => openEdit('bio')} />
           </div>
-          {profile.bio ? <p style={{ fontSize:'14px',color:'#444',lineHeight:1.6,margin:0 }}>{profile.bio}</p> : <Empty text="Tell casting directors about yourself" onClick={() => openEdit('bio')} />}
+          {profile.bio ? <p style={{ fontSize:'14px',color:'#444',lineHeight:1.6,margin:0 }}>{profile.bio}</p> : <Empty text="A short headline about yourself" onClick={() => openEdit('bio')} />}
         </div>
 
-        {/* REELS — 4 slot upload */}
+        {/* SUMMARY */}
+        <div style={{ marginBottom:'24px' }}>
+          <div style={{ display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:'10px' }}>
+            <p style={{ fontFamily:'Georgia,serif',fontSize:'17px',fontWeight:500,color:'#0c2520',margin:0 }}>About</p>
+            <Pencil onClick={() => openEdit('summary')} />
+          </div>
+          {profile.summary ? <p style={{ fontSize:'14px',color:'#444',lineHeight:1.6,margin:0 }}>{profile.summary}</p> : <Empty text="A detailed summary about your experience, training, and what makes you unique" onClick={() => openEdit('summary')} />}
+        </div>
+
+        {/* REELS */}
         <div style={{ marginBottom:'24px' }}>
           <div style={{ display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:'10px' }}>
             <p style={{ fontFamily:'Georgia,serif',fontSize:'17px',fontWeight:500,color:'#0c2520',margin:0 }}>Showreels</p>
@@ -378,7 +375,7 @@ export default function EditProfile() {
           </div>
         )}
 
-        {/* CREDITS — grouped by type */}
+        {/* CREDITS */}
         <div style={{ marginBottom:'24px' }}>
           <div style={{ display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:'10px' }}>
             <p style={{ fontFamily:'Georgia,serif',fontSize:'17px',fontWeight:500,color:'#0c2520',margin:0 }}>Credits</p>
@@ -479,7 +476,9 @@ export default function EditProfile() {
 
       {/* ============== EDIT SHEETS ============== */}
 
-      {editing === 'bio' && <Sheet title="Edit bio" onClose={() => setEditing(null)}><textarea value={editBio} onChange={e => setEditBio(e.target.value)} rows={6} placeholder="Tell casting directors about yourself..." style={{ ...inputStyle, resize:'vertical',minHeight:'120px' }} /><SaveBtn section="bio" /></Sheet>}
+      {editing === 'bio' && <Sheet title="Edit headline" onClose={() => setEditing(null)}><p style={{ fontSize:'12px',color:'#888',margin:'0 0 12px' }}>A short, punchy line that describes who you are. This shows in large text on your profile.</p><textarea value={editBio} onChange={e => setEditBio(e.target.value)} rows={3} placeholder="e.g. Identical twins who love to have a laugh and never take life too seriously." style={{ ...inputStyle, resize:'vertical',minHeight:'80px' }} /><SaveBtn section="bio" /></Sheet>}
+
+      {editing === 'summary' && <Sheet title="Edit about" onClose={() => setEditing(null)}><p style={{ fontSize:'12px',color:'#888',margin:'0 0 12px' }}>A detailed summary of your experience, training, and what you bring to productions. Think of this as your LinkedIn bio.</p><textarea value={editSummary} onChange={e => setEditSummary(e.target.value)} rows={8} placeholder="Trained at RADA with 10 years of experience across theatre, film, and commercial work. Specialising in contemporary dance and physical theatre..." style={{ ...inputStyle, resize:'vertical',minHeight:'160px' }} /><SaveBtn section="summary" /></Sheet>}
 
       {editing === 'skills' && (
         <Sheet title="Edit skills" onClose={() => setEditing(null)}>
@@ -544,14 +543,11 @@ export default function EditProfile() {
                 <input value={c.year||''} onChange={e => { const n=[...editCredits]; n[i]={...n[i],year:parseInt(e.target.value)||null}; setEditCredits(n) }} placeholder="Year" style={{ ...inputStyle,width:'80px' }} />
               </div>
               <input value={c.production_company||''} onChange={e => { const n=[...editCredits]; n[i]={...n[i],production_company:e.target.value}; setEditCredits(n) }} placeholder="Production company" style={{ ...inputStyle,marginBottom:'8px' }} />
-              {/* Category dropdown */}
               <label style={labelStyle}>Category</label>
               <select value={c.production_type_id||''} onChange={e => { const n=[...editCredits]; n[i]={...n[i],production_type_id:parseInt(e.target.value)||null}; setEditCredits(n) }} style={{ ...selectStyle,marginBottom:'8px' }}>
                 <option value="">Select category</option>
                 {productionTypes.map(pt => <option key={pt.id} value={pt.id}>{pt.name}</option>)}
               </select>
-
-              {/* Featured extras */}
               {c.is_featured && (
                 <div style={{ borderTop:'1px solid #f0ede5',paddingTop:'10px',marginTop:'6px' }}>
                   <label style={labelStyle}>Featured description</label>
