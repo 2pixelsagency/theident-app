@@ -27,8 +27,8 @@ function NavButton() {
     setFromApp(params.get('from') === 'app')
     supabase.auth.getUser().then(({ data: { user } }) => setIsLoggedIn(!!user))
   }, [])
-  if (isLoggedIn || fromApp) return <a href="/dashboard" style={{ fontSize:'13px',color:'#0c2520',textDecoration:'none',background:'white',border:'1px solid #e0ddd5',padding:'8px 16px',borderRadius:'20px' }}>Back to app</a>
-  return <a href="/login" style={{ fontSize:'13px',color:'#0c2520',textDecoration:'none',background:'white',border:'1px solid #e0ddd5',padding:'8px 16px',borderRadius:'20px' }}>Sign in</a>
+  if (isLoggedIn || fromApp) return <a href="/dashboard" style={{ fontSize:'13px',color:'white',textDecoration:'none',background:'rgba(0,0,0,0.4)',backdropFilter:'blur(8px)',border:'1px solid rgba(255,255,255,0.2)',padding:'8px 16px',borderRadius:'20px' }}>Back to app</a>
+  return <a href="/login" style={{ fontSize:'13px',color:'white',textDecoration:'none',background:'rgba(0,0,0,0.4)',backdropFilter:'blur(8px)',border:'1px solid rgba(255,255,255,0.2)',padding:'8px 16px',borderRadius:'20px' }}>Sign in</a>
 }
 
 export default function PublicProfile() {
@@ -127,7 +127,6 @@ export default function PublicProfile() {
     { label: 'Singing Reel', url: profile.vid_4 },
   ].filter(r => r.url) : []
 
-  // Credit filters
   let filteredCredits = [...credits]
   if (creditFilter) filteredCredits = filteredCredits.filter(c => c.production_type_id === creditFilter)
   if (creditYearFilter) filteredCredits = filteredCredits.filter(c => c.year === creditYearFilter)
@@ -151,7 +150,7 @@ export default function PublicProfile() {
   if (notFound) return <div style={{ minHeight:'100vh',background:'#f1f0ee',display:'flex',alignItems:'center',justifyContent:'center',fontFamily:'system-ui' }}><div style={{ textAlign:'center' }}><p style={{ fontFamily:'Georgia,serif',fontSize:'24px',color:'#0c2520',margin:'0 0 8px' }}>Profile not found</p><a href="/" style={{ fontSize:'14px',color:'#0c2520' }}>Go to The Ident</a></div></div>
 
   return (
-    <div style={{ fontFamily:'system-ui, sans-serif',background:'#f1f0ee',minHeight:'100vh' }}>
+    <div style={{ fontFamily:'system-ui, sans-serif',background:'#f1f0ee',minHeight:'100vh',position:'relative' }}>
       <style>{`
         @keyframes spin { to { transform: rotate(360deg); } }
         @keyframes marquee { from { transform: translateX(0); } to { transform: translateX(-50%); } }
@@ -173,7 +172,7 @@ export default function PublicProfile() {
 
       {lightbox && <div className="lightbox-overlay" onClick={() => setLightbox(null)}><img src={lightbox} alt="" style={{ maxWidth:'90vw',maxHeight:'90vh',borderRadius:'8px',objectFit:'contain' }} /></div>}
 
-      {/* Contact info — fixed right side with more padding */}
+      {/* Contact info — fixed right side */}
       {(profile?.agent_name || profile?.agent_email) && (
         <div ref={contactRef}>
           <button onClick={() => setShowContact(!showContact)} style={{ position:'fixed',right:0,top:'50%',transform:'translateY(-50%)',background:'#0c2520',color:'#f1f0ee',border:'none',padding:'16px 10px',borderRadius:'10px 0 0 10px',cursor:'pointer',writingMode:'vertical-rl',fontSize:'12px',fontWeight:600,letterSpacing:'0.05em',zIndex:400,fontFamily:'inherit' }}>Contact Info</button>
@@ -188,49 +187,54 @@ export default function PublicProfile() {
         </div>
       )}
 
-      {/* Nav */}
-      <div style={{ padding:'16px 24px',display:'flex',justifyContent:'space-between',alignItems:'center' }}>
-        <a href="/" style={{ fontFamily:'Georgia,serif',fontSize:'18px',color:'#0c2520',textDecoration:'none',fontWeight:500 }}>theident</a>
+      {/* Nav — floating over video */}
+      <div style={{ position:'absolute',top:0,left:0,right:0,padding:'16px 24px',display:'flex',justifyContent:'flex-end',alignItems:'center',zIndex:10 }}>
         <NavButton />
       </div>
 
-      {/* Availability */}
-      {profile?.availability_status && (
-        <div style={{ background:profile.availability_status === 'available' ? '#4ade80' : '#fde6c2',padding:'10px 24px',display:'flex',alignItems:'center',justifyContent:'center',gap:'8px' }}>
-          <div style={{ width:'7px',height:'7px',borderRadius:'50%',background:profile.availability_status === 'available' ? '#061410' : '#8a5a2e' }} />
-          <p style={{ fontSize:'13px',fontWeight:600,color:profile.availability_status === 'available' ? '#061410' : '#8a5a2e',margin:0 }}>
-            {profile.availability_status === 'available' ? 'Available for work' : 'In production' + (profile.production_until ? ' until ' + new Date(profile.production_until).toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'}) : '')}
-          </p>
-        </div>
-      )}
-
       <div style={{ maxWidth:'680px',margin:'0 auto',padding:'0 0 80px' }}>
 
-        {/* Hero with background video — cropped at 60%, full opacity */}
-        <div style={{ position:'relative',textAlign:'center',padding:'48px 24px 24px',overflow:'hidden',background:'#f1f0ee' }}>
+        {/* Hero — video full top, sharp cut, headshot overlaps */}
+        <div style={{ textAlign:'center',background:'#f1f0ee' }}>
+          {/* Video background — sharp bottom edge */}
           {profile?.vid_1 && (
-            <div style={{ position:'absolute',top:0,left:0,width:'100%',height:'60%',overflow:'hidden',zIndex:0 }}>
+            <div style={{ width:'100%',height:'280px',overflow:'hidden' }}>
               <video autoPlay muted loop playsInline style={{ width:'100%',height:'100%',objectFit:'cover' }}>
                 <source src={profile.vid_1} />
               </video>
-              <div style={{ position:'absolute',bottom:0,left:0,right:0,height:'60px',background:'linear-gradient(transparent, #f1f0ee)' }} />
             </div>
           )}
-          <div style={{ position:'relative',zIndex:1 }}>
+          {!profile?.vid_1 && <div style={{ height:'80px' }} />}
+
+          {/* Headshot overlapping the video edge */}
+          <div style={{ marginTop:profile?.vid_1 ? '-50px' : '0',position:'relative',zIndex:2 }}>
             {profile?.picture_url && (
-              <div style={{ width:'100px',height:'100px',borderRadius:'50%',background:'url(' + profile.picture_url + ') center/cover',backgroundSize:'cover',margin:'0 auto 20px',border:'3px solid white',boxShadow:'0 4px 20px rgba(12,37,32,0.12)' }} />
+              <div style={{ width:'100px',height:'100px',borderRadius:'50%',background:'url(' + profile.picture_url + ') center/cover',backgroundSize:'cover',margin:'0 auto 20px',border:'4px solid #f1f0ee',boxShadow:'0 4px 20px rgba(12,37,32,0.12)' }} />
             )}
-            <h1 style={{ fontFamily:'Georgia,serif',fontSize:'36px',fontWeight:500,color:'#0c2520',margin:'0 0 8px',lineHeight:1.1 }}>{fullName}</h1>
+            <h1 style={{ fontFamily:'Georgia,serif',fontSize:'36px',fontWeight:500,color:'#0c2520',margin:'0 0 8px',lineHeight:1.1,padding:'0 24px' }}>{fullName}</h1>
             {skills.length > 0 && (
-              <div style={{ display:'flex',gap:'6px',flexWrap:'wrap',justifyContent:'center',marginBottom:'8px' }}>
+              <div style={{ display:'flex',gap:'6px',flexWrap:'wrap',justifyContent:'center',marginBottom:'8px',padding:'0 24px' }}>
                 {skills.map(s => <span key={s.id} style={{ padding:'5px 12px',borderRadius:'20px',fontSize:'12px',fontWeight:500,background:s.color,color:s.text_color }}>{s.name}</span>)}
               </div>
             )}
             {profile?.location && <p style={{ fontSize:'13px',color:'#888',margin:'0 0 4px' }}>{profile.location}</p>}
-            <p style={{ fontSize:'12px',color:'#aaa',margin:'0 0 20px' }}>{connectionCount} connection{connectionCount !== 1 ? 's' : ''}</p>
+            <p style={{ fontSize:'12px',color:'#aaa',margin:'0 0 8px' }}>{connectionCount} connection{connectionCount !== 1 ? 's' : ''}</p>
+
+            {/* Availability pill */}
+            {profile?.availability_status && (
+              <div style={{ marginBottom:'16px' }}>
+                {profile.availability_status === 'available' ? (
+                  <span style={{ background:'#4ade80',color:'#061410',padding:'5px 14px',borderRadius:'20px',fontSize:'12px',fontWeight:600 }}>Available for work</span>
+                ) : (
+                  <span style={{ background:'#fde6c2',color:'#8a5a2e',padding:'5px 14px',borderRadius:'20px',fontSize:'12px',fontWeight:600 }}>
+                    {'In production' + (profile.production_until ? ' until ' + new Date(profile.production_until).toLocaleDateString('en-GB',{month:'short',year:'numeric'}) : '')}
+                  </span>
+                )}
+              </div>
+            )}
 
             {!isOwnProfile && (
-              <div style={{ display:'flex',gap:'10px',justifyContent:'center',flexWrap:'wrap' }}>
+              <div style={{ display:'flex',gap:'10px',justifyContent:'center',flexWrap:'wrap',paddingBottom:'24px' }}>
                 {currentUserId && (
                   <button onClick={handleConnect} disabled={connectStatus !== 'none'} style={{ padding:'10px 24px',borderRadius:'30px',border:'none',cursor:connectStatus === 'none' ? 'pointer' : 'default',background:connectStatus === 'connected' ? '#4ade80' : connectStatus === 'pending' ? '#e8e4de' : '#0c2520',color:connectStatus === 'connected' ? '#061410' : connectStatus === 'pending' ? '#888' : '#f1f0ee',fontSize:'14px',fontWeight:500,fontFamily:'inherit' }}>
                     {connectStatus === 'connected' ? 'Connected' : connectStatus === 'pending' ? 'Request sent' : 'Connect'}
@@ -241,7 +245,7 @@ export default function PublicProfile() {
           </div>
         </div>
 
-        {/* Bio — not italic */}
+        {/* Bio */}
         {profile?.bio && (
           <div style={{ padding:'0 24px 40px' }}>
             <p style={{ fontFamily:'Georgia,serif',fontSize:'26px',color:'#0c2520',lineHeight:1.5,margin:0,fontWeight:400 }}>{profile.bio}</p>
@@ -285,8 +289,7 @@ export default function PublicProfile() {
         {/* Credits tab */}
         {mainTab === 'credits' && credits.length > 0 && (
           <div style={{ padding:'0 24px 40px' }}>
-
-            {/* Search bar */}
+            {/* Search */}
             <div style={{ position:'relative',marginBottom:'12px' }}>
               <svg style={{ position:'absolute',left:'12px',top:'50%',transform:'translateY(-50%)' }} width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#aaa" strokeWidth="2" strokeLinecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
               <input type="search" placeholder="Search credits..." value={creditSearch} onChange={e => setCreditSearch(e.target.value)} style={{ width:'100%',padding:'10px 12px 10px 36px',border:'1px solid #e0ddd5',borderRadius:'10px',fontSize:'13px',fontFamily:'inherit',background:'white',boxSizing:'border-box',color:'#0c2520' }} />
@@ -294,32 +297,25 @@ export default function PublicProfile() {
 
             {/* Filters row */}
             <div style={{ display:'flex',gap:'8px',alignItems:'center',overflowX:'auto',marginBottom:'16px',paddingBottom:'4px' }}>
-              {/* Category tabs */}
               <button className={'cat-tab' + (creditFilter === null ? ' on' : '')} onClick={() => setCreditFilter(null)}>All</button>
               {creditCategories.map(pt => (
                 <button key={pt.id} className={'cat-tab' + (creditFilter === pt.id ? ' on' : '')} onClick={() => setCreditFilter(creditFilter === pt.id ? null : pt.id)}>{pt.name}</button>
               ))}
-
-              {/* Year dropdown */}
               {creditYears.length > 1 && (
                 <select value={creditYearFilter || ''} onChange={e => setCreditYearFilter(e.target.value ? parseInt(e.target.value) : null)} style={{ padding:'6px 10px',borderRadius:'20px',fontSize:'12px',fontFamily:'inherit',border:'1px solid #e0ddd5',background:'white',color:creditYearFilter ? '#0c2520' : '#888',cursor:'pointer',appearance:'none' as any,paddingRight:'24px',backgroundImage:'url("data:image/svg+xml,%3Csvg width=\'8\' height=\'5\' viewBox=\'0 0 8 5\' fill=\'none\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cpath d=\'M1 1l3 3 3-3\' stroke=\'%23888\' stroke-width=\'1.5\' stroke-linecap=\'round\'/%3E%3C/svg%3E")',backgroundRepeat:'no-repeat',backgroundPosition:'right 8px center' }}>
                   <option value="">Year</option>
                   {creditYears.map(y => <option key={y} value={y}>{y}</option>)}
                 </select>
               )}
-
-              {/* Clear filters */}
               {hasActiveCredFilter && (
                 <button onClick={() => { setCreditFilter(null); setCreditYearFilter(null); setCreditSearch('') }} style={{ padding:'6px 12px',borderRadius:'20px',fontSize:'11px',fontFamily:'inherit',border:'none',background:'#c0392b',color:'white',cursor:'pointer',whiteSpace:'nowrap' }}>Clear</button>
               )}
             </div>
 
-            {/* Results count */}
             {hasActiveCredFilter && (
               <p style={{ fontSize:'12px',color:'#aaa',margin:'0 0 12px' }}>{filteredCredits.length} credit{filteredCredits.length !== 1 ? 's' : ''} found</p>
             )}
 
-            {/* Credit rows */}
             {filteredCredits.length === 0 ? (
               <p style={{ fontSize:'13px',color:'#aaa',textAlign:'center',padding:'24px 0' }}>No credits match your filters</p>
             ) : (
