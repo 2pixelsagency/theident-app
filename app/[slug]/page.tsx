@@ -55,10 +55,10 @@ export default function PublicProfile() {
   const [connectionCount, setConnectionCount] = useState(0)
   const contactRef = useRef<HTMLDivElement>(null)
 
-  // Tab state: credits or reels
   const [mainTab, setMainTab] = useState<'credits' | 'reels'>('credits')
-  // Credit category filter
   const [creditFilter, setCreditFilter] = useState<number | null>(null)
+  const [creditYearFilter, setCreditYearFilter] = useState<number | null>(null)
+  const [creditSearch, setCreditSearch] = useState('')
 
   useEffect(() => {
     const load = async () => {
@@ -127,9 +127,22 @@ export default function PublicProfile() {
     { label: 'Singing Reel', url: profile.vid_4 },
   ].filter(r => r.url) : []
 
-  // Credits filtered by category
-  const filteredCredits = creditFilter ? credits.filter(c => c.production_type_id === creditFilter) : credits
+  // Credit filters
+  let filteredCredits = [...credits]
+  if (creditFilter) filteredCredits = filteredCredits.filter(c => c.production_type_id === creditFilter)
+  if (creditYearFilter) filteredCredits = filteredCredits.filter(c => c.year === creditYearFilter)
+  if (creditSearch) {
+    const q = creditSearch.toLowerCase()
+    filteredCredits = filteredCredits.filter(c =>
+      (c.title || '').toLowerCase().includes(q) ||
+      (c.role || '').toLowerCase().includes(q) ||
+      (c.director || '').toLowerCase().includes(q) ||
+      (c.production_company || '').toLowerCase().includes(q)
+    )
+  }
   const creditCategories = productionTypes.filter(pt => credits.some(c => c.production_type_id === pt.id))
+  const creditYears = [...new Set(credits.map(c => c.year).filter(Boolean))].sort((a, b) => (b || 0) - (a || 0)) as number[]
+  const hasActiveCredFilter = creditFilter !== null || creditYearFilter !== null || creditSearch !== ''
 
   const isOwnProfile = currentUserId === profile?.id
   const fullName = ((profile?.first_name || '') + ' ' + (profile?.last_name || '')).trim()
@@ -148,27 +161,28 @@ export default function PublicProfile() {
         .gallery-img { cursor:pointer;transition:transform 0.2s ease;flex-shrink:0; }
         .gallery-img:hover { transform:scale(1.03); }
         .faq-row { cursor:pointer;transition:background 0.15s ease; }
-        .faq-row:hover { background:#f5f3ee; }
+        .faq-row:hover { background:#eae8e3; }
         .lightbox-overlay { position:fixed;inset:0;background:rgba(0,0,0,0.92);z-index:1000;display:flex;align-items:center;justify-content:center;cursor:zoom-out; }
         .contact-popup { animation:popIn 0.2s ease-out; }
         .feat-scroll { display:flex;gap:14px;overflow-x:auto;padding-bottom:4px;scrollbar-width:none;-webkit-overflow-scrolling:touch; }
         .feat-scroll::-webkit-scrollbar { display:none; }
         .cat-tab { padding:6px 14px;border-radius:20px;font-size:12px;cursor:pointer;font-family:inherit;border:1px solid #e0ddd5;background:white;color:#888;transition:all 0.15s ease;white-space:nowrap;-webkit-tap-highlight-color:transparent; }
         .cat-tab.on { background:#0c2520;color:#f1f0ee;border-color:#0c2520; }
+        input[type=search]:focus { border-color:#0c2520 !important;outline:none;box-shadow:0 0 0 1px #0c2520; }
       `}</style>
 
       {lightbox && <div className="lightbox-overlay" onClick={() => setLightbox(null)}><img src={lightbox} alt="" style={{ maxWidth:'90vw',maxHeight:'90vh',borderRadius:'8px',objectFit:'contain' }} /></div>}
 
-      {/* Contact info — fixed right side */}
+      {/* Contact info — fixed right side with more padding */}
       {(profile?.agent_name || profile?.agent_email) && (
         <div ref={contactRef}>
-          <button onClick={() => setShowContact(!showContact)} style={{ position:'fixed',right:0,top:'50%',transform:'translateY(-50%)',background:'#0c2520',color:'#f1f0ee',border:'none',padding:'12px 6px',borderRadius:'8px 0 0 8px',cursor:'pointer',writingMode:'vertical-rl',fontSize:'11px',fontWeight:600,letterSpacing:'0.05em',zIndex:400,fontFamily:'inherit' }}>Contact Info</button>
+          <button onClick={() => setShowContact(!showContact)} style={{ position:'fixed',right:0,top:'50%',transform:'translateY(-50%)',background:'#0c2520',color:'#f1f0ee',border:'none',padding:'16px 10px',borderRadius:'10px 0 0 10px',cursor:'pointer',writingMode:'vertical-rl',fontSize:'12px',fontWeight:600,letterSpacing:'0.05em',zIndex:400,fontFamily:'inherit' }}>Contact Info</button>
           {showContact && (
-            <div className="contact-popup" style={{ position:'fixed',right:'16px',top:'50%',transform:'translateY(-50%)',background:'white',borderRadius:'16px',padding:'20px',boxShadow:'0 8px 32px rgba(0,0,0,0.15)',zIndex:460,width:'260px',border:'1px solid #e8e4de' }}>
-              <p style={{ fontSize:'11px',color:'#888',textTransform:'uppercase',letterSpacing:'0.06em',fontWeight:600,margin:'0 0 12px' }}>Agent details</p>
-              {profile?.agent_name && <p style={{ fontSize:'15px',fontWeight:600,color:'#0c2520',margin:'0 0 10px' }}>{profile.agent_name}</p>}
-              {profile?.agent_phone && <a href={'tel:' + profile.agent_phone} style={{ display:'flex',alignItems:'center',gap:'8px',fontSize:'13px',color:'#0c2520',textDecoration:'none',marginBottom:'8px' }}><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#888" strokeWidth="2" strokeLinecap="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 14a19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 3.6 3.18h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 10.9a16 16 0 0 0 5.35 5.35l1.53-1.53a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>{profile.agent_phone}</a>}
-              {profile?.agent_email && <a href={'mailto:' + profile.agent_email} style={{ display:'flex',alignItems:'center',gap:'8px',fontSize:'13px',color:'#0c2520',textDecoration:'none' }}><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#888" strokeWidth="2" strokeLinecap="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>{profile.agent_email}</a>}
+            <div className="contact-popup" style={{ position:'fixed',right:'16px',top:'50%',transform:'translateY(-50%)',background:'white',borderRadius:'16px',padding:'24px',boxShadow:'0 8px 32px rgba(0,0,0,0.15)',zIndex:460,width:'280px',border:'1px solid #e8e4de' }}>
+              <p style={{ fontSize:'11px',color:'#888',textTransform:'uppercase',letterSpacing:'0.06em',fontWeight:600,margin:'0 0 14px' }}>Agent details</p>
+              {profile?.agent_name && <p style={{ fontSize:'16px',fontWeight:600,color:'#0c2520',margin:'0 0 12px' }}>{profile.agent_name}</p>}
+              {profile?.agent_phone && <a href={'tel:' + profile.agent_phone} style={{ display:'flex',alignItems:'center',gap:'10px',fontSize:'14px',color:'#0c2520',textDecoration:'none',marginBottom:'10px' }}><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#888" strokeWidth="2" strokeLinecap="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 14a19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 3.6 3.18h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 10.9a16 16 0 0 0 5.35 5.35l1.53-1.53a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>{profile.agent_phone}</a>}
+              {profile?.agent_email && <a href={'mailto:' + profile.agent_email} style={{ display:'flex',alignItems:'center',gap:'10px',fontSize:'14px',color:'#0c2520',textDecoration:'none' }}><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#888" strokeWidth="2" strokeLinecap="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>{profile.agent_email}</a>}
             </div>
           )}
         </div>
@@ -192,12 +206,15 @@ export default function PublicProfile() {
 
       <div style={{ maxWidth:'680px',margin:'0 auto',padding:'0 0 80px' }}>
 
-        {/* Hero with background video */}
-        <div style={{ position:'relative',textAlign:'center',padding:'48px 24px 24px',overflow:'hidden' }}>
+        {/* Hero with background video — cropped at 60%, full opacity */}
+        <div style={{ position:'relative',textAlign:'center',padding:'48px 24px 24px',overflow:'hidden',background:'#f1f0ee' }}>
           {profile?.vid_1 && (
-            <video autoPlay muted loop playsInline style={{ position:'absolute',top:0,left:0,width:'100%',height:'100%',objectFit:'cover',opacity:0.15,zIndex:0 }}>
-              <source src={profile.vid_1} />
-            </video>
+            <div style={{ position:'absolute',top:0,left:0,width:'100%',height:'60%',overflow:'hidden',zIndex:0 }}>
+              <video autoPlay muted loop playsInline style={{ width:'100%',height:'100%',objectFit:'cover' }}>
+                <source src={profile.vid_1} />
+              </video>
+              <div style={{ position:'absolute',bottom:0,left:0,right:0,height:'60px',background:'linear-gradient(transparent, #f1f0ee)' }} />
+            </div>
           )}
           <div style={{ position:'relative',zIndex:1 }}>
             {profile?.picture_url && (
@@ -224,14 +241,14 @@ export default function PublicProfile() {
           </div>
         </div>
 
-        {/* Bio — bigger */}
+        {/* Bio — not italic */}
         {profile?.bio && (
           <div style={{ padding:'0 24px 40px' }}>
-            <p style={{ fontFamily:'Georgia,serif',fontSize:'26px',color:'#0c2520',lineHeight:1.5,margin:0,fontWeight:400,fontStyle:'italic' }}>{profile.bio}</p>
+            <p style={{ fontFamily:'Georgia,serif',fontSize:'26px',color:'#0c2520',lineHeight:1.5,margin:0,fontWeight:400 }}>{profile.bio}</p>
           </div>
         )}
 
-        {/* Featured work — matching design */}
+        {/* Featured work */}
         {featuredCredits.length > 0 && (
           <div style={{ marginBottom:'40px' }}>
             <div className="feat-scroll" style={{ paddingLeft:'24px',paddingRight:'24px' }}>
@@ -244,9 +261,7 @@ export default function PublicProfile() {
                       <span style={{ fontFamily:'Georgia,serif',fontSize:'48px',color:'#2a5040' }}>{c.title?.[0]}</span>
                     </div>
                   )}
-                  {/* Year badge */}
                   {c.year && <div style={{ position:'absolute',top:'14px',right:'14px',background:'white',padding:'4px 12px',borderRadius:'6px' }}><span style={{ fontSize:'13px',fontWeight:600,color:'#0c2520' }}>{c.year}</span></div>}
-                  {/* Bottom overlay */}
                   <div style={{ position:'absolute',bottom:0,left:0,right:0,background:'linear-gradient(transparent, rgba(0,0,0,0.7))',padding:'40px 18px 18px' }}>
                     <p style={{ fontFamily:'Georgia,serif',fontSize:'22px',color:'white',margin:'0 0 4px',fontWeight:500,lineHeight:1.2 }}>{c.title}</p>
                     {c.role && <p style={{ fontSize:'14px',color:'rgba(255,255,255,0.8)',margin:0,fontStyle:'italic' }}>{c.role}</p>}
@@ -270,37 +285,66 @@ export default function PublicProfile() {
         {/* Credits tab */}
         {mainTab === 'credits' && credits.length > 0 && (
           <div style={{ padding:'0 24px 40px' }}>
-            {/* Category filter tabs */}
-            {creditCategories.length > 1 && (
-              <div style={{ display:'flex',gap:'6px',overflowX:'auto',marginBottom:'16px',paddingBottom:'4px' }}>
-                <button className={'cat-tab' + (creditFilter === null ? ' on' : '')} onClick={() => setCreditFilter(null)}>All</button>
-                {creditCategories.map(pt => (
-                  <button key={pt.id} className={'cat-tab' + (creditFilter === pt.id ? ' on' : '')} onClick={() => setCreditFilter(pt.id)}>{pt.name}</button>
-                ))}
-              </div>
+
+            {/* Search bar */}
+            <div style={{ position:'relative',marginBottom:'12px' }}>
+              <svg style={{ position:'absolute',left:'12px',top:'50%',transform:'translateY(-50%)' }} width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#aaa" strokeWidth="2" strokeLinecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+              <input type="search" placeholder="Search credits..." value={creditSearch} onChange={e => setCreditSearch(e.target.value)} style={{ width:'100%',padding:'10px 12px 10px 36px',border:'1px solid #e0ddd5',borderRadius:'10px',fontSize:'13px',fontFamily:'inherit',background:'white',boxSizing:'border-box',color:'#0c2520' }} />
+            </div>
+
+            {/* Filters row */}
+            <div style={{ display:'flex',gap:'8px',alignItems:'center',overflowX:'auto',marginBottom:'16px',paddingBottom:'4px' }}>
+              {/* Category tabs */}
+              <button className={'cat-tab' + (creditFilter === null ? ' on' : '')} onClick={() => setCreditFilter(null)}>All</button>
+              {creditCategories.map(pt => (
+                <button key={pt.id} className={'cat-tab' + (creditFilter === pt.id ? ' on' : '')} onClick={() => setCreditFilter(creditFilter === pt.id ? null : pt.id)}>{pt.name}</button>
+              ))}
+
+              {/* Year dropdown */}
+              {creditYears.length > 1 && (
+                <select value={creditYearFilter || ''} onChange={e => setCreditYearFilter(e.target.value ? parseInt(e.target.value) : null)} style={{ padding:'6px 10px',borderRadius:'20px',fontSize:'12px',fontFamily:'inherit',border:'1px solid #e0ddd5',background:'white',color:creditYearFilter ? '#0c2520' : '#888',cursor:'pointer',appearance:'none' as any,paddingRight:'24px',backgroundImage:'url("data:image/svg+xml,%3Csvg width=\'8\' height=\'5\' viewBox=\'0 0 8 5\' fill=\'none\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cpath d=\'M1 1l3 3 3-3\' stroke=\'%23888\' stroke-width=\'1.5\' stroke-linecap=\'round\'/%3E%3C/svg%3E")',backgroundRepeat:'no-repeat',backgroundPosition:'right 8px center' }}>
+                  <option value="">Year</option>
+                  {creditYears.map(y => <option key={y} value={y}>{y}</option>)}
+                </select>
+              )}
+
+              {/* Clear filters */}
+              {hasActiveCredFilter && (
+                <button onClick={() => { setCreditFilter(null); setCreditYearFilter(null); setCreditSearch('') }} style={{ padding:'6px 12px',borderRadius:'20px',fontSize:'11px',fontFamily:'inherit',border:'none',background:'#c0392b',color:'white',cursor:'pointer',whiteSpace:'nowrap' }}>Clear</button>
+              )}
+            </div>
+
+            {/* Results count */}
+            {hasActiveCredFilter && (
+              <p style={{ fontSize:'12px',color:'#aaa',margin:'0 0 12px' }}>{filteredCredits.length} credit{filteredCredits.length !== 1 ? 's' : ''} found</p>
             )}
 
-            {filteredCredits.map((c, i) => (
-              <div key={c.id} style={{ display:'flex',alignItems:'center',gap:'14px',padding:'14px 0',borderBottom:i < filteredCredits.length - 1 ? '1px solid #e8e4de' : 'none' }}>
-                {c.thumbnail_url ? (
-                  <img src={c.thumbnail_url} alt={c.title} style={{ width:'56px',height:'40px',objectFit:'cover',borderRadius:'6px',flexShrink:0 }} />
-                ) : (
-                  <div style={{ width:'56px',height:'40px',borderRadius:'6px',background:'#e8e4de',flexShrink:0,display:'flex',alignItems:'center',justifyContent:'center' }}>
-                    <span style={{ fontSize:'16px',fontWeight:700,color:'#ccc' }}>{c.title?.[0]}</span>
+            {/* Credit rows */}
+            {filteredCredits.length === 0 ? (
+              <p style={{ fontSize:'13px',color:'#aaa',textAlign:'center',padding:'24px 0' }}>No credits match your filters</p>
+            ) : (
+              filteredCredits.map((c, i) => (
+                <div key={c.id} style={{ display:'flex',alignItems:'center',gap:'14px',padding:'14px 0',borderBottom:i < filteredCredits.length - 1 ? '1px solid #e8e4de' : 'none' }}>
+                  {c.thumbnail_url ? (
+                    <img src={c.thumbnail_url} alt={c.title} style={{ width:'56px',height:'40px',objectFit:'cover',borderRadius:'6px',flexShrink:0 }} />
+                  ) : (
+                    <div style={{ width:'56px',height:'40px',borderRadius:'6px',background:'#e8e4de',flexShrink:0,display:'flex',alignItems:'center',justifyContent:'center' }}>
+                      <span style={{ fontSize:'16px',fontWeight:700,color:'#ccc' }}>{c.title?.[0]}</span>
+                    </div>
+                  )}
+                  <div style={{ flex:1 }}>
+                    <div style={{ display:'flex',alignItems:'center',gap:'8px' }}>
+                      <p style={{ fontSize:'14px',fontWeight:600,color:'#0c2520',margin:0 }}>{c.title}</p>
+                      {c.is_featured && <span style={{ fontSize:'9px',fontWeight:600,color:'#4ade80' }}>FEATURED</span>}
+                    </div>
+                    <p style={{ fontSize:'12px',color:'#888',margin:'2px 0 0' }}>
+                      {c.role}{c.director ? ' · ' + c.director : ''}{c.production_company ? ' · ' + c.production_company : ''}
+                    </p>
                   </div>
-                )}
-                <div style={{ flex:1 }}>
-                  <div style={{ display:'flex',alignItems:'center',gap:'8px' }}>
-                    <p style={{ fontSize:'14px',fontWeight:600,color:'#0c2520',margin:0 }}>{c.title}</p>
-                    {c.is_featured && <span style={{ fontSize:'9px',fontWeight:600,color:'#4ade80' }}>FEATURED</span>}
-                  </div>
-                  <p style={{ fontSize:'12px',color:'#888',margin:'2px 0 0' }}>
-                    {c.role}{c.director ? ' · ' + c.director : ''}{c.production_company ? ' · ' + c.production_company : ''}
-                  </p>
+                  {c.year && <span style={{ fontSize:'12px',color:'#aaa',flexShrink:0 }}>{c.year}</span>}
                 </div>
-                {c.year && <span style={{ fontSize:'12px',color:'#aaa',flexShrink:0 }}>{c.year}</span>}
-              </div>
-            ))}
+              ))
+            )}
           </div>
         )}
 
