@@ -176,7 +176,7 @@ export default function PublicProfile() {
         </div>
       )}
 
-      {/* Nav — arrow left, availability right */}
+      {/* Nav */}
       <div style={{ position:'absolute',top:0,left:0,right:0,padding:'16px 20px',display:'flex',justifyContent:'space-between',alignItems:'center',zIndex:10 }}>
         <NavButton />
         {profile?.availability_status === 'available' && (
@@ -210,7 +210,7 @@ export default function PublicProfile() {
             <div style={{ display:'flex',alignItems:'center',justifyContent:'center',gap:'6px',marginBottom:'16px',flexWrap:'wrap' }}>
               {profile?.location && <span style={{ fontSize:'13px',color:'#888' }}>{profile.location}</span>}
               {profile?.location && connectionCount > 0 && <span style={{ fontSize:'13px',color:'#d4d2cc' }}>·</span>}
-              {connectionCount > 0 && <span style={{ fontSize:'13px',color:'#888' }}>{connectionCount} connection{connectionCount !== 1 ? 's' : ''}</span>}
+              {connectionCount > 0 && <span style={{ fontSize:'13px',color:'#888',display:'flex',alignItems:'center',gap:'4px' }}><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#888" strokeWidth="2" strokeLinecap="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>{connectionCount} connection{connectionCount !== 1 ? 's' : ''}</span>}
             </div>
 
             {skills.length > 0 && (
@@ -232,20 +232,16 @@ export default function PublicProfile() {
         {/* Bio + Summary */}
         {(profile?.bio || profile?.summary) && (
           <div style={{ padding:'36px 32px 0' }}>
-            {profile?.bio && (
-              <p style={{ fontFamily:'Georgia,serif',fontSize:'26px',color:'#0c2520',lineHeight:1.45,margin:0,fontWeight:400 }}>{profile.bio}</p>
-            )}
-            {profile?.summary && (
-              <p style={{ fontSize:'15px',color:'#666',lineHeight:1.7,margin:'18px 0 0' }}>{profile.summary}</p>
-            )}
+            {profile?.bio && <p style={{ fontFamily:'Georgia,serif',fontSize:'26px',color:'#0c2520',lineHeight:1.45,margin:0,fontWeight:400 }}>{profile.bio}</p>}
+            {profile?.summary && <p style={{ fontSize:'15px',color:'#666',lineHeight:1.7,margin:'18px 0 0' }}>{profile.summary}</p>}
           </div>
         )}
 
         <div style={{ height:'52px' }} />
 
-        {/* Highlights / Featured work */}
+        {/* Highlights */}
         {featuredCredits.length > 0 && (
-          <div style={{ marginBottom:'56px' }}>
+          <div style={{ marginBottom:'48px' }}>
             <p style={{ fontSize:'11px',color:'#888',textTransform:'uppercase',letterSpacing:'0.08em',fontWeight:600,margin:'0 0 12px',paddingLeft:'32px' }}>Highlights</p>
             <div className="feat-scroll" style={{ paddingLeft:'32px',paddingRight:'32px' }}>
               {featuredCredits.map(c => (
@@ -286,7 +282,7 @@ export default function PublicProfile() {
               <div className="tab-slide" style={{ display:'flex',width:'200%',transform:mainTab === 'credits' ? 'translateX(0)' : 'translateX(-50%)' }}>
 
                 {/* Credits panel */}
-                <div style={{ width:'50%',padding:'0 32px 48px',boxSizing:'border-box' }}>
+                <div style={{ width:'50%',padding:'0 32px 24px',boxSizing:'border-box' }}>
                   {credits.length > 0 && (
                     <>
                       <div style={{ position:'relative',marginBottom:'14px' }}>
@@ -337,7 +333,7 @@ export default function PublicProfile() {
                 </div>
 
                 {/* Reels panel */}
-                <div style={{ width:'50%',padding:'0 32px 48px',boxSizing:'border-box' }}>
+                <div style={{ width:'50%',padding:'0 32px 24px',boxSizing:'border-box' }}>
                   {hasReels && (
                     <div style={{ display:'flex',flexDirection:'column',gap:'16px' }}>
                       {reelsList.map(r => (
@@ -356,9 +352,24 @@ export default function PublicProfile() {
           </>
         )}
 
-        {/* Brand logos */}
+        {/* Testimonials — dark green */}
+        {testimonials.length > 0 && (
+          <div style={{ background:'#0c2520',borderRadius:'20px',margin:'32px 20px 40px',padding:'36px 32px' }}>
+            <div style={{ fontSize:'56px',color:'#4ade80',fontFamily:'Georgia,serif',lineHeight:1,marginBottom:'8px' }}>"</div>
+            <p style={{ fontFamily:'Georgia,serif',fontSize:'19px',color:'#f1f0ee',lineHeight:1.65,margin:'0 0 24px',fontStyle:'italic' }}>{testimonials[activeTestimonial]?.quote}</p>
+            <p style={{ fontSize:'13px',fontWeight:700,color:'#f1f0ee',margin:'0 0 2px',textTransform:'uppercase',letterSpacing:'0.06em' }}>{testimonials[activeTestimonial]?.author_name}</p>
+            {testimonials[activeTestimonial]?.author_title && <p style={{ fontSize:'12px',color:'#92d7af',margin:0 }}>{testimonials[activeTestimonial]?.author_title}</p>}
+            {testimonials.length > 1 && (
+              <div style={{ display:'flex',gap:'6px',marginTop:'24px' }}>
+                {testimonials.map((_, i) => <button key={i} onClick={() => setActiveTestimonial(i)} style={{ width:i === activeTestimonial ? '20px' : '6px',height:'6px',borderRadius:'3px',background:i === activeTestimonial ? '#4ade80' : 'rgba(255,255,255,0.2)',border:'none',cursor:'pointer',transition:'all 0.3s ease',padding:0 }} />)}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Brand logos — after testimonials */}
         {brands.length > 0 && (
-          <div style={{ margin:'0 32px 56px',paddingTop:'8px',paddingBottom:'8px',borderTop:'1px solid #e8e4de',borderBottom:'1px solid #e8e4de' }}>
+          <div style={{ margin:'0 32px 48px',paddingTop:'8px',paddingBottom:'8px',borderTop:'1px solid #e8e4de',borderBottom:'1px solid #e8e4de' }}>
             <div className="marquee-wrap" style={{ overflow:'hidden' }}>
               <div className="marquee-track">
                 {[...brands,...brands,...brands].map((b, i) => (
@@ -374,25 +385,10 @@ export default function PublicProfile() {
           </div>
         )}
 
-        {/* Testimonials */}
-        {testimonials.length > 0 && (
-          <div style={{ padding:'0 32px 56px' }}>
-            <div style={{ fontSize:'56px',color:'#e0ddd5',fontFamily:'Georgia,serif',lineHeight:1,marginBottom:'8px' }}>"</div>
-            <p style={{ fontFamily:'Georgia,serif',fontSize:'19px',color:'#0c2520',lineHeight:1.65,margin:'0 0 24px',fontStyle:'italic' }}>{testimonials[activeTestimonial]?.quote}</p>
-            <p style={{ fontSize:'13px',fontWeight:700,color:'#0c2520',margin:'0 0 2px',textTransform:'uppercase',letterSpacing:'0.06em' }}>{testimonials[activeTestimonial]?.author_name}</p>
-            {testimonials[activeTestimonial]?.author_title && <p style={{ fontSize:'12px',color:'#888',margin:0 }}>{testimonials[activeTestimonial]?.author_title}</p>}
-            {testimonials.length > 1 && (
-              <div style={{ display:'flex',gap:'6px',marginTop:'24px' }}>
-                {testimonials.map((_, i) => <button key={i} onClick={() => setActiveTestimonial(i)} style={{ width:i === activeTestimonial ? '20px' : '6px',height:'6px',borderRadius:'3px',background:i === activeTestimonial ? '#0c2520' : '#e0ddd5',border:'none',cursor:'pointer',transition:'all 0.3s ease',padding:0 }} />)}
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* Gallery — portrait, swipeable */}
+        {/* Gallery — full bleed swipeable */}
         {gallery.length > 0 && (
-          <div style={{ padding:'0 32px 56px' }}>
-            <div style={{ position:'relative',borderRadius:'14px',overflow:'hidden',aspectRatio:'3/4' }}>
+          <div style={{ padding:'0 0 48px' }}>
+            <div style={{ position:'relative',overflow:'hidden',aspectRatio:'3/4' }}>
               <div style={{ display:'flex',width:gallery.length * 100 + '%',transform:'translateX(-' + (activeGallery * (100 / gallery.length)) + '%)',transition:'transform 0.4s cubic-bezier(0.4,0,0.2,1)',height:'100%' }}
                 onTouchStart={e => { (e.currentTarget as any)._startX = e.touches[0].clientX }}
                 onTouchEnd={e => {
@@ -419,7 +415,7 @@ export default function PublicProfile() {
 
         {/* FAQs */}
         {faqs.length > 0 && (
-          <div style={{ padding:'0 32px 56px' }}>
+          <div style={{ padding:'0 32px 48px' }}>
             <h2 style={{ fontFamily:'Georgia,serif',fontSize:'28px',fontWeight:500,color:'#0c2520',margin:'0 0 20px' }}>Questions</h2>
             {faqs.map(faq => (
               <div key={faq.id} style={{ borderBottom:'1px solid #e8e4de' }}>
