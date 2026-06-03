@@ -52,6 +52,18 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     load()
   }, [router])
 
+  useEffect(() => {
+    const meta = document.querySelector('meta[name="theme-color"]')
+    if (!meta) {
+      const m = document.createElement('meta')
+      m.name = 'theme-color'
+      m.content = '#f1f0ee'
+      document.head.appendChild(m)
+    } else {
+      meta.setAttribute('content', '#f1f0ee')
+    }
+  }, [])
+
   const handleLogout = async () => {
     await supabase.auth.signOut()
     router.push('/login')
