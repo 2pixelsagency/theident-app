@@ -1,21 +1,26 @@
 @import "tailwindcss";
 
+@font-face {
+  font-family: 'ITC Symbol';
+  src: url('/ITC_Symbol_Std_Bold.otf') format('opentype');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
 :root {
   --background: #f1f0ee;
   --foreground: #0c2520;
 }
-
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
-
 *, *::before, *::after {
   box-sizing: border-box;
 }
-
 html, body {
   margin: 0;
   padding: 0;
