@@ -38,8 +38,6 @@ export default function Login() {
     if (mode === 'slider') {
       document.body.style.background = s.bg
       document.documentElement.style.background = s.bg
-      document.body.style.transition = 'background 0.8s ease'
-      document.documentElement.style.transition = 'background 0.8s ease'
     } else {
       document.body.style.background = '#f1f0ee'
       document.documentElement.style.background = '#f1f0ee'
@@ -47,8 +45,6 @@ export default function Login() {
     return () => {
       document.body.style.background = '#f1f0ee'
       document.documentElement.style.background = '#f1f0ee'
-      document.body.style.transition = ''
-      document.documentElement.style.transition = ''
     }
   }, [active, s.bg, mode])
 
@@ -106,8 +102,13 @@ export default function Login() {
         .slide-text { animation: fadeSlide 0.5s ease-out; }
       `}</style>
 
-      {/* Main content */}
-      <div style={{ flex:1,display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',padding:'0 32px',maxWidth:'420px',margin:'0 auto',width:'100%',boxSizing:'border-box' }}
+      {/* Text — pinned near top */}
+      <div style={{ paddingTop:'max(env(safe-area-inset-top), 16px)',padding:'max(env(safe-area-inset-top), 16px) 32px 0' }}>
+        <p key={active} className="slide-text" style={{ fontFamily:"'ITC Symbol',Georgia,serif",letterSpacing:'-0.03em',fontSize:'22px',fontWeight:700,color:s.textColor,textAlign:'center',lineHeight:1.35,margin:'16px 0 0',maxWidth:'420px',marginLeft:'auto',marginRight:'auto' }}>{s.text}</p>
+      </div>
+
+      {/* Phone — fills middle, swipeable */}
+      <div style={{ flex:1,display:'flex',alignItems:'center',justifyContent:'center',padding:'16px 32px',maxWidth:'420px',margin:'0 auto',width:'100%',boxSizing:'border-box' }}
         onTouchStart={e => { (e.currentTarget as any)._startX = e.touches[0].clientX }}
         onTouchEnd={e => {
           const start = (e.currentTarget as any)._startX
@@ -116,34 +117,31 @@ export default function Login() {
           if (diff > 50) setActive(i => (i + 1) % slides.length)
           if (diff < -50) setActive(i => (i - 1 + slides.length) % slides.length)
         }}>
-
-        <p key={active} className="slide-text" style={{ fontFamily:"'ITC Symbol',Georgia,serif",letterSpacing:'-0.03em',fontSize:'22px',fontWeight:700,color:s.textColor,textAlign:'center',lineHeight:1.35,margin:'0 0 28px' }}>{s.text}</p>
-
-        <div className="phone-float" style={{ width:'200px',height:'360px',borderRadius:'28px',background:'white',boxShadow:'0 20px 60px rgba(0,0,0,0.15), 0 0 0 1px rgba(0,0,0,0.05)',position:'relative',overflow:'hidden' }}>
-          <div style={{ height:'36px',background:'#f8f8f6',display:'flex',alignItems:'center',justifyContent:'center' }}>
-            <div style={{ width:'60px',height:'6px',borderRadius:'3px',background:'#e0ddd5' }} />
+        <div className="phone-float" style={{ width:'240px',height:'460px',borderRadius:'32px',background:'white',boxShadow:'0 20px 60px rgba(0,0,0,0.15), 0 0 0 1px rgba(0,0,0,0.05)',position:'relative',overflow:'hidden' }}>
+          <div style={{ height:'40px',background:'#f8f8f6',display:'flex',alignItems:'center',justifyContent:'center' }}>
+            <div style={{ width:'70px',height:'6px',borderRadius:'3px',background:'#e0ddd5' }} />
           </div>
-          <div style={{ padding:'14px',display:'flex',flexDirection:'column',gap:'8px' }}>
-            <div style={{ width:'55%',height:'8px',borderRadius:'4px',background:'#e8e4de' }} />
-            <div style={{ width:'85%',height:'8px',borderRadius:'4px',background:'#e8e4de' }} />
-            <div style={{ width:'70%',height:'8px',borderRadius:'4px',background:'#e8e4de' }} />
-            <div style={{ height:'12px' }} />
-            <div style={{ width:'100%',height:'70px',borderRadius:'10px',background:'#f1f0ee' }} />
-            <div style={{ width:'100%',height:'70px',borderRadius:'10px',background:'#f1f0ee' }} />
-            <div style={{ width:'100%',height:'45px',borderRadius:'10px',background:'#f1f0ee' }} />
+          <div style={{ padding:'16px',display:'flex',flexDirection:'column',gap:'10px' }}>
+            <div style={{ width:'55%',height:'9px',borderRadius:'5px',background:'#e8e4de' }} />
+            <div style={{ width:'85%',height:'9px',borderRadius:'5px',background:'#e8e4de' }} />
+            <div style={{ width:'70%',height:'9px',borderRadius:'5px',background:'#e8e4de' }} />
+            <div style={{ height:'14px' }} />
+            <div style={{ width:'100%',height:'90px',borderRadius:'12px',background:'#f1f0ee' }} />
+            <div style={{ width:'100%',height:'90px',borderRadius:'12px',background:'#f1f0ee' }} />
+            <div style={{ width:'100%',height:'60px',borderRadius:'12px',background:'#f1f0ee' }} />
           </div>
-          <div style={{ position:'absolute',bottom:0,left:0,right:0,height:'40px',background:'#f8f8f6',borderTop:'1px solid #eee',display:'flex',alignItems:'center',justifyContent:'space-around',padding:'0 20px' }}>
-            <div style={{ width:'18px',height:'18px',borderRadius:'4px',background:'#e0ddd5' }} />
-            <div style={{ width:'18px',height:'18px',borderRadius:'4px',background:'#e0ddd5' }} />
-            <div style={{ width:'18px',height:'18px',borderRadius:'4px',background:'#e0ddd5' }} />
-            <div style={{ width:'18px',height:'18px',borderRadius:'50%',background:'#e0ddd5' }} />
+          <div style={{ position:'absolute',bottom:0,left:0,right:0,height:'44px',background:'#f8f8f6',borderTop:'1px solid #eee',display:'flex',alignItems:'center',justifyContent:'space-around',padding:'0 24px' }}>
+            <div style={{ width:'20px',height:'20px',borderRadius:'4px',background:'#e0ddd5' }} />
+            <div style={{ width:'20px',height:'20px',borderRadius:'4px',background:'#e0ddd5' }} />
+            <div style={{ width:'20px',height:'20px',borderRadius:'4px',background:'#e0ddd5' }} />
+            <div style={{ width:'20px',height:'20px',borderRadius:'50%',background:'#e0ddd5' }} />
           </div>
         </div>
       </div>
 
-      {/* Bottom */}
-      <div style={{ padding:'16px 32px 0',paddingBottom:'max(env(safe-area-inset-bottom), 20px)',maxWidth:'420px',margin:'0 auto',width:'100%',boxSizing:'border-box' }}>
-        <div style={{ display:'flex',justifyContent:'center',gap:'6px',marginBottom:'20px' }}>
+      {/* Bottom — dots + buttons */}
+      <div style={{ padding:'0 32px 0',paddingBottom:'max(env(safe-area-inset-bottom), 16px)',maxWidth:'420px',margin:'0 auto',width:'100%',boxSizing:'border-box' }}>
+        <div style={{ display:'flex',justifyContent:'center',gap:'6px',marginBottom:'16px' }}>
           {slides.map((_, i) => (
             <button key={i} onClick={() => setActive(i)} style={{ width:i === active ? '20px' : '6px',height:'6px',borderRadius:'3px',background:i === active ? s.textColor : (s.bg === '#061410' ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.15)'),border:'none',cursor:'pointer',transition:'all 0.3s ease',padding:0 }} />
           ))}
