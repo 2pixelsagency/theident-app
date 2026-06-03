@@ -30,6 +30,7 @@ export default function Login() {
   useEffect(() => {
     const meta = document.querySelector('meta[name="theme-color"]')
     if (mode === 'slider' && meta) meta.setAttribute('content', s.bg)
+    if (mode !== 'slider' && meta) meta.setAttribute('content', '#f1f0ee')
     return () => { const m = document.querySelector('meta[name="theme-color"]'); if (m) m.setAttribute('content', '#f1f0ee') }
   }, [active, s.bg, mode])
 
@@ -48,7 +49,7 @@ export default function Login() {
 
   if (mode !== 'slider') {
     return (
-      <div style={{ height:'100vh',height:'100dvh' as any,background:'#f1f0ee',fontFamily:'system-ui, sans-serif',display:'flex',alignItems:'center',justifyContent:'center',padding:'24px',boxSizing:'border-box' }}>
+      <div style={{ minHeight:'100dvh',background:'#f1f0ee',fontFamily:'system-ui, sans-serif',display:'flex',alignItems:'center',justifyContent:'center',padding:'24px',boxSizing:'border-box' }}>
         <div style={{ width:'100%',maxWidth:'400px' }}>
           <div style={{ textAlign:'center',marginBottom:'40px' }}>
             <p style={{ fontFamily:"'ITC Symbol',Georgia,serif",fontSize:'28px',fontWeight:700,color:'#0c2520',margin:'0 0 8px' }}>{mode === 'signin' ? 'Welcome back' : 'Create your Ident'}</p>
@@ -79,7 +80,7 @@ export default function Login() {
   }
 
   return (
-    <div style={{ height:'100vh',height:'100dvh' as any,background:s.bg,fontFamily:'system-ui, sans-serif',display:'flex',flexDirection:'column',transition:'background 0.8s ease',overflow:'hidden',paddingTop:'env(safe-area-inset-top)' }}>
+    <div style={{ position:'fixed',inset:0,background:s.bg,fontFamily:'system-ui, sans-serif',display:'flex',flexDirection:'column',transition:'background 0.8s ease',overflow:'hidden' }}>
       <style>{`
         @keyframes phoneFloat { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
         @keyframes fadeSlide { from { opacity:0;transform:translateY(10px); } to { opacity:1;transform:translateY(0); } }
@@ -87,7 +88,7 @@ export default function Login() {
         .slide-text { animation: fadeSlide 0.5s ease-out; }
       `}</style>
 
-      {/* Main content */}
+      {/* Main content — swipeable */}
       <div style={{ flex:1,display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',padding:'0 32px',maxWidth:'420px',margin:'0 auto',width:'100%',boxSizing:'border-box' }}
         onTouchStart={e => { (e.currentTarget as any)._startX = e.touches[0].clientX }}
         onTouchEnd={e => {
@@ -124,9 +125,8 @@ export default function Login() {
         </div>
       </div>
 
-      {/* Bottom */}
-      <div style={{ padding:'16px 32px',paddingBottom:'max(env(safe-area-inset-bottom), 20px)',maxWidth:'420px',margin:'0 auto',width:'100%',boxSizing:'border-box' }}>
-        {/* Dots */}
+      {/* Bottom buttons */}
+      <div style={{ padding:'16px 32px 0',paddingBottom:'max(env(safe-area-inset-bottom), 20px)',maxWidth:'420px',margin:'0 auto',width:'100%',boxSizing:'border-box' }}>
         <div style={{ display:'flex',justifyContent:'center',gap:'6px',marginBottom:'20px' }}>
           {slides.map((_, i) => (
             <button key={i} onClick={() => setActive(i)} style={{ width:i === active ? '20px' : '6px',height:'6px',borderRadius:'3px',background:i === active ? s.textColor : (s.bg === '#061410' ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.15)'),border:'none',cursor:'pointer',transition:'all 0.3s ease',padding:0 }} />
