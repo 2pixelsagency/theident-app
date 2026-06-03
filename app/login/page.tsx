@@ -34,6 +34,24 @@ export default function Login() {
     return () => { const m = document.querySelector('meta[name="theme-color"]'); if (m) m.setAttribute('content', '#f1f0ee') }
   }, [active, s.bg, mode])
 
+  useEffect(() => {
+    if (mode === 'slider') {
+      document.body.style.background = s.bg
+      document.documentElement.style.background = s.bg
+      document.body.style.transition = 'background 0.8s ease'
+      document.documentElement.style.transition = 'background 0.8s ease'
+    } else {
+      document.body.style.background = '#f1f0ee'
+      document.documentElement.style.background = '#f1f0ee'
+    }
+    return () => {
+      document.body.style.background = '#f1f0ee'
+      document.documentElement.style.background = '#f1f0ee'
+      document.body.style.transition = ''
+      document.documentElement.style.transition = ''
+    }
+  }, [active, s.bg, mode])
+
   const handleAuth = async () => {
     setError(''); setLoading(true)
     if (mode === 'signin') {
@@ -49,10 +67,10 @@ export default function Login() {
 
   if (mode !== 'slider') {
     return (
-      <div style={{ minHeight:'100dvh',background:'#f1f0ee',fontFamily:'system-ui, sans-serif',display:'flex',alignItems:'center',justifyContent:'center',padding:'24px',boxSizing:'border-box' }}>
+      <div style={{ position:'fixed',inset:0,background:'#f1f0ee',fontFamily:'system-ui, sans-serif',display:'flex',alignItems:'center',justifyContent:'center',padding:'24px',boxSizing:'border-box' }}>
         <div style={{ width:'100%',maxWidth:'400px' }}>
           <div style={{ textAlign:'center',marginBottom:'40px' }}>
-            <p style={{ fontFamily:"'ITC Symbol',Georgia,serif",fontSize:'28px',fontWeight:700,color:'#0c2520',margin:'0 0 8px' }}>{mode === 'signin' ? 'Welcome back' : 'Create your Ident'}</p>
+            <p style={{ fontFamily:"'ITC Symbol',Georgia,serif",letterSpacing:'-0.03em',fontSize:'28px',fontWeight:700,color:'#0c2520',margin:'0 0 8px' }}>{mode === 'signin' ? 'Welcome back' : 'Create your Ident'}</p>
             <p style={{ fontSize:'14px',color:'#888',margin:0 }}>{mode === 'signin' ? 'Sign in to continue' : 'Join the performing arts platform'}</p>
           </div>
 
@@ -88,7 +106,7 @@ export default function Login() {
         .slide-text { animation: fadeSlide 0.5s ease-out; }
       `}</style>
 
-      {/* Main content — swipeable */}
+      {/* Main content */}
       <div style={{ flex:1,display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',padding:'0 32px',maxWidth:'420px',margin:'0 auto',width:'100%',boxSizing:'border-box' }}
         onTouchStart={e => { (e.currentTarget as any)._startX = e.touches[0].clientX }}
         onTouchEnd={e => {
@@ -99,10 +117,8 @@ export default function Login() {
           if (diff < -50) setActive(i => (i - 1 + slides.length) % slides.length)
         }}>
 
-        {/* Text */}
-        <p key={active} className="slide-text" style={{ fontFamily:"'ITC Symbol',Georgia,serif",fontSize:'22px',fontWeight:700,color:s.textColor,textAlign:'center',lineHeight:1.35,margin:'0 0 28px' }}>{s.text}</p>
+        <p key={active} className="slide-text" style={{ fontFamily:"'ITC Symbol',Georgia,serif",letterSpacing:'-0.03em',fontSize:'22px',fontWeight:700,color:s.textColor,textAlign:'center',lineHeight:1.35,margin:'0 0 28px' }}>{s.text}</p>
 
-        {/* Phone mockup */}
         <div className="phone-float" style={{ width:'200px',height:'360px',borderRadius:'28px',background:'white',boxShadow:'0 20px 60px rgba(0,0,0,0.15), 0 0 0 1px rgba(0,0,0,0.05)',position:'relative',overflow:'hidden' }}>
           <div style={{ height:'36px',background:'#f8f8f6',display:'flex',alignItems:'center',justifyContent:'center' }}>
             <div style={{ width:'60px',height:'6px',borderRadius:'3px',background:'#e0ddd5' }} />
@@ -125,7 +141,7 @@ export default function Login() {
         </div>
       </div>
 
-      {/* Bottom buttons */}
+      {/* Bottom */}
       <div style={{ padding:'16px 32px 0',paddingBottom:'max(env(safe-area-inset-bottom), 20px)',maxWidth:'420px',margin:'0 auto',width:'100%',boxSizing:'border-box' }}>
         <div style={{ display:'flex',justifyContent:'center',gap:'6px',marginBottom:'20px' }}>
           {slides.map((_, i) => (
