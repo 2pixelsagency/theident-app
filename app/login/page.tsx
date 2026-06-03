@@ -1,13 +1,13 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { supabase } from '@/lib/supabase'
 import { useRouter } from 'next/navigation'
 
 const slides = [
-  { bg: '#92d7af', text: 'Make your portfolio match your talent.', textColor: '#0c2520', btnBg: '#0c2520', btnText: '#f1f0ee', outlineBorder: '#0c2520' },
-  { bg: '#061410', text: 'Collaborate with talent, producers, graduates.', textColor: '#f1f0ee', btnBg: '#f1f0ee', btnText: '#0c2520', outlineBorder: 'rgba(255,255,255,0.3)' },
-  { bg: '#5B7CFA', text: 'Manage side hustles without missing opportunities.', textColor: '#ffffff', btnBg: '#ffffff', btnText: '#0c2520', outlineBorder: 'rgba(255,255,255,0.4)' },
+  { bg: '#92d7af', text: 'Make your portfolio match your talent.', textColor: '#0c2520', btnBg: '#0c2520', btnText: '#f1f0ee', outlineBorder: '#0c2520', dotInactive: 'rgba(0,0,0,0.15)' },
+  { bg: '#061410', text: 'Collaborate with talent, producers, graduates.', textColor: '#f1f0ee', btnBg: '#f1f0ee', btnText: '#0c2520', outlineBorder: 'rgba(255,255,255,0.3)', dotInactive: 'rgba(255,255,255,0.2)' },
+  { bg: '#5B7CFA', text: 'Manage side hustles without missing opportunities.', textColor: '#ffffff', btnBg: '#ffffff', btnText: '#0c2520', outlineBorder: 'rgba(255,255,255,0.4)', dotInactive: 'rgba(255,255,255,0.3)' },
 ]
 
 export default function Login() {
@@ -18,14 +18,34 @@ export default function Login() {
   const [mode, setMode] = useState<'slider' | 'signin' | 'signup'>('slider')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
-
-  useEffect(() => {
-    if (mode !== 'slider') return
-    const t = setInterval(() => setActive(i => (i + 1) % slides.length), 5000)
-    return () => clearInterval(t)
-  }, [mode])
+  const timerRef = useRef<NodeJS.Timeout | null>(null)
 
   const s = slides[active]
+
+  const resetTimer = () => {
+    if (timerRef.current) clearInterval(timerRef.current)
+    timerRef.current = setInterval(() => setActive(i => (i + 1) % slides.length), 5000)
+  }
+
+  useEffect(() => {
+    if (mode !== 'slider') {
+      if (timerRef.current) clearInterval(timerRef.current)
+      return
+    }
+    resetTimer()
+    return () => { if (timerRef.current) clearInterval(timerRef.current) }
+  }, [mode])
+
+  const goToSlide = (index: number) => {
+    setActive(index)
+    resetTimer()
+  }
+
+  const handleSwipe = (dir: 'left' | 'right') => {
+    if (dir === 'left') setActive(i => (i + 1) % slides.length)
+    else setActive(i => (i - 1 + slides.length) % slides.length)
+    resetTimer()
+  }
 
   if (typeof document !== 'undefined') {
     const color = mode === 'slider' ? s.bg : '#f1f0ee'
@@ -40,36 +60,55 @@ export default function Login() {
     if (mode === 'signin') {
       const { error: e } = await supabase.auth.signInWithPassword({ email, password })
       if (e) { setError(e.message); setLoading(false); return }
+      router.push('/dashboard')
     } else {
       const { error: e } = await supabase.auth.signUp({ email, password })
       if (e) { setError(e.message); setLoading(false); return }
+      router.push('/onboarding/step-1')
     }
     setLoading(false)
-    router.push('/dashboard')
   }
 
   if (mode !== 'slider') {
     return (
-      <div style={{ position:'fixed',inset:0,background:'#f1f0ee',fontFamily:'system-ui, sans-serif',display:'flex',alignItems:'center',justifyContent:'center',padding:'24px',boxSizing:'border-box' }}>
-        <div style={{ width:'100%',maxWidth:'400px' }}>
-          <div style={{ textAlign:'center',marginBottom:'40px' }}>
-            <p style={{ fontFamily:"'ITC Symbol',Georgia,serif",letterSpacing:'-0.03em',fontSize:'28px',fontWeight:700,color:'#0c2520',margin:'0 0 8px' }}>{mode === 'signin' ? 'Welcome back' : 'Create your Ident'}</p>
-            <p style={{ fontSize:'14px',color:'#888',margin:0 }}>{mode === 'signin' ? 'Sign in to continue' : 'Join the performing arts platform'}</p>
+      <div style={{ position:'fixed',inset:0,background:'#f1f0ee',fontFamily:'system-ui, sans-serif',display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',padding:'24px',boxSizing:'border-box' }}>
+        <div style={{ width:'100%',maxWidth:'380px' }}>
+
+          {/* Logo */}
+          <div style={{ textAlign:'center',marginBottom:'48px' }}>
+            <p style={{ fontFamily:"'ITC Symbol',Georgia,serif",letterSpacing:'-0.03em',fontSize:'18px',fontWeight:700,color:'#0c2520',margin:'0 0 32px' }}>theident</p>
+            <p style={{ fontFamily:"'ITC Symbol',Georgia,serif",letterSpacing:'-0.03em',fontSize:'30px',fontWeight:700,color:'#0c2520',margin:'0 0 8px',lineHeight:1.2 }}>
+              {mode === 'signin' ? 'Welcome back.' : 'Join The Ident.'}
+            </p>
+            <p style={{ fontSize:'15px',color:'#888',margin:0,lineHeight:1.5 }}>
+              {mode === 'signin' ? 'Sign in to pick up where you left off.' : 'Create your profile and start getting booked.'}
+            </p>
           </div>
+
           {error && <div style={{ background:'#fde8e8',color:'#c0392b',padding:'12px 16px',borderRadius:'12px',fontSize:'13px',marginBottom:'16px',textAlign:'center' }}>{error}</div>}
-          <div style={{ marginBottom:'14px' }}>
-            <input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="Email address" style={{ width:'100%',padding:'14px 16px',border:'1px solid #e0ddd5',borderRadius:'12px',fontSize:'15px',fontFamily:'inherit',boxSizing:'border-box',background:'white',color:'#0c2520' }} />
+
+          <div style={{ marginBottom:'12px' }}>
+            <input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="Email address" style={{ width:'100%',padding:'15px 16px',border:'1px solid #e0ddd5',borderRadius:'14px',fontSize:'15px',fontFamily:'inherit',boxSizing:'border-box',background:'white',color:'#0c2520' }} />
           </div>
           <div style={{ marginBottom:'24px' }}>
-            <input type="password" value={password} onChange={e => setPassword(e.target.value)} placeholder="Password" onKeyDown={e => { if (e.key === 'Enter') handleAuth() }} style={{ width:'100%',padding:'14px 16px',border:'1px solid #e0ddd5',borderRadius:'12px',fontSize:'15px',fontFamily:'inherit',boxSizing:'border-box',background:'white',color:'#0c2520' }} />
+            <input type="password" value={password} onChange={e => setPassword(e.target.value)} placeholder="Password" onKeyDown={e => { if (e.key === 'Enter') handleAuth() }} style={{ width:'100%',padding:'15px 16px',border:'1px solid #e0ddd5',borderRadius:'14px',fontSize:'15px',fontFamily:'inherit',boxSizing:'border-box',background:'white',color:'#0c2520' }} />
           </div>
-          <button onClick={handleAuth} disabled={loading || !email || !password} style={{ width:'100%',padding:'16px',background:'#0c2520',color:'#f1f0ee',border:'none',borderRadius:'30px',fontSize:'15px',fontWeight:600,cursor:'pointer',fontFamily:'inherit',opacity:loading ? 0.6 : 1,marginBottom:'12px' }}>
+
+          <button onClick={handleAuth} disabled={loading || !email || !password} style={{ width:'100%',padding:'16px',background:'#0c2520',color:'#f1f0ee',border:'none',borderRadius:'30px',fontSize:'15px',fontWeight:600,cursor:'pointer',fontFamily:'inherit',opacity:loading ? 0.6 : 1,marginBottom:'16px' }}>
             {loading ? 'Please wait...' : (mode === 'signin' ? 'Sign in' : 'Create account')}
           </button>
-          <button onClick={() => setMode(mode === 'signin' ? 'signup' : 'signin')} style={{ width:'100%',padding:'14px',background:'transparent',color:'#0c2520',border:'1px solid #e0ddd5',borderRadius:'30px',fontSize:'14px',fontWeight:500,cursor:'pointer',fontFamily:'inherit' }}>
-            {mode === 'signin' ? 'Need an account? Sign up' : 'Already have an account? Sign in'}
+
+          <p style={{ textAlign:'center',fontSize:'14px',color:'#888',margin:0 }}>
+            {mode === 'signin' ? "Don't have an account? " : 'Already have an account? '}
+            <button onClick={() => { setMode(mode === 'signin' ? 'signup' : 'signin'); setError('') }} style={{ background:'none',border:'none',color:'#0c2520',fontWeight:600,cursor:'pointer',fontFamily:'inherit',fontSize:'14px',textDecoration:'underline' }}>
+              {mode === 'signin' ? 'Sign up' : 'Sign in'}
+            </button>
+          </p>
+
+          <button onClick={() => setMode('slider')} style={{ display:'flex',alignItems:'center',justifyContent:'center',gap:'6px',margin:'32px auto 0',background:'none',border:'none',fontSize:'13px',color:'#aaa',cursor:'pointer',fontFamily:'inherit' }}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#aaa" strokeWidth="2" strokeLinecap="round"><path d="M19 12H5"/><path d="M12 19l-7-7 7-7"/></svg>
+            Back
           </button>
-          <button onClick={() => setMode('slider')} style={{ display:'block',margin:'20px auto 0',background:'none',border:'none',fontSize:'13px',color:'#888',cursor:'pointer',fontFamily:'inherit' }}>Back</button>
         </div>
       </div>
     )
@@ -84,18 +123,20 @@ export default function Login() {
         .slide-text { animation: fadeSlide 0.5s ease-out; }
       `}</style>
 
+      {/* Text near top */}
       <div style={{ paddingTop:'max(env(safe-area-inset-top), 16px)',padding:'max(env(safe-area-inset-top), 16px) 32px 0' }}>
         <p key={active} className="slide-text" style={{ fontFamily:"'ITC Symbol',Georgia,serif",letterSpacing:'-0.03em',fontSize:'22px',fontWeight:700,color:s.textColor,textAlign:'center',lineHeight:1.35,margin:'16px 0 0',maxWidth:'420px',marginLeft:'auto',marginRight:'auto' }}>{s.text}</p>
       </div>
 
+      {/* Phone — swipeable */}
       <div style={{ flex:1,display:'flex',alignItems:'center',justifyContent:'center',padding:'16px 32px',maxWidth:'420px',margin:'0 auto',width:'100%',boxSizing:'border-box' }}
         onTouchStart={e => { (e.currentTarget as any)._startX = e.touches[0].clientX }}
         onTouchEnd={e => {
           const start = (e.currentTarget as any)._startX
           const end = e.changedTouches[0].clientX
           const diff = start - end
-          if (diff > 50) setActive(i => (i + 1) % slides.length)
-          if (diff < -50) setActive(i => (i - 1 + slides.length) % slides.length)
+          if (diff > 50) handleSwipe('left')
+          if (diff < -50) handleSwipe('right')
         }}>
         <div className="phone-float" style={{ width:'240px',height:'460px',borderRadius:'32px',background:'white',boxShadow:'0 20px 60px rgba(0,0,0,0.15), 0 0 0 1px rgba(0,0,0,0.05)',position:'relative',overflow:'hidden' }}>
           <div style={{ height:'40px',background:'#f8f8f6',display:'flex',alignItems:'center',justifyContent:'center' }}>
@@ -119,17 +160,24 @@ export default function Login() {
         </div>
       </div>
 
+      {/* Bottom */}
       <div style={{ padding:'0 32px 0',paddingBottom:'max(env(safe-area-inset-bottom), 16px)',maxWidth:'420px',margin:'0 auto',width:'100%',boxSizing:'border-box' }}>
-        <div style={{ display:'flex',justifyContent:'center',gap:'6px',marginBottom:'16px' }}>
+
+        {/* Dots */}
+        <div style={{ display:'flex',justifyContent:'center',gap:'6px',marginBottom:'18px' }}>
           {slides.map((_, i) => (
-            <button key={i} onClick={() => setActive(i)} style={{ width:i === active ? '20px' : '6px',height:'6px',borderRadius:'3px',background:i === active ? s.textColor : (s.bg === '#061410' ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.15)'),border:'none',cursor:'pointer',transition:'all 0.3s ease',padding:0 }} />
+            <button key={i} onClick={() => goToSlide(i)} style={{ width:i === active ? '20px' : '6px',height:'6px',borderRadius:'3px',background:i === active ? s.textColor : s.dotInactive,border:'none',cursor:'pointer',transition:'all 0.3s ease',padding:0 }} />
           ))}
         </div>
-        <button onClick={() => setMode('signin')} style={{ width:'100%',padding:'15px',background:s.btnBg,color:s.btnText,border:'none',borderRadius:'30px',fontSize:'15px',fontWeight:600,cursor:'pointer',fontFamily:'inherit',marginBottom:'10px' }}>
-          Sign in
+
+        {/* Role buttons */}
+        <button onClick={() => setMode('signin')} style={{ width:'100%',padding:'15px',background:s.btnBg,color:s.btnText,border:'none',borderRadius:'30px',fontSize:'15px',fontWeight:600,cursor:'pointer',fontFamily:'inherit',marginBottom:'10px',display:'flex',alignItems:'center',justifyContent:'center',gap:'8px' }}>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={s.btnText} strokeWidth="2" strokeLinecap="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+          I'm a performer
         </button>
-        <button onClick={() => setMode('signup')} style={{ width:'100%',padding:'15px',background:'transparent',color:s.textColor,border:'1.5px solid ' + s.outlineBorder,borderRadius:'30px',fontSize:'15px',fontWeight:600,cursor:'pointer',fontFamily:'inherit' }}>
-          Sign up
+        <button onClick={() => setMode('signin')} style={{ width:'100%',padding:'15px',background:'transparent',color:s.textColor,border:'1.5px solid ' + s.outlineBorder,borderRadius:'30px',fontSize:'15px',fontWeight:600,cursor:'pointer',fontFamily:'inherit',display:'flex',alignItems:'center',justifyContent:'center',gap:'8px' }}>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M15 10l4.553-2.276A1 1 0 0 1 21 8.618v6.764a1 1 0 0 1-1.447.894L15 14"/><rect x="1" y="6" width="14" height="12" rx="2"/></svg>
+          I'm a casting director
         </button>
       </div>
     </div>
