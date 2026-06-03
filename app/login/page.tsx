@@ -28,20 +28,15 @@ export default function Login() {
   const s = slides[active]
 
   useEffect(() => {
-    const meta = document.querySelector('meta[name="theme-color"]')
-    if (mode === 'slider' && meta) meta.setAttribute('content', s.bg)
-    if (mode !== 'slider' && meta) meta.setAttribute('content', '#f1f0ee')
-    return () => { const m = document.querySelector('meta[name="theme-color"]'); if (m) m.setAttribute('content', '#f1f0ee') }
-  }, [active, s.bg, mode])
-
-  useEffect(() => {
-    if (mode === 'slider') {
-      document.body.style.background = s.bg
-      document.documentElement.style.background = s.bg
-    } else {
-      document.body.style.background = '#f1f0ee'
-      document.documentElement.style.background = '#f1f0ee'
-    }
+    const color = mode === 'slider' ? s.bg : '#f1f0ee'
+    document.body.style.background = color
+    document.documentElement.style.background = color
+    const existing = document.querySelector('meta[name="theme-color"]')
+    if (existing) existing.remove()
+    const meta = document.createElement('meta')
+    meta.name = 'theme-color'
+    meta.content = color
+    document.head.appendChild(meta)
     return () => {
       document.body.style.background = '#f1f0ee'
       document.documentElement.style.background = '#f1f0ee'
