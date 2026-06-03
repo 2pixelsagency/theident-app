@@ -73,10 +73,7 @@ export default function Login() {
     return (
       <div style={{ position:'fixed',inset:0,background:'#f1f0ee',fontFamily:'system-ui, sans-serif',display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',padding:'24px',boxSizing:'border-box' }}>
         <div style={{ width:'100%',maxWidth:'380px' }}>
-
-          {/* Logo */}
           <div style={{ textAlign:'center',marginBottom:'48px' }}>
-            <p style={{ fontFamily:"'ITC Symbol',Georgia,serif",letterSpacing:'-0.03em',fontSize:'18px',fontWeight:700,color:'#0c2520',margin:'0 0 32px' }}>theident</p>
             <p style={{ fontFamily:"'ITC Symbol',Georgia,serif",letterSpacing:'-0.03em',fontSize:'30px',fontWeight:700,color:'#0c2520',margin:'0 0 8px',lineHeight:1.2 }}>
               {mode === 'signin' ? 'Welcome back.' : 'Join The Ident.'}
             </p>
@@ -123,12 +120,10 @@ export default function Login() {
         .slide-text { animation: fadeSlide 0.5s ease-out; }
       `}</style>
 
-      {/* Text near top */}
       <div style={{ paddingTop:'max(env(safe-area-inset-top), 16px)',padding:'max(env(safe-area-inset-top), 16px) 32px 0' }}>
         <p key={active} className="slide-text" style={{ fontFamily:"'ITC Symbol',Georgia,serif",letterSpacing:'-0.03em',fontSize:'22px',fontWeight:700,color:s.textColor,textAlign:'center',lineHeight:1.35,margin:'16px 0 0',maxWidth:'420px',marginLeft:'auto',marginRight:'auto' }}>{s.text}</p>
       </div>
 
-      {/* Phone — swipeable */}
       <div style={{ flex:1,display:'flex',alignItems:'center',justifyContent:'center',padding:'16px 32px',maxWidth:'420px',margin:'0 auto',width:'100%',boxSizing:'border-box' }}
         onTouchStart={e => { (e.currentTarget as any)._startX = e.touches[0].clientX }}
         onTouchEnd={e => {
@@ -160,23 +155,16 @@ export default function Login() {
         </div>
       </div>
 
-      {/* Bottom */}
       <div style={{ padding:'0 32px 0',paddingBottom:'max(env(safe-area-inset-bottom), 16px)',maxWidth:'420px',margin:'0 auto',width:'100%',boxSizing:'border-box' }}>
-
-        {/* Dots */}
         <div style={{ display:'flex',justifyContent:'center',gap:'6px',marginBottom:'18px' }}>
           {slides.map((_, i) => (
             <button key={i} onClick={() => goToSlide(i)} style={{ width:i === active ? '20px' : '6px',height:'6px',borderRadius:'3px',background:i === active ? s.textColor : s.dotInactive,border:'none',cursor:'pointer',transition:'all 0.3s ease',padding:0 }} />
           ))}
         </div>
-
-        {/* Role buttons */}
-        <button onClick={() => setMode('signin')} style={{ width:'100%',padding:'15px',background:s.btnBg,color:s.btnText,border:'none',borderRadius:'30px',fontSize:'15px',fontWeight:600,cursor:'pointer',fontFamily:'inherit',marginBottom:'10px',display:'flex',alignItems:'center',justifyContent:'center',gap:'8px' }}>
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={s.btnText} strokeWidth="2" strokeLinecap="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+        <button onClick={() => setMode('signin')} style={{ width:'100%',padding:'15px',background:s.btnBg,color:s.btnText,border:'none',borderRadius:'30px',fontSize:'15px',fontWeight:600,cursor:'pointer',fontFamily:'inherit',marginBottom:'10px' }}>
           I'm a performer
         </button>
-        <button onClick={() => setMode('signin')} style={{ width:'100%',padding:'15px',background:'transparent',color:s.textColor,border:'1.5px solid ' + s.outlineBorder,borderRadius:'30px',fontSize:'15px',fontWeight:600,cursor:'pointer',fontFamily:'inherit',display:'flex',alignItems:'center',justifyContent:'center',gap:'8px' }}>
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M15 10l4.553-2.276A1 1 0 0 1 21 8.618v6.764a1 1 0 0 1-1.447.894L15 14"/><rect x="1" y="6" width="14" height="12" rx="2"/></svg>
+        <button onClick={() => setMode('signin')} style={{ width:'100%',padding:'15px',background:'transparent',color:s.textColor,border:'1.5px solid ' + s.outlineBorder,borderRadius:'30px',fontSize:'15px',fontWeight:600,cursor:'pointer',fontFamily:'inherit' }}>
           I'm a casting director
         </button>
       </div>
