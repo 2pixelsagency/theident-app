@@ -65,7 +65,7 @@ export default function PublicProfile() {
     const load = async () => {
       const { data: { user } } = await supabase.auth.getUser()
       if (user) setCurrentUserId(user.id)
-      const { data: prof } = await supabase.from('profiles').select('id, first_name, last_name, picture_url, bio, summary, location, slug, availability_status, production_until, agent_name, agent_phone, agent_email, vid_1, vid_2, vid_3, vid_4, section_settings').eq('slug', slug).single()
+      const { data: prof } = await supabase.from('profiles').select('*').eq('slug', slug).single()
       if (!prof) { setNotFound(true); setLoading(false); return }
       setProfile(prof)
       const [{ data: skillData }, { data: creditData }, { data: brandData }, { data: testimonialData }, { data: galleryData }, { data: faqData }, { data: ptData }, { data: conns }] = await Promise.all([
