@@ -10,6 +10,7 @@ type Profile = {
   availability_status: string | null; production_until: string | null
   agent_name: string | null; agent_phone: string | null; agent_email: string | null
   vid_1: string | null; vid_2: string | null; vid_3: string | null; vid_4: string | null
+  section_settings: any
 }
 type Skill = { id: number; name: string }
 type Credit = { id: string; title: string; role: string | null; year: number | null; thumbnail_url: string | null; director: string | null; production_company: string | null; is_featured: boolean; production_type_id: number | null; description: string | null }
@@ -55,7 +56,6 @@ export default function PublicProfile() {
   const [currentUserId, setCurrentUserId] = useState<string | null>(null)
   const [connectionCount, setConnectionCount] = useState(0)
   const contactRef = useRef<HTMLDivElement>(null)
-
   const [mainTab, setMainTab] = useState<'credits' | 'reels'>('credits')
   const [creditFilter, setCreditFilter] = useState<number | null>(null)
   const [creditYearFilter, setCreditYearFilter] = useState<number | null>(null)
@@ -65,7 +65,7 @@ export default function PublicProfile() {
     const load = async () => {
       const { data: { user } } = await supabase.auth.getUser()
       if (user) setCurrentUserId(user.id)
-      const { data: prof } = await supabase.from('profiles').select('id, first_name, last_name, picture_url, bio, summary, location, slug, availability_status, production_until, agent_name, agent_phone, agent_email, vid_1, vid_2, vid_3, vid_4').eq('slug', slug).single()
+      const { data: prof } = await supabase.from('profiles').select('id, first_name, last_name, picture_url, bio, summary, location, slug, availability_status, production_until, agent_name, agent_phone, agent_email, vid_1, vid_2, vid_3, vid_4, section_settings').eq('slug', slug).single()
       if (!prof) { setNotFound(true); setLoading(false); return }
       setProfile(prof)
       const [{ data: skillData }, { data: creditData }, { data: brandData }, { data: testimonialData }, { data: galleryData }, { data: faqData }, { data: ptData }, { data: conns }] = await Promise.all([
@@ -136,8 +136,203 @@ export default function PublicProfile() {
   const isOwnProfile = currentUserId === profile?.id
   const fullName = ((profile?.first_name || '') + ' ' + (profile?.last_name || '')).trim()
 
+  // Section ordering
+  const defaultOrder = ['bio','highlights','credits_reels','testimonials','brands','gallery','faqs']
+  const ss = profile?.section_settings
+  let sectionOrder = defaultOrder
+  const hiddenSections = new Set<string>()
+  if (ss && Array.isArray(ss)) {
+    sectionOrder = [...ss].sort((a: any, b: any) => (a.order || 0) - (b.order || 0)).map((s: any) => s.id)
+    ss.forEach((s: any) => { if (!s.visible) hiddenSections.add(s.id) })
+    defaultOrder.forEach(id => { if (!sectionOrder.includes(id)) sectionOrder.push(id) })
+  }
+
   if (loading) return <div style={{ minHeight:'100vh',background:'#f1f0ee',display:'flex',alignItems:'center',justifyContent:'center' }}><div style={{ width:'24px',height:'24px',border:'2px solid #0c2520',borderTopColor:'transparent',borderRadius:'50%',animation:'spin 0.8s linear infinite' }} /><style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style></div>
-  if (notFound) return <div style={{ minHeight:'100vh',background:'#f1f0ee',display:'flex',alignItems:'center',justifyContent:'center',fontFamily:'system-ui' }}><div style={{ textAlign:'center' }}><p style={{ fontFamily:'Georgia,serif',fontSize:'24px',color:'#0c2520',margin:'0 0 8px' }}>Profile not found</p><a href="/" style={{ fontSize:'14px',color:'#0c2520' }}>Go to The Ident</a></div></div>
+  if (notFound) return <div style={{ minHeight:'100vh',background:'#f1f0ee',display:'flex',alignItems:'center',justifyContent:'center',fontFamily:'system-ui' }}><div style={{ textAlign:'center' }}><p style={{ fontFamily:"'ITC Symbol',Georgia,serif",letterSpacing:'-0.03em',fontSize:'24px',color:'#0c2520',margin:'0 0 8px' }}>Profile not found</p><a href="/" style={{ fontSize:'14px',color:'#0c2520' }}>Go to The Ident</a></div></div>
+
+  const renderSection = (id: string) => {
+    if (hiddenSections.has(id)) return null
+
+    if (id === 'bio') {
+      if (!profile?.bio && !profile?.summary) return null
+      return (
+        <div key="bio">
+          <div style={{ padding:'36px 32px 0' }}>
+            {profile?.bio && <p style={{ fontFamily:"'ITC Symbol',Georgia,serif",letterSpacing:'-0.03em',fontSize:'26px',color:'#0c2520',lineHeight:1.45,margin:0,fontWeight:700 }}>{profile.bio}</p>}
+            {profile?.summary && <p style={{ fontSize:'15px',color:'#666',lineHeight:1.7,margin:'18px 0 0' }}>{profile.summary}</p>}
+          </div>
+          <div style={{ height:'52px' }} />
+        </div>
+      )
+    }
+
+    if (id === 'highlights') {
+      if (featuredCredits.length === 0) return null
+      return (
+        <div key="highlights" style={{ marginBottom:'48px' }}>
+          <p style={{ fontSize:'11px',color:'#888',textTransform:'uppercase',letterSpacing:'0.08em',fontWeight:600,margin:'0 0 12px',paddingLeft:'32px' }}>Highlights</p>
+          <div className="feat-scroll" style={{ paddingLeft:'32px',paddingRight:'32px' }}>
+            {featuredCredits.map(c => (
+              <div key={c.id} style={{ flexShrink:0,width:'280px',height:'360px',borderRadius:'14px',overflow:'hidden',position:'relative' }}>
+                {c.thumbnail_url ? <div style={{ width:'100%',height:'100%',background:'url(' + c.thumbnail_url + ') center/cover',backgroundSize:'cover' }} /> : <div style={{ width:'100%',height:'100%',background:'#1a3a30',display:'flex',alignItems:'center',justifyContent:'center' }}><span style={{ fontFamily:'Georgia,serif',fontSize:'48px',color:'#2a5040' }}>{c.title?.[0]}</span></div>}
+                {c.year && <div style={{ position:'absolute',top:'14px',right:'14px',background:'rgba(0,0,0,0.3)',backdropFilter:'blur(10px)',WebkitBackdropFilter:'blur(10px)',padding:'4px 12px',borderRadius:'6px',border:'1px solid rgba(255,255,255,0.15)' }}><span style={{ fontSize:'13px',fontWeight:600,color:'white' }}>{c.year}</span></div>}
+                <div style={{ position:'absolute',bottom:0,left:0,right:0,background:'linear-gradient(transparent, rgba(0,0,0,0.75))',padding:'48px 18px 20px' }}>
+                  <p style={{ fontFamily:"'ITC Symbol',Georgia,serif",letterSpacing:'-0.03em',fontSize:'22px',color:'white',margin:'0 0 4px',fontWeight:700,lineHeight:1.2 }}>{c.title}</p>
+                  {c.role && <p style={{ fontSize:'14px',color:'rgba(255,255,255,0.8)',margin:0 }}>{c.role}</p>}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )
+    }
+
+    if (id === 'credits_reels') {
+      if (credits.length === 0 && !hasReels) return null
+      return (
+        <div key="credits_reels">
+          <div style={{ padding:'0 32px' }}>
+            <div style={{ display:'flex',background:'#e8e4de',borderRadius:'12px',padding:'4px',gap:'4px',marginBottom:'24px' }}>
+              <button onClick={() => setMainTab('credits')} style={{ flex:1,padding:'12px',borderRadius:'9px',border:'none',background:mainTab === 'credits' ? '#0c2520' : 'transparent',color:mainTab === 'credits' ? '#f1f0ee' : '#888',fontSize:'15px',fontWeight:mainTab === 'credits' ? 600 : 400,cursor:'pointer',fontFamily:'inherit',transition:'all 0.2s ease' }}>Credits</button>
+              <button onClick={() => setMainTab('reels')} style={{ flex:1,padding:'12px',borderRadius:'9px',border:'none',background:mainTab === 'reels' ? '#0c2520' : 'transparent',color:mainTab === 'reels' ? '#f1f0ee' : '#888',fontSize:'15px',fontWeight:mainTab === 'reels' ? 600 : 400,cursor:'pointer',fontFamily:'inherit',transition:'all 0.2s ease' }}>Reels</button>
+            </div>
+          </div>
+          <div style={{ overflow:'hidden' }}>
+            <div className="tab-slide" style={{ display:'flex',width:'200%',transform:mainTab === 'credits' ? 'translateX(0)' : 'translateX(-50%)' }}>
+              <div style={{ width:'50%',padding:'0 32px 24px',boxSizing:'border-box' }}>
+                {credits.length > 0 && (
+                  <>
+                    <div style={{ position:'relative',marginBottom:'14px' }}>
+                      <svg style={{ position:'absolute',left:'14px',top:'50%',transform:'translateY(-50%)' }} width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#aaa" strokeWidth="2" strokeLinecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                      <input type="search" placeholder="Search credits..." value={creditSearch} onChange={e => setCreditSearch(e.target.value)} style={{ width:'100%',padding:'11px 14px 11px 38px',border:'1px solid #e0ddd5',borderRadius:'12px',fontSize:'13px',fontFamily:'inherit',background:'white',boxSizing:'border-box',color:'#0c2520' }} />
+                    </div>
+                    <div style={{ display:'flex',gap:'8px',alignItems:'center',overflowX:'auto',marginBottom:'18px',paddingBottom:'4px' }}>
+                      <button className={'cat-tab' + (creditFilter === null ? ' on' : '')} onClick={() => setCreditFilter(null)}>All</button>
+                      {creditCategories.map(pt => <button key={pt.id} className={'cat-tab' + (creditFilter === pt.id ? ' on' : '')} onClick={() => setCreditFilter(creditFilter === pt.id ? null : pt.id)}>{pt.name}</button>)}
+                      {creditYears.length > 1 && (
+                        <select value={creditYearFilter || ''} onChange={e => setCreditYearFilter(e.target.value ? parseInt(e.target.value) : null)} style={{ padding:'6px 10px',borderRadius:'20px',fontSize:'12px',fontFamily:'inherit',border:'1px solid #e0ddd5',background:'white',color:creditYearFilter ? '#0c2520' : '#888',cursor:'pointer',appearance:'none' as any,paddingRight:'24px',backgroundImage:'url("data:image/svg+xml,%3Csvg width=\'8\' height=\'5\' viewBox=\'0 0 8 5\' fill=\'none\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cpath d=\'M1 1l3 3 3-3\' stroke=\'%23888\' stroke-width=\'1.5\' stroke-linecap=\'round\'/%3E%3C/svg%3E")',backgroundRepeat:'no-repeat',backgroundPosition:'right 8px center' }}>
+                          <option value="">Year</option>
+                          {creditYears.map(y => <option key={y} value={y}>{y}</option>)}
+                        </select>
+                      )}
+                      {hasActiveCredFilter && <button onClick={() => { setCreditFilter(null); setCreditYearFilter(null); setCreditSearch('') }} style={{ padding:'6px 12px',borderRadius:'20px',fontSize:'11px',fontFamily:'inherit',border:'none',background:'#c0392b',color:'white',cursor:'pointer',whiteSpace:'nowrap' }}>Clear</button>}
+                    </div>
+                    {hasActiveCredFilter && <p style={{ fontSize:'12px',color:'#aaa',margin:'0 0 14px' }}>{filteredCredits.length} credit{filteredCredits.length !== 1 ? 's' : ''}</p>}
+                    {filteredCredits.length === 0 ? (
+                      <p style={{ fontSize:'13px',color:'#aaa',textAlign:'center',padding:'32px 0' }}>No credits match your filters</p>
+                    ) : filteredCredits.map((c, i) => (
+                      <div key={c.id} style={{ display:'flex',alignItems:'center',gap:'14px',padding:'16px 0',borderBottom:i < filteredCredits.length - 1 ? '1px solid #e8e4de' : 'none' }}>
+                        {c.thumbnail_url ? <img src={c.thumbnail_url} alt={c.title} style={{ width:'56px',height:'40px',objectFit:'cover',borderRadius:'6px',flexShrink:0 }} /> : <div style={{ width:'56px',height:'40px',borderRadius:'6px',background:'#e8e4de',flexShrink:0,display:'flex',alignItems:'center',justifyContent:'center' }}><span style={{ fontSize:'16px',fontWeight:700,color:'#ccc' }}>{c.title?.[0]}</span></div>}
+                        <div style={{ flex:1 }}>
+                          <div style={{ display:'flex',alignItems:'center',gap:'8px' }}>
+                            <p style={{ fontSize:'14px',fontWeight:600,color:'#0c2520',margin:0 }}>{c.title}</p>
+                            {c.is_featured && <span style={{ fontSize:'9px',fontWeight:600,color:'#4ade80' }}>FEATURED</span>}
+                          </div>
+                          <p style={{ fontSize:'12px',color:'#888',margin:'3px 0 0' }}>{c.role}{c.director ? ' · ' + c.director : ''}{c.production_company ? ' · ' + c.production_company : ''}</p>
+                        </div>
+                        {c.year && <span style={{ fontSize:'12px',color:'#aaa',flexShrink:0 }}>{c.year}</span>}
+                      </div>
+                    ))}
+                  </>
+                )}
+              </div>
+              <div style={{ width:'50%',padding:'0 32px 24px',boxSizing:'border-box' }}>
+                {hasReels && (
+                  <div style={{ display:'flex',flexDirection:'column',gap:'16px' }}>
+                    {reelsList.map(r => (
+                      <div key={r.label}>
+                        <p style={{ fontSize:'13px',fontWeight:600,color:'#0c2520',margin:'0 0 8px' }}>{r.label}</p>
+                        <video controls playsInline preload="metadata" style={{ width:'100%',borderRadius:'12px',background:'#061410',aspectRatio:'16/9',objectFit:'cover' }}><source src={(r.url || '') + '#t=0.5'} /></video>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )
+    }
+
+    if (id === 'testimonials') {
+      if (testimonials.length === 0) return null
+      return (
+        <div key="testimonials" style={{ background:'#0c2520',borderRadius:'20px',margin:'32px 20px 40px',padding:'36px 32px' }}>
+          <div style={{ fontSize:'56px',color:'#4ade80',fontFamily:"'ITC Symbol',Georgia,serif",lineHeight:1,marginBottom:'8px' }}>"</div>
+          <p style={{ fontFamily:"'ITC Symbol',Georgia,serif",letterSpacing:'-0.03em',fontSize:'19px',color:'#f1f0ee',lineHeight:1.65,margin:'0 0 24px',fontStyle:'italic' }}>{testimonials[activeTestimonial]?.quote}</p>
+          <p style={{ fontSize:'13px',fontWeight:700,color:'#f1f0ee',margin:'0 0 2px',textTransform:'uppercase',letterSpacing:'0.06em' }}>{testimonials[activeTestimonial]?.author_name}</p>
+          {testimonials[activeTestimonial]?.author_title && <p style={{ fontSize:'12px',color:'#92d7af',margin:0 }}>{testimonials[activeTestimonial]?.author_title}</p>}
+          {testimonials.length > 1 && (
+            <div style={{ display:'flex',gap:'6px',marginTop:'24px' }}>
+              {testimonials.map((_, i) => <button key={i} onClick={() => setActiveTestimonial(i)} style={{ width:i === activeTestimonial ? '20px' : '6px',height:'6px',borderRadius:'3px',background:i === activeTestimonial ? '#4ade80' : 'rgba(255,255,255,0.2)',border:'none',cursor:'pointer',transition:'all 0.3s ease',padding:0 }} />)}
+            </div>
+          )}
+        </div>
+      )
+    }
+
+    if (id === 'brands') {
+      if (brands.length === 0) return null
+      return (
+        <div key="brands" style={{ margin:'0 32px 48px',paddingTop:'8px',paddingBottom:'8px',borderTop:'1px solid #e8e4de',borderBottom:'1px solid #e8e4de' }}>
+          <div className="marquee-wrap" style={{ overflow:'hidden' }}>
+            <div className="marquee-track">
+              {[...brands,...brands,...brands].map((b, i) => (
+                <div key={b.id + '-' + i} style={{ flexShrink:0,margin:'0 36px',display:'flex',alignItems:'center',justifyContent:'center',height:'60px' }}>
+                  {b.logo_url ? <img src={b.logo_url} alt={b.brand_name} style={{ height:'44px',maxWidth:'140px',objectFit:'contain' }} onError={e => { (e.target as HTMLImageElement).style.display='none'; const n = (e.target as HTMLImageElement).nextElementSibling as HTMLElement; if(n) n.style.display='block' }} /> : null}
+                  <span style={{ fontSize:'14px',fontWeight:700,color:'#bbb',letterSpacing:'0.08em',textTransform:'uppercase',fontFamily:'Georgia,serif',display:b.logo_url?'none':'block' }}>{b.brand_name}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )
+    }
+
+    if (id === 'gallery') {
+      if (gallery.length === 0) return null
+      return (
+        <div key="gallery" style={{ padding:'0 0 48px' }}>
+          <div style={{ position:'relative',overflow:'hidden',aspectRatio:'3/4' }}>
+            <div style={{ display:'flex',width:gallery.length * 100 + '%',transform:'translateX(-' + (activeGallery * (100 / gallery.length)) + '%)',transition:'transform 0.4s cubic-bezier(0.4,0,0.2,1)',height:'100%' }}
+              onTouchStart={e => { (e.currentTarget as any)._startX = e.touches[0].clientX }}
+              onTouchEnd={e => {
+                const start = (e.currentTarget as any)._startX; const end = e.changedTouches[0].clientX; const diff = start - end
+                if (diff > 50 && activeGallery < gallery.length - 1) setActiveGallery(activeGallery + 1)
+                if (diff < -50 && activeGallery > 0) setActiveGallery(activeGallery - 1)
+              }}>
+              {gallery.map(img => <div key={img.id} onClick={() => setLightbox(img.url)} style={{ width:100 / gallery.length + '%',height:'100%',flexShrink:0,background:'url(' + img.url + ') center/cover',backgroundSize:'cover',cursor:'pointer' }} />)}
+            </div>
+            {gallery.length > 1 && (
+              <div style={{ position:'absolute',bottom:'14px',left:'50%',transform:'translateX(-50%)',display:'flex',gap:'6px' }}>
+                {gallery.map((_, i) => <button key={i} onClick={() => setActiveGallery(i)} style={{ width:i === activeGallery ? '20px' : '6px',height:'6px',borderRadius:'3px',background:i === activeGallery ? 'white' : 'rgba(255,255,255,0.5)',border:'none',cursor:'pointer',transition:'all 0.3s ease',padding:0 }} />)}
+              </div>
+            )}
+          </div>
+        </div>
+      )
+    }
+
+    if (id === 'faqs') {
+      if (faqs.length === 0) return null
+      return (
+        <div key="faqs" style={{ padding:'0 32px 48px' }}>
+          <h2 style={{ fontFamily:"'ITC Symbol',Georgia,serif",letterSpacing:'-0.03em',fontSize:'28px',fontWeight:700,color:'#0c2520',margin:'0 0 20px' }}>Questions</h2>
+          {faqs.map(faq => (
+            <div key={faq.id} style={{ borderBottom:'1px solid #e8e4de' }}>
+              <div className="faq-row" onClick={() => setOpenFaq(openFaq === faq.id ? null : faq.id)} style={{ padding:'18px 0',display:'flex',justifyContent:'space-between',alignItems:'center',gap:'16px' }}>
+                <p style={{ fontSize:'15px',fontWeight:500,color:'#0c2520',margin:0 }}>{faq.question}</p>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#aaa" strokeWidth="2" strokeLinecap="round" style={{ flexShrink:0,transform:openFaq === faq.id ? 'rotate(180deg)' : 'none',transition:'transform 0.2s ease' }}><path d="M6 9l6 6 6-6"/></svg>
+              </div>
+              {openFaq === faq.id && <p style={{ fontSize:'14px',color:'#666',margin:'0 0 18px',lineHeight:1.65 }}>{faq.answer}</p>}
+            </div>
+          ))}
+        </div>
+      )
+    }
+
+    return null
+  }
 
   return (
     <div style={{ fontFamily:'system-ui, sans-serif',background:'#f1f0ee',minHeight:'100vh',position:'relative' }}>
@@ -193,32 +388,24 @@ export default function PublicProfile() {
         <div style={{ textAlign:'center',background:'#f1f0ee' }}>
           {profile?.vid_1 && (
             <div style={{ width:'100%',height:'240px',overflow:'hidden' }}>
-              <video autoPlay muted loop playsInline style={{ width:'100%',height:'100%',objectFit:'cover' }}>
-                <source src={profile.vid_1} />
-              </video>
+              <video autoPlay muted loop playsInline style={{ width:'100%',height:'100%',objectFit:'cover' }}><source src={profile.vid_1} /></video>
             </div>
           )}
           {!profile?.vid_1 && <div style={{ height:'80px' }} />}
 
           <div style={{ marginTop:profile?.vid_1 ? '-55px' : '0',position:'relative',zIndex:2,paddingBottom:'8px' }}>
-            {profile?.picture_url && (
-              <div style={{ width:'110px',height:'110px',borderRadius:'50%',background:'url(' + profile.picture_url + ') center/cover',backgroundSize:'cover',margin:'0 auto 24px',border:'4px solid #f1f0ee',boxShadow:'0 4px 24px rgba(12,37,32,0.15)' }} />
-            )}
-
-            <h1 style={{ fontFamily:'Georgia,serif',fontSize:'36px',fontWeight:500,color:'#0c2520',margin:'0 0 10px',lineHeight:1.1,padding:'0 32px' }}>{fullName}</h1>
-
+            {profile?.picture_url && <div style={{ width:'110px',height:'110px',borderRadius:'50%',background:'url(' + profile.picture_url + ') center/cover',backgroundSize:'cover',margin:'0 auto 24px',border:'4px solid #f1f0ee',boxShadow:'0 4px 24px rgba(12,37,32,0.15)' }} />}
+            <h1 style={{ fontFamily:"'ITC Symbol',Georgia,serif",letterSpacing:'-0.03em',fontSize:'36px',fontWeight:700,color:'#0c2520',margin:'0 0 10px',lineHeight:1.1,padding:'0 32px' }}>{fullName}</h1>
             <div style={{ display:'flex',alignItems:'center',justifyContent:'center',gap:'6px',marginBottom:'16px',flexWrap:'wrap' }}>
               {profile?.location && <span style={{ fontSize:'13px',color:'#888' }}>{profile.location}</span>}
               {profile?.location && connectionCount > 0 && <span style={{ fontSize:'13px',color:'#d4d2cc' }}>·</span>}
               {connectionCount > 0 && <span style={{ fontSize:'13px',color:'#888',display:'flex',alignItems:'center',gap:'4px' }}><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#888" strokeWidth="2" strokeLinecap="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>{connectionCount} connection{connectionCount !== 1 ? 's' : ''}</span>}
             </div>
-
             {skills.length > 0 && (
               <div style={{ display:'flex',gap:'6px',flexWrap:'wrap',justifyContent:'center',marginBottom:'24px',padding:'0 32px' }}>
                 {skills.map(s => <span key={s.id} style={{ padding:'5px 14px',borderRadius:'20px',fontSize:'12px',fontWeight:500,background:'#e8e4de',color:'#0c2520' }}>{s.name}</span>)}
               </div>
             )}
-
             {!isOwnProfile && currentUserId && (
               <div style={{ marginBottom:'8px' }}>
                 <button onClick={handleConnect} disabled={connectStatus !== 'none'} style={{ padding:'11px 28px',borderRadius:'30px',border:'none',cursor:connectStatus === 'none' ? 'pointer' : 'default',background:connectStatus === 'connected' ? '#4ade80' : connectStatus === 'pending' ? '#e8e4de' : '#0c2520',color:connectStatus === 'connected' ? '#061410' : connectStatus === 'pending' ? '#888' : '#f1f0ee',fontSize:'14px',fontWeight:500,fontFamily:'inherit' }}>
@@ -229,209 +416,12 @@ export default function PublicProfile() {
           </div>
         </div>
 
-        {/* Bio + Summary */}
-        {(profile?.bio || profile?.summary) && (
-          <div style={{ padding:'36px 32px 0' }}>
-            {profile?.bio && <p style={{ fontFamily:'Georgia,serif',fontSize:'26px',color:'#0c2520',lineHeight:1.45,margin:0,fontWeight:400 }}>{profile.bio}</p>}
-            {profile?.summary && <p style={{ fontSize:'15px',color:'#666',lineHeight:1.7,margin:'18px 0 0' }}>{profile.summary}</p>}
-          </div>
-        )}
-
-        <div style={{ height:'52px' }} />
-
-        {/* Highlights */}
-        {featuredCredits.length > 0 && (
-          <div style={{ marginBottom:'48px' }}>
-            <p style={{ fontSize:'11px',color:'#888',textTransform:'uppercase',letterSpacing:'0.08em',fontWeight:600,margin:'0 0 12px',paddingLeft:'32px' }}>Highlights</p>
-            <div className="feat-scroll" style={{ paddingLeft:'32px',paddingRight:'32px' }}>
-              {featuredCredits.map(c => (
-                <div key={c.id} style={{ flexShrink:0,width:'280px',height:'360px',borderRadius:'14px',overflow:'hidden',position:'relative' }}>
-                  {c.thumbnail_url ? (
-                    <div style={{ width:'100%',height:'100%',background:'url(' + c.thumbnail_url + ') center/cover',backgroundSize:'cover' }} />
-                  ) : (
-                    <div style={{ width:'100%',height:'100%',background:'#1a3a30',display:'flex',alignItems:'center',justifyContent:'center' }}>
-                      <span style={{ fontFamily:'Georgia,serif',fontSize:'48px',color:'#2a5040' }}>{c.title?.[0]}</span>
-                    </div>
-                  )}
-                  {c.year && (
-                    <div style={{ position:'absolute',top:'14px',right:'14px',background:'rgba(0,0,0,0.3)',backdropFilter:'blur(10px)',WebkitBackdropFilter:'blur(10px)',padding:'4px 12px',borderRadius:'6px',border:'1px solid rgba(255,255,255,0.15)' }}>
-                      <span style={{ fontSize:'13px',fontWeight:600,color:'white' }}>{c.year}</span>
-                    </div>
-                  )}
-                  <div style={{ position:'absolute',bottom:0,left:0,right:0,background:'linear-gradient(transparent, rgba(0,0,0,0.75))',padding:'48px 18px 20px' }}>
-                    <p style={{ fontFamily:'Georgia,serif',fontSize:'22px',color:'white',margin:'0 0 4px',fontWeight:500,lineHeight:1.2 }}>{c.title}</p>
-                    {c.role && <p style={{ fontSize:'14px',color:'rgba(255,255,255,0.8)',margin:0 }}>{c.role}</p>}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Credits / Reels tabs */}
-        {(credits.length > 0 || hasReels) && (
-          <>
-            <div style={{ padding:'0 32px' }}>
-              <div style={{ display:'flex',background:'#e8e4de',borderRadius:'12px',padding:'4px',gap:'4px',marginBottom:'24px' }}>
-                <button onClick={() => setMainTab('credits')} style={{ flex:1,padding:'12px',borderRadius:'9px',border:'none',background:mainTab === 'credits' ? '#0c2520' : 'transparent',color:mainTab === 'credits' ? '#f1f0ee' : '#888',fontSize:'15px',fontWeight:mainTab === 'credits' ? 600 : 400,cursor:'pointer',fontFamily:'inherit',transition:'all 0.2s ease' }}>Credits</button>
-                <button onClick={() => setMainTab('reels')} style={{ flex:1,padding:'12px',borderRadius:'9px',border:'none',background:mainTab === 'reels' ? '#0c2520' : 'transparent',color:mainTab === 'reels' ? '#f1f0ee' : '#888',fontSize:'15px',fontWeight:mainTab === 'reels' ? 600 : 400,cursor:'pointer',fontFamily:'inherit',transition:'all 0.2s ease' }}>Reels</button>
-              </div>
-            </div>
-
-            <div style={{ overflow:'hidden' }}>
-              <div className="tab-slide" style={{ display:'flex',width:'200%',transform:mainTab === 'credits' ? 'translateX(0)' : 'translateX(-50%)' }}>
-
-                {/* Credits panel */}
-                <div style={{ width:'50%',padding:'0 32px 24px',boxSizing:'border-box' }}>
-                  {credits.length > 0 && (
-                    <>
-                      <div style={{ position:'relative',marginBottom:'14px' }}>
-                        <svg style={{ position:'absolute',left:'14px',top:'50%',transform:'translateY(-50%)' }} width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#aaa" strokeWidth="2" strokeLinecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-                        <input type="search" placeholder="Search credits..." value={creditSearch} onChange={e => setCreditSearch(e.target.value)} style={{ width:'100%',padding:'11px 14px 11px 38px',border:'1px solid #e0ddd5',borderRadius:'12px',fontSize:'13px',fontFamily:'inherit',background:'white',boxSizing:'border-box',color:'#0c2520' }} />
-                      </div>
-                      <div style={{ display:'flex',gap:'8px',alignItems:'center',overflowX:'auto',marginBottom:'18px',paddingBottom:'4px' }}>
-                        <button className={'cat-tab' + (creditFilter === null ? ' on' : '')} onClick={() => setCreditFilter(null)}>All</button>
-                        {creditCategories.map(pt => (
-                          <button key={pt.id} className={'cat-tab' + (creditFilter === pt.id ? ' on' : '')} onClick={() => setCreditFilter(creditFilter === pt.id ? null : pt.id)}>{pt.name}</button>
-                        ))}
-                        {creditYears.length > 1 && (
-                          <select value={creditYearFilter || ''} onChange={e => setCreditYearFilter(e.target.value ? parseInt(e.target.value) : null)} style={{ padding:'6px 10px',borderRadius:'20px',fontSize:'12px',fontFamily:'inherit',border:'1px solid #e0ddd5',background:'white',color:creditYearFilter ? '#0c2520' : '#888',cursor:'pointer',appearance:'none' as any,paddingRight:'24px',backgroundImage:'url("data:image/svg+xml,%3Csvg width=\'8\' height=\'5\' viewBox=\'0 0 8 5\' fill=\'none\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cpath d=\'M1 1l3 3 3-3\' stroke=\'%23888\' stroke-width=\'1.5\' stroke-linecap=\'round\'/%3E%3C/svg%3E")',backgroundRepeat:'no-repeat',backgroundPosition:'right 8px center' }}>
-                            <option value="">Year</option>
-                            {creditYears.map(y => <option key={y} value={y}>{y}</option>)}
-                          </select>
-                        )}
-                        {hasActiveCredFilter && <button onClick={() => { setCreditFilter(null); setCreditYearFilter(null); setCreditSearch('') }} style={{ padding:'6px 12px',borderRadius:'20px',fontSize:'11px',fontFamily:'inherit',border:'none',background:'#c0392b',color:'white',cursor:'pointer',whiteSpace:'nowrap' }}>Clear</button>}
-                      </div>
-                      {hasActiveCredFilter && <p style={{ fontSize:'12px',color:'#aaa',margin:'0 0 14px' }}>{filteredCredits.length} credit{filteredCredits.length !== 1 ? 's' : ''}</p>}
-                      {filteredCredits.length === 0 ? (
-                        <p style={{ fontSize:'13px',color:'#aaa',textAlign:'center',padding:'32px 0' }}>No credits match your filters</p>
-                      ) : (
-                        filteredCredits.map((c, i) => (
-                          <div key={c.id} style={{ display:'flex',alignItems:'center',gap:'14px',padding:'16px 0',borderBottom:i < filteredCredits.length - 1 ? '1px solid #e8e4de' : 'none' }}>
-                            {c.thumbnail_url ? (
-                              <img src={c.thumbnail_url} alt={c.title} style={{ width:'56px',height:'40px',objectFit:'cover',borderRadius:'6px',flexShrink:0 }} />
-                            ) : (
-                              <div style={{ width:'56px',height:'40px',borderRadius:'6px',background:'#e8e4de',flexShrink:0,display:'flex',alignItems:'center',justifyContent:'center' }}>
-                                <span style={{ fontSize:'16px',fontWeight:700,color:'#ccc' }}>{c.title?.[0]}</span>
-                              </div>
-                            )}
-                            <div style={{ flex:1 }}>
-                              <div style={{ display:'flex',alignItems:'center',gap:'8px' }}>
-                                <p style={{ fontSize:'14px',fontWeight:600,color:'#0c2520',margin:0 }}>{c.title}</p>
-                                {c.is_featured && <span style={{ fontSize:'9px',fontWeight:600,color:'#4ade80' }}>FEATURED</span>}
-                              </div>
-                              <p style={{ fontSize:'12px',color:'#888',margin:'3px 0 0' }}>
-                                {c.role}{c.director ? ' · ' + c.director : ''}{c.production_company ? ' · ' + c.production_company : ''}
-                              </p>
-                            </div>
-                            {c.year && <span style={{ fontSize:'12px',color:'#aaa',flexShrink:0 }}>{c.year}</span>}
-                          </div>
-                        ))
-                      )}
-                    </>
-                  )}
-                </div>
-
-                {/* Reels panel */}
-                <div style={{ width:'50%',padding:'0 32px 24px',boxSizing:'border-box' }}>
-                  {hasReels && (
-                    <div style={{ display:'flex',flexDirection:'column',gap:'16px' }}>
-                      {reelsList.map(r => (
-                        <div key={r.label}>
-                          <p style={{ fontSize:'13px',fontWeight:600,color:'#0c2520',margin:'0 0 8px' }}>{r.label}</p>
-                          <video controls playsInline preload="metadata" style={{ width:'100%',borderRadius:'12px',background:'#061410',aspectRatio:'16/9',objectFit:'cover' }}>
-                            <source src={(r.url || '') + '#t=0.5'} />
-                          </video>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
-          </>
-        )}
-
-        {/* Testimonials — dark green */}
-        {testimonials.length > 0 && (
-          <div style={{ background:'#0c2520',borderRadius:'20px',margin:'32px 20px 40px',padding:'36px 32px' }}>
-            <div style={{ fontSize:'56px',color:'#4ade80',fontFamily:'Georgia,serif',lineHeight:1,marginBottom:'8px' }}>"</div>
-            <p style={{ fontFamily:'Georgia,serif',fontSize:'19px',color:'#f1f0ee',lineHeight:1.65,margin:'0 0 24px',fontStyle:'italic' }}>{testimonials[activeTestimonial]?.quote}</p>
-            <p style={{ fontSize:'13px',fontWeight:700,color:'#f1f0ee',margin:'0 0 2px',textTransform:'uppercase',letterSpacing:'0.06em' }}>{testimonials[activeTestimonial]?.author_name}</p>
-            {testimonials[activeTestimonial]?.author_title && <p style={{ fontSize:'12px',color:'#92d7af',margin:0 }}>{testimonials[activeTestimonial]?.author_title}</p>}
-            {testimonials.length > 1 && (
-              <div style={{ display:'flex',gap:'6px',marginTop:'24px' }}>
-                {testimonials.map((_, i) => <button key={i} onClick={() => setActiveTestimonial(i)} style={{ width:i === activeTestimonial ? '20px' : '6px',height:'6px',borderRadius:'3px',background:i === activeTestimonial ? '#4ade80' : 'rgba(255,255,255,0.2)',border:'none',cursor:'pointer',transition:'all 0.3s ease',padding:0 }} />)}
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* Brand logos — after testimonials */}
-        {brands.length > 0 && (
-          <div style={{ margin:'0 32px 48px',paddingTop:'8px',paddingBottom:'8px',borderTop:'1px solid #e8e4de',borderBottom:'1px solid #e8e4de' }}>
-            <div className="marquee-wrap" style={{ overflow:'hidden' }}>
-              <div className="marquee-track">
-                {[...brands,...brands,...brands].map((b, i) => (
-                  <div key={b.id + '-' + i} style={{ flexShrink:0,margin:'0 36px',display:'flex',alignItems:'center',justifyContent:'center',height:'60px' }}>
-                    {b.logo_url ? (
-                      <img src={b.logo_url} alt={b.brand_name} style={{ height:'44px',maxWidth:'140px',objectFit:'contain' }} onError={e => { (e.target as HTMLImageElement).style.display='none'; const n = (e.target as HTMLImageElement).nextElementSibling as HTMLElement; if(n) n.style.display='block' }} />
-                    ) : null}
-                    <span style={{ fontSize:'14px',fontWeight:700,color:'#bbb',letterSpacing:'0.08em',textTransform:'uppercase',fontFamily:'Georgia,serif',display:b.logo_url?'none':'block' }}>{b.brand_name}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Gallery — full bleed swipeable */}
-        {gallery.length > 0 && (
-          <div style={{ padding:'0 0 48px' }}>
-            <div style={{ position:'relative',overflow:'hidden',aspectRatio:'3/4' }}>
-              <div style={{ display:'flex',width:gallery.length * 100 + '%',transform:'translateX(-' + (activeGallery * (100 / gallery.length)) + '%)',transition:'transform 0.4s cubic-bezier(0.4,0,0.2,1)',height:'100%' }}
-                onTouchStart={e => { (e.currentTarget as any)._startX = e.touches[0].clientX }}
-                onTouchEnd={e => {
-                  const start = (e.currentTarget as any)._startX
-                  const end = e.changedTouches[0].clientX
-                  const diff = start - end
-                  if (diff > 50 && activeGallery < gallery.length - 1) setActiveGallery(activeGallery + 1)
-                  if (diff < -50 && activeGallery > 0) setActiveGallery(activeGallery - 1)
-                }}>
-                {gallery.map(img => (
-                  <div key={img.id} onClick={() => setLightbox(img.url)} style={{ width:100 / gallery.length + '%',height:'100%',flexShrink:0,background:'url(' + img.url + ') center/cover',backgroundSize:'cover',cursor:'pointer' }} />
-                ))}
-              </div>
-              {gallery.length > 1 && (
-                <div style={{ position:'absolute',bottom:'14px',left:'50%',transform:'translateX(-50%)',display:'flex',gap:'6px' }}>
-                  {gallery.map((_, i) => (
-                    <button key={i} onClick={() => setActiveGallery(i)} style={{ width:i === activeGallery ? '20px' : '6px',height:'6px',borderRadius:'3px',background:i === activeGallery ? 'white' : 'rgba(255,255,255,0.5)',border:'none',cursor:'pointer',transition:'all 0.3s ease',padding:0 }} />
-                  ))}
-                </div>
-              )}
-            </div>
-          </div>
-        )}
-
-        {/* FAQs */}
-        {faqs.length > 0 && (
-          <div style={{ padding:'0 32px 48px' }}>
-            <h2 style={{ fontFamily:'Georgia,serif',fontSize:'28px',fontWeight:500,color:'#0c2520',margin:'0 0 20px' }}>Questions</h2>
-            {faqs.map(faq => (
-              <div key={faq.id} style={{ borderBottom:'1px solid #e8e4de' }}>
-                <div className="faq-row" onClick={() => setOpenFaq(openFaq === faq.id ? null : faq.id)} style={{ padding:'18px 0',display:'flex',justifyContent:'space-between',alignItems:'center',gap:'16px' }}>
-                  <p style={{ fontSize:'15px',fontWeight:500,color:'#0c2520',margin:0 }}>{faq.question}</p>
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#aaa" strokeWidth="2" strokeLinecap="round" style={{ flexShrink:0,transform:openFaq === faq.id ? 'rotate(180deg)' : 'none',transition:'transform 0.2s ease' }}><path d="M6 9l6 6 6-6"/></svg>
-                </div>
-                {openFaq === faq.id && <p style={{ fontSize:'14px',color:'#666',margin:'0 0 18px',lineHeight:1.65 }}>{faq.answer}</p>}
-              </div>
-            ))}
-          </div>
-        )}
+        {/* Dynamic sections based on section_settings */}
+        {sectionOrder.map(id => renderSection(id))}
 
         {/* Footer */}
         <div style={{ textAlign:'center',padding:'0 32px' }}>
-          <a href="/" style={{ fontFamily:'Georgia,serif',fontSize:'15px',color:'#0c2520',textDecoration:'none' }}>theident</a>
+          <a href="/" style={{ fontFamily:"'ITC Symbol',Georgia,serif",letterSpacing:'-0.03em',fontSize:'15px',color:'#0c2520',textDecoration:'none' }}>theident</a>
           <p style={{ fontSize:'11px',color:'#aaa',margin:'6px 0 0' }}>The performing arts platform</p>
         </div>
       </div>
