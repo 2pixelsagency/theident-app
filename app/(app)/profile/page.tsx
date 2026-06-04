@@ -12,6 +12,7 @@ type Profile = {
   picture_url: string | null
   location: string | null
   bio: string | null
+  slug: string | null
 }
 
 function CropModal({ file, onSave, onClose }: { file: File; onSave: (blob: Blob) => void; onClose: () => void }) {
@@ -43,27 +44,16 @@ function CropModal({ file, onSave, onClose }: { file: File; onSave: (blob: Blob)
     ctx.drawImage(img, x, y, w, h)
   }, [img, zoom, offset])
 
-  const handlePointerDown = (e: React.PointerEvent) => {
-    setDragging(true)
-    setDragStart({ x: e.clientX - offset.x, y: e.clientY - offset.y })
-  }
-  const handlePointerMove = (e: React.PointerEvent) => {
-    if (!dragging) return
-    setOffset({ x: e.clientX - dragStart.x, y: e.clientY - dragStart.y })
-  }
-  const handlePointerUp = () => setDragging(false)
-
-  const handleSave = () => {
-    if (!canvasRef.current) return
-    canvasRef.current.toBlob(blob => { if (blob) onSave(blob) }, 'image/jpeg', 0.9)
-  }
-
   return (
     <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', zIndex: 500, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px' }}>
       <div style={{ background: '#f1f0ee', borderRadius: '20px', padding: '24px', maxWidth: '340px', width: '100%' }}>
-        <p style={{ fontFamily: 'Georgia, serif', fontSize: '18px', fontWeight: 500, color: '#0c2520', margin: '0 0 16px', textAlign: 'center' }}>Crop photo</p>
+        <p style={{ fontFamily: "'ITC Symbol',Georgia,serif", letterSpacing: '-0.03em', fontSize: '18px', fontWeight: 700, color: '#0c2520', margin: '0 0 16px', textAlign: 'center' }}>Crop photo</p>
         <div style={{ width: SIZE + 'px', height: SIZE + 'px', margin: '0 auto 16px', position: 'relative', borderRadius: '50%', overflow: 'hidden', border: '3px solid #e0ddd5', touchAction: 'none' }}>
-          <canvas ref={canvasRef} width={SIZE} height={SIZE} onPointerDown={handlePointerDown} onPointerMove={handlePointerMove} onPointerUp={handlePointerUp} onPointerLeave={handlePointerUp} style={{ width: '100%', height: '100%', cursor: dragging ? 'grabbing' : 'grab' }} />
+          <canvas ref={canvasRef} width={SIZE} height={SIZE}
+            onPointerDown={e => { setDragging(true); setDragStart({ x: e.clientX - offset.x, y: e.clientY - offset.y }) }}
+            onPointerMove={e => { if (dragging) setOffset({ x: e.clientX - dragStart.x, y: e.clientY - dragStart.y }) }}
+            onPointerUp={() => setDragging(false)} onPointerLeave={() => setDragging(false)}
+            style={{ width: '100%', height: '100%', cursor: dragging ? 'grabbing' : 'grab' }} />
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '20px', padding: '0 8px' }}>
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#888" strokeWidth="2" strokeLinecap="round"><circle cx="12" cy="12" r="3"/></svg>
@@ -72,7 +62,7 @@ function CropModal({ file, onSave, onClose }: { file: File; onSave: (blob: Blob)
         </div>
         <div style={{ display: 'flex', gap: '10px' }}>
           <button onClick={onClose} style={{ flex: 1, padding: '14px', borderRadius: '30px', border: '1px solid #e0ddd5', background: 'white', color: '#0c2520', fontSize: '14px', fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit' }}>Cancel</button>
-          <button onClick={handleSave} style={{ flex: 1, padding: '14px', borderRadius: '30px', border: 'none', background: '#0c2520', color: '#f1f0ee', fontSize: '14px', fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit' }}>Save</button>
+          <button onClick={() => { if (!canvasRef.current) return; canvasRef.current.toBlob(blob => { if (blob) onSave(blob) }, 'image/jpeg', 0.9) }} style={{ flex: 1, padding: '14px', borderRadius: '30px', border: 'none', background: '#0c2520', color: '#f1f0ee', fontSize: '14px', fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit' }}>Save</button>
         </div>
       </div>
     </div>
@@ -91,7 +81,7 @@ export default function AccountPage() {
     const load = async () => {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) { router.push('/login'); return }
-      const { data: p } = await supabase.from('profiles').select('id, first_name, last_name, picture_url, location, bio').eq('id', user.id).single()
+      const { data: p } = await supabase.from('profiles').select('id, first_name, last_name, picture_url, location, bio, slug').eq('id', user.id).single()
       setProfile(p)
       setLoading(false)
     }
@@ -106,8 +96,7 @@ export default function AccountPage() {
 
   const handleCropSave = async (blob: Blob) => {
     if (!profile) return
-    setUploading(true)
-    setCropFile(null)
+    setUploading(true); setCropFile(null)
     const path = profile.id + '/headshot-' + Date.now() + '.jpg'
     const { error } = await supabase.storage.from('headshots').upload(path, blob, { upsert: true, contentType: 'image/jpeg' })
     if (!error) {
@@ -124,10 +113,7 @@ export default function AccountPage() {
     router.push('/login')
   }
 
-  const showToast = (msg: string) => {
-    setToast(msg)
-    setTimeout(() => setToast(null), 3000)
-  }
+  const showToast = (msg: string) => { setToast(msg); setTimeout(() => setToast(null), 3000) }
 
   if (loading) return <div />
 
@@ -135,7 +121,7 @@ export default function AccountPage() {
     {
       section: 'Your profile',
       items: [
-        { label: 'View public profile', sub: 'See what casting directors see', href: '#', icon: (
+        { label: 'View public profile', sub: 'See what casting directors see', href: '/' + (profile?.slug || '') + '?from=app', icon: (
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
         )},
         { label: 'Edit profile', sub: 'Name, bio, skills, appearance', href: '/profile/edit', icon: (
@@ -182,15 +168,10 @@ export default function AccountPage() {
         .menu-row:active { background: #e8e4de !important; }
       `}</style>
 
-      {/* Crop modal */}
-      {cropFile && (
-        <CropModal file={cropFile} onSave={handleCropSave} onClose={() => setCropFile(null)} />
-      )}
+      {cropFile && <CropModal file={cropFile} onSave={handleCropSave} onClose={() => setCropFile(null)} />}
 
       {toast && (
-        <div className="toast-anim" style={{ position: 'fixed', bottom: '110px', left: '50%', transform: 'translateX(-50%)', background: '#0c2520', color: '#f1f0ee', padding: '12px 24px', borderRadius: '30px', fontSize: '13px', fontWeight: 500, zIndex: 300, whiteSpace: 'nowrap' }}>
-          {toast}
-        </div>
+        <div className="toast-anim" style={{ position: 'fixed', bottom: '110px', left: '50%', transform: 'translateX(-50%)', background: '#0c2520', color: '#f1f0ee', padding: '12px 24px', borderRadius: '30px', fontSize: '13px', fontWeight: 500, zIndex: 300, whiteSpace: 'nowrap' }}>{toast}</div>
       )}
 
       {/* Profile header */}
@@ -204,29 +185,23 @@ export default function AccountPage() {
             )}
           </div>
           <div style={{ position: 'absolute', bottom: 0, right: 0, width: '24px', height: '24px', borderRadius: '50%', background: '#0c2520', border: '2px solid #f1f0ee', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#f1f0ee" strokeWidth="2.5" strokeLinecap="round">
-              <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/>
-            </svg>
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#f1f0ee" strokeWidth="2.5" strokeLinecap="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
           </div>
           <input type="file" accept="image/*" onChange={handleFileSelect} style={{ display: 'none' }} />
         </label>
         <div>
-          <p style={{ fontFamily: 'Georgia, serif', fontSize: '20px', fontWeight: 500, color: '#0c2520', margin: '0 0 2px' }}>
+          <p style={{ fontFamily: "'ITC Symbol',Georgia,serif", letterSpacing: '-0.03em', fontSize: '20px', fontWeight: 700, color: '#0c2520', margin: '0 0 2px' }}>
             {profile?.first_name} {profile?.last_name}
           </p>
           {profile?.location && <p style={{ fontSize: '13px', color: '#888', margin: '0 0 8px' }}>{profile.location}</p>}
-          <span style={{ fontSize: '11px', background: '#e8efea', color: '#0c2520', padding: '3px 10px', borderRadius: '20px', fontWeight: 500 }}>
-            Free plan
-          </span>
+          <span style={{ fontSize: '11px', background: '#e8efea', color: '#0c2520', padding: '3px 10px', borderRadius: '20px', fontWeight: 500 }}>Free plan</span>
         </div>
       </div>
 
       {/* Menu sections */}
       {menuItems.map(section => (
         <div key={section.section} style={{ marginBottom: '8px' }}>
-          <p style={{ fontSize: '11px', color: '#888', textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 600, margin: '0 0 4px', padding: '0 20px' }}>
-            {section.section}
-          </p>
+          <p style={{ fontSize: '11px', color: '#888', textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 600, margin: '0 0 4px', padding: '0 20px' }}>{section.section}</p>
           <div style={{ background: 'white', borderRadius: '14px', margin: '0 16px', overflow: 'hidden', border: '1px solid #e8e4de' }}>
             {section.items.map((item, i) => (
               <Link key={item.label} href={item.href} style={{ textDecoration: 'none' }}>
@@ -236,9 +211,7 @@ export default function AccountPage() {
                     <p style={{ fontSize: '14px', color: '#0c2520', margin: '0 0 1px', fontWeight: 500 }}>{item.label}</p>
                     <p style={{ fontSize: '12px', color: '#888', margin: 0 }}>{item.sub}</p>
                   </div>
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#ccc" strokeWidth="2" strokeLinecap="round">
-                    <path d="M9 18l6-6-6-6"/>
-                  </svg>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#ccc" strokeWidth="2" strokeLinecap="round"><path d="M9 18l6-6-6-6"/></svg>
                 </div>
               </Link>
             ))}
@@ -248,12 +221,7 @@ export default function AccountPage() {
 
       {/* Logout */}
       <div style={{ margin: '16px 16px 0' }}>
-        <button
-          onClick={handleLogout}
-          style={{ width: '100%', padding: '14px', background: 'white', color: '#c0392b', border: '1px solid #e8e4de', borderRadius: '14px', fontSize: '14px', fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit' }}
-        >
-          Log out
-        </button>
+        <button onClick={handleLogout} style={{ width: '100%', padding: '14px', background: 'white', color: '#c0392b', border: '1px solid #e8e4de', borderRadius: '14px', fontSize: '14px', fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit' }}>Log out</button>
       </div>
 
       <p style={{ textAlign: 'center', fontSize: '11px', color: '#ccc', margin: '16px 0 0' }}>The Ident · Version 1.0</p>
