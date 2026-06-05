@@ -5,9 +5,9 @@ import { supabase } from '@/lib/supabase'
 import { useRouter } from 'next/navigation'
 
 const slides = [
-  { bg: '#92d7af', text: 'Make your portfolio match your talent.', textColor: '#0c2520', btnBg: '#0c2520', btnText: '#f1f0ee', outlineBorder: '#0c2520', dotInactive: 'rgba(0,0,0,0.15)' },
-  { bg: '#061410', text: 'Collaborate with talent, producers, graduates.', textColor: '#f1f0ee', btnBg: '#f1f0ee', btnText: '#0c2520', outlineBorder: 'rgba(255,255,255,0.3)', dotInactive: 'rgba(255,255,255,0.2)' },
-  { bg: '#5B7CFA', text: 'Manage side hustles without missing opportunities.', textColor: '#ffffff', btnBg: '#ffffff', btnText: '#0c2520', outlineBorder: 'rgba(255,255,255,0.4)', dotInactive: 'rgba(255,255,255,0.3)' },
+  { bg: '#92d7af', text: 'Make your portfolio match your talent.', textColor: '#0c2520', btnBg: '#0c2520', btnText: '#f1f0ee', outlineBorder: '#0c2520', dotInactive: 'rgba(0,0,0,0.15)', img: '/slide-1.png' },
+  { bg: '#061410', text: 'Collaborate with talent, producers, graduates.', textColor: '#f1f0ee', btnBg: '#f1f0ee', btnText: '#0c2520', outlineBorder: 'rgba(255,255,255,0.3)', dotInactive: 'rgba(255,255,255,0.2)', img: '/slide-2.png' },
+  { bg: '#5B7CFA', text: 'Manage side hustles without missing opportunities.', textColor: '#ffffff', btnBg: '#ffffff', btnText: '#0c2520', outlineBorder: 'rgba(255,255,255,0.4)', dotInactive: 'rgba(255,255,255,0.3)', img: '/slide-3.png' },
 ]
 
 export default function Login() {
@@ -36,11 +36,7 @@ export default function Login() {
     return () => { if (timerRef.current) clearInterval(timerRef.current) }
   }, [mode])
 
-  const goToSlide = (index: number) => {
-    setActive(index)
-    resetTimer()
-  }
-
+  const goToSlide = (index: number) => { setActive(index); resetTimer() }
   const handleSwipe = (dir: 'left' | 'right') => {
     if (dir === 'left') setActive(i => (i + 1) % slides.length)
     else setActive(i => (i - 1 + slides.length) % slides.length)
@@ -81,27 +77,22 @@ export default function Login() {
               {mode === 'signin' ? 'Sign in to pick up where you left off.' : 'Create your profile and start getting booked.'}
             </p>
           </div>
-
           {error && <div style={{ background:'#fde8e8',color:'#c0392b',padding:'12px 16px',borderRadius:'12px',fontSize:'13px',marginBottom:'16px',textAlign:'center' }}>{error}</div>}
-
           <div style={{ marginBottom:'12px' }}>
             <input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="Email address" style={{ width:'100%',padding:'15px 16px',border:'1px solid #e0ddd5',borderRadius:'14px',fontSize:'15px',fontFamily:'inherit',boxSizing:'border-box',background:'white',color:'#0c2520' }} />
           </div>
           <div style={{ marginBottom:'24px' }}>
             <input type="password" value={password} onChange={e => setPassword(e.target.value)} placeholder="Password" onKeyDown={e => { if (e.key === 'Enter') handleAuth() }} style={{ width:'100%',padding:'15px 16px',border:'1px solid #e0ddd5',borderRadius:'14px',fontSize:'15px',fontFamily:'inherit',boxSizing:'border-box',background:'white',color:'#0c2520' }} />
           </div>
-
           <button onClick={handleAuth} disabled={loading || !email || !password} style={{ width:'100%',padding:'16px',background:'#0c2520',color:'#f1f0ee',border:'none',borderRadius:'30px',fontSize:'15px',fontWeight:600,cursor:'pointer',fontFamily:'inherit',opacity:loading ? 0.6 : 1,marginBottom:'16px' }}>
             {loading ? 'Please wait...' : (mode === 'signin' ? 'Sign in' : 'Create account')}
           </button>
-
           <p style={{ textAlign:'center',fontSize:'14px',color:'#888',margin:0 }}>
             {mode === 'signin' ? "Don't have an account? " : 'Already have an account? '}
             <button onClick={() => { setMode(mode === 'signin' ? 'signup' : 'signin'); setError('') }} style={{ background:'none',border:'none',color:'#0c2520',fontWeight:600,cursor:'pointer',fontFamily:'inherit',fontSize:'14px',textDecoration:'underline' }}>
               {mode === 'signin' ? 'Sign up' : 'Sign in'}
             </button>
           </p>
-
           <button onClick={() => setMode('slider')} style={{ display:'flex',alignItems:'center',justifyContent:'center',gap:'6px',margin:'32px auto 0',background:'none',border:'none',fontSize:'13px',color:'#aaa',cursor:'pointer',fontFamily:'inherit' }}>
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#aaa" strokeWidth="2" strokeLinecap="round"><path d="M19 12H5"/><path d="M12 19l-7-7 7-7"/></svg>
             Back
@@ -120,10 +111,12 @@ export default function Login() {
         .slide-text { animation: fadeSlide 0.5s ease-out; }
       `}</style>
 
+      {/* Text near top */}
       <div style={{ paddingTop:'max(env(safe-area-inset-top), 16px)',padding:'max(env(safe-area-inset-top), 16px) 32px 0' }}>
         <p key={active} className="slide-text" style={{ fontFamily:"'ITC Symbol',Georgia,serif",letterSpacing:'-0.03em',fontSize:'22px',fontWeight:700,color:s.textColor,textAlign:'center',lineHeight:1.35,margin:'16px 0 0',maxWidth:'420px',marginLeft:'auto',marginRight:'auto' }}>{s.text}</p>
       </div>
 
+      {/* Phone screenshot — swipeable */}
       <div style={{ flex:1,display:'flex',alignItems:'center',justifyContent:'center',padding:'16px 32px',maxWidth:'420px',margin:'0 auto',width:'100%',boxSizing:'border-box' }}
         onTouchStart={e => { (e.currentTarget as any)._startX = e.touches[0].clientX }}
         onTouchEnd={e => {
@@ -133,28 +126,12 @@ export default function Login() {
           if (diff > 50) handleSwipe('left')
           if (diff < -50) handleSwipe('right')
         }}>
-        <div className="phone-float" style={{ width:'240px',height:'460px',borderRadius:'32px',background:'white',boxShadow:'0 20px 60px rgba(0,0,0,0.15), 0 0 0 1px rgba(0,0,0,0.05)',position:'relative',overflow:'hidden' }}>
-          <div style={{ height:'40px',background:'#f8f8f6',display:'flex',alignItems:'center',justifyContent:'center' }}>
-            <div style={{ width:'70px',height:'6px',borderRadius:'3px',background:'#e0ddd5' }} />
-          </div>
-          <div style={{ padding:'16px',display:'flex',flexDirection:'column',gap:'10px' }}>
-            <div style={{ width:'55%',height:'9px',borderRadius:'5px',background:'#e8e4de' }} />
-            <div style={{ width:'85%',height:'9px',borderRadius:'5px',background:'#e8e4de' }} />
-            <div style={{ width:'70%',height:'9px',borderRadius:'5px',background:'#e8e4de' }} />
-            <div style={{ height:'14px' }} />
-            <div style={{ width:'100%',height:'90px',borderRadius:'12px',background:'#f1f0ee' }} />
-            <div style={{ width:'100%',height:'90px',borderRadius:'12px',background:'#f1f0ee' }} />
-            <div style={{ width:'100%',height:'60px',borderRadius:'12px',background:'#f1f0ee' }} />
-          </div>
-          <div style={{ position:'absolute',bottom:0,left:0,right:0,height:'44px',background:'#f8f8f6',borderTop:'1px solid #eee',display:'flex',alignItems:'center',justifyContent:'space-around',padding:'0 24px' }}>
-            <div style={{ width:'20px',height:'20px',borderRadius:'4px',background:'#e0ddd5' }} />
-            <div style={{ width:'20px',height:'20px',borderRadius:'4px',background:'#e0ddd5' }} />
-            <div style={{ width:'20px',height:'20px',borderRadius:'4px',background:'#e0ddd5' }} />
-            <div style={{ width:'20px',height:'20px',borderRadius:'50%',background:'#e0ddd5' }} />
-          </div>
+        <div className="phone-float" style={{ width:'240px',borderRadius:'32px',overflow:'hidden',boxShadow:'0 20px 60px rgba(0,0,0,0.15)' }}>
+          <img key={active} src={s.img} alt="" style={{ width:'100%',display:'block' }} />
         </div>
       </div>
 
+      {/* Bottom */}
       <div style={{ padding:'0 32px 0',paddingBottom:'max(env(safe-area-inset-bottom), 16px)',maxWidth:'420px',margin:'0 auto',width:'100%',boxSizing:'border-box' }}>
         <div style={{ display:'flex',justifyContent:'center',gap:'6px',marginBottom:'18px' }}>
           {slides.map((_, i) => (
