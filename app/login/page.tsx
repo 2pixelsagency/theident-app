@@ -123,7 +123,7 @@ export default function Login() {
       </div>
 
       {/* Phone screenshot — swipeable */}
-      <div style={{ flex:1,display:'flex',alignItems:'center',justifyContent:'center',padding:'16px 32px',maxWidth:'420px',margin:'0 auto',width:'100%',boxSizing:'border-box' }}
+      <div style={{ flex:1,display:'flex',alignItems:'center',justifyContent:'center',padding:'16px 32px',maxWidth:'460px',margin:'0 auto',width:'100%',boxSizing:'border-box' }}
         onTouchStart={e => { (e.currentTarget as any)._startX = e.touches[0].clientX }}
         onTouchEnd={e => {
           const start = (e.currentTarget as any)._startX
