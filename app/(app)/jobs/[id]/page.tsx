@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
+import ApplyForm from './ApplyForm'
 
 type Job = {
   id: string
@@ -35,6 +36,10 @@ type Job = {
   dbs_required: boolean
   start_date: string | null
   created_at: string
+  application_method: string | null
+  application_email: string | null
+  requires_nda: boolean
+  nda_text: string | null
 }
 
 type Skill = { id: number; name: string; category_id: number | null }
@@ -50,7 +55,10 @@ export default function JobDetail() {
   const [jobSkills, setJobSkills] = useState<Array<Skill & { category?: SkillCategory }>>([])
   const [loading, setLoading] = useState(true)
   const [saved, setSaved] = useState(false)
-  const [toast, setToast] = useState<'saved' | 'unsaved' | null>(null)
+  const [toast, setToast] = useState<string | null>(null)
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null)
+  const [showApply, setShowApply] = useState(false)
+  const [hasApplied, setHasApplied] = useState(false)
 
   useEffect(() => {
     const load = async () => {
@@ -75,8 +83,11 @@ export default function JobDetail() {
 
       const { data: { user } } = await supabase.auth.getUser()
       if (user) {
+        setCurrentUserId(user.id)
         const { data: sj } = await supabase.from('saved_jobs').select('job_id').eq('profile_id', user.id).eq('job_id', jobId).maybeSingle()
         if (sj) setSaved(true)
+        const { data: existingApp } = await supabase.from('applications').select('id').eq('job_id', jobId).eq('profile_id', user.id).maybeSingle()
+        if (existingApp) setHasApplied(true)
       }
 
       setLoading(false)
@@ -84,10 +95,7 @@ export default function JobDetail() {
     load()
   }, [jobId])
 
-  const showToast = (type: 'saved' | 'unsaved') => {
-    setToast(type)
-    setTimeout(() => setToast(null), 3000)
-  }
+  const showToastMsg = (msg: string) => { setToast(msg); setTimeout(() => setToast(null), 3000) }
 
   const toggleSaved = async () => {
     const { data: { user } } = await supabase.auth.getUser()
@@ -95,19 +103,20 @@ export default function JobDetail() {
     if (saved) {
       await supabase.from('saved_jobs').delete().eq('profile_id', user.id).eq('job_id', jobId)
       setSaved(false)
-      showToast('unsaved')
+      showToastMsg('Removed from saved')
     } else {
       await supabase.from('saved_jobs').insert({ profile_id: user.id, job_id: jobId })
       setSaved(true)
-      showToast('saved')
+      showToastMsg('Job saved')
     }
   }
 
   const handleApply = () => {
-    if (job?.submission_link) {
-      window.open(job.submission_link, '_blank')
-    } else if (job?.casting_email) {
-      window.location.href = `mailto:${job.casting_email}?subject=Application for ${job.project_role || job.job_title}`
+    if (!currentUserId) { router.push('/login'); return }
+    if (job?.application_method === 'email' && job?.application_email) {
+      window.open('mailto:' + job.application_email + '?subject=Application: ' + (job.project_role || job.job_title))
+    } else {
+      setShowApply(true)
     }
   }
 
@@ -115,15 +124,15 @@ export default function JobDetail() {
     const diffDays = Math.floor((new Date().getTime() - new Date(dateStr).getTime()) / 86400000)
     if (diffDays === 0) return 'Today'
     if (diffDays === 1) return 'Yesterday'
-    if (diffDays < 7) return `${diffDays} days ago`
+    if (diffDays < 7) return diffDays + ' days ago'
     if (diffDays < 14) return 'Last week'
-    return `${Math.floor(diffDays / 7)} weeks ago`
+    return Math.floor(diffDays / 7) + ' weeks ago'
   }
 
   if (loading) return <div style={{ minHeight: '100vh', background: 'white' }} />
   if (!job) return (
     <div style={{ minHeight: '100vh', background: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-      <p style={{ fontFamily: 'Georgia, serif', fontSize: '17px', color: '#0c2520' }}>Job not found</p>
+      <p style={{ fontFamily: "'ITC Symbol',Georgia,serif", letterSpacing: '-0.03em', fontSize: '17px', color: '#0c2520' }}>Job not found</p>
     </div>
   )
 
@@ -143,47 +152,22 @@ export default function JobDetail() {
       `}</style>
 
       {toast && (
-        <div className="toast-anim" style={{
-          position: 'fixed', bottom: '110px', left: '50%', transform: 'translateX(-50%)',
-          background: '#0c2520', color: '#f1f0ee', padding: '12px 24px',
-          borderRadius: '30px', fontSize: '13px', fontWeight: 500,
-          zIndex: 300, whiteSpace: 'nowrap', fontFamily: 'inherit',
-        }}>
-          {toast === 'saved' ? 'Job saved' : 'Removed from saved'}
-        </div>
+        <div className="toast-anim" style={{ position: 'fixed', bottom: '110px', left: '50%', transform: 'translateX(-50%)', background: '#0c2520', color: '#f1f0ee', padding: '12px 24px', borderRadius: '30px', fontSize: '13px', fontWeight: 500, zIndex: 300, whiteSpace: 'nowrap' }}>{toast}</div>
       )}
 
-      {/* Dark green header */}
-      <div style={{
-        background: '#061410',
-        padding: '0 20px 24px',
-        paddingTop: 'max(56px, env(safe-area-inset-top))',
-      }}>
+      {/* Header */}
+      <div style={{ background: '#061410', padding: '0 20px 24px', paddingTop: 'max(56px, env(safe-area-inset-top))' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
-          <button
-            onClick={() => router.back()}
-            style={{ background: 'rgba(255,255,255,0.12)', border: 'none', borderRadius: '50%', width: '40px', height: '40px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', WebkitTapHighlightColor: 'transparent' }}
-          >
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#f1f0ee" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M19 12H5M12 5l-7 7 7 7"/>
-            </svg>
+          <button onClick={() => router.back()} style={{ background: 'rgba(255,255,255,0.12)', border: 'none', borderRadius: '50%', width: '40px', height: '40px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', WebkitTapHighlightColor: 'transparent' }}>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#f1f0ee" strokeWidth="2.2" strokeLinecap="round"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
           </button>
-          <button
-            onClick={toggleSaved}
-            style={{ background: saved ? '#92d7af' : 'rgba(255,255,255,0.12)', border: 'none', borderRadius: '50%', width: '40px', height: '40px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', transition: 'background 0.2s ease', WebkitTapHighlightColor: 'transparent' }}
-          >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill={saved ? '#0c2520' : 'none'} stroke={saved ? '#0c2520' : '#f1f0ee'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/>
-            </svg>
+          <button onClick={toggleSaved} style={{ background: saved ? '#92d7af' : 'rgba(255,255,255,0.12)', border: 'none', borderRadius: '50%', width: '40px', height: '40px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', transition: 'background 0.2s ease', WebkitTapHighlightColor: 'transparent' }}>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill={saved ? '#0c2520' : 'none'} stroke={saved ? '#0c2520' : '#f1f0ee'} strokeWidth="2" strokeLinecap="round"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>
           </button>
         </div>
 
-        {job.is_spotlighted && (
-          <span style={{ display: 'inline-block', background: '#92d7af', color: '#0c2520', padding: '3px 10px', borderRadius: '5px', fontSize: '10px', fontWeight: 600, letterSpacing: '0.05em', textTransform: 'uppercase', marginBottom: '10px' }}>
-            Spotlight
-          </span>
-        )}
-        <h1 style={{ fontFamily: 'Georgia, serif', fontSize: '26px', fontWeight: 500, color: '#f1f0ee', margin: '0 0 6px', lineHeight: 1.2 }}>{title}</h1>
+        {job.is_spotlighted && <span style={{ display: 'inline-block', background: '#92d7af', color: '#0c2520', padding: '3px 10px', borderRadius: '5px', fontSize: '10px', fontWeight: 600, letterSpacing: '0.05em', textTransform: 'uppercase', marginBottom: '10px' }}>Spotlight</span>}
+        <h1 style={{ fontFamily: "'ITC Symbol',Georgia,serif", letterSpacing: '-0.03em', fontSize: '26px', fontWeight: 700, color: '#f1f0ee', margin: '0 0 6px', lineHeight: 1.2 }}>{title}</h1>
         {subtitle && <p style={{ fontSize: '14px', color: '#a8c4b4', margin: '0 0 16px', fontStyle: 'italic' }}>In {subtitle}</p>}
 
         <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
@@ -218,9 +202,7 @@ export default function JobDetail() {
               <div>
                 <p style={{ fontSize: '11px', color: '#888', margin: '0 0 8px' }}>Required skills</p>
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
-                  {jobSkills.map(skill => (
-                    <span key={skill.id} style={{ background: skill.category?.color || '#e8efea', color: skill.category?.text_color || '#0c2520', padding: '4px 10px', borderRadius: '6px', fontSize: '12px' }}>{skill.name}</span>
-                  ))}
+                  {jobSkills.map(skill => <span key={skill.id} style={{ background: skill.category?.color || '#e8efea', color: skill.category?.text_color || '#0c2520', padding: '4px 10px', borderRadius: '6px', fontSize: '12px' }}>{skill.name}</span>)}
                 </div>
               </div>
             )}
@@ -260,38 +242,45 @@ export default function JobDetail() {
           <div className="section-card">
             <p style={{ fontSize: '11px', color: '#888', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 600, margin: '0 0 10px' }}>Contact</p>
             {job.casting_team && <p style={{ fontSize: '14px', color: '#0c2520', margin: '0 0 4px' }}>{job.casting_team}</p>}
-            {job.casting_email && <a href={`mailto:${job.casting_email}`} style={{ fontSize: '14px', color: '#0c2520', textDecoration: 'underline' }}>{job.casting_email}</a>}
+            {job.casting_email && <a href={'mailto:' + job.casting_email} style={{ fontSize: '14px', color: '#0c2520', textDecoration: 'underline' }}>{job.casting_email}</a>}
           </div>
         )}
 
-        <p style={{ fontSize: '11px', color: '#bbb', textAlign: 'center', margin: '16px 0 0' }}>
-          Posted {formatRelativeDate(job.created_at)}
-        </p>
+        {job.requires_nda && (
+          <div style={{ background: '#fef3c7', borderRadius: '14px', padding: '14px 16px', marginBottom: '10px', border: '1px solid #fde68a', display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#92400e" strokeWidth="1.8" strokeLinecap="round" style={{ flexShrink: 0 }}><path d="M12 9v2m0 4h.01M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0z"/></svg>
+            <p style={{ fontSize: '12px', color: '#92400e', margin: 0, fontWeight: 500 }}>This job requires an NDA to be signed when applying</p>
+          </div>
+        )}
+
+        <p style={{ fontSize: '11px', color: '#bbb', textAlign: 'center', margin: '16px 0 0' }}>Posted {formatRelativeDate(job.created_at)}</p>
       </div>
 
       {/* Sticky apply bar */}
-      <div style={{
-        position: 'fixed', bottom: 0, left: 0, right: 0,
-        background: 'white',
-        borderTop: '1px solid #e8e6e0',
-        padding: '12px 16px',
-        paddingBottom: 'max(16px, env(safe-area-inset-bottom))',
-        zIndex: 150,
-      }}>
-        <button
-          onClick={handleApply}
-          className="apply-btn-main"
-          style={{
-            width: '100%', padding: '16px',
-            background: '#0c2520', color: '#f1f0ee',
-            border: 'none', borderRadius: '30px',
-            fontSize: '16px', fontWeight: 500,
-            cursor: 'pointer', fontFamily: 'inherit',
-          }}
-        >
-          Apply now
-        </button>
+      <div style={{ position: 'fixed', bottom: 0, left: 0, right: 0, background: 'white', borderTop: '1px solid #e8e6e0', padding: '12px 16px', paddingBottom: 'max(16px, env(safe-area-inset-bottom))', zIndex: 150 }}>
+        {hasApplied ? (
+          <div style={{ width: '100%', padding: '16px', background: '#e8efea', borderRadius: '30px', textAlign: 'center', fontSize: '15px', fontWeight: 600, color: '#0c2520', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#4ade80" strokeWidth="2.5" strokeLinecap="round"><polyline points="20 6 9 17 4 12"/></svg>
+            Applied
+          </div>
+        ) : (
+          <button onClick={handleApply} className="apply-btn-main" style={{ width: '100%', padding: '16px', background: '#0c2520', color: '#f1f0ee', border: 'none', borderRadius: '30px', fontSize: '16px', fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit' }}>
+            Apply now
+          </button>
+        )}
       </div>
+
+      {/* Apply form */}
+      {showApply && currentUserId && (
+        <ApplyForm
+          jobId={job.id}
+          profileId={currentUserId}
+          requiresNda={job.requires_nda || false}
+          ndaText={job.nda_text || null}
+          onClose={() => setShowApply(false)}
+          onApplied={() => { setShowApply(false); setHasApplied(true); showToastMsg('Application submitted') }}
+        />
+      )}
     </div>
   )
 }
