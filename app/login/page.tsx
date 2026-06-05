@@ -123,7 +123,7 @@ export default function Login() {
       </div>
 
       {/* Phone screenshot — swipeable */}
-      <div style={{ flex:1,display:'flex',alignItems:'center',justifyContent:'center',padding:'16px 32px',maxWidth:'100%',margin:'0 auto',width:'100%',boxSizing:'border-box' }}
+    <div style={{ flex:1,display:'flex',alignItems:'center',justifyContent:'center',padding:'8px 0',overflow:'hidden' }}
         onTouchStart={e => { (e.currentTarget as any)._startX = e.touches[0].clientX }}
         onTouchEnd={e => {
           const start = (e.currentTarget as any)._startX
@@ -132,7 +132,7 @@ export default function Login() {
           if (diff > 50) handleSwipe('left')
           if (diff < -50) handleSwipe('right')
         }}>
-      <img key={active} className="phone-float" src={s.img} alt="" style={{ width:'460px',display:'block' }} />
+        <img key={active} className="phone-float slide-text" src={s.img} alt="" style={{ height:'100%',maxHeight:'100%',width:'auto',display:'block',objectFit:'contain' }} />
       </div>
 
       {/* Bottom */}
