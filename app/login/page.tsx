@@ -126,9 +126,7 @@ export default function Login() {
           if (diff > 50) handleSwipe('left')
           if (diff < -50) handleSwipe('right')
         }}>
-        <div className="phone-float" style={{ width:'240px',borderRadius:'32px',overflow:'hidden',boxShadow:'0 20px 60px rgba(0,0,0,0.15)' }}>
-          <img key={active} src={s.img} alt="" style={{ width:'100%',display:'block' }} />
-        </div>
+      <img key={active} className="phone-float" src={s.img} alt="" style={{ width:'280px',display:'block' }} />
       </div>
 
       {/* Bottom */}
