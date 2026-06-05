@@ -68,7 +68,7 @@ export default function JobApplicants() {
   }
 
   const filtered = filter === 'all' ? applicants : applicants.filter(a => a.status === filter)
-  const title = job?.is_side_hustle ? job.job_title : job.project_role
+  const title = job?.is_side_hustle ? job?.job_title : job?.project_role
   const counts = { all: applicants.length, submitted: applicants.filter(a => a.status === 'submitted').length, shortlisted: applicants.filter(a => a.status === 'shortlisted').length, rejected: applicants.filter(a => a.status === 'rejected').length }
 
   const statusColor = (s: string) => {
