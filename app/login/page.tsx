@@ -132,7 +132,7 @@ export default function Login() {
           if (diff > 50) handleSwipe('left')
           if (diff < -50) handleSwipe('right')
         }}>
-      <img key={active} className="phone-float" src={s.img} alt="" style={{ width:'340px',display:'block' }} />
+      <img key={active} className="phone-float" src={s.img} alt="" style={{ width:'380px',display:'block' }} />
       </div>
 
       {/* Bottom */}
