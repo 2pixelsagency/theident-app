@@ -42,6 +42,12 @@ export default function Login() {
     else setActive(i => (i - 1 + slides.length) % slides.length)
     resetTimer()
   }
+  useEffect(() => {
+    slides.forEach(slide => {
+      const img = new Image()
+      img.src = slide.img
+    })
+  }, [])
 
   if (typeof document !== 'undefined') {
     const color = mode === 'slider' ? s.bg : '#f1f0ee'
