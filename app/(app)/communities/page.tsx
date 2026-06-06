@@ -70,19 +70,16 @@ export default function CommunitiesPage() {
           <Link href="/communities/create" style={{ background: '#0c2520', color: '#f1f0ee', padding: '8px 16px', borderRadius: '20px', fontSize: '12px', fontWeight: 500, textDecoration: 'none' }}>+ Create</Link>
         </div>
 
-        {/* Tabs */}
         <div style={{ display: 'flex', background: '#e8e4de', borderRadius: '12px', padding: '4px', gap: '4px', marginBottom: '14px' }}>
           <button onClick={() => setTab('mine')} style={{ flex: 1, padding: '10px', borderRadius: '9px', border: 'none', background: tab === 'mine' ? '#0c2520' : 'transparent', color: tab === 'mine' ? '#f1f0ee' : '#888', fontSize: '14px', fontWeight: tab === 'mine' ? 600 : 400, cursor: 'pointer', fontFamily: 'inherit' }}>My Communities</button>
           <button onClick={() => setTab('discover')} style={{ flex: 1, padding: '10px', borderRadius: '9px', border: 'none', background: tab === 'discover' ? '#0c2520' : 'transparent', color: tab === 'discover' ? '#f1f0ee' : '#888', fontSize: '14px', fontWeight: tab === 'discover' ? 600 : 400, cursor: 'pointer', fontFamily: 'inherit' }}>Discover</button>
         </div>
 
-        {/* Search */}
         <div style={{ position: 'relative', marginBottom: '12px' }}>
           <svg style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)' }} width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#aaa" strokeWidth="2" strokeLinecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
           <input type="search" value={search} onChange={e => setSearch(e.target.value)} placeholder="Search communities..." style={{ width: '100%', padding: '11px 14px 11px 38px', border: '1px solid #e0ddd5', borderRadius: '12px', fontSize: '13px', fontFamily: 'inherit', background: 'white', boxSizing: 'border-box', color: '#0c2520' }} />
         </div>
 
-        {/* Categories */}
         <div style={{ display: 'flex', gap: '6px', overflowX: 'auto', marginBottom: '16px', paddingBottom: '4px' }}>
           {CATEGORIES.map(c => (
             <button key={c} onClick={() => setCatFilter(c)} style={{ padding: '6px 14px', borderRadius: '20px', fontSize: '12px', cursor: 'pointer', fontFamily: 'inherit', border: catFilter === c ? 'none' : '1px solid #e0ddd5', background: catFilter === c ? '#0c2520' : 'white', color: catFilter === c ? '#f1f0ee' : '#888', fontWeight: catFilter === c ? 600 : 400, whiteSpace: 'nowrap' }}>{c}</button>
@@ -90,7 +87,6 @@ export default function CommunitiesPage() {
         </div>
       </div>
 
-      {/* Community cards */}
       <div style={{ padding: '0 16px' }}>
         {filtered.length === 0 ? (
           <div style={{ background: 'white', borderRadius: '14px', border: '1px solid #e8e4de', padding: '48px 24px', textAlign: 'center' }}>
@@ -108,11 +104,18 @@ export default function CommunitiesPage() {
                       {!c.icon_url && c.name[0]}
                     </div>
                     <div style={{ flex: 1 }}>
-                      <p style={{ fontSize: '15px', fontWeight: 600, color: '#0c2520', margin: '0 0 2px' }}>{c.name}</p>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '2px' }}>
+                        <p style={{ fontSize: '15px', fontWeight: 600, color: '#0c2520', margin: 0 }}>{c.name}</p>
+                        {c.is_private && (
+                          <div style={{ background: '#0c2520', borderRadius: '50%', width: '16px', height: '16px', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                            <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="#4ade80" strokeWidth="3" strokeLinecap="round"><polyline points="20 6 9 17 4 12"/></svg>
+                          </div>
+                        )}
+                      </div>
                       <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
                         <span style={{ fontSize: '11px', color: '#888' }}>{c.member_count} member{c.member_count !== 1 ? 's' : ''}</span>
                         <span style={{ fontSize: '11px', color: '#aaa' }}>{c.category}</span>
-                        {c.is_private && <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#aaa" strokeWidth="2" strokeLinecap="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>}
+                        {c.is_private && <span style={{ fontSize: '9px', fontWeight: 600, color: '#f59e0b', background: '#fef3c7', padding: '2px 6px', borderRadius: '4px' }}>RESTRICTED</span>}
                       </div>
                     </div>
                     {c.status === 'pending' && <span style={{ fontSize: '10px', fontWeight: 600, color: '#f59e0b', background: '#fef3c7', padding: '3px 8px', borderRadius: '4px' }}>PENDING</span>}
