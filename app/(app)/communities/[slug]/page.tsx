@@ -27,7 +27,7 @@ export default function CommunityDetail() {
   const [membership, setMembership] = useState<{ role: string; status: string } | null>(null)
   const [newPost, setNewPost] = useState('')
   const [postCatId, setPostCatId] = useState<string | null>(null)
-  const [eventDate, setEventDate] = useState('')
+  const [event, setEvent] = useState('')
   const [eventTime, setEventTime] = useState('')
   const [eventLocation, setEventLocation] = useState('')
   const [posting, setPosting] = useState(false)
@@ -307,9 +307,9 @@ export default function CommunityDetail() {
               )}
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '10px' }}>
                 <div style={{ display: 'flex', gap: '6px' }}>
-                  <input type="date" value={eventDate} onChange={e => setEventDate(e.target.value)} style={{ padding: '4px 6px', border: '1px solid #e0ddd5', borderRadius: '6px', fontSize: '11px', fontFamily: 'inherit', color: eventDate ? '#0c2520' : '#ccc' }} />
-                  {eventDate && <input type="time" value={eventTime} onChange={e => setEventTime(e.target.value)} style={{ padding: '4px 6px', border: '1px solid #e0ddd5', borderRadius: '6px', fontSize: '11px', fontFamily: 'inherit', color: '#0c2520' }} />}
-                  {eventDate && <input type="text" value={eventLocation} onChange={e => setEventLocation(e.target.value)} placeholder="Location" style={{ padding: '4px 6px', border: '1px solid #e0ddd5', borderRadius: '6px', fontSize: '11px', fontFamily: 'inherit', color: '#0c2520', width: '100px' }} />}
+                  <input type="date" value={eventDate} onChange={e => setEventDate(e.target.value)} placeholder="Add date" style={{ padding: '6px 10px', border: '1px solid #e0ddd5', borderRadius: '8px', fontSize: '12px', fontFamily: 'inherit', color: eventDate ? '#0c2520' : '#aaa', background: 'white' }} />
+                  {eventDate && <input type="time" value={eventTime} onChange={e => setEventTime(e.target.value)} placeholder="Add time" style={{ padding: '6px 10px', border: '1px solid #e0ddd5', borderRadius: '8px', fontSize: '12px', fontFamily: 'inherit', color: eventTime ? '#0c2520' : '#aaa', background: 'white' }} />}
+                  {eventDate && <input type="text" value={eventLocation} onChange={e => setEventLocation(e.target.value)} placeholder="Add location" style={{ padding: '6px 10px', border: '1px solid #e0ddd5', borderRadius: '8px', fontSize: '12px', fontFamily: 'inherit', color: '#0c2520', flex: 1, minWidth: '80px', background: 'white' }} />}
                 </div>
                 <button onClick={handlePost} disabled={posting || !newPost.trim()} style={{ padding: '8px 20px', background: '#0c2520', color: '#f1f0ee', border: 'none', borderRadius: '20px', fontSize: '12px', fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit', opacity: posting || !newPost.trim() ? 0.5 : 1 }}>{posting ? 'Posting...' : 'Post'}</button>
               </div>
