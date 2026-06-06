@@ -218,7 +218,7 @@ export default function CommunityDetail() {
       {toast && <div className="toast-anim" style={{ position: 'fixed', bottom: '100px', left: '50%', transform: 'translateX(-50%)', background: '#0c2520', color: '#f1f0ee', padding: '12px 24px', borderRadius: '30px', fontSize: '13px', fontWeight: 500, zIndex: 700, whiteSpace: 'nowrap' }}>{toast}</div>}
 
       {/* Cover */}
-      <div style={{ position: 'relative', height: '160px', background: community.cover_url ? 'url(' + community.cover_url + ') center/cover' : 'linear-gradient(135deg, #0c2520, #1a4a3a)', backgroundSize: 'cover' }}>
+      <div style={{ position: 'relative', height: '180px', background: community.cover_url ? 'url(' + community.cover_url + ') center/cover' : 'linear-gradient(135deg, #0c2520, #1a4a3a)', backgroundSize: 'cover' }}>
         <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(transparent 30%, rgba(0,0,0,0.4))' }} />
         <button onClick={() => router.push('/communities')} style={{ position: 'absolute', top: '16px', left: '16px', zIndex: 2, background: 'rgba(255,255,255,0.15)', backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)', border: '1px solid rgba(255,255,255,0.15)', borderRadius: '50%', width: '36px', height: '36px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round"><path d="M19 12H5"/><path d="M12 19l-7-7 7-7"/></svg>
@@ -234,7 +234,7 @@ export default function CommunityDetail() {
 
       <div style={{ padding: '0 16px' }}>
         {/* Profile pic + name */}
-        <div style={{ display: 'flex', alignItems: 'end', gap: '14px', marginTop: '-30px', position: 'relative', zIndex: 2, marginBottom: '12px' }}>
+        <div style={{ display: 'flex', alignItems: 'end', gap: '14px', marginTop: '-30px', position: 'relative', zIndex: 2, marginBottom: '12px', paddingTop: '0' }}>
           <div style={{ position: 'relative' }}>
             <div style={{ width: '64px', height: '64px', borderRadius: '50%', border: '3px solid #f1f0ee', background: community.icon_url ? 'url(' + community.icon_url + ') center/cover' : '#0c2520', backgroundSize: 'cover', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 2px 8px rgba(0,0,0,0.15)' }}>
               {!community.icon_url && <span style={{ fontSize: '26px', fontWeight: 700, color: '#f1f0ee' }}>{community.name[0]}</span>}
