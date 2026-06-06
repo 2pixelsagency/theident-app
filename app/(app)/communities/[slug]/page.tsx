@@ -27,7 +27,7 @@ export default function CommunityDetail() {
   const [membership, setMembership] = useState<{ role: string; status: string } | null>(null)
   const [newPost, setNewPost] = useState('')
   const [postCatId, setPostCatId] = useState<string | null>(null)
-  const [event, setEvent] = useState('')
+  const [eventDate, setEventDate] = useState('')
   const [eventTime, setEventTime] = useState('')
   const [eventLocation, setEventLocation] = useState('')
   const [posting, setPosting] = useState(false)
