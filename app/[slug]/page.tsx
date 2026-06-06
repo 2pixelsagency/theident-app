@@ -35,11 +35,6 @@ function NavButton() {
 export default function PublicProfile() {
   const params = useParams()
   const slug = params.slug as string
-  
-const knownRoutes = ['dashboard','browse','saved','calendar','connections','profile','post-job','applications','my-jobs','billing','notifications','security','jobs','login','onboarding']
-  if (knownRoutes.includes(slug)) {
-    return null
-  }
   const [profile, setProfile] = useState<Profile | null>(null)
   const [skills, setSkills] = useState<Skill[]>([])
   const [credits, setCredits] = useState<Credit[]>([])
