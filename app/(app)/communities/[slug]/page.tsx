@@ -204,7 +204,7 @@ export default function CommunityDetail() {
 
   const approvedMembers = members.filter(m => m.status === 'approved')
   const pendingMembers = members.filter(m => m.status === 'pending')
-  const filteredPosts = (feedFilter ? posts.filter(p => p.category_id === feedFilter) : posts)     .sort((a, b) => {       if (a.is_pinned && !b.is_pinned) return -1       if (!a.is_pinned && b.is_pinned) return 1       const aScore = a.upvotes - a.downvotes       const bScore = b.upvotes - b.downvotes       if (bScore !== aScore) return bScore - aScore       return new Date(b.created_at).getTime() - new Date(a.created_at).getTime()     })
+const filteredPosts = (feedFilter ? posts.filter(p => p.category_id === feedFilter) : posts).sort((a, b) => { if (a.is_pinned && !b.is_pinned) { return -1; } if (!a.is_pinned && b.is_pinned) { return 1; } var aS = a.upvotes - a.downvotes; var bS = b.upvotes - b.downvotes; if (bS !== aS) { return bS - aS; } return new Date(b.created_at).getTime() - new Date(a.created_at).getTime(); })
   const formatTime = (t: string) => { const [h, m] = t.split(':'); const hr = parseInt(h); return (hr > 12 ? hr - 12 : hr) + ':' + m + (hr >= 12 ? 'pm' : 'am') }
   const timeAgo = (d: string) => { const mins = Math.floor((Date.now() - new Date(d).getTime()) / 60000); if (mins < 1) return 'now'; if (mins < 60) return mins + 'm'; const hrs = Math.floor(mins / 60); if (hrs < 24) return hrs + 'h'; return Math.floor(hrs / 24) + 'd' }
   const getCatName = (id: string | null) => { if (!id) return null; return categories.find(c => c.id === id)?.name || null }
