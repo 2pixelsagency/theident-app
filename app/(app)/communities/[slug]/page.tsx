@@ -192,9 +192,9 @@ export default function CommunityDetail() {
         <input ref={coverRef} type="file" accept="image/*" onChange={handleCoverUpload} style={{ display: 'none' }} />
       </div>
 
-      {/* Community info */}
       <div style={{ padding: '16px 16px 0' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
+        {/* Name + badges */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px', flexWrap: 'wrap' }}>
           <p style={{ fontFamily: "'ITC Symbol',Georgia,serif", letterSpacing: '-0.03em', fontSize: '24px', fontWeight: 700, color: '#0c2520', margin: 0 }}>{community.name}</p>
           {community.is_private && (
             <div style={{ background: '#0c2520', borderRadius: '50%', width: '20px', height: '20px', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
@@ -205,20 +205,22 @@ export default function CommunityDetail() {
         <div style={{ display: 'flex', gap: '8px', alignItems: 'center', marginBottom: '12px' }}>
           <span style={{ fontSize: '12px', color: '#888' }}>{approvedMembers.length} member{approvedMembers.length !== 1 ? 's' : ''}</span>
           <span style={{ fontSize: '12px', color: '#aaa' }}>{community.category}</span>
-          {community.is_private && <span style={{ fontSize: '10px', fontWeight: 600, color: '#4ade80', background: '#0c2520', padding: '2px 8px', borderRadius: '4px' }}>VERIFIED</span>}
+          {community.is_private && <span style={{ fontSize: '9px', fontWeight: 600, color: '#f59e0b', background: '#fef3c7', padding: '2px 6px', borderRadius: '4px' }}>RESTRICTED</span>}
         </div>
 
-        {/* Member avatars row */}
+        {/* Member avatars */}
         {approvedMembers.length > 0 && (
           <div style={{ display: 'flex', alignItems: 'center', marginBottom: '16px' }}>
             <div style={{ display: 'flex' }}>
-              {approvedMembers.slice(0, 8).map((m, i) => (
-                <div key={m.id} style={{ width: '36px', height: '36px', borderRadius: '50%', border: '2px solid #f1f0ee', background: m.profiles?.picture_url ? 'url(' + m.profiles.picture_url + ') center/cover' : '#e8e4de', backgroundSize: 'cover', marginLeft: i > 0 ? '-10px' : '0', zIndex: 8 - i, position: 'relative' }} />
+              {approvedMembers.slice(0, 10).map((m, i) => (
+                <div key={m.id} style={{ width: '32px', height: '32px', borderRadius: '50%', border: '2.5px solid #f1f0ee', background: m.profiles?.picture_url ? 'url(' + m.profiles.picture_url + ') center/cover' : '#e8e4de', backgroundSize: 'cover', marginLeft: i > 0 ? '-8px' : '0', zIndex: 10 - i, position: 'relative' }} />
               ))}
+              {approvedMembers.length > 10 && (
+                <div style={{ width: '32px', height: '32px', borderRadius: '50%', border: '2.5px solid #f1f0ee', background: '#0c2520', marginLeft: '-8px', zIndex: 0, position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <span style={{ fontSize: '9px', fontWeight: 700, color: '#f1f0ee' }}>+{approvedMembers.length - 10}</span>
+                </div>
+              )}
             </div>
-            {approvedMembers.length > 8 && (
-              <span style={{ fontSize: '12px', color: '#888', marginLeft: '8px' }}>+{approvedMembers.length - 8} more</span>
-            )}
           </div>
         )}
 
@@ -248,10 +250,9 @@ export default function CommunityDetail() {
       </div>
 
       <div style={{ padding: '0 16px' }}>
-        {/* FEED TAB */}
+        {/* FEED */}
         {isApproved && tab === 'feed' && (
           <>
-            {/* New post */}
             <div style={{ background: 'white', borderRadius: '14px', border: '1px solid #e8e4de', padding: '14px', marginBottom: '16px' }}>
               <textarea value={newPost} onChange={e => setNewPost(e.target.value)} placeholder="Share something..." rows={2} style={{ width: '100%', border: 'none', fontSize: '14px', fontFamily: 'inherit', color: '#0c2520', resize: 'none', outline: 'none', boxSizing: 'border-box' }} />
               <div style={{ display: 'flex', gap: '6px', marginTop: '8px', flexWrap: 'wrap' }}>
@@ -271,7 +272,6 @@ export default function CommunityDetail() {
               </div>
             </div>
 
-            {/* Posts */}
             {posts.map(p => {
               const canDelete = p.author_id === userId || isOwner
               const showReplies = expandedReplies.has(p.id)
@@ -299,8 +299,6 @@ export default function CommunityDetail() {
                         {p.event_location && <span>{p.event_location}</span>}
                       </div>
                     )}
-
-                    {/* Actions */}
                     <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
                       <button onClick={() => toggleLike(p.id)} style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px', fontSize: '12px', color: p.liked ? '#c0392b' : '#888', padding: 0, fontFamily: 'inherit' }}>
                         <svg width="14" height="14" viewBox="0 0 24 24" fill={p.liked ? '#c0392b' : 'none'} stroke={p.liked ? '#c0392b' : '#888'} strokeWidth="1.8" strokeLinecap="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
@@ -318,7 +316,6 @@ export default function CommunityDetail() {
                     </div>
                   </div>
 
-                  {/* Reply input */}
                   {replyingTo === p.id && (
                     <div style={{ padding: '0 16px 12px', display: 'flex', gap: '8px' }}>
                       <input value={replyText} onChange={e => setReplyText(e.target.value)} onKeyDown={e => { if (e.key === 'Enter' && replyText.trim()) handleReply(p.id) }} placeholder="Write a reply..." style={{ flex: 1, padding: '8px 12px', border: '1px solid #e0ddd5', borderRadius: '20px', fontSize: '13px', fontFamily: 'inherit', color: '#0c2520', outline: 'none', background: '#f9f8f6' }} />
@@ -326,7 +323,6 @@ export default function CommunityDetail() {
                     </div>
                   )}
 
-                  {/* Replies */}
                   {showReplies && p.replies.length > 0 && (
                     <div style={{ borderTop: '1px solid #f0ede5', background: '#fafaf8' }}>
                       {p.replies.map(r => (
@@ -337,7 +333,7 @@ export default function CommunityDetail() {
                             <p style={{ fontSize: '13px', color: '#444', margin: '2px 0 0', lineHeight: 1.5 }}>{r.content}</p>
                           </div>
                           {(r.author_id === userId || isOwner) && (
-                            <button onClick={() => deleteReply(r.id, p.id)} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '2px', fontSize: '10px', color: '#ccc' }}>
+                            <button onClick={() => deleteReply(r.id, p.id)} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '2px' }}>
                               <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#ccc" strokeWidth="2" strokeLinecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
                             </button>
                           )}
@@ -352,7 +348,7 @@ export default function CommunityDetail() {
           </>
         )}
 
-        {/* MEMBERS TAB */}
+        {/* MEMBERS */}
         {isApproved && tab === 'members' && (
           <>
             {isOwner && pendingMembers.length > 0 && (
@@ -383,7 +379,7 @@ export default function CommunityDetail() {
           </>
         )}
 
-        {/* ABOUT TAB */}
+        {/* ABOUT */}
         {isApproved && tab === 'about' && (
           <div>
             {community.description && (
@@ -393,22 +389,10 @@ export default function CommunityDetail() {
               </div>
             )}
             <div style={{ background: 'white', borderRadius: '14px', border: '1px solid #e8e4de', padding: '16px', marginBottom: '12px' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px' }}>
-                <span style={{ fontSize: '12px', color: '#888' }}>Category</span>
-                <span style={{ fontSize: '12px', color: '#0c2520', fontWeight: 500 }}>{community.category}</span>
-              </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px' }}>
-                <span style={{ fontSize: '12px', color: '#888' }}>Members</span>
-                <span style={{ fontSize: '12px', color: '#0c2520', fontWeight: 500 }}>{approvedMembers.length}</span>
-              </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px' }}>
-                <span style={{ fontSize: '12px', color: '#888' }}>Type</span>
-                <span style={{ fontSize: '12px', color: '#0c2520', fontWeight: 500 }}>{community.is_private ? 'Private' : 'Public'}</span>
-              </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                <span style={{ fontSize: '12px', color: '#888' }}>Posts</span>
-                <span style={{ fontSize: '12px', color: '#0c2520', fontWeight: 500 }}>{posts.length}</span>
-              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px' }}><span style={{ fontSize: '12px', color: '#888' }}>Category</span><span style={{ fontSize: '12px', color: '#0c2520', fontWeight: 500 }}>{community.category}</span></div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px' }}><span style={{ fontSize: '12px', color: '#888' }}>Members</span><span style={{ fontSize: '12px', color: '#0c2520', fontWeight: 500 }}>{approvedMembers.length}</span></div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px' }}><span style={{ fontSize: '12px', color: '#888' }}>Type</span><span style={{ fontSize: '12px', color: '#0c2520', fontWeight: 500 }}>{community.is_private ? 'Private' : 'Public'}</span></div>
+              <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ fontSize: '12px', color: '#888' }}>Posts</span><span style={{ fontSize: '12px', color: '#0c2520', fontWeight: 500 }}>{posts.length}</span></div>
             </div>
             {isApproved && !isOwner && (
               <button onClick={handleLeave} style={{ width: '100%', padding: '14px', background: 'white', color: '#c0392b', border: '1px solid #e8e4de', borderRadius: '30px', fontSize: '13px', fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit' }}>Leave community</button>
@@ -416,7 +400,7 @@ export default function CommunityDetail() {
           </div>
         )}
 
-        {/* Not approved yet */}
+        {/* Not a member yet */}
         {!isApproved && !membership && community.description && (
           <div style={{ background: 'white', borderRadius: '14px', border: '1px solid #e8e4de', padding: '16px' }}>
             <p style={{ fontSize: '14px', color: '#666', lineHeight: 1.6, margin: 0 }}>{community.description}</p>
