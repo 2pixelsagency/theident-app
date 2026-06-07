@@ -28,6 +28,14 @@ export default function Login() {
   }
 
   useEffect(() => {
+    const color = mode === 'slider' ? s.bg : '#f1f0ee'
+    document.documentElement.style.backgroundColor = color
+    document.body.style.backgroundColor = color
+    const metas = document.querySelectorAll('meta[name="theme-color"]')
+    metas.forEach(m => m.setAttribute('content', color))
+  })
+
+  useEffect(() => {
     if (mode !== 'slider') {
       if (timerRef.current) clearInterval(timerRef.current)
       return
