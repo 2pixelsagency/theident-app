@@ -56,13 +56,15 @@ export default function ExpensesPage() {
       showToast('Scanning receipt...')
       try {
         // @ts-ignore         const Tesseract = (await import('tesseract.js')).default
-        const { data: { text } } = await Tesseract.recognize(result, 'eng')
-        var lines = text.split('\n').map(function(l) { return l.trim() }).filter(Boolean)
-        var amountMatch = text.match(/[£$]\s*(\d+[.,]\d{2})/g) || text.match(/(\d+[.,]\d{2})/g)
+ const recogResult: any = await Tesseract.recognize(result, 'eng')
+        const text: string = recogResult.data.text || ''
+        const lines: string[] = text.split('\n').map((l: string) => l.trim()).filter(Boolean)
+        const amountMatch: string[] | null = text.match(/[£$]\s*(\d+[.,]\d{2})/g) || text.match(/(\d+[.,]\d{2})/g)
         if (amountMatch) {
-          var amounts = amountMatch.map(function(a) { return parseFloat(a.replace(/[£$\s]/g, '').replace(',', '.')) })
-          var biggest = Math.max.apply(null, amounts)
+          const amounts: number[] = amountMatch.map((a: string) => parseFloat(a.replace(/[£$\s]/g, '').replace(',', '.')))
+          const biggest = Math.max.apply(null, amounts)
           setAmount(String(biggest.toFixed(2)))
+        
         }
         var dateMatch = text.match(/(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{2,4})/)
         if (dateMatch) {
@@ -71,7 +73,7 @@ export default function ExpensesPage() {
           var year = dateMatch[3].length === 2 ? '20' + dateMatch[3] : dateMatch[3]
           setExpenseDate(year + '-' + month + '-' + day)
         }
-        var descLine = lines.find(function(l) { return l.length > 5 && !/^\d/.test(l) && !/total|subtotal|vat|tax|change|cash|card|visa|mastercard|receipt|thank/i.test(l) })
+        const descLine = lines.find((l: string) => l.length > 5 && !/^\d/.test(l) && !/total|subtotal|vat|tax|change|cash|card|visa|mastercard|receipt|thank/i.test(l))
         if (descLine) { setDescription(descLine.slice(0, 60)) }
         var lowerText = text.toLowerCase()
         if (/uber|train|bus|taxi|flight|parking|petrol/.test(lowerText)) { setCategory('Travel') }
