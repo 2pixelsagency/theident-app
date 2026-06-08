@@ -105,9 +105,10 @@ export default function AccountPage() {
       const { data: notifData } = await supabase.from('notifications').select('*').eq('profile_id', user.id).eq('read', false).order('created_at', { ascending: false }).limit(10)
       setNotifications(notifData || [])
 
-      const { count: appCount } = await supabase.from('applications').select('id', { count: 'exact', head: true }).eq('profile_id', user.id)
-      const { count: savedCount } = await supabase.from('saved_jobs').select('id', { count: 'exact', head: true }).eq('user_id', user.id)
-      const { count: postedCount } = await supabase.from('jobs').select('id', { count: 'exact', head: true }).eq('created_by', user.id)
+     let appCount = 0, savedCount = 0, postedCount = 0
+      try { const r = await supabase.from('applications').select('id', { count: 'exact', head: true }).eq('profile_id', user.id); appCount = r.count || 0 } catch {}
+      try { const r = await supabase.from('saved_jobs').select('id', { count: 'exact', head: true }).eq('profile_id', user.id); savedCount = r.count || 0 } catch {}
+      try { const r = await supabase.from('jobs').select('id', { count: 'exact', head: true }).eq('created_by', user.id); postedCount = r.count || 0 } catch {}
       const { data: myMems } = await supabase.from('community_members').select('community_id, communities(id, name, slug, icon_url, cover_url, category)').eq('profile_id', user.id).eq('status', 'approved')
 
       var myComms: Community[] = []
@@ -137,9 +138,13 @@ export default function AccountPage() {
       }
       setSuggested(sugg)
 
-    var todayStr = new Date().toISOString().split('T')[0]
-      const { data: events } = await supabase.from('calendar_events').select('*').eq('profile_id', user.id).gte('event_date', todayStr).order('event_date', { ascending: true }).limit(10)
-      setWeekEvents(events || [])
+    try {
+        const { data: allEvents, error: ee } = await supabase.from('calendar_events').select('*').eq('profile_id', user.id)
+        console.log('calendar events:', allEvents, 'error:', ee)
+        const todayStr = new Date().toISOString().split('T')[0]
+        const upcoming = (allEvents || []).filter((e: any) => e.event_date >= todayStr).sort((a: any, b: any) => a.event_date.localeCompare(b.event_date)).slice(0, 10)
+        setWeekEvents(upcoming)
+      } catch (err) { console.log('cal err:', err) }
 
       setLoading(false)
     }
@@ -288,7 +293,7 @@ export default function AccountPage() {
           ].map(s => (
             <Link key={s.label} href={s.href} style={{ textDecoration: 'none' }}>
               <div style={{ background: 'white', borderRadius: '12px', padding: '12px 8px', textAlign: 'center', border: '1px solid #e8e4de' }}>
-                <p style={{ fontFamily: "'ITC Symbol',Georgia,serif", letterSpacing: '-0.03em', fontSize: '22px', fontWeight: 700, color: '#0c2520', margin: '0 0 2px', lineHeight: 1 }}>{s.value}</p>
+                <p style={{ fontFamily: "'ITC Symbol',Georgia,serif", letterSpacing: '-0.03em', fontSize: '22px', fontWeight: 500, color: '#0c2520', margin: '0 0 2px', lineHeight: 1 }}>{s.value}</p>
                 <p style={{ fontSize: '10px', color: '#888', margin: 0, fontWeight: 500 }}>{s.label}</p>
               </div>
             </Link>
