@@ -5,15 +5,11 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
 
-type Profile = {
-  id: string
-  first_name: string | null
-  last_name: string | null
-  picture_url: string | null
-  location: string | null
-  bio: string | null
-  slug: string | null
-}
+type Profile = { id: string; first_name: string | null; last_name: string | null; picture_url: string | null; location: string | null; bio: string | null; slug: string | null }
+type Community = { id: string; name: string; slug: string; icon_url: string | null; cover_url: string | null; category: string; member_count: number }
+type CalEvent = { id: string; title: string; event_date: string; event_time: string | null; event_type: string }
+
+const EVENT_COLORS: Record<string, string> = { audition: '#5B7CFA', casting: '#ec4899', rehearsal: '#f59e0b', performance: '#4ade80', work: '#8b5cf6', holiday: '#06b6d4', personal: '#888' }
 
 function CropModal({ file, onSave, onClose }: { file: File; onSave: (blob: Blob) => void; onClose: () => void }) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
@@ -76,6 +72,10 @@ export default function AccountPage() {
   const [uploading, setUploading] = useState(false)
   const [toast, setToast] = useState<string | null>(null)
   const [cropFile, setCropFile] = useState<File | null>(null)
+  const [myCommunities, setMyCommunities] = useState<Community[]>([])
+  const [suggested, setSuggested] = useState<Community[]>([])
+  const [weekEvents, setWeekEvents] = useState<CalEvent[]>([])
+  const [stats, setStats] = useState({ applications: 0, saved: 0, posted: 0, communities: 0 })
 
   useEffect(() => {
     const load = async () => {
@@ -83,6 +83,47 @@ export default function AccountPage() {
       if (!user) { router.push('/login'); return }
       const { data: p } = await supabase.from('profiles').select('id, first_name, last_name, picture_url, location, bio, slug').eq('id', user.id).single()
       setProfile(p)
+
+      const { count: appCount } = await supabase.from('applications').select('id', { count: 'exact', head: true }).eq('profile_id', user.id)
+      const { count: savedCount } = await supabase.from('saved_jobs').select('id', { count: 'exact', head: true }).eq('profile_id', user.id)
+      const { count: postedCount } = await supabase.from('jobs').select('id', { count: 'exact', head: true }).eq('created_by', user.id)
+      const { data: myMems } = await supabase.from('community_members').select('community_id, communities(id, name, slug, icon_url, cover_url, category)').eq('profile_id', user.id).eq('status', 'approved')
+
+      var myComms: Community[] = []
+      var myCommIds: string[] = []
+      if (myMems) {
+        for (var m of myMems) {
+          if (m.communities) {
+            const c: any = m.communities
+            const { count } = await supabase.from('community_members').select('id', { count: 'exact', head: true }).eq('community_id', c.id).eq('status', 'approved')
+            myComms.push({ ...c, member_count: count || 0 })
+            myCommIds.push(c.id)
+          }
+        }
+      }
+      setMyCommunities(myComms)
+      setStats({ applications: appCount || 0, saved: savedCount || 0, posted: postedCount || 0, communities: myComms.length })
+
+      const { data: allComms } = await supabase.from('communities').select('id, name, slug, icon_url, cover_url, category').limit(20)
+      var sugg: Community[] = []
+      if (allComms) {
+        for (var c of allComms) {
+          if (!myCommIds.includes(c.id) && sugg.length < 5) {
+            const { count } = await supabase.from('community_members').select('id', { count: 'exact', head: true }).eq('community_id', c.id).eq('status', 'approved')
+            sugg.push({ ...c, member_count: count || 0 })
+          }
+        }
+      }
+      setSuggested(sugg)
+
+      var today = new Date()
+      var weekEnd = new Date()
+      weekEnd.setDate(today.getDate() + 7)
+      var todayStr = today.toISOString().split('T')[0]
+      var weekEndStr = weekEnd.toISOString().split('T')[0]
+      const { data: events } = await supabase.from('calendar_events').select('*').eq('profile_id', user.id).gte('event_date', todayStr).lte('event_date', weekEndStr).order('event_date').limit(5)
+      setWeekEvents(events || [])
+
       setLoading(false)
     }
     load()
@@ -116,6 +157,14 @@ export default function AccountPage() {
   const showToast = (msg: string) => { setToast(msg); setTimeout(() => setToast(null), 3000) }
 
   if (loading) return <div />
+
+  var firstName = profile?.first_name || 'there'
+  var statCards = [
+    { label: 'Applications', value: stats.applications, href: '/applications', color: '#0c2520', bg: '#d4e4dd' },
+    { label: 'Saved jobs', value: stats.saved, href: '/saved', color: '#92400e', bg: '#fef3c7' },
+    { label: 'Posted jobs', value: stats.posted, href: '/my-jobs', color: '#5B7CFA', bg: '#dbe4ff' },
+    { label: 'Communities', value: stats.communities, href: '/communities', color: '#9333ea', bg: '#ede0ff' },
+  ]
 
   const menuItems = [
     {
@@ -178,33 +227,141 @@ export default function AccountPage() {
       `}</style>
 
       {cropFile && <CropModal file={cropFile} onSave={handleCropSave} onClose={() => setCropFile(null)} />}
+      {toast && <div className="toast-anim" style={{ position: 'fixed', bottom: '110px', left: '50%', transform: 'translateX(-50%)', background: '#0c2520', color: '#f1f0ee', padding: '12px 24px', borderRadius: '30px', fontSize: '13px', fontWeight: 500, zIndex: 300, whiteSpace: 'nowrap' }}>{toast}</div>}
 
-      {toast && (
-        <div className="toast-anim" style={{ position: 'fixed', bottom: '110px', left: '50%', transform: 'translateX(-50%)', background: '#0c2520', color: '#f1f0ee', padding: '12px 24px', borderRadius: '30px', fontSize: '13px', fontWeight: 500, zIndex: 300, whiteSpace: 'nowrap' }}>{toast}</div>
-      )}
-
-      {/* Profile header */}
-      <div style={{ padding: '32px 20px 24px', display: 'flex', alignItems: 'center', gap: '16px' }}>
+      {/* Welcome header */}
+      <div style={{ padding: '24px 16px 12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div>
+          <p style={{ fontFamily: "'ITC Symbol',Georgia,serif", letterSpacing: '-0.03em', fontSize: '24px', fontWeight: 700, color: '#0c2520', margin: 0, lineHeight: 1.1 }}>Welcome back,</p>
+          <p style={{ fontFamily: "'ITC Symbol',Georgia,serif", letterSpacing: '-0.03em', fontSize: '24px', fontWeight: 700, color: '#0c2520', margin: 0, lineHeight: 1.1 }}>{firstName} 👋</p>
+        </div>
         <label style={{ position: 'relative', cursor: 'pointer', flexShrink: 0 }}>
-          <div style={{ width: '72px', height: '72px', borderRadius: '50%', background: profile?.picture_url ? 'url(' + profile.picture_url + ') center/cover' : '#e8efea', backgroundSize: 'cover', border: '2px solid #e0ddd5', overflow: 'hidden' }}>
-            {uploading && (
-              <div style={{ width: '100%', height: '100%', background: 'rgba(12,37,32,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <div style={{ width: '16px', height: '16px', border: '2px solid #f1f0ee', borderTopColor: 'transparent', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
-              </div>
-            )}
+          <div style={{ width: '52px', height: '52px', borderRadius: '50%', background: profile?.picture_url ? 'url(' + profile.picture_url + ') center/cover' : '#e8efea', backgroundSize: 'cover', border: '3px solid white', boxShadow: '0 2px 8px rgba(0,0,0,0.08)', overflow: 'hidden' }}>
+            {uploading && <div style={{ width: '100%', height: '100%', background: 'rgba(12,37,32,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><div style={{ width: '14px', height: '14px', border: '2px solid #f1f0ee', borderTopColor: 'transparent', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} /></div>}
           </div>
-          <div style={{ position: 'absolute', bottom: 0, right: 0, width: '24px', height: '24px', borderRadius: '50%', background: '#0c2520', border: '2px solid #f1f0ee', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#f1f0ee" strokeWidth="2.5" strokeLinecap="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+          <div style={{ position: 'absolute', bottom: 0, right: 0, width: '20px', height: '20px', borderRadius: '50%', background: '#0c2520', border: '2px solid #f1f0ee', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="#f1f0ee" strokeWidth="2.5" strokeLinecap="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
           </div>
           <input type="file" accept="image/*" onChange={handleFileSelect} style={{ display: 'none' }} />
         </label>
-        <div>
-          <p style={{ fontFamily: "'ITC Symbol',Georgia,serif", letterSpacing: '-0.03em', fontSize: '20px', fontWeight: 700, color: '#0c2520', margin: '0 0 2px' }}>
-            {profile?.first_name} {profile?.last_name}
-          </p>
-          {profile?.location && <p style={{ fontSize: '13px', color: '#888', margin: '0 0 8px' }}>{profile.location}</p>}
-          <span style={{ fontSize: '11px', background: '#e8efea', color: '#0c2520', padding: '3px 10px', borderRadius: '20px', fontWeight: 500 }}>Free plan</span>
+      </div>
+
+      <div style={{ padding: '0 16px' }}>
+        <span style={{ fontSize: '11px', background: '#e8efea', color: '#0c2520', padding: '3px 10px', borderRadius: '20px', fontWeight: 500, display: 'inline-block', marginBottom: '20px' }}>Free plan</span>
+
+        {/* Stat cards */}
+        <p style={{ fontSize: '11px', color: '#888', textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 600, margin: '0 0 10px' }}>Your activity</p>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '24px' }}>
+          {statCards.map(s => (
+            <Link key={s.label} href={s.href} style={{ textDecoration: 'none' }}>
+              <div style={{ background: s.bg, borderRadius: '16px', padding: '16px', position: 'relative', overflow: 'hidden' }}>
+                <p style={{ fontSize: '11px', color: s.color, opacity: 0.7, margin: '0 0 4px', fontWeight: 500 }}>{s.label}</p>
+                <p style={{ fontFamily: "'ITC Symbol',Georgia,serif", letterSpacing: '-0.03em', fontSize: '28px', fontWeight: 700, color: s.color, margin: 0, lineHeight: 1 }}>{s.value}</p>
+                <div style={{ position: 'absolute', bottom: '12px', right: '12px', width: '24px', height: '24px', borderRadius: '50%', background: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke={s.color} strokeWidth="2.5" strokeLinecap="round"><line x1="7" y1="17" x2="17" y2="7"/><polyline points="7 7 17 7 17 17"/></svg>
+                </div>
+              </div>
+            </Link>
+          ))}
         </div>
+
+        {/* This week */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+          <p style={{ fontSize: '11px', color: '#888', textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 600, margin: 0 }}>This week</p>
+          <Link href="/calendar" style={{ fontSize: '12px', color: '#0c2520', textDecoration: 'none', fontWeight: 500 }}>See all →</Link>
+        </div>
+        {weekEvents.length === 0 ? (
+          <Link href="/calendar" style={{ textDecoration: 'none' }}>
+            <div style={{ background: '#0c2520', borderRadius: '16px', padding: '20px', marginBottom: '24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div>
+                <p style={{ fontFamily: "'ITC Symbol',Georgia,serif", letterSpacing: '-0.03em', fontSize: '17px', fontWeight: 700, color: '#f1f0ee', margin: '0 0 4px' }}>Nothing scheduled</p>
+                <p style={{ fontSize: '12px', color: '#4ade80', margin: 0 }}>Add auditions, rehearsals, and more</p>
+              </div>
+              <div style={{ width: '36px', height: '36px', borderRadius: '50%', background: '#4ade80', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#0c2520" strokeWidth="2.5" strokeLinecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+              </div>
+            </div>
+          </Link>
+        ) : (
+          <div style={{ marginBottom: '24px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            {weekEvents.map(e => {
+              var color = EVENT_COLORS[e.event_type] || '#888'
+              var dateObj = new Date(e.event_date + 'T12:00:00')
+              var day = dateObj.toLocaleDateString('en-GB', { weekday: 'short' })
+              var dateNum = dateObj.getDate()
+              var isToday = e.event_date === new Date().toISOString().split('T')[0]
+              return (
+                <Link key={e.id} href="/calendar" style={{ textDecoration: 'none' }}>
+                  <div style={{ background: 'white', borderRadius: '14px', border: '1px solid #e8e4de', padding: '14px', display: 'flex', alignItems: 'center', gap: '12px' }}>
+                    <div style={{ background: color + '18', color: color, borderRadius: '12px', padding: '8px 12px', minWidth: '52px', textAlign: 'center' }}>
+                      <p style={{ fontSize: '10px', fontWeight: 600, margin: 0, textTransform: 'uppercase' }}>{isToday ? 'Today' : day}</p>
+                      <p style={{ fontFamily: "'ITC Symbol',Georgia,serif", letterSpacing: '-0.03em', fontSize: '20px', fontWeight: 700, margin: 0, lineHeight: 1 }}>{dateNum}</p>
+                    </div>
+                    <div style={{ flex: 1 }}>
+                      <p style={{ fontSize: '14px', fontWeight: 600, color: '#0c2520', margin: '0 0 2px' }}>{e.title}</p>
+                      <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+                        <span style={{ fontSize: '10px', color: color, background: color + '18', padding: '2px 8px', borderRadius: '4px', fontWeight: 500, textTransform: 'capitalize' }}>{e.event_type}</span>
+                        {e.event_time && <span style={{ fontSize: '11px', color: '#aaa' }}>{e.event_time.slice(0, 5)}</span>}
+                      </div>
+                    </div>
+                  </div>
+                </Link>
+              )
+            })}
+          </div>
+        )}
+
+        {/* Your communities */}
+        {myCommunities.length > 0 && (
+          <>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+              <p style={{ fontSize: '11px', color: '#888', textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 600, margin: 0 }}>Your communities</p>
+              <Link href="/communities" style={{ fontSize: '12px', color: '#0c2520', textDecoration: 'none', fontWeight: 500 }}>See all →</Link>
+            </div>
+            <div style={{ display: 'flex', gap: '10px', overflowX: 'auto', marginBottom: '24px', paddingBottom: '4px' }}>
+              {myCommunities.map(c => (
+                <Link key={c.id} href={'/communities/' + c.slug} style={{ textDecoration: 'none', flexShrink: 0 }}>
+                  <div style={{ width: '140px', background: 'white', borderRadius: '14px', border: '1px solid #e8e4de', overflow: 'hidden' }}>
+                    <div style={{ height: '60px', background: c.cover_url ? 'url(' + c.cover_url + ') center/cover' : 'linear-gradient(135deg, #0c2520, #1a4a3a)', backgroundSize: 'cover' }} />
+                    <div style={{ padding: '8px 12px 12px' }}>
+                      <div style={{ width: '32px', height: '32px', borderRadius: '50%', border: '2px solid white', background: c.icon_url ? 'url(' + c.icon_url + ') center/cover' : '#0c2520', backgroundSize: 'cover', marginTop: '-22px', marginBottom: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        {!c.icon_url && <span style={{ fontSize: '13px', fontWeight: 700, color: '#f1f0ee' }}>{c.name[0]}</span>}
+                      </div>
+                      <p style={{ fontSize: '12px', fontWeight: 600, color: '#0c2520', margin: '0 0 2px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{c.name}</p>
+                      <p style={{ fontSize: '10px', color: '#888', margin: 0 }}>{c.member_count + ' members'}</p>
+                    </div>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </>
+        )}
+
+        {/* Suggested */}
+        {suggested.length > 0 && (
+          <>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+              <p style={{ fontSize: '11px', color: '#888', textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 600, margin: 0 }}>Suggested for you</p>
+              <Link href="/communities" style={{ fontSize: '12px', color: '#0c2520', textDecoration: 'none', fontWeight: 500 }}>Discover →</Link>
+            </div>
+            <div style={{ display: 'flex', gap: '10px', overflowX: 'auto', marginBottom: '24px', paddingBottom: '4px' }}>
+              {suggested.map(c => (
+                <Link key={c.id} href={'/communities/' + c.slug} style={{ textDecoration: 'none', flexShrink: 0 }}>
+                  <div style={{ width: '140px', background: 'white', borderRadius: '14px', border: '1px solid #e8e4de', overflow: 'hidden' }}>
+                    <div style={{ height: '60px', background: c.cover_url ? 'url(' + c.cover_url + ') center/cover' : 'linear-gradient(135deg, #5B7CFA, #ec4899)', backgroundSize: 'cover' }} />
+                    <div style={{ padding: '8px 12px 12px' }}>
+                      <div style={{ width: '32px', height: '32px', borderRadius: '50%', border: '2px solid white', background: c.icon_url ? 'url(' + c.icon_url + ') center/cover' : '#0c2520', backgroundSize: 'cover', marginTop: '-22px', marginBottom: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        {!c.icon_url && <span style={{ fontSize: '13px', fontWeight: 700, color: '#f1f0ee' }}>{c.name[0]}</span>}
+                      </div>
+                      <p style={{ fontSize: '12px', fontWeight: 600, color: '#0c2520', margin: '0 0 2px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{c.name}</p>
+                      <p style={{ fontSize: '10px', color: '#888', margin: 0 }}>{c.member_count + ' members'}</p>
+                    </div>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </>
+        )}
       </div>
 
       {/* Menu sections */}
@@ -228,7 +385,6 @@ export default function AccountPage() {
         </div>
       ))}
 
-      {/* Logout */}
       <div style={{ margin: '16px 16px 0' }}>
         <button onClick={handleLogout} style={{ width: '100%', padding: '14px', background: 'white', color: '#c0392b', border: '1px solid #e8e4de', borderRadius: '14px', fontSize: '14px', fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit' }}>Log out</button>
       </div>
