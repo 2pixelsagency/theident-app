@@ -55,7 +55,7 @@ export default function ExpensesPage() {
       setScanning(true)
       showToast('Scanning receipt...')
       try {
-        const Tesseract = (await import('tesseract.js')).default
+        // @ts-ignore         const Tesseract = (await import('tesseract.js')).default
         const { data: { text } } = await Tesseract.recognize(result, 'eng')
         var lines = text.split('\n').map(function(l) { return l.trim() }).filter(Boolean)
         var amountMatch = text.match(/[£$]\s*(\d+[.,]\d{2})/g) || text.match(/(\d+[.,]\d{2})/g)
