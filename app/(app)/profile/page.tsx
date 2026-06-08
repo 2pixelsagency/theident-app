@@ -106,7 +106,7 @@ export default function AccountPage() {
       setNotifications(notifData || [])
 
       const { count: appCount } = await supabase.from('applications').select('id', { count: 'exact', head: true }).eq('profile_id', user.id)
-      const { count: savedCount } = await supabase.from('saved_jobs').select('id', { count: 'exact', head: true }).eq('profile_id', user.id)
+      const { count: savedCount } = await supabase.from('saved_jobs').select('id', { count: 'exact', head: true }).eq('user_id', user.id)
       const { count: postedCount } = await supabase.from('jobs').select('id', { count: 'exact', head: true }).eq('created_by', user.id)
       const { data: myMems } = await supabase.from('community_members').select('community_id, communities(id, name, slug, icon_url, cover_url, category)').eq('profile_id', user.id).eq('status', 'approved')
 
@@ -138,7 +138,7 @@ export default function AccountPage() {
       setSuggested(sugg)
 
     var todayStr = new Date().toISOString().split('T')[0]
-      const { data: events } = await supabase.from('calendar_events').select('*').eq('profile_id', user.id).gte('event_date', todayStr).order('event_date').order('event_time').limit(10)
+      const { data: events } = await supabase.from('calendar_events').select('*').eq('profile_id', user.id).gte('event_date', todayStr).order('event_date', { ascending: true }).limit(10)
       setWeekEvents(events || [])
 
       setLoading(false)
