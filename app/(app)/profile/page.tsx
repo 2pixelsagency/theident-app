@@ -137,12 +137,8 @@ export default function AccountPage() {
       }
       setSuggested(sugg)
 
-      var today = new Date()
-      var weekEnd = new Date()
-      weekEnd.setDate(today.getDate() + 7)
-      var todayStr = today.toISOString().split('T')[0]
-      var weekEndStr = weekEnd.toISOString().split('T')[0]
-      const { data: events } = await supabase.from('calendar_events').select('*').eq('profile_id', user.id).gte('event_date', todayStr).lte('event_date', weekEndStr).order('event_date').limit(5)
+    var todayStr = new Date().toISOString().split('T')[0]
+      const { data: events } = await supabase.from('calendar_events').select('*').eq('profile_id', user.id).gte('event_date', todayStr).order('event_date').order('event_time').limit(10)
       setWeekEvents(events || [])
 
       setLoading(false)
@@ -301,7 +297,7 @@ export default function AccountPage() {
 
         {/* This week */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
-          <p style={{ fontSize: '11px', color: '#888', textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 600, margin: 0 }}>This week</p>
+          <p style={{ fontSize: '11px', color: '#888', textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 600, margin: 0 }}>Coming up</p>
           <Link href="/calendar" style={{ fontSize: '12px', color: '#0c2520', textDecoration: 'none', fontWeight: 500 }}>See all</Link>
         </div>
         {weekEvents.length === 0 ? (
