@@ -139,12 +139,11 @@ export default function AccountPage() {
       setSuggested(sugg)
 
     try {
-        const { data: allEvents, error: ee } = await supabase.from('calendar_events').select('*').eq('profile_id', user.id)
-        console.log('calendar events:', allEvents, 'error:', ee)
+        const { data: allEvents } = await supabase.from('calendar_events').select('*').eq('profile_id', user.id)
         const todayStr = new Date().toISOString().split('T')[0]
-        const upcoming = (allEvents || []).filter((e: any) => e.event_date >= todayStr).sort((a: any, b: any) => a.event_date.localeCompare(b.event_date)).slice(0, 10)
+        const upcoming = (allEvents || []).filter((e: any) => e.start_date >= todayStr).sort((a: any, b: any) => a.start_date.localeCompare(b.start_date)).slice(0, 10)
         setWeekEvents(upcoming)
-      } catch (err) { console.log('cal err:', err) }
+      } catch (err) {}
 
       setLoading(false)
     }
