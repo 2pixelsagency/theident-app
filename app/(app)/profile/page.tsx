@@ -7,7 +7,7 @@ import { supabase } from '@/lib/supabase'
 
 type Profile = { id: string; first_name: string | null; last_name: string | null; picture_url: string | null; location: string | null; bio: string | null; slug: string | null; last_active: string | null }
 type Community = { id: string; name: string; slug: string; icon_url: string | null; cover_url: string | null; category: string; member_count: number }
-type CalEvent = { id: string; title: string; event_date: string; event_time: string | null; event_type: string }
+type CalEvent = { id: string; title: string; start_date: string; start_time: string | null; event_type: string; location: string | null }
 
 function CropModal({ file, onSave, onClose }: { file: File; onSave: (blob: Blob) => void; onClose: () => void }) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
@@ -319,10 +319,10 @@ export default function AccountPage() {
         ) : (
           <div style={{ marginBottom: '24px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
             {weekEvents.map(e => {
-              var dateObj = new Date(e.event_date + 'T12:00:00')
+              var dateObj = new Date(e.start_date + 'T12:00:00')
               var day = dateObj.toLocaleDateString('en-GB', { weekday: 'short' })
               var dateNum = dateObj.getDate()
-              var isToday = e.event_date === new Date().toISOString().split('T')[0]
+              var isToday = e.start_date === new Date().toISOString().split('T')[0]
               return (
                 <Link key={e.id} href="/calendar" style={{ textDecoration: 'none' }}>
                   <div style={{ background: 'white', borderRadius: '14px', border: '1px solid #e8e4de', padding: '14px', display: 'flex', alignItems: 'center', gap: '12px' }}>
@@ -334,7 +334,7 @@ export default function AccountPage() {
                       <p style={{ fontSize: '14px', fontWeight: 600, color: '#0c2520', margin: '0 0 2px' }}>{e.title}</p>
                       <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
                         <span style={{ fontSize: '10px', color: '#0c2520', background: '#e8efea', padding: '2px 8px', borderRadius: '4px', fontWeight: 500, textTransform: 'capitalize' }}>{e.event_type}</span>
-                        {e.event_time && <span style={{ fontSize: '11px', color: '#aaa' }}>{e.event_time.slice(0, 5)}</span>}
+                        {e.start_time && <span style={{ fontSize: '11px', color: '#aaa' }}>{e.start_time.slice(0, 5)}</span>}
                       </div>
                     </div>
                   </div>
