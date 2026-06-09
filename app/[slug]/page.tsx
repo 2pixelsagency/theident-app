@@ -19,6 +19,7 @@ type Testimonial = { id: string; quote: string; author_name: string; author_titl
 type GalleryImage = { id: string; url: string }
 type FAQ = { id: string; question: string; answer: string }
 type ProdType = { id: number; name: string }
+type Reel = { label: string; url: string }
 
 function NavButton() {
   const [isLoggedIn, setIsLoggedIn] = useState(false)
@@ -30,6 +31,85 @@ function NavButton() {
   }, [])
   if (isLoggedIn || fromApp) return <a href="/dashboard" style={{ width:'38px',height:'38px',borderRadius:'50%',background:'rgba(0,0,0,0.35)',backdropFilter:'blur(10px)',WebkitBackdropFilter:'blur(10px)',border:'1px solid rgba(255,255,255,0.15)',display:'flex',alignItems:'center',justifyContent:'center',textDecoration:'none' }}><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round"><path d="M19 12H5"/><path d="M12 19l-7-7 7-7"/></svg></a>
   return <a href="/login" style={{ width:'38px',height:'38px',borderRadius:'50%',background:'rgba(0,0,0,0.35)',backdropFilter:'blur(10px)',WebkitBackdropFilter:'blur(10px)',border:'1px solid rgba(255,255,255,0.15)',display:'flex',alignItems:'center',justifyContent:'center',textDecoration:'none' }}><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg></a>
+}
+
+function ReelsViewer({ reels }: { reels: Reel[] }) {
+  const [active, setActive] = useState(0)
+  const videoRef = useRef<HTMLVideoElement>(null)
+  const current = reels[active]
+
+  const toggleFullscreen = () => {
+    if (!videoRef.current) return
+    if (!document.fullscreenElement) {
+      const v: any = videoRef.current
+      if (v.requestFullscreen) v.requestFullscreen()
+      else if (v.webkitEnterFullscreen) v.webkitEnterFullscreen()
+      else if (v.webkitRequestFullscreen) v.webkitRequestFullscreen()
+    } else {
+      document.exitFullscreen?.()
+    }
+  }
+
+  return (
+    <div>
+      {/* Main player */}
+      <div style={{ background:'#061410',borderRadius:'14px',overflow:'hidden',position:'relative',marginBottom:'10px',aspectRatio:'16/9' }}>
+        <video
+          ref={videoRef}
+          key={current.url}
+          src={current.url + '#t=0.5'}
+          controls
+          playsInline
+          preload="metadata"
+          style={{ width:'100%',height:'100%',objectFit:'cover',background:'#061410' }}
+        />
+        <button onClick={toggleFullscreen} style={{ position:'absolute',top:'12px',right:'12px',background:'rgba(0,0,0,0.5)',backdropFilter:'blur(8px)',WebkitBackdropFilter:'blur(8px)',border:'1px solid rgba(255,255,255,0.15)',borderRadius:'8px',padding:'6px 10px',cursor:'pointer',display:'flex',alignItems:'center',gap:'4px',color:'white',fontSize:'11px',fontFamily:'inherit',fontWeight:500 }}>
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round"><polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/><line x1="21" y1="3" x2="14" y2="10"/><line x1="3" y1="21" x2="10" y2="14"/></svg>
+          Full
+        </button>
+      </div>
+
+      {/* Title under main */}
+      <p style={{ fontSize:'14px',fontWeight:600,color:'#0c2520',margin:'0 0 12px' }}>{current.label}</p>
+
+      {/* Thumbnails row */}
+      {reels.length > 1 && (
+        <div style={{ display:'flex',gap:'8px',overflowX:'auto',paddingBottom:'4px',scrollbarWidth:'none' }} className="reel-thumbs">
+          <style>{`.reel-thumbs::-webkit-scrollbar { display:none; }`}</style>
+          {reels.map((r, i) => (
+            <button
+              key={r.label}
+              onClick={() => setActive(i)}
+              style={{
+                flexShrink:0,
+                width:'110px',
+                aspectRatio:'16/9',
+                background:'#061410',
+                border: active === i ? '2px solid #0c2520' : '2px solid transparent',
+                borderRadius:'8px',
+                cursor:'pointer',
+                padding:0,
+                position:'relative',
+                overflow:'hidden',
+              }}
+            >
+              <video src={r.url + '#t=0.5'} preload="metadata" playsInline muted style={{ width:'100%',height:'100%',objectFit:'cover',pointerEvents:'none' }} />
+              <div style={{ position:'absolute',inset:0,background:active === i ? 'transparent' : 'rgba(0,0,0,0.3)',display:'flex',alignItems:'center',justifyContent:'center' }}>
+                {active !== i && (
+                  <div style={{ width:'24px',height:'24px',borderRadius:'50%',background:'rgba(255,255,255,0.9)',display:'flex',alignItems:'center',justifyContent:'center' }}>
+                    <svg width="10" height="10" viewBox="0 0 24 24" fill="#0c2520" stroke="none"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                  </div>
+                )}
+              </div>
+              <div style={{ position:'absolute',bottom:0,left:0,right:0,padding:'4px 6px',background:'linear-gradient(transparent, rgba(0,0,0,0.7))' }}>
+                <p style={{ fontSize:'9px',color:'white',margin:0,fontWeight:600,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap' }}>{r.label}</p>
+              </div>
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  )
 }
 
 export default function PublicProfile() {
@@ -114,12 +194,59 @@ export default function PublicProfile() {
     setConnectStatus('pending')
   }
 
+  const downloadCredits = () => {
+    if (!profile || credits.length === 0) return
+    const name = ((profile.first_name || '') + ' ' + (profile.last_name || '')).trim()
+    const grouped: Record<string, Credit[]> = {}
+    credits.forEach(c => {
+      const ptName = productionTypes.find(p => p.id === c.production_type_id)?.name || 'Other'
+      if (!grouped[ptName]) grouped[ptName] = []
+      grouped[ptName].push(c)
+    })
+
+    const html = '<!DOCTYPE html><html><head><title>' + name + ' - Credits</title><style>' +
+      'body { font-family: Georgia, serif; max-width: 700px; margin: 40px auto; padding: 20px; color: #0c2520; }' +
+      'h1 { font-size: 32px; margin: 0 0 4px; letter-spacing: -0.02em; font-weight: 700; }' +
+      '.sub { color: #888; font-size: 13px; margin-bottom: 32px; text-transform: uppercase; letter-spacing: 0.06em; }' +
+      'h2 { font-size: 14px; text-transform: uppercase; letter-spacing: 0.08em; color: #888; margin: 32px 0 12px; font-weight: 600; border-bottom: 1px solid #e8e4de; padding-bottom: 6px; }' +
+      '.credit { display: flex; justify-content: space-between; padding: 10px 0; gap: 24px; }' +
+      '.credit-main { flex: 1; }' +
+      '.role { font-weight: 600; font-size: 14px; margin: 0 0 2px; }' +
+      '.show { font-size: 13px; color: #444; margin: 0 0 2px; }' +
+      '.company { font-size: 12px; color: #888; margin: 0; }' +
+      '.year { font-size: 12px; color: #888; white-space: nowrap; }' +
+      '@media print { body { margin: 20px; } h1 { font-size: 24px; } }' +
+      '</style></head><body>' +
+      '<h1>' + name + '</h1>' +
+      '<p class="sub">Performance Credits</p>' +
+      Object.keys(grouped).map(cat =>
+        '<h2>' + cat + '</h2>' +
+        grouped[cat].map(c =>
+          '<div class="credit"><div class="credit-main">' +
+          '<p class="role">' + (c.title || '') + '</p>' +
+          (c.role ? '<p class="show">' + c.role + '</p>' : '') +
+          (c.director || c.production_company ? '<p class="company">' + [c.director, c.production_company].filter(Boolean).join(' · ') + '</p>' : '') +
+          '</div>' +
+          (c.year ? '<span class="year">' + c.year + '</span>' : '') +
+          '</div>'
+        ).join('')
+      ).join('') +
+      '</body></html>'
+
+    const w = window.open('', '_blank')
+    if (w) {
+      w.document.write(html)
+      w.document.close()
+      setTimeout(() => w.print(), 300)
+    }
+  }
+
   const hasReels = profile && (profile.vid_1 || profile.vid_2 || profile.vid_3 || profile.vid_4)
-  const reelsList = profile ? [
-    { label: 'Ident', url: profile.vid_1 },
-    { label: 'Dance Reel', url: profile.vid_2 },
-    { label: 'Acting Reel', url: profile.vid_3 },
-    { label: 'Singing Reel', url: profile.vid_4 },
+  const reelsList: Reel[] = profile ? [
+    { label: 'Ident', url: profile.vid_1 || '' },
+    { label: 'Dance Reel', url: profile.vid_2 || '' },
+    { label: 'Acting Reel', url: profile.vid_3 || '' },
+    { label: 'Singing Reel', url: profile.vid_4 || '' },
   ].filter(r => r.url) : []
 
   let filteredCredits = [...credits]
@@ -135,7 +262,6 @@ export default function PublicProfile() {
   const isOwnProfile = currentUserId === profile?.id
   const fullName = ((profile?.first_name || '') + ' ' + (profile?.last_name || '')).trim()
 
-  // Section ordering
   const defaultOrder = ['bio','highlights','credits_reels','testimonials','brands','gallery','faqs']
   const ss = profile?.section_settings
   let sectionOrder = defaultOrder
@@ -201,6 +327,14 @@ export default function PublicProfile() {
               <div style={{ width:'50%',padding:'0 32px 24px',boxSizing:'border-box' }}>
                 {credits.length > 0 && (
                   <>
+                    {/* Download button */}
+                    <div style={{ display:'flex',justifyContent:'flex-end',marginBottom:'10px' }}>
+                      <button onClick={downloadCredits} style={{ background:'white',border:'1px solid #e0ddd5',borderRadius:'20px',padding:'7px 14px',fontSize:'12px',color:'#0c2520',cursor:'pointer',display:'flex',alignItems:'center',gap:'6px',fontFamily:'inherit',fontWeight:500 }}>
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#0c2520" strokeWidth="2" strokeLinecap="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                        Download
+                      </button>
+                    </div>
+
                     <div style={{ position:'relative',marginBottom:'14px' }}>
                       <svg style={{ position:'absolute',left:'14px',top:'50%',transform:'translateY(-50%)' }} width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#aaa" strokeWidth="2" strokeLinecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
                       <input type="search" placeholder="Search credits..." value={creditSearch} onChange={e => setCreditSearch(e.target.value)} style={{ width:'100%',padding:'11px 14px 11px 38px',border:'1px solid #e0ddd5',borderRadius:'12px',fontSize:'13px',fontFamily:'inherit',background:'white',boxSizing:'border-box',color:'#0c2520' }} />
@@ -236,16 +370,7 @@ export default function PublicProfile() {
                 )}
               </div>
               <div style={{ width:'50%',padding:'0 32px 24px',boxSizing:'border-box' }}>
-                {hasReels && (
-                  <div style={{ display:'flex',flexDirection:'column',gap:'16px' }}>
-                    {reelsList.map(r => (
-                      <div key={r.label}>
-                        <p style={{ fontSize:'13px',fontWeight:600,color:'#0c2520',margin:'0 0 8px' }}>{r.label}</p>
-                        <video controls playsInline preload="metadata" style={{ width:'100%',borderRadius:'12px',background:'#061410',aspectRatio:'16/9',objectFit:'cover' }}><source src={(r.url || '') + '#t=0.5'} /></video>
-                      </div>
-                    ))}
-                  </div>
-                )}
+                {hasReels && <ReelsViewer reels={reelsList} />}
               </div>
             </div>
           </div>
@@ -355,7 +480,6 @@ export default function PublicProfile() {
 
       {lightbox && <div className="lightbox-overlay" onClick={() => setLightbox(null)}><img src={lightbox} alt="" style={{ maxWidth:'90vw',maxHeight:'90vh',borderRadius:'8px',objectFit:'contain' }} /></div>}
 
-      {/* Contact info */}
       {(profile?.agent_name || profile?.agent_email) && (
         <div ref={contactRef}>
           <button onClick={() => setShowContact(!showContact)} style={{ position:'fixed',right:0,top:'50%',transform:'translateY(-50%)',background:'#0c2520',color:'#f1f0ee',border:'none',padding:'16px 10px',borderRadius:'10px 0 0 10px',cursor:'pointer',writingMode:'vertical-rl',fontSize:'12px',fontWeight:600,letterSpacing:'0.05em',zIndex:400,fontFamily:'inherit' }}>Contact Info</button>
@@ -370,7 +494,6 @@ export default function PublicProfile() {
         </div>
       )}
 
-      {/* Nav */}
       <div style={{ position:'absolute',top:0,left:0,right:0,padding:'16px 20px',display:'flex',justifyContent:'space-between',alignItems:'center',zIndex:10 }}>
         <NavButton />
         {profile?.availability_status === 'available' && (
@@ -382,8 +505,6 @@ export default function PublicProfile() {
       </div>
 
       <div style={{ maxWidth:'680px',margin:'0 auto',padding:'0 0 100px' }}>
-
-        {/* Hero */}
         <div style={{ textAlign:'center',background:'#f1f0ee' }}>
           {profile?.vid_1 && (
             <div style={{ width:'100%',height:'240px',overflow:'hidden' }}>
@@ -415,10 +536,8 @@ export default function PublicProfile() {
           </div>
         </div>
 
-        {/* Dynamic sections based on section_settings */}
         {sectionOrder.map(id => renderSection(id))}
 
-        {/* Footer */}
         <div style={{ textAlign:'center',padding:'0 32px' }}>
           <a href="/" style={{ fontFamily:"'ITC Symbol',Georgia,serif",letterSpacing:'-0.03em',fontSize:'15px',color:'#0c2520',textDecoration:'none' }}>theident</a>
           <p style={{ fontSize:'11px',color:'#aaa',margin:'6px 0 0' }}>The performing arts platform</p>
