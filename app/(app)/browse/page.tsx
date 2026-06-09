@@ -194,8 +194,8 @@ export default function BrowseTalent() {
         .fade-in { animation: fadeIn 0.5s ease-out; }
         .sheet { animation: slideUp 0.3s cubic-bezier(0.32, 0.72, 0, 1); }
         .notif-popup { animation: popIn 0.2s ease-out; }
-        .talent-card { transition: transform 0.15s ease; -webkit-tap-highlight-color: transparent; position: relative; }
-        .talent-card:active { transform: scale(0.99); }
+        .talent-card { transition: transform 0.15s ease; -webkit-tap-highlight-color: transparent; }
+        .talent-card:active { transform: scale(0.98); }
         .range-slider { -webkit-appearance: none; width: 100%; height: 4px; background: #e0ddd5; border-radius: 2px; outline: none; }
         .range-slider::-webkit-slider-thumb { -webkit-appearance: none; width: 22px; height: 22px; background: #0c2520; border-radius: 50%; cursor: pointer; }
         input[type=text]:focus, input[type=search]:focus { border-color: #0c2520 !important; outline: none; box-shadow: 0 0 0 1px #0c2520; }
@@ -355,7 +355,7 @@ export default function BrowseTalent() {
             <p style={{ fontSize: '13px', color: '#888', margin: 0 }}>Try adjusting your search or filters</p>
           </div>
         ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', padding: '0 16px 100px' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', padding: '0 16px 100px' }}>
             {profiles.map(p => {
               const fullName = ((p.first_name || '') + ' ' + (p.last_name || '')).trim()
               const connStatus = connectionStatuses[p.id]
@@ -363,31 +363,49 @@ export default function BrowseTalent() {
               const primarySkill = p.skills[0]
               const isVerified = false
               return (
-                <div key={p.id} className="talent-card" style={{ background: 'white', borderRadius: '16px', border: '1px solid #e8e4de', padding: '14px', display: 'flex', gap: '14px', alignItems: 'flex-start' }}>
+                <div key={p.id} className="talent-card" style={{ background: 'white', borderRadius: '14px', overflow: 'hidden', border: '1px solid #e8e4de', display: 'flex', flexDirection: 'column' }}>
 
                   {/* Image */}
-                  <Link href={p.slug ? '/' + p.slug + '?from=app' : '#'} style={{ flexShrink: 0, position: 'relative', textDecoration: 'none' }}>
-                    <div style={{ width: '92px', height: '92px', borderRadius: '50%', background: p.gallery[0] ? 'url(' + p.gallery[0] + ') center/cover' : '#e8efea', backgroundSize: 'cover', border: '1px solid #e8e4de' }}>
-                      {!p.gallery[0] && (
-                        <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#d4d2cc" strokeWidth="1.5" strokeLinecap="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
-                        </div>
-                      )}
-                    </div>
-                    {online && <div style={{ position: 'absolute', bottom: '2px', right: '2px', width: '14px', height: '14px', borderRadius: '50%', background: '#4ade80', border: '2.5px solid white' }} />}
-                  </Link>
+                  <div style={{ position: 'relative' }}>
+                    <Link href={p.slug ? '/' + p.slug + '?from=app' : '#'} style={{ textDecoration: 'none' }}>
+                      <div style={{ width: '100%', aspectRatio: '1/1', background: p.gallery[0] ? 'url(' + p.gallery[0] + ') center/cover' : '#e8efea', backgroundSize: 'cover' }}>
+                        {!p.gallery[0] && (
+                          <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#d4d2cc" strokeWidth="1.5" strokeLinecap="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+                          </div>
+                        )}
+                      </div>
+                    </Link>
 
-                  {/* Info */}
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    {primarySkill && (
-                      <span style={{ display: 'inline-block', background: primarySkill.color, color: primarySkill.text_color, padding: '3px 10px', borderRadius: '6px', fontSize: '10px', fontWeight: 600, marginBottom: '6px', textTransform: 'capitalize' }}>{primarySkill.name}</span>
+                    {/* Online badge */}
+                    {online && (
+                      <div style={{ position: 'absolute', top: '8px', right: '8px', display: 'flex', alignItems: 'center', gap: '4px', background: 'rgba(0,0,0,0.5)', padding: '3px 8px', borderRadius: '10px' }}>
+                        <div style={{ width: '5px', height: '5px', borderRadius: '50%', background: '#4ade80' }} />
+                        <span style={{ fontSize: '9px', color: '#f1f0ee', fontWeight: 500 }}>Online</span>
+                      </div>
                     )}
 
+                    {/* Availability badge */}
+                    {p.availability_status === 'available' && !online && (
+                      <div style={{ position: 'absolute', top: '8px', right: '8px', display: 'flex', alignItems: 'center', gap: '4px', background: '#4ade80', padding: '3px 8px', borderRadius: '10px' }}>
+                        <div style={{ width: '5px', height: '5px', borderRadius: '50%', background: '#061410' }} />
+                        <span style={{ fontSize: '9px', color: '#061410', fontWeight: 600 }}>Available</span>
+                      </div>
+                    )}
+
+                    {/* Skill pill */}
+                    {primarySkill && (
+                      <span style={{ position: 'absolute', bottom: '8px', left: '8px', background: primarySkill.color, color: primarySkill.text_color, padding: '3px 9px', borderRadius: '6px', fontSize: '10px', fontWeight: 600, textTransform: 'capitalize' }}>{primarySkill.name}</span>
+                    )}
+                  </div>
+
+                  {/* Info */}
+                  <div style={{ padding: '10px 10px 12px', display: 'flex', flexDirection: 'column', flex: 1 }}>
                     <Link href={p.slug ? '/' + p.slug + '?from=app' : '#'} style={{ textDecoration: 'none' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '5px', marginBottom: '4px' }}>
-                        <p style={{ fontFamily: "'ITC Symbol',Georgia,serif", letterSpacing: '-0.03em', fontSize: '17px', fontWeight: 700, color: '#0c2520', margin: 0, lineHeight: 1.1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{fullName}</p>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '4px', marginBottom: '2px' }}>
+                        <p style={{ fontFamily: "'ITC Symbol',Georgia,serif", letterSpacing: '-0.03em', fontSize: '15px', fontWeight: 700, color: '#0c2520', margin: 0, lineHeight: 1.1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1 }}>{fullName}</p>
                         {isVerified && (
-                          <svg width="14" height="14" viewBox="0 0 24 24" fill="#0c2520" stroke="none" style={{ flexShrink: 0 }}>
+                          <svg width="12" height="12" viewBox="0 0 24 24" fill="#0c2520" stroke="none" style={{ flexShrink: 0 }}>
                             <path d="M12 2L9.5 5 6 4l-1 3.5L2 9l2 3-2 3 3 1.5L6 20l3.5-1 2.5 3 2.5-3 3.5 1 1-3.5L22 15l-2-3 2-3-3-1.5L18 4l-3.5 1z"/>
                             <polyline points="9 12 11 14 15 10" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
                           </svg>
@@ -396,50 +414,36 @@ export default function BrowseTalent() {
                     </Link>
 
                     {p.location && (
-                      <p style={{ fontSize: '12px', color: '#888', margin: '0 0 8px', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#888" strokeWidth="2" strokeLinecap="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
-                        <span style={{ borderBottom: '1px dashed #ccc' }}>{p.location}</span>
+                      <p style={{ fontSize: '11px', color: '#888', margin: '0 0 8px', display: 'flex', alignItems: 'center', gap: '3px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#888" strokeWidth="2" strokeLinecap="round" style={{ flexShrink: 0 }}><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                        <span style={{ borderBottom: '1px dashed #ccc', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.location}</span>
                       </p>
                     )}
 
+                    {/* Skills */}
                     {p.skills.length > 1 && (
                       <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap', marginBottom: '10px' }}>
-                        {p.skills.slice(1, 4).map((s, i) => (
-                          <span key={i} style={{ background: '#e8e4de', color: '#666', padding: '3px 9px', borderRadius: '12px', fontSize: '10px', fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '90px' }}>{s.name}</span>
+                        {p.skills.slice(1, 3).map((s, i) => (
+                          <span key={i} style={{ background: '#e8e4de', color: '#666', padding: '2px 7px', borderRadius: '10px', fontSize: '9px', fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '70px' }}>{s.name}</span>
                         ))}
-                        {p.skills.length > 4 && <span style={{ fontSize: '10px', color: '#aaa', padding: '3px 4px' }}>+{p.skills.length - 4}</span>}
+                        {p.skills.length > 3 && <span style={{ fontSize: '9px', color: '#aaa', padding: '2px 2px' }}>+{p.skills.length - 3}</span>}
                       </div>
                     )}
 
+                    <div style={{ flex: 1 }} />
+
+                    {/* Buttons */}
                     {currentUserId && currentUserId !== p.id && (
-                      <div style={{ display: 'flex', gap: '6px', marginTop: '4px' }}>
-                        <Link href={p.slug ? '/' + p.slug + '?from=app' : '#'} style={{ textDecoration: 'none' }}>
-                          <button style={{ padding: '8px 14px', background: 'white', color: '#0c2520', border: '1px solid #e0ddd5', borderRadius: '20px', fontSize: '11px', fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit', WebkitTapHighlightColor: 'transparent' }}>View profile</button>
+                      <div style={{ display: 'flex', gap: '5px', marginTop: '4px' }}>
+                        <Link href={p.slug ? '/' + p.slug + '?from=app' : '#'} style={{ textDecoration: 'none', flex: 1 }}>
+                          <button style={{ width: '100%', padding: '8px 6px', background: 'white', color: '#0c2520', border: '1px solid #e0ddd5', borderRadius: '18px', fontSize: '10px', fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit', WebkitTapHighlightColor: 'transparent' }}>View profile</button>
                         </Link>
-                        <button onClick={() => handleConnect(p.id)} disabled={!!connStatus} style={{ padding: '8px 14px', borderRadius: '20px', fontSize: '11px', fontWeight: 500, cursor: connStatus ? 'default' : 'pointer', fontFamily: 'inherit', background: connStatus === 'accepted' ? '#4ade80' : connStatus === 'pending' ? '#f1f0ee' : '#0c2520', color: connStatus === 'accepted' ? '#061410' : connStatus === 'pending' ? '#888' : '#f1f0ee', border: connStatus === 'pending' ? '1px solid #e0ddd5' : 'none', WebkitTapHighlightColor: 'transparent', display: 'flex', alignItems: 'center', gap: '5px' }}>
-                          {connStatus === 'accepted' ? (
-                            <>
-                              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><polyline points="20 6 9 17 4 12"/></svg>
-                              Collaborator
-                            </>
-                          ) : connStatus === 'pending' ? 'Invite sent' : (
-                            <>
-                              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><line x1="20" y1="8" x2="20" y2="14"/><line x1="23" y1="11" x2="17" y2="11"/></svg>
-                              Collaborate
-                            </>
-                          )}
+                        <button onClick={() => handleConnect(p.id)} disabled={!!connStatus} style={{ flex: 1, padding: '8px 6px', borderRadius: '18px', fontSize: '10px', fontWeight: 500, cursor: connStatus ? 'default' : 'pointer', fontFamily: 'inherit', background: connStatus === 'accepted' ? '#4ade80' : connStatus === 'pending' ? '#f1f0ee' : '#0c2520', color: connStatus === 'accepted' ? '#061410' : connStatus === 'pending' ? '#888' : '#f1f0ee', border: connStatus === 'pending' ? '1px solid #e0ddd5' : 'none', WebkitTapHighlightColor: 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}>
+                          {connStatus === 'accepted' ? 'Connected' : connStatus === 'pending' ? 'Sent' : 'Collaborate'}
                         </button>
                       </div>
                     )}
                   </div>
-
-                  {/* Availability badge */}
-                  {p.availability_status === 'available' && !online && (
-                    <div style={{ position: 'absolute', top: '14px', right: '14px', display: 'flex', alignItems: 'center', gap: '4px', background: 'rgba(74,222,128,0.15)', padding: '3px 8px', borderRadius: '10px' }}>
-                      <div style={{ width: '5px', height: '5px', borderRadius: '50%', background: '#4ade80' }} />
-                      <span style={{ fontSize: '9px', fontWeight: 600, color: '#0c2520' }}>Available</span>
-                    </div>
-                  )}
                 </div>
               )
             })}
