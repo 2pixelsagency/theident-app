@@ -25,6 +25,54 @@ type TalentProfile = {
 type Gender = { id: number; name: string }
 type Skill = { id: number; name: string }
 
+function ImageCarousel({ images, slug }: { images: string[]; slug: string | null }) {
+  const [active, setActive] = useState(0)
+  const startX = useRef(0)
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    startX.current = e.touches[0].clientX
+  }
+
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    const diff = startX.current - e.changedTouches[0].clientX
+    if (Math.abs(diff) > 40) {
+      if (diff > 0 && active < images.length - 1) setActive(active + 1)
+      if (diff < 0 && active > 0) setActive(active - 1)
+    }
+  }
+
+  if (images.length === 0) return (
+    <Link href={slug ? '/' + slug + '?from=app' : '#'} style={{ textDecoration: 'none' }}>
+      <div style={{ width: '100%', aspectRatio: '1/1', background: '#e8efea', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#d4d2cc" strokeWidth="1.5" strokeLinecap="round">
+          <circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/>
+        </svg>
+      </div>
+    </Link>
+  )
+
+  return (
+    <div style={{ width: '100%', aspectRatio: '1/1', position: 'relative', overflow: 'hidden' }}
+      onTouchStart={handleTouchStart}
+      onTouchEnd={handleTouchEnd}>
+      <Link href={slug ? '/' + slug + '?from=app' : '#'} style={{ textDecoration: 'none' }}>
+        <div style={{ width: '100%', height: '100%', background: 'url(' + images[active] + ') center/cover', backgroundSize: 'cover', transition: 'background-image 0.3s ease' }} />
+      </Link>
+      {images.length > 1 && (
+        <div style={{ position: 'absolute', bottom: '8px', left: 0, right: 0, display: 'flex', justifyContent: 'center', gap: '3px' }}>
+          {images.map((_, i) => (
+            <div key={i} style={{
+              width: i === active ? '12px' : '4px', height: '4px', borderRadius: '2px',
+              background: i === active ? 'white' : 'rgba(255,255,255,0.5)',
+              transition: 'all 0.2s ease',
+            }} />
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
 export default function BrowseTalent() {
   const router = useRouter()
   const [profiles, setProfiles] = useState<TalentProfile[]>([])
@@ -358,24 +406,15 @@ export default function BrowseTalent() {
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', padding: '0 16px 100px' }}>
             {profiles.map(p => {
               const fullName = ((p.first_name || '') + ' ' + (p.last_name || '')).trim()
-              const connStatus = connectionStatuses[p.id]
               const online = isOnline(p.last_active)
               const primarySkill = p.skills[0]
               const isVerified = false
               return (
                 <div key={p.id} className="talent-card" style={{ background: 'white', borderRadius: '14px', overflow: 'hidden', border: '1px solid #e8e4de', display: 'flex', flexDirection: 'column' }}>
 
-                  {/* Image */}
+                  {/* Image carousel */}
                   <div style={{ position: 'relative' }}>
-                    <Link href={p.slug ? '/' + p.slug + '?from=app' : '#'} style={{ textDecoration: 'none' }}>
-                      <div style={{ width: '100%', aspectRatio: '1/1', background: p.gallery[0] ? 'url(' + p.gallery[0] + ') center/cover' : '#e8efea', backgroundSize: 'cover' }}>
-                        {!p.gallery[0] && (
-                          <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#d4d2cc" strokeWidth="1.5" strokeLinecap="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
-                          </div>
-                        )}
-                      </div>
-                    </Link>
+                    <ImageCarousel images={p.gallery} slug={p.slug} />
 
                     {/* Online badge */}
                     {online && (
@@ -395,7 +434,7 @@ export default function BrowseTalent() {
 
                     {/* Skill pill */}
                     {primarySkill && (
-                      <span style={{ position: 'absolute', bottom: '8px', left: '8px', background: primarySkill.color, color: primarySkill.text_color, padding: '3px 9px', borderRadius: '6px', fontSize: '10px', fontWeight: 600, textTransform: 'capitalize' }}>{primarySkill.name}</span>
+                      <span style={{ position: 'absolute', top: '8px', left: '8px', background: primarySkill.color, color: primarySkill.text_color, padding: '3px 9px', borderRadius: '6px', fontSize: '10px', fontWeight: 600, textTransform: 'capitalize' }}>{primarySkill.name}</span>
                     )}
                   </div>
 
@@ -422,25 +461,11 @@ export default function BrowseTalent() {
 
                     {/* Skills */}
                     {p.skills.length > 1 && (
-                      <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap', marginBottom: '10px' }}>
+                      <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
                         {p.skills.slice(1, 3).map((s, i) => (
                           <span key={i} style={{ background: '#e8e4de', color: '#666', padding: '2px 7px', borderRadius: '10px', fontSize: '9px', fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '70px' }}>{s.name}</span>
                         ))}
                         {p.skills.length > 3 && <span style={{ fontSize: '9px', color: '#aaa', padding: '2px 2px' }}>+{p.skills.length - 3}</span>}
-                      </div>
-                    )}
-
-                    <div style={{ flex: 1 }} />
-
-                    {/* Buttons */}
-                    {currentUserId && currentUserId !== p.id && (
-                      <div style={{ display: 'flex', gap: '5px', marginTop: '4px' }}>
-                        <Link href={p.slug ? '/' + p.slug + '?from=app' : '#'} style={{ textDecoration: 'none', flex: 1 }}>
-                          <button style={{ width: '100%', padding: '8px 6px', background: 'white', color: '#0c2520', border: '1px solid #e0ddd5', borderRadius: '18px', fontSize: '10px', fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit', WebkitTapHighlightColor: 'transparent' }}>View profile</button>
-                        </Link>
-                        <button onClick={() => handleConnect(p.id)} disabled={!!connStatus} style={{ flex: 1, padding: '8px 6px', borderRadius: '18px', fontSize: '10px', fontWeight: 500, cursor: connStatus ? 'default' : 'pointer', fontFamily: 'inherit', background: connStatus === 'accepted' ? '#4ade80' : connStatus === 'pending' ? '#f1f0ee' : '#0c2520', color: connStatus === 'accepted' ? '#061410' : connStatus === 'pending' ? '#888' : '#f1f0ee', border: connStatus === 'pending' ? '1px solid #e0ddd5' : 'none', WebkitTapHighlightColor: 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}>
-                          {connStatus === 'accepted' ? 'Connected' : connStatus === 'pending' ? 'Sent' : 'Collaborate'}
-                        </button>
                       </div>
                     )}
                   </div>
