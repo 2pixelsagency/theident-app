@@ -25,61 +25,6 @@ type TalentProfile = {
 type Gender = { id: number; name: string }
 type Skill = { id: number; name: string }
 
-function ImageCarousel({ images, slug }: { images: string[]; slug: string | null }) {
-  const [active, setActive] = useState(0)
-  const startX = useRef(0)
-
-  const handleTouchStart = (e: React.TouchEvent) => {
-    startX.current = e.touches[0].clientX
-  }
-
-  const handleTouchEnd = (e: React.TouchEvent) => {
-    const diff = startX.current - e.changedTouches[0].clientX
-    if (Math.abs(diff) > 40) {
-      if (diff > 0 && active < images.length - 1) setActive(active + 1)
-      if (diff < 0 && active > 0) setActive(active - 1)
-    }
-  }
-
-  if (images.length === 0) return (
-    <Link href={slug ? '/' + slug : '#'} style={{ textDecoration: 'none' }}>
-      <div style={{ width: '100%', aspectRatio: '3/4', background: '#e8efea', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#d4d2cc" strokeWidth="1.5" strokeLinecap="round">
-          <circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/>
-        </svg>
-      </div>
-    </Link>
-  )
-
-  return (
-    <div
-      style={{ width: '100%', aspectRatio: '3/4', position: 'relative', overflow: 'hidden' }}
-      onTouchStart={handleTouchStart}
-      onTouchEnd={handleTouchEnd}
-    >
-      <Link href={slug ? '/' + slug : '#'} style={{ textDecoration: 'none' }}>
-        <div style={{
-          width: '100%', height: '100%',
-          background: 'url(' + images[active] + ') center/cover',
-          backgroundSize: 'cover',
-          transition: 'background-image 0.3s ease',
-        }} />
-      </Link>
-      {images.length > 1 && (
-        <div style={{ position: 'absolute', bottom: '10px', left: 0, right: 0, display: 'flex', justifyContent: 'center', gap: '4px' }}>
-          {images.map((_, i) => (
-            <div key={i} style={{
-              width: i === active ? '14px' : '5px', height: '5px', borderRadius: '3px',
-              background: i === active ? 'white' : 'rgba(255,255,255,0.5)',
-              transition: 'all 0.2s ease',
-            }} />
-          ))}
-        </div>
-      )}
-    </div>
-  )
-}
-
 export default function BrowseTalent() {
   const router = useRouter()
   const [profiles, setProfiles] = useState<TalentProfile[]>([])
@@ -249,8 +194,8 @@ export default function BrowseTalent() {
         .fade-in { animation: fadeIn 0.5s ease-out; }
         .sheet { animation: slideUp 0.3s cubic-bezier(0.32, 0.72, 0, 1); }
         .notif-popup { animation: popIn 0.2s ease-out; }
-        .talent-card { transition: transform 0.15s ease; -webkit-tap-highlight-color: transparent; }
-        .talent-card:active { transform: scale(0.97); }
+        .talent-card { transition: transform 0.15s ease; -webkit-tap-highlight-color: transparent; position: relative; }
+        .talent-card:active { transform: scale(0.99); }
         .range-slider { -webkit-appearance: none; width: 100%; height: 4px; background: #e0ddd5; border-radius: 2px; outline: none; }
         .range-slider::-webkit-slider-thumb { -webkit-appearance: none; width: 22px; height: 22px; background: #0c2520; border-radius: 50%; cursor: pointer; }
         input[type=text]:focus, input[type=search]:focus { border-color: #0c2520 !important; outline: none; box-shadow: 0 0 0 1px #0c2520; }
@@ -268,7 +213,7 @@ export default function BrowseTalent() {
           </div>
           <div style={{ padding: '8px 20px 24px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-              <p style={{ fontFamily: 'Georgia, serif', fontSize: '18px', fontWeight: 500, color: '#0c2520', margin: 0 }}>Filters</p>
+              <p style={{ fontFamily: "'ITC Symbol',Georgia,serif", letterSpacing: '-0.03em', fontSize: '18px', fontWeight: 500, color: '#0c2520', margin: 0 }}>Filters</p>
               <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
                 {hasActiveFilters && <button onClick={clearAllFilters} style={{ background: 'none', border: 'none', fontSize: '13px', color: '#888', textDecoration: 'underline', cursor: 'pointer', fontFamily: 'inherit' }}>Clear all</button>}
                 <button onClick={() => setShowFilters(false)} style={{ background: '#0c2520', border: 'none', borderRadius: '50%', width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
@@ -328,13 +273,12 @@ export default function BrowseTalent() {
               <p style={{ fontSize: '12px', color: '#888', margin: '0 0 3px', letterSpacing: '0.02em' }}>
                 {new Date().toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' })}
               </p>
-              <p style={{ fontFamily: 'Georgia, serif', fontSize: '20px', color: '#0c2520', margin: 0, fontWeight: 500, lineHeight: 1.2 }}>
+              <p style={{ fontFamily: "'ITC Symbol',Georgia,serif", letterSpacing: '-0.03em', fontSize: '20px', color: '#0c2520', margin: 0, fontWeight: 500, lineHeight: 1.2 }}>
                 Browse talent
               </p>
             </div>
 
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              {/* Bell — small */}
               <div ref={notifRef} style={{ position: 'relative' }}>
                 <button onClick={() => setShowNotifications(!showNotifications)}
                   style={{ width: '30px', height: '30px', borderRadius: '50%', background: 'white', border: '1px solid #e0ddd5', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', position: 'relative', flexShrink: 0, WebkitTapHighlightColor: 'transparent' }}>
@@ -348,7 +292,7 @@ export default function BrowseTalent() {
                 {showNotifications && (
                   <div className="notif-popup" style={{ position: 'absolute', top: 'calc(100% + 8px)', right: 0, width: '280px', background: 'white', borderRadius: '16px', border: '1px solid #e8e4de', boxShadow: '0 8px 32px rgba(12,37,32,0.12)', zIndex: 300, overflow: 'hidden' }}>
                     <div style={{ padding: '14px 16px 10px', borderBottom: '1px solid #f0ede5' }}>
-                      <p style={{ fontFamily: 'Georgia, serif', fontSize: '15px', fontWeight: 500, color: '#0c2520', margin: 0 }}>Notifications</p>
+                      <p style={{ fontFamily: "'ITC Symbol',Georgia,serif", letterSpacing: '-0.03em', fontSize: '15px', fontWeight: 700, color: '#0c2520', margin: 0 }}>Notifications</p>
                     </div>
                     {notifications.length === 0 ? (
                       <div style={{ padding: '24px 16px', textAlign: 'center' }}>
@@ -368,7 +312,6 @@ export default function BrowseTalent() {
                 )}
               </div>
 
-              {/* Headshot — bigger with online dot */}
               <Link href="/profile" style={{ textDecoration: 'none', flexShrink: 0, position: 'relative' }}>
                 <div style={{
                   width: '46px', height: '46px', borderRadius: '50%',
@@ -405,101 +348,98 @@ export default function BrowseTalent() {
           </button>
         </div>
 
-        {/* Grid */}
+        {/* Cards */}
         {profiles.length === 0 ? (
           <div style={{ margin: '0 16px', textAlign: 'center', padding: '48px 24px', background: 'white', borderRadius: '14px', border: '1px solid #e8e6e0' }}>
-            <p style={{ fontFamily: 'Georgia, serif', fontSize: '17px', color: '#0c2520', margin: '0 0 6px' }}>No talent found</p>
+            <p style={{ fontFamily: "'ITC Symbol',Georgia,serif", letterSpacing: '-0.03em', fontSize: '17px', color: '#0c2520', margin: '0 0 6px' }}>No talent found</p>
             <p style={{ fontSize: '13px', color: '#888', margin: 0 }}>Try adjusting your search or filters</p>
           </div>
         ) : (
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', padding: '0 16px 100px' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', padding: '0 16px 100px' }}>
             {profiles.map(p => {
               const fullName = ((p.first_name || '') + ' ' + (p.last_name || '')).trim()
               const connStatus = connectionStatuses[p.id]
               const online = isOnline(p.last_active)
+              const primarySkill = p.skills[0]
+              const isVerified = false
               return (
-                <div key={p.id} className="talent-card" style={{ background: 'white', borderRadius: '14px', overflow: 'hidden', border: '1px solid #e8e4de' }}>
+                <div key={p.id} className="talent-card" style={{ background: 'white', borderRadius: '16px', border: '1px solid #e8e4de', padding: '14px', display: 'flex', gap: '14px', alignItems: 'flex-start' }}>
 
-                  <div style={{ position: 'relative' }}>
-                    <ImageCarousel images={p.gallery} slug={p.slug} />
+                  {/* Image */}
+                  <Link href={p.slug ? '/' + p.slug + '?from=app' : '#'} style={{ flexShrink: 0, position: 'relative', textDecoration: 'none' }}>
+                    <div style={{ width: '92px', height: '92px', borderRadius: '50%', background: p.gallery[0] ? 'url(' + p.gallery[0] + ') center/cover' : '#e8efea', backgroundSize: 'cover', border: '1px solid #e8e4de' }}>
+                      {!p.gallery[0] && (
+                        <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#d4d2cc" strokeWidth="1.5" strokeLinecap="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+                        </div>
+                      )}
+                    </div>
+                    {online && <div style={{ position: 'absolute', bottom: '2px', right: '2px', width: '14px', height: '14px', borderRadius: '50%', background: '#4ade80', border: '2.5px solid white' }} />}
+                  </Link>
 
-                    {/* Online badge */}
-                    {online && (
-                      <div style={{ position: 'absolute', top: '10px', right: '10px', display: 'flex', alignItems: 'center', gap: '4px', background: 'rgba(0,0,0,0.5)', padding: '3px 8px', borderRadius: '10px' }}>
-                        <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#4ade80' }} />
-                        <span style={{ fontSize: '9px', color: '#f1f0ee', fontWeight: 500 }}>Online</span>
-                      </div>
+                  {/* Info */}
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    {primarySkill && (
+                      <span style={{ display: 'inline-block', background: primarySkill.color, color: primarySkill.text_color, padding: '3px 10px', borderRadius: '6px', fontSize: '10px', fontWeight: 600, marginBottom: '6px', textTransform: 'capitalize' }}>{primarySkill.name}</span>
                     )}
 
-                    {/* Availability badge when not online */}
-                    {p.availability_status && !online && (
-                      <div style={{
-                        position: 'absolute', top: '10px', right: '10px',
-                        background: p.availability_status === 'available' ? '#4ade80' : '#fde6c2',
-                        padding: '3px 8px', borderRadius: '10px',
-                      }}>
-                        <span style={{ fontSize: '9px', fontWeight: 600, color: p.availability_status === 'available' ? '#061410' : '#8a5a2e' }}>
-                          {p.availability_status === 'available' ? 'Available' : 'In production'}
-                        </span>
+                    <Link href={p.slug ? '/' + p.slug + '?from=app' : '#'} style={{ textDecoration: 'none' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '5px', marginBottom: '4px' }}>
+                        <p style={{ fontFamily: "'ITC Symbol',Georgia,serif", letterSpacing: '-0.03em', fontSize: '17px', fontWeight: 700, color: '#0c2520', margin: 0, lineHeight: 1.1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{fullName}</p>
+                        {isVerified && (
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="#0c2520" stroke="none" style={{ flexShrink: 0 }}>
+                            <path d="M12 2L9.5 5 6 4l-1 3.5L2 9l2 3-2 3 3 1.5L6 20l3.5-1 2.5 3 2.5-3 3.5 1 1-3.5L22 15l-2-3 2-3-3-1.5L18 4l-3.5 1z"/>
+                            <polyline points="9 12 11 14 15 10" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
+                          </svg>
+                        )}
                       </div>
-                    )}
-                  </div>
-
-                  <div style={{ padding: '12px 12px 14px' }}>
-                    <Link href={p.slug ? '/' + p.slug : '#'} style={{ textDecoration: 'none' }}>
-                      <p style={{ fontFamily: 'Georgia, serif', fontSize: '15px', fontWeight: 500, color: '#0c2520', margin: '0 0 2px', lineHeight: 1.2 }}>{fullName}</p>
                     </Link>
 
                     {p.location && (
-                      <p style={{ fontSize: '11px', color: '#888', margin: '0 0 8px', display: 'flex', alignItems: 'center', gap: '3px' }}>
-                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#aaa" strokeWidth="2" strokeLinecap="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
-                        {p.location}
+                      <p style={{ fontSize: '12px', color: '#888', margin: '0 0 8px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#888" strokeWidth="2" strokeLinecap="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                        <span style={{ borderBottom: '1px dashed #ccc' }}>{p.location}</span>
                       </p>
                     )}
 
-                    {/* Skills */}
-                    {p.skills.length > 0 && (
-                      <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap', marginBottom: '12px' }}>
-                        {p.skills.slice(0, 3).map((s, i) => (
-                          <span key={i} style={{ background: s.color, color: s.text_color, padding: '2px 7px', borderRadius: '4px', fontSize: '9px', fontWeight: 500 }}>
-                            {s.name}
-                          </span>
+                    {p.skills.length > 1 && (
+                      <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap', marginBottom: '10px' }}>
+                        {p.skills.slice(1, 4).map((s, i) => (
+                          <span key={i} style={{ background: '#e8e4de', color: '#666', padding: '3px 9px', borderRadius: '12px', fontSize: '10px', fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '90px' }}>{s.name}</span>
                         ))}
-                        {p.skills.length > 3 && (
-                          <span style={{ fontSize: '9px', color: '#aaa', padding: '2px 4px' }}>+{p.skills.length - 3}</span>
-                        )}
+                        {p.skills.length > 4 && <span style={{ fontSize: '10px', color: '#aaa', padding: '3px 4px' }}>+{p.skills.length - 4}</span>}
                       </div>
                     )}
 
-                    {/* Collaborate button */}
                     {currentUserId && currentUserId !== p.id && (
-                      <button
-                        onClick={() => handleConnect(p.id)}
-                        disabled={!!connStatus}
-                        style={{
-                          width: '100%', padding: '10px 12px', borderRadius: '22px', fontSize: '12px', fontWeight: 500,
-                          cursor: connStatus ? 'default' : 'pointer', fontFamily: 'inherit',
-                          background: connStatus === 'accepted' ? '#4ade80' : connStatus === 'pending' ? '#f1f0ee' : '#061410',
-                          color: connStatus === 'accepted' ? '#061410' : connStatus === 'pending' ? '#888' : '#f1f0ee',
-                          border: connStatus === 'pending' ? '1px solid #e0ddd5' : 'none',
-                          WebkitTapHighlightColor: 'transparent',
-                          display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px',
-                        }}
-                      >
-                        {connStatus === 'accepted' ? (
-                          <>
-                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><polyline points="20 6 9 17 4 12"/></svg>
-                            Collaborator
-                          </>
-                        ) : connStatus === 'pending' ? 'Invite sent' : (
-                          <>
-                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><line x1="20" y1="8" x2="20" y2="14"/><line x1="23" y1="11" x2="17" y2="11"/></svg>
-                            Collaborate
-                          </>
-                        )}
-                      </button>
+                      <div style={{ display: 'flex', gap: '6px', marginTop: '4px' }}>
+                        <Link href={p.slug ? '/' + p.slug + '?from=app' : '#'} style={{ textDecoration: 'none' }}>
+                          <button style={{ padding: '8px 14px', background: 'white', color: '#0c2520', border: '1px solid #e0ddd5', borderRadius: '20px', fontSize: '11px', fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit', WebkitTapHighlightColor: 'transparent' }}>View profile</button>
+                        </Link>
+                        <button onClick={() => handleConnect(p.id)} disabled={!!connStatus} style={{ padding: '8px 14px', borderRadius: '20px', fontSize: '11px', fontWeight: 500, cursor: connStatus ? 'default' : 'pointer', fontFamily: 'inherit', background: connStatus === 'accepted' ? '#4ade80' : connStatus === 'pending' ? '#f1f0ee' : '#0c2520', color: connStatus === 'accepted' ? '#061410' : connStatus === 'pending' ? '#888' : '#f1f0ee', border: connStatus === 'pending' ? '1px solid #e0ddd5' : 'none', WebkitTapHighlightColor: 'transparent', display: 'flex', alignItems: 'center', gap: '5px' }}>
+                          {connStatus === 'accepted' ? (
+                            <>
+                              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><polyline points="20 6 9 17 4 12"/></svg>
+                              Collaborator
+                            </>
+                          ) : connStatus === 'pending' ? 'Invite sent' : (
+                            <>
+                              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><line x1="20" y1="8" x2="20" y2="14"/><line x1="23" y1="11" x2="17" y2="11"/></svg>
+                              Collaborate
+                            </>
+                          )}
+                        </button>
+                      </div>
                     )}
                   </div>
+
+                  {/* Availability badge */}
+                  {p.availability_status === 'available' && !online && (
+                    <div style={{ position: 'absolute', top: '14px', right: '14px', display: 'flex', alignItems: 'center', gap: '4px', background: 'rgba(74,222,128,0.15)', padding: '3px 8px', borderRadius: '10px' }}>
+                      <div style={{ width: '5px', height: '5px', borderRadius: '50%', background: '#4ade80' }} />
+                      <span style={{ fontSize: '9px', fontWeight: 600, color: '#0c2520' }}>Available</span>
+                    </div>
+                  )}
                 </div>
               )
             })}
