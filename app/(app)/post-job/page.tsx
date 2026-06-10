@@ -203,12 +203,12 @@ export default function PostJob() {
   )
 
   return (
-    <div style={{ padding: '32px 40px' }}>
+    <div>
       <style>{`
         @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
         .fade-in { animation: fadeIn 0.5s ease-out; }
         input:focus, textarea:focus, select:focus { border-color: #0c2520 !important; box-shadow: 0 0 0 1px #0c2520 !important; }
-        .toggle-switch { position: relative; width: 44px; height: 24px; background: #d4d2cc; border-radius: 12px; cursor: pointer; transition: background 0.2s ease; }
+        .toggle-switch { position: relative; width: 44px; height: 24px; background: #d4d2cc; border-radius: 12px; cursor: pointer; transition: background 0.2s ease; flex-shrink: 0; }
         .toggle-switch.on { background: #0c2520; }
         .toggle-knob { position: absolute; top: 2px; left: 2px; width: 20px; height: 20px; background: white; border-radius: 50%; transition: transform 0.2s ease; }
         .toggle-switch.on .toggle-knob { transform: translateX(20px); }
@@ -221,17 +221,24 @@ export default function PostJob() {
         input[type="number"] { -moz-appearance: textfield; }
       `}</style>
 
-      <div className="fade-in" style={{ maxWidth: '1100px', margin: '0 auto' }}>
-
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '24px', flexWrap: 'wrap', gap: '12px' }}>
+      {/* Header — matches app standard */}
+      <div style={{ padding: '24px 16px 16px' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '12px' }}>
           <div>
-            <h1 style={{ fontFamily: "'ITC Symbol',Georgia,serif", letterSpacing: '-0.03em', fontSize: '28px', fontWeight: 700, color: '#0c2520', margin: '0 0 6px' }}>Post a Job</h1>
-            <p style={{ fontSize: '13px', color: '#666', margin: 0, maxWidth: '600px' }}>Please give at least 7 days&apos; notice so talent has time to put in their best work.</p>
+            <p style={{ fontSize: '12px', color: '#888', margin: '0 0 3px', letterSpacing: '0.02em' }}>
+              {new Date().toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' })}
+            </p>
+            <p style={{ fontFamily: "'ITC Symbol',Georgia,serif", letterSpacing: '-0.03em', fontSize: '20px', color: '#0c2520', margin: 0, fontWeight: 500, lineHeight: 1.2 }}>Post a job</p>
           </div>
-          <button onClick={() => router.push('/dashboard')} style={{ background: 'transparent', border: '1px solid #e0ddd5', padding: '8px 16px', borderRadius: '20px', fontSize: '13px', cursor: 'pointer', color: '#0c2520', fontFamily: 'inherit' }}>Cancel</button>
+          <button onClick={() => router.push('/dashboard')} style={{ background: 'transparent', border: '1px solid #e0ddd5', padding: '8px 16px', borderRadius: '20px', fontSize: '13px', cursor: 'pointer', color: '#0c2520', fontFamily: 'inherit', flexShrink: 0 }}>Cancel</button>
         </div>
+      </div>
 
-        <div style={{ background: '#92d7af', border: '1px solid #6db98a', borderRadius: '12px', padding: '16px 20px', marginBottom: '12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '16px' }}>
+      <div className="fade-in" style={{ padding: '0 16px 100px', maxWidth: '700px', margin: '0 auto' }}>
+
+        <p style={{ fontSize: '13px', color: '#666', margin: '0 0 16px' }}>Please give at least 7 days&apos; notice so talent has time to put in their best work.</p>
+
+        <div style={{ background: '#92d7af', border: '1px solid #6db98a', borderRadius: '12px', padding: '16px 18px', marginBottom: '12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '16px' }}>
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
               <p style={{ fontFamily: "'ITC Symbol',Georgia,serif", letterSpacing: '-0.03em', fontWeight: 700, fontSize: '15px', color: '#0c2520', margin: 0 }}>Spotlight this job</p>
@@ -242,7 +249,7 @@ export default function PostJob() {
           <div className={'toggle-switch' + (spotlightJob ? ' on' : '')} onClick={() => setSpotlightJob(!spotlightJob)}><div className="toggle-knob" /></div>
         </div>
 
-        <div style={{ background: 'white', border: '1px solid #e8e6e0', borderRadius: '12px', padding: '16px 20px', marginBottom: '20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '16px' }}>
+        <div style={{ background: 'white', border: '1px solid #e8e6e0', borderRadius: '12px', padding: '16px 18px', marginBottom: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '16px' }}>
           <div>
             <p style={{ fontFamily: "'ITC Symbol',Georgia,serif", letterSpacing: '-0.03em', fontWeight: 700, fontSize: '15px', color: '#0c2520', margin: '0 0 4px' }}>Side Hustle</p>
             <p style={{ fontSize: '12px', color: '#666', margin: 0 }}>Toggle for non-industry jobs (teaching, hospitality, etc.)</p>
@@ -251,7 +258,7 @@ export default function PostJob() {
         </div>
 
         {!isSideHustle && (
-          <div style={{ background: 'white', border: '1px solid #e8e6e0', borderRadius: '12px', padding: '32px' }}>
+          <div style={{ background: 'white', border: '1px solid #e8e6e0', borderRadius: '12px', padding: '20px' }}>
 
             <h2 style={{ ...sectionStyle, margin: '0 0 14px' }}>The project</h2>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '12px' }}>
@@ -332,7 +339,7 @@ export default function PostJob() {
         )}
 
         {isSideHustle && (
-          <div style={{ background: 'white', border: '1px solid #e8e6e0', borderRadius: '12px', padding: '32px' }}>
+          <div style={{ background: 'white', border: '1px solid #e8e6e0', borderRadius: '12px', padding: '20px' }}>
             <h2 style={{ ...sectionStyle, margin: '0 0 14px' }}>The role</h2>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '12px' }}>
               <div><label style={labelStyle}>Job Title <span style={{ color: '#c44' }}>*</span></label><input type="text" value={jobTitle} onChange={e => setJobTitle(e.target.value)} placeholder="e.g. Pilates Cover Teacher" style={inputStyle} /></div>
@@ -372,7 +379,7 @@ export default function PostJob() {
 
         {showPayment && (
           <div style={{ position: 'fixed', inset: 0, background: 'rgba(12, 37, 32, 0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 100, padding: '20px' }}>
-            <div style={{ background: 'white', borderRadius: '16px', padding: '32px', maxWidth: '420px', width: '100%' }}>
+            <div style={{ background: 'white', borderRadius: '16px', padding: '28px', maxWidth: '420px', width: '100%' }}>
               <h2 style={{ fontFamily: "'ITC Symbol',Georgia,serif", letterSpacing: '-0.03em', fontSize: '22px', fontWeight: 700, color: '#0c2520', margin: '0 0 6px' }}>Spotlight your job</h2>
               <p style={{ fontSize: '13px', color: '#666', margin: '0 0 24px' }}>£5 to feature your job at the top of the dashboard for 7 days.</p>
               <div style={{ marginBottom: '12px' }}><label style={labelStyle}>Card Number</label><input type="text" value={cardNumber} onChange={e => setCardNumber(e.target.value)} placeholder="1234 5678 9012 3456" style={inputStyle} /></div>
