@@ -367,7 +367,7 @@ export default function Dashboard() {
           <div style={{ display: 'flex', justifyContent: 'center', padding: '12px 0 4px' }}><div style={{ width: '36px', height: '4px', borderRadius: '2px', background: '#d4d2cc' }} /></div>
           <div style={{ padding: '8px 20px 24px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-              <p style={{ fontFamily: 'Georgia, serif', fontSize: '18px', fontWeight: 500, color: '#0c2520', margin: 0 }}>Filters</p>
+              <p style={{ fontFamily: "'ITC Symbol',Georgia,serif", letterSpacing: '-0.03em', fontSize: '18px', fontWeight: 500, color: '#0c2520', margin: 0 }}>Filters</p>
               <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
                 {hasActiveFilters && <button onClick={clearAllFilters} style={{ background: 'none', border: 'none', fontSize: '13px', color: '#888', textDecoration: 'underline', cursor: 'pointer', fontFamily: 'inherit' }}>Clear all</button>}
                 <button onClick={() => setShowFilters(false)} style={{ background: '#0c2520', border: 'none', borderRadius: '50%', width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
@@ -419,13 +419,12 @@ export default function Dashboard() {
               <p style={{ fontSize: '12px', color: '#888', margin: '0 0 3px', letterSpacing: '0.02em' }}>
                 {new Date().toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' })}
               </p>
-              <p style={{ fontFamily: 'Georgia, serif', fontSize: '20px', color: '#0c2520', margin: 0, fontWeight: 500, lineHeight: 1.2 }}>
+              <p style={{ fontFamily: "'ITC Symbol',Georgia,serif", letterSpacing: '-0.03em', fontSize: '20px', color: '#0c2520', margin: 0, fontWeight: 500, lineHeight: 1.2 }}>
                 Hey, <span className="name-fade">{profile?.first_name || ''}</span>
               </p>
             </div>
 
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              {/* Bell */}
               <div ref={notifRef} style={{ position: 'relative' }}>
                 <button onClick={() => setShowNotifications(!showNotifications)} style={{ width: '30px', height: '30px', borderRadius: '50%', background: 'white', border: '1px solid #e0ddd5', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', position: 'relative', flexShrink: 0, WebkitTapHighlightColor: 'transparent' }}>
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#0c2520" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
@@ -437,7 +436,7 @@ export default function Dashboard() {
                 {showNotifications && (
                   <div className="notif-popup" style={{ position: 'absolute', top: 'calc(100% + 8px)', right: 0, width: '300px', background: 'white', borderRadius: '16px', border: '1px solid #e8e4de', boxShadow: '0 8px 32px rgba(12,37,32,0.12)', zIndex: 300, overflow: 'hidden' }}>
                     <div style={{ padding: '14px 16px 10px', borderBottom: '1px solid #f0ede5', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <p style={{ fontFamily: 'Georgia, serif', fontSize: '15px', fontWeight: 500, color: '#0c2520', margin: 0 }}>Notifications</p>
+                      <p style={{ fontFamily: "'ITC Symbol',Georgia,serif", letterSpacing: '-0.03em', fontSize: '15px', fontWeight: 700, color: '#0c2520', margin: 0 }}>Notifications</p>
                       {unreadCount > 0 && <button onClick={markAllRead} style={{ background: 'none', border: 'none', fontSize: '11px', color: '#888', cursor: 'pointer', fontFamily: 'inherit', textDecoration: 'underline' }}>Mark all read</button>}
                     </div>
                     {notifications.length === 0 ? (
@@ -463,7 +462,6 @@ export default function Dashboard() {
                 )}
               </div>
 
-              {/* Profile picture with online dot */}
               <label style={{ cursor: 'pointer', position: 'relative', flexShrink: 0 }}>
                 <div style={{ width: '46px', height: '46px', borderRadius: '50%', background: profile?.picture_url ? 'url(' + profile.picture_url + ') center/cover no-repeat' : '#e8efea', backgroundSize: 'cover', border: '2px solid #e0ddd5', overflow: 'hidden' }}>
                   {uploading && <div style={{ width: '100%', height: '100%', background: 'rgba(12,37,32,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><div style={{ width: '14px', height: '14px', border: '2px solid #f1f0ee', borderTopColor: 'transparent', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} /></div>}
@@ -485,7 +483,7 @@ export default function Dashboard() {
 
         {/* Spotlight */}
         <div style={{ marginBottom: '24px' }}>
-          <p style={{ fontFamily: 'Georgia, serif', fontSize: '17px', color: '#0c2520', margin: '0 0 12px', fontWeight: 500, paddingLeft: '16px' }}>In the spotlight</p>
+          <p style={{ fontFamily: "'ITC Symbol',Georgia,serif", letterSpacing: '-0.03em', fontSize: '17px', color: '#0c2520', margin: '0 0 12px', fontWeight: 500, paddingLeft: '16px' }}>In the spotlight</p>
           <div className="spot-scroll" style={{ paddingLeft: '16px', paddingRight: '16px' }}>
             {spotlightJobs.length === 0 ? (
               <Link href="/post-job" style={{ textDecoration: 'none', flexShrink: 0 }}>
@@ -503,7 +501,7 @@ export default function Dashboard() {
                       <div className="job-card" style={{ width: '220px', minHeight: '170px', background: isMint ? '#92d7af' : '#061410', borderRadius: '14px', padding: '18px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
                         <div>
                           <p style={{ fontSize: '10px', color: isMint ? '#0c2520' : '#4ade80', margin: '0 0 8px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Spotlight</p>
-                          <h3 style={{ fontFamily: 'Georgia, serif', fontSize: '15px', color: isMint ? '#0c2520' : '#f1f0ee', margin: '0 0 4px', fontWeight: 500, lineHeight: 1.2 }}>{title}</h3>
+                          <h3 style={{ fontFamily: "'ITC Symbol',Georgia,serif", letterSpacing: '-0.03em', fontSize: '15px', color: isMint ? '#0c2520' : '#f1f0ee', margin: '0 0 4px', fontWeight: 500, lineHeight: 1.2 }}>{title}</h3>
                           {subtitle && <p style={{ fontSize: '11px', color: isMint ? '#0c2520' : '#6b9e8a', margin: '0 0 10px', fontStyle: 'italic' }}>In {subtitle}</p>}
                           <div style={{ display: 'flex', gap: '5px', flexWrap: 'wrap' }}>
                             {job.location && <span style={{ background: isMint ? 'rgba(0,0,0,0.1)' : 'rgba(255,255,255,0.08)', color: isMint ? '#0c2520' : '#e0f0e8', padding: '3px 8px', borderRadius: '5px', fontSize: '10px' }}>{job.location}</span>}
@@ -536,20 +534,23 @@ export default function Dashboard() {
             <button onClick={() => setShowSideHustle(true)} style={{ flex: 1, padding: '10px', borderRadius: '9px', border: 'none', background: showSideHustle ? 'white' : 'transparent', color: '#0c2520', fontSize: '14px', fontWeight: showSideHustle ? 600 : 400, cursor: 'pointer', fontFamily: 'inherit', transition: 'all 0.2s ease', boxShadow: showSideHustle ? '0 1px 4px rgba(0,0,0,0.08)' : 'none', WebkitTapHighlightColor: 'transparent' }}>Side hustles</button>
           </div>
 
-          <div style={{ padding: '0 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
-            <p style={{ fontSize: '13px', color: '#888', margin: 0 }}>
+          <div style={{ padding: '0 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px', gap: '8px' }}>
+            <p style={{ fontSize: '13px', color: '#888', margin: 0, flex: 1 }}>
               {jobs.length} {jobs.length === 1 ? 'result' : 'results'}
-              {matchFilter !== 'all' && <span style={{ marginLeft: '6px', color: '#4ade80', fontWeight: 500 }}>{matchFilter === 'strong' ? '· Strong matches' : '· Good & strong'}</span>}
             </p>
-            <button onClick={() => setShowFilters(true)} style={{ background: hasActiveFilters ? '#0c2520' : 'white', color: hasActiveFilters ? '#f1f0ee' : '#0c2520', border: '1px solid #e0ddd5', padding: '8px 16px', borderRadius: '20px', fontSize: '13px', cursor: 'pointer', fontFamily: 'inherit', display: 'flex', alignItems: 'center', gap: '6px', WebkitTapHighlightColor: 'transparent' }}>
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><line x1="4" y1="6" x2="20" y2="6"/><line x1="8" y1="12" x2="16" y2="12"/><line x1="11" y1="18" x2="13" y2="18"/></svg>
+            <button onClick={() => setMatchFilter(matchFilter === 'all' ? 'good_strong' : 'all')} style={{ background: matchFilter !== 'all' ? '#0c2520' : 'white', color: matchFilter !== 'all' ? '#f1f0ee' : '#0c2520', border: '1px solid #e0ddd5', padding: '8px 14px', borderRadius: '20px', fontSize: '13px', cursor: 'pointer', fontFamily: 'inherit', display: 'flex', alignItems: 'center', gap: '5px', WebkitTapHighlightColor: 'transparent' }}>
+              <svg width="13" height="13" viewBox="0 0 24 24" fill={matchFilter !== 'all' ? '#4ade80' : 'none'} stroke="currentColor" strokeWidth="2" strokeLinecap="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+              Matches
+            </button>
+            <button onClick={() => setShowFilters(true)} style={{ background: hasActiveFilters ? '#0c2520' : 'white', color: hasActiveFilters ? '#f1f0ee' : '#0c2520', border: '1px solid #e0ddd5', padding: '8px 14px', borderRadius: '20px', fontSize: '13px', cursor: 'pointer', fontFamily: 'inherit', display: 'flex', alignItems: 'center', gap: '5px', WebkitTapHighlightColor: 'transparent' }}>
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><line x1="4" y1="6" x2="20" y2="6"/><line x1="8" y1="12" x2="16" y2="12"/><line x1="11" y1="18" x2="13" y2="18"/></svg>
               Filters{activeFilterCount > 0 ? ' (' + activeFilterCount + ')' : ''}
             </button>
           </div>
 
           {jobs.length === 0 ? (
             <div style={{ margin: '0 16px', textAlign: 'center', padding: '48px 24px', background: 'white', borderRadius: '14px', border: '1px solid #e8e6e0' }}>
-              <p style={{ fontFamily: 'Georgia, serif', fontSize: '17px', color: '#0c2520', margin: '0 0 6px' }}>No jobs found</p>
+              <p style={{ fontFamily: "'ITC Symbol',Georgia,serif", letterSpacing: '-0.03em', fontSize: '17px', color: '#0c2520', margin: '0 0 6px' }}>No jobs found</p>
               <p style={{ fontSize: '13px', color: '#888', margin: 0 }}>Try adjusting your filters</p>
             </div>
           ) : (
@@ -572,12 +573,12 @@ export default function Dashboard() {
                       </div>
                       <div style={{ paddingRight: '72px' }}>
                         {(isStrong || isGood) && (
-                          <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', background: isStrong ? '#0c2520' : '#e8efea', color: isStrong ? '#4ade80' : '#0c2520', padding: '3px 10px', borderRadius: '20px', fontSize: '10px', fontWeight: 600, marginBottom: '8px' }}>
-                            <svg width="8" height="8" viewBox="0 0 24 24" fill={isStrong ? '#4ade80' : '#0c2520'} stroke="none"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
-                            {isStrong ? 'Strong match' : 'Good match'}
+                          <span style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', color: '#888', fontSize: '10px', fontWeight: 500, marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                            <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: isStrong ? '#4ade80' : '#92d7af' }} />
+                            Match
                           </span>
                         )}
-                        <h3 style={{ fontFamily: 'Georgia, serif', fontSize: '16px', fontWeight: 500, color: '#0c2520', margin: '0 0 3px', lineHeight: 1.2 }}>{title}</h3>
+                        <h3 style={{ fontFamily: "'ITC Symbol',Georgia,serif", letterSpacing: '-0.03em', fontSize: '16px', fontWeight: 500, color: '#0c2520', margin: '0 0 3px', lineHeight: 1.2 }}>{title}</h3>
                         {subtitle && <p style={{ fontSize: '12px', color: '#666', margin: '0 0 10px', fontStyle: 'italic' }}>In {subtitle}</p>}
                         <div style={{ display: 'flex', gap: '5px', flexWrap: 'wrap' }}>
                           {job.location && <span style={{ background: '#f1f0ee', padding: '3px 9px', borderRadius: '5px', fontSize: '11px', color: '#0c2520' }}>{job.location}</span>}
