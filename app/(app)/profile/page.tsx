@@ -77,6 +77,9 @@ export default function AccountPage() {
   const [notifications, setNotifications] = useState<any[]>([])
   const [showNotifications, setShowNotifications] = useState(false)
   const [completion, setCompletion] = useState(0)
+  const [connections, setConnections] = useState<any[]>([])
+  const [viewsTotal, setViewsTotal] = useState(0)
+  const [viewsWeek, setViewsWeek] = useState(0)
   const notifRef = useRef<HTMLDivElement>(null)
 
   const isOnline = (lastActive: string | null) => { if (!lastActive) return false; return (Date.now() - new Date(lastActive).getTime()) < 15 * 60 * 1000 }
@@ -95,7 +98,6 @@ export default function AccountPage() {
       const { data: p } = await supabase.from('profiles').select('*').eq('id', user.id).single()
       setProfile(p)
 
-      // Profile completion percentage
       if (p) {
         var fields = [p.first_name, p.last_name, p.picture_url, p.location, p.bio, p.slug]
         var filled = fields.filter(Boolean).length
@@ -105,12 +107,21 @@ export default function AccountPage() {
       const { data: notifData } = await supabase.from('notifications').select('*').eq('profile_id', user.id).eq('read', false).order('created_at', { ascending: false }).limit(10)
       setNotifications(notifData || [])
 
-     let appCount = 0, savedCount = 0, postedCount = 0
+      // Profile views
+      try {
+        const { count: totalViews } = await supabase.from('profile_views').select('id', { count: 'exact', head: true }).eq('profile_id', user.id)
+        setViewsTotal(totalViews || 0)
+        var weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString()
+        const { count: weekViews } = await supabase.from('profile_views').select('id', { count: 'exact', head: true }).eq('profile_id', user.id).gte('created_at', weekAgo)
+        setViewsWeek(weekViews || 0)
+      } catch {}
+
+      let appCount = 0, savedCount = 0, postedCount = 0
       try { const r = await supabase.from('applications').select('id', { count: 'exact', head: true }).eq('profile_id', user.id); appCount = r.count || 0 } catch {}
       try { const r = await supabase.from('saved_jobs').select('id', { count: 'exact', head: true }).eq('profile_id', user.id); savedCount = r.count || 0 } catch {}
       try { const r = await supabase.from('jobs').select('id', { count: 'exact', head: true }).eq('created_by', user.id); postedCount = r.count || 0 } catch {}
-      const { data: myMems } = await supabase.from('community_members').select('community_id, communities(id, name, slug, icon_url, cover_url, category)').eq('profile_id', user.id).eq('status', 'approved')
 
+      const { data: myMems } = await supabase.from('community_members').select('community_id, communities(id, name, slug, icon_url, cover_url, category)').eq('profile_id', user.id).eq('status', 'approved')
       var myComms: Community[] = []
       var myCommIds: string[] = []
       if (myMems) {
@@ -124,7 +135,7 @@ export default function AccountPage() {
         }
       }
       setMyCommunities(myComms)
-      setStats({ applications: appCount || 0, saved: savedCount || 0, posted: postedCount || 0, communities: myComms.length })
+      setStats({ applications: appCount, saved: savedCount, posted: postedCount, communities: myComms.length })
 
       const { data: allComms } = await supabase.from('communities').select('id, name, slug, icon_url, cover_url, category').limit(20)
       var sugg: Community[] = []
@@ -138,12 +149,23 @@ export default function AccountPage() {
       }
       setSuggested(sugg)
 
-    try {
+      // Connections (accepted) for the Network row
+      try {
+        const { data: conns } = await supabase.from('connections').select('requester_id, receiver_id, status').or('requester_id.eq.' + user.id + ',receiver_id.eq.' + user.id).eq('status', 'accepted')
+        const otherIds = (conns || []).map((c: any) => c.requester_id === user.id ? c.receiver_id : c.requester_id)
+        if (otherIds.length > 0) {
+          const { data: people } = await supabase.from('profiles').select('id, first_name, last_name, picture_url, slug, last_active').in('id', otherIds)
+          setConnections(people || [])
+        }
+      } catch {}
+
+      // Upcoming events
+      try {
         const { data: allEvents } = await supabase.from('calendar_events').select('*').eq('profile_id', user.id)
         const todayStr = new Date().toISOString().split('T')[0]
         const upcoming = (allEvents || []).filter((e: any) => e.start_date >= todayStr).sort((a: any, b: any) => a.start_date.localeCompare(b.start_date)).slice(0, 10)
         setWeekEvents(upcoming)
-      } catch (err) {}
+      } catch {}
 
       setLoading(false)
     }
@@ -173,7 +195,7 @@ export default function AccountPage() {
   const handleLogout = async () => { await supabase.auth.signOut(); router.push('/login') }
   const showToast = (msg: string) => { setToast(msg); setTimeout(() => setToast(null), 3000) }
 
-  if (loading) return <div />
+  if (loading) return <div style={{ minHeight: '100vh', background: '#f1f0ee' }} />
 
   var online = isOnline(profile?.last_active || null)
   var unreadCount = notifications.length
@@ -185,7 +207,7 @@ export default function AccountPage() {
     { label: 'My posted jobs', sub: stats.posted + ' active', href: '/my-jobs', icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/></svg> },
     { label: 'Saved jobs', sub: stats.saved + ' bookmarked', href: '/saved', icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg> },
     { label: 'Expenses', sub: 'Receipts and spending', href: '/expenses', icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg> },
-    { label: 'Connections', sub: 'People you work with', href: '/connections', icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/></svg> },
+    { label: 'Connections', sub: connections.length + ' collaborators', href: '/connections', icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/></svg> },
     { label: 'Customise your Ident', sub: 'Reorder and toggle sections', href: '/profile/customise', icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg> },
     { label: 'Billing', sub: 'Plan and payments', href: '/billing', icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg> },
     { label: 'Notifications', sub: 'Email and push alerts', href: '/notifications', icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg> },
@@ -248,9 +270,7 @@ export default function AccountPage() {
       <div style={{ padding: '0 16px' }}>
         {/* HERO PROFILE CARD */}
         <div style={{ background: '#0c2520', borderRadius: '20px', padding: '20px', marginBottom: '12px', position: 'relative', overflow: 'hidden' }}>
-          {/* Decorative circle */}
           <div style={{ position: 'absolute', top: '-40px', right: '-40px', width: '160px', height: '160px', borderRadius: '50%', background: 'rgba(146,215,175,0.08)' }} />
-
           <div style={{ display: 'flex', alignItems: 'center', gap: '14px', marginBottom: '16px', position: 'relative' }}>
             <label style={{ position: 'relative', cursor: 'pointer', flexShrink: 0 }}>
               <div style={{ width: '64px', height: '64px', borderRadius: '50%', background: profile?.picture_url ? 'url(' + profile.picture_url + ') center/cover' : '#1a3a32', backgroundSize: 'cover', border: '2px solid #92d7af', overflow: 'hidden' }}>
@@ -266,12 +286,9 @@ export default function AccountPage() {
               <p style={{ fontSize: '12px', color: '#92d7af', margin: 0 }}>{completion}% complete</p>
             </div>
           </div>
-
-          {/* Progress bar */}
           <div style={{ background: 'rgba(255,255,255,0.1)', borderRadius: '4px', height: '4px', marginBottom: '16px', overflow: 'hidden', position: 'relative' }}>
             <div style={{ width: completion + '%', height: '100%', background: '#92d7af', transition: 'width 0.4s ease' }} />
           </div>
-
           <div style={{ display: 'flex', gap: '8px', position: 'relative' }}>
             <Link href="/profile/edit" style={{ flex: 1, textDecoration: 'none' }}>
               <div style={{ background: '#92d7af', color: '#0c2520', padding: '12px', borderRadius: '24px', fontSize: '13px', fontWeight: 600, textAlign: 'center' }}>Edit your Ident</div>
@@ -282,7 +299,26 @@ export default function AccountPage() {
           </div>
         </div>
 
-        {/* Quick stats — minimal row */}
+        {/* PROFILE VIEWS — the selling point stat */}
+        <Link href={'/' + (profile?.slug || '') + '?from=app'} style={{ textDecoration: 'none' }}>
+          <div style={{ background: 'white', border: '1px solid #e8e4de', borderRadius: '16px', padding: '16px 18px', marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '14px' }}>
+            <div style={{ width: '44px', height: '44px', borderRadius: '12px', background: '#e8efea', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#0c2520" strokeWidth="1.8" strokeLinecap="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+            </div>
+            <div style={{ flex: 1 }}>
+              <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px' }}>
+                <p style={{ fontFamily: "'ITC Symbol',Georgia,serif", letterSpacing: '-0.03em', fontSize: '24px', fontWeight: 700, color: '#0c2520', margin: 0, lineHeight: 1 }}>{viewsTotal}</p>
+                <p style={{ fontSize: '13px', color: '#0c2520', margin: 0, fontWeight: 500 }}>profile views</p>
+              </div>
+              <p style={{ fontSize: '12px', color: viewsWeek > 0 ? '#0c2520' : '#888', margin: '3px 0 0' }}>
+                {viewsWeek > 0 ? '+' + viewsWeek + ' this week' : 'Share your Ident to get seen'}
+              </p>
+            </div>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#ccc" strokeWidth="2" strokeLinecap="round"><path d="M9 18l6-6-6-6"/></svg>
+          </div>
+        </Link>
+
+        {/* Compact stats row */}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '8px', marginBottom: '24px' }}>
           {[
             { label: 'Applied', value: stats.applications, href: '/applications' },
@@ -299,7 +335,41 @@ export default function AccountPage() {
           ))}
         </div>
 
-        {/* This week */}
+        {/* Network — quick access to connections */}
+        {connections.length > 0 && (
+          <div style={{ marginBottom: '24px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+              <p style={{ fontSize: '11px', color: '#888', textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 600, margin: 0 }}>Network</p>
+              <Link href="/connections" style={{ fontSize: '12px', color: '#0c2520', textDecoration: 'none', fontWeight: 500 }}>See all</Link>
+            </div>
+            <div className="scroll-row" style={{ display: 'flex', gap: '14px', overflowX: 'auto', paddingBottom: '4px', scrollbarWidth: 'none' }}>
+              {/* Find new people bubble */}
+              <Link href="/browse" style={{ textDecoration: 'none', flexShrink: 0, width: '64px', textAlign: 'center' }}>
+                <div style={{ width: '60px', height: '60px', borderRadius: '50%', border: '2px dashed #d4d2cc', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 6px' }}>
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#888" strokeWidth="2" strokeLinecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                </div>
+                <p style={{ fontSize: '11px', color: '#888', margin: 0, fontWeight: 500 }}>Find</p>
+              </Link>
+
+              {connections.map(c => {
+                var online2 = c.last_active && (Date.now() - new Date(c.last_active).getTime()) < 15 * 60 * 1000
+                return (
+                  <Link key={c.id} href={c.slug ? '/' + c.slug + '?from=app' : '#'} style={{ textDecoration: 'none', flexShrink: 0, width: '64px', textAlign: 'center' }}>
+                    <div style={{ position: 'relative', width: '60px', height: '60px', margin: '0 auto 6px' }}>
+                      <div style={{ width: '60px', height: '60px', borderRadius: '50%', background: c.picture_url ? 'url(' + c.picture_url + ') center/cover' : '#e8efea', backgroundSize: 'cover', border: '2px solid #92d7af', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        {!c.picture_url && <span style={{ fontSize: '18px', fontWeight: 700, color: '#92d7af', fontFamily: "'ITC Symbol',Georgia,serif" }}>{(c.first_name || '?')[0]}</span>}
+                      </div>
+                      {online2 && <div style={{ position: 'absolute', bottom: '2px', right: '2px', width: '13px', height: '13px', borderRadius: '50%', background: '#4ade80', border: '2.5px solid #f1f0ee' }} />}
+                    </div>
+                    <p style={{ fontSize: '11px', color: '#0c2520', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontWeight: 500 }}>{c.first_name}</p>
+                  </Link>
+                )
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* Coming up */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
           <p style={{ fontSize: '11px', color: '#888', textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 600, margin: 0 }}>Coming up</p>
           <Link href="/calendar" style={{ fontSize: '12px', color: '#0c2520', textDecoration: 'none', fontWeight: 500 }}>See all</Link>
@@ -396,7 +466,7 @@ export default function AccountPage() {
           </>
         )}
 
-        {/* All menu items in one clean list */}
+        {/* Menu */}
         <p style={{ fontSize: '11px', color: '#888', textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 600, margin: '0 0 8px' }}>More</p>
         <div style={{ background: 'white', borderRadius: '14px', overflow: 'hidden', border: '1px solid #e8e4de', marginBottom: '16px' }}>
           {menuItems.map((item, i) => (
