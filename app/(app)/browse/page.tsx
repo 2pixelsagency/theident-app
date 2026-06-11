@@ -25,6 +25,8 @@ type TalentProfile = {
 type Gender = { id: number; name: string }
 type Skill = { id: number; name: string }
 
+const PER_PAGE = 20
+
 function ImageCarousel({ images, slug }: { images: string[]; slug: string | null }) {
   const [active, setActive] = useState(0)
   const startX = useRef(0)
@@ -85,6 +87,7 @@ export default function BrowseTalent() {
   const [connectionStatuses, setConnectionStatuses] = useState<Record<string, string>>({})
   const [notifications, setNotifications] = useState<any[]>([])
   const [showNotifications, setShowNotifications] = useState(false)
+  const [page, setPage] = useState(1)
   const notifRef = useRef<HTMLDivElement>(null)
 
   const [genders, setGenders] = useState<Gender[]>([])
@@ -113,28 +116,27 @@ export default function BrowseTalent() {
 
   useEffect(() => {
     const load = async () => {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (user) {
-        setCurrentUserId(user.id)
-        await supabase.from('profiles').update({ last_active: new Date().toISOString() }).eq('id', user.id)
-        const { data: myProf } = await supabase.from('profiles').select('first_name, picture_url').eq('id', user.id).single()
-        if (myProf) setCurrentProfile(myProf)
-        const { data: notifData } = await supabase.from('notifications').select('*').eq('profile_id', user.id).eq('read', false).order('created_at', { ascending: false }).limit(10)
-        setNotifications(notifData || [])
-      }
+      const { data: { session } } = await supabase.auth.getSession()
+      const user = session?.user || null
 
-      const [{ data: genderData }, { data: skillData }] = await Promise.all([
+      const [{ data: genderData }, { data: skillData }, { data: profileData }] = await Promise.all([
         supabase.from('genders').select('id, name').order('id'),
         supabase.from('skills').select('id, name').order('name'),
+        supabase
+          .from('profiles')
+          .select('id, first_name, last_name, picture_url, location, slug, availability_status, production_until, minimum_age, maximum_age, gender_id, last_active')
+          .not('first_name', 'is', null)
+          .order('first_name'),
       ])
       setGenders(genderData || [])
       setAllSkills(skillData || [])
 
-      const { data: profileData } = await supabase
-        .from('profiles')
-        .select('id, first_name, last_name, picture_url, location, slug, availability_status, production_until, minimum_age, maximum_age, gender_id, last_active')
-        .not('first_name', 'is', null)
-        .order('first_name')
+      if (user) {
+        setCurrentUserId(user.id)
+        supabase.from('profiles').update({ last_active: new Date().toISOString() }).eq('id', user.id).then(() => {})
+        supabase.from('profiles').select('first_name, picture_url').eq('id', user.id).single().then(({ data }) => { if (data) setCurrentProfile(data) })
+        supabase.from('notifications').select('*').eq('profile_id', user.id).eq('read', false).order('created_at', { ascending: false }).limit(10).then(({ data }) => setNotifications(data || []))
+      }
 
       if (profileData) {
         const profileIds = profileData.map(p => p.id)
@@ -168,22 +170,21 @@ export default function BrowseTalent() {
 
         setAllProfiles(enriched)
         setProfiles(enriched)
+        setLoading(false)
 
         if (user) {
-          const { data: conns } = await supabase
-            .from('connections')
-            .select('requester_id, receiver_id, status')
-            .or('requester_id.eq.' + user.id + ',receiver_id.eq.' + user.id)
-          const statuses: Record<string, string> = {}
-          ;(conns || []).forEach(c => {
-            const otherId = c.requester_id === user.id ? c.receiver_id : c.requester_id
-            statuses[otherId] = c.status
+          supabase.from('connections').select('requester_id, receiver_id, status').or('requester_id.eq.' + user.id + ',receiver_id.eq.' + user.id).then(({ data: conns }) => {
+            const statuses: Record<string, string> = {}
+            ;(conns || []).forEach(c => {
+              const otherId = c.requester_id === user.id ? c.receiver_id : c.requester_id
+              statuses[otherId] = c.status
+            })
+            setConnectionStatuses(statuses)
           })
-          setConnectionStatuses(statuses)
         }
+      } else {
+        setLoading(false)
       }
-
-      setLoading(false)
     }
     load()
   }, [])
@@ -214,6 +215,7 @@ export default function BrowseTalent() {
       })
     }
     setProfiles(filtered)
+    setPage(1) // reset to first page whenever filters change
   }, [searchQuery, selectedGender, selectedSkills, locationFilter, availabilityFilter, minAge, maxAge, allProfiles, currentUserId, allSkills])
 
   const handleConnect = async (profileId: string) => {
@@ -230,6 +232,17 @@ export default function BrowseTalent() {
   const hasActiveFilters = selectedGender !== null || selectedSkills.length > 0 || !!locationFilter || !!availabilityFilter || minAge > 0 || maxAge < 100
   const activeFilterCount = (selectedGender !== null ? 1 : 0) + (selectedSkills.length > 0 ? 1 : 0) + (locationFilter ? 1 : 0) + (availabilityFilter ? 1 : 0) + (minAge > 0 || maxAge < 100 ? 1 : 0)
   const unreadCount = notifications.length
+
+  // Pagination
+  const totalPages = Math.max(1, Math.ceil(profiles.length / PER_PAGE))
+  const currentPage = Math.min(page, totalPages)
+  const pageStart = (currentPage - 1) * PER_PAGE
+  const pageProfiles = profiles.slice(pageStart, pageStart + PER_PAGE)
+
+  const goToPage = (p: number) => {
+    setPage(p)
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
 
   if (loading) return <div style={{ minHeight: '100vh', background: '#f1f0ee' }} />
 
@@ -250,6 +263,9 @@ export default function BrowseTalent() {
         .filter-chip { padding: 8px 14px; border-radius: 20px; font-size: 13px; cursor: pointer; font-family: inherit; border: 1px solid #e0ddd5; background: white; color: #0c2520; transition: all 0.15s ease; -webkit-tap-highlight-color: transparent; }
         .filter-chip.on { background: #0c2520; color: #f1f0ee; border-color: #0c2520; }
         .notif-row:hover { background: #f5f3ee; }
+        .page-btn { min-width: 36px; height: 36px; border-radius: 10px; border: 1px solid #e0ddd5; background: white; color: #0c2520; font-size: 13px; font-weight: 500; cursor: pointer; font-family: inherit; display: flex; align-items: center; justify-content: center; -webkit-tap-highlight-color: transparent; }
+        .page-btn.on { background: #0c2520; color: #f1f0ee; border-color: #0c2520; }
+        .page-btn:disabled { opacity: 0.4; cursor: default; }
       `}</style>
 
       {showFilters && <div onClick={() => setShowFilters(false)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.4)', zIndex: 200 }} />}
@@ -403,76 +419,92 @@ export default function BrowseTalent() {
             <p style={{ fontSize: '13px', color: '#888', margin: 0 }}>Try adjusting your search or filters</p>
           </div>
         ) : (
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', padding: '0 16px 100px' }}>
-            {profiles.map(p => {
-              const fullName = ((p.first_name || '') + ' ' + (p.last_name || '')).trim()
-              const online = isOnline(p.last_active)
-              const primarySkill = p.skills[0]
-              const isVerified = false
-              return (
-                <div key={p.id} className="talent-card" style={{ background: 'white', borderRadius: '14px', overflow: 'hidden', border: '1px solid #e8e4de', display: 'flex', flexDirection: 'column' }}>
+          <>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', padding: '0 16px 16px' }}>
+              {pageProfiles.map(p => {
+                const fullName = ((p.first_name || '') + ' ' + (p.last_name || '')).trim()
+                const online = isOnline(p.last_active)
+                const primarySkill = p.skills[0]
+                const isVerified = false
+                return (
+                  <div key={p.id} className="talent-card" style={{ background: 'white', borderRadius: '14px', overflow: 'hidden', border: '1px solid #e8e4de', display: 'flex', flexDirection: 'column' }}>
 
-                  {/* Image carousel */}
-                  <div style={{ position: 'relative' }}>
-                    <ImageCarousel images={p.gallery} slug={p.slug} />
+                    <div style={{ position: 'relative' }}>
+                      <ImageCarousel images={p.gallery} slug={p.slug} />
 
-                    {/* Online badge */}
-                    {online && (
-                      <div style={{ position: 'absolute', top: '8px', right: '8px', display: 'flex', alignItems: 'center', gap: '4px', background: 'rgba(0,0,0,0.5)', padding: '3px 8px', borderRadius: '10px' }}>
-                        <div style={{ width: '5px', height: '5px', borderRadius: '50%', background: '#4ade80' }} />
-                        <span style={{ fontSize: '9px', color: '#f1f0ee', fontWeight: 500 }}>Online</span>
-                      </div>
-                    )}
+                      {online && (
+                        <div style={{ position: 'absolute', top: '8px', right: '8px', display: 'flex', alignItems: 'center', gap: '4px', background: 'rgba(0,0,0,0.5)', padding: '3px 8px', borderRadius: '10px' }}>
+                          <div style={{ width: '5px', height: '5px', borderRadius: '50%', background: '#4ade80' }} />
+                          <span style={{ fontSize: '9px', color: '#f1f0ee', fontWeight: 500 }}>Online</span>
+                        </div>
+                      )}
 
-                    {/* Availability badge */}
-                    {p.availability_status === 'available' && !online && (
-                      <div style={{ position: 'absolute', top: '8px', right: '8px', display: 'flex', alignItems: 'center', gap: '4px', background: '#4ade80', padding: '3px 8px', borderRadius: '10px' }}>
-                        <div style={{ width: '5px', height: '5px', borderRadius: '50%', background: '#061410' }} />
-                        <span style={{ fontSize: '9px', color: '#061410', fontWeight: 600 }}>Available</span>
-                      </div>
-                    )}
+                      {p.availability_status === 'available' && !online && (
+                        <div style={{ position: 'absolute', top: '8px', right: '8px', display: 'flex', alignItems: 'center', gap: '4px', background: '#4ade80', padding: '3px 8px', borderRadius: '10px' }}>
+                          <div style={{ width: '5px', height: '5px', borderRadius: '50%', background: '#061410' }} />
+                          <span style={{ fontSize: '9px', color: '#061410', fontWeight: 600 }}>Available</span>
+                        </div>
+                      )}
 
-                    {/* Skill pill */}
-                    {primarySkill && (
-                      <span style={{ position: 'absolute', top: '8px', left: '8px', background: primarySkill.color, color: primarySkill.text_color, padding: '3px 9px', borderRadius: '6px', fontSize: '10px', fontWeight: 600, textTransform: 'capitalize' }}>{primarySkill.name}</span>
-                    )}
+                      {primarySkill && (
+                        <span style={{ position: 'absolute', top: '8px', left: '8px', background: primarySkill.color, color: primarySkill.text_color, padding: '3px 9px', borderRadius: '6px', fontSize: '10px', fontWeight: 600, textTransform: 'capitalize' }}>{primarySkill.name}</span>
+                      )}
+                    </div>
+
+                    <div style={{ padding: '10px 10px 12px', display: 'flex', flexDirection: 'column', flex: 1 }}>
+                      <Link href={p.slug ? '/' + p.slug + '?from=app' : '#'} style={{ textDecoration: 'none' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '4px', marginBottom: '2px' }}>
+                          <p style={{ fontFamily: "'ITC Symbol',Georgia,serif", letterSpacing: '-0.03em', fontSize: '15px', fontWeight: 700, color: '#0c2520', margin: 0, lineHeight: 1.1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1 }}>{fullName}</p>
+                          {isVerified && (
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="#0c2520" stroke="none" style={{ flexShrink: 0 }}>
+                              <path d="M12 2L9.5 5 6 4l-1 3.5L2 9l2 3-2 3 3 1.5L6 20l3.5-1 2.5 3 2.5-3 3.5 1 1-3.5L22 15l-2-3 2-3-3-1.5L18 4l-3.5 1z"/>
+                              <polyline points="9 12 11 14 15 10" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
+                            </svg>
+                          )}
+                        </div>
+                      </Link>
+
+                      {p.location && (
+                        <p style={{ fontSize: '11px', color: '#888', margin: '0 0 8px', display: 'flex', alignItems: 'center', gap: '3px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#888" strokeWidth="2" strokeLinecap="round" style={{ flexShrink: 0 }}><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                          <span style={{ borderBottom: '1px dashed #ccc', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.location}</span>
+                        </p>
+                      )}
+
+                      {p.skills.length > 1 && (
+                        <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
+                          {p.skills.slice(1, 3).map((s, i) => (
+                            <span key={i} style={{ background: '#e8e4de', color: '#666', padding: '2px 7px', borderRadius: '10px', fontSize: '9px', fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '70px' }}>{s.name}</span>
+                          ))}
+                          {p.skills.length > 3 && <span style={{ fontSize: '9px', color: '#aaa', padding: '2px 2px' }}>+{p.skills.length - 3}</span>}
+                        </div>
+                      )}
+                    </div>
                   </div>
+                )
+              })}
+            </div>
 
-                  {/* Info */}
-                  <div style={{ padding: '10px 10px 12px', display: 'flex', flexDirection: 'column', flex: 1 }}>
-                    <Link href={p.slug ? '/' + p.slug + '?from=app' : '#'} style={{ textDecoration: 'none' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '4px', marginBottom: '2px' }}>
-                        <p style={{ fontFamily: "'ITC Symbol',Georgia,serif", letterSpacing: '-0.03em', fontSize: '15px', fontWeight: 700, color: '#0c2520', margin: 0, lineHeight: 1.1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1 }}>{fullName}</p>
-                        {isVerified && (
-                          <svg width="12" height="12" viewBox="0 0 24 24" fill="#0c2520" stroke="none" style={{ flexShrink: 0 }}>
-                            <path d="M12 2L9.5 5 6 4l-1 3.5L2 9l2 3-2 3 3 1.5L6 20l3.5-1 2.5 3 2.5-3 3.5 1 1-3.5L22 15l-2-3 2-3-3-1.5L18 4l-3.5 1z"/>
-                            <polyline points="9 12 11 14 15 10" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
-                          </svg>
-                        )}
-                      </div>
-                    </Link>
-
-                    {p.location && (
-                      <p style={{ fontSize: '11px', color: '#888', margin: '0 0 8px', display: 'flex', alignItems: 'center', gap: '3px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#888" strokeWidth="2" strokeLinecap="round" style={{ flexShrink: 0 }}><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
-                        <span style={{ borderBottom: '1px dashed #ccc', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.location}</span>
-                      </p>
-                    )}
-
-                    {/* Skills */}
-                    {p.skills.length > 1 && (
-                      <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
-                        {p.skills.slice(1, 3).map((s, i) => (
-                          <span key={i} style={{ background: '#e8e4de', color: '#666', padding: '2px 7px', borderRadius: '10px', fontSize: '9px', fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '70px' }}>{s.name}</span>
-                        ))}
-                        {p.skills.length > 3 && <span style={{ fontSize: '9px', color: '#aaa', padding: '2px 2px' }}>+{p.skills.length - 3}</span>}
-                      </div>
-                    )}
-                  </div>
-                </div>
-              )
-            })}
-          </div>
+            {/* Pagination */}
+            {totalPages > 1 && (
+              <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '6px', padding: '8px 16px 100px', flexWrap: 'wrap' }}>
+                <button className="page-btn" onClick={() => goToPage(currentPage - 1)} disabled={currentPage === 1}>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M15 18l-6-6 6-6"/></svg>
+                </button>
+                {Array.from({ length: totalPages }, (_, i) => i + 1).filter(p => {
+                  return p === 1 || p === totalPages || (p >= currentPage - 1 && p <= currentPage + 1)
+                }).map((p, idx, arr) => (
+                  <span key={p} style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    {idx > 0 && arr[idx - 1] !== p - 1 && <span style={{ color: '#aaa', fontSize: '13px' }}>...</span>}
+                    <button className={'page-btn' + (p === currentPage ? ' on' : '')} onClick={() => goToPage(p)}>{p}</button>
+                  </span>
+                ))}
+                <button className="page-btn" onClick={() => goToPage(currentPage + 1)} disabled={currentPage === totalPages}>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M9 18l6-6-6-6"/></svg>
+                </button>
+              </div>
+            )}
+          </>
         )}
       </div>
     </div>
