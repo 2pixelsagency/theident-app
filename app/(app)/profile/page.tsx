@@ -17,6 +17,7 @@ function CropModal({ file, onSave, onClose }: { file: File; onSave: (blob: Blob)
   const [dragging, setDragging] = useState(false)
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 })
   const SIZE = 280
+  
 
   useEffect(() => {
     const image = new Image()
@@ -80,6 +81,7 @@ export default function AccountPage() {
   const [connections, setConnections] = useState<any[]>([])
   const [viewsTotal, setViewsTotal] = useState(0)
   const [viewsWeek, setViewsWeek] = useState(0)
+  const [networkSuggestions, setNetworkSuggestions] = useState<any[]>([])
   const notifRef = useRef<HTMLDivElement>(null)
 
   const isOnline = (lastActive: string | null) => { if (!lastActive) return false; return (Date.now() - new Date(lastActive).getTime()) < 15 * 60 * 1000 }
@@ -157,6 +159,12 @@ export default function AccountPage() {
           const { data: people } = await supabase.from('profiles').select('id, first_name, last_name, picture_url, slug, last_active').in('id', otherIds)
           setConnections(people || [])
         }
+      } catch {}
+
+      // Network suggestions (people you're not connected to) for empty state
+      try {
+        const { data: suggestedPeople } = await supabase.from('profiles').select('id, first_name, last_name, picture_url, slug, last_active').not('first_name', 'is', null).neq('id', user.id).limit(10)
+        setNetworkSuggestions(suggestedPeople || [])
       } catch {}
 
       // Upcoming events
