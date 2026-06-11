@@ -147,6 +147,14 @@ export default function PublicProfile() {
       const { data: prof } = await supabase.from('profiles').select('*').eq('slug', slug).single()
       if (!prof) { setNotFound(true); setLoading(false); return }
       setProfile(prof)
+
+      // Log a profile view (skip own profile)
+      if (user && user.id !== prof.id) {
+        try { await supabase.from('profile_views').insert({ profile_id: prof.id, viewer_id: user.id }) } catch {}
+      } else if (!user) {
+        try { await supabase.from('profile_views').insert({ profile_id: prof.id, viewer_id: null }) } catch {}
+      }
+
       const [{ data: skillData }, { data: creditData }, { data: brandData }, { data: testimonialData }, { data: galleryData }, { data: faqData }, { data: ptData }, { data: conns }] = await Promise.all([
         supabase.from('profile_skills').select('skills(id, name)').eq('profile_id', prof.id),
         supabase.from('credits').select('*').eq('profile_id', prof.id).order('year', { ascending: false }),
@@ -458,12 +466,16 @@ export default function PublicProfile() {
     return null
   }
 
+  const renderedSections = sectionOrder.map(id => renderSection(id)).filter(Boolean)
+
   return (
     <div style={{ fontFamily:'system-ui, sans-serif',background:'#f1f0ee',minHeight:'100vh',position:'relative' }}>
       <style>{`
         @keyframes spin { to { transform: rotate(360deg); } }
         @keyframes marquee { from { transform: translateX(0); } to { transform: translateX(-33.333%); } }
         @keyframes popIn { from { opacity:0;transform:scale(0.95) translateY(-4px); } to { opacity:1;transform:scale(1) translateY(0); } }
+        @keyframes fadeUp { from { opacity:0; transform:translateY(14px); } to { opacity:1; transform:translateY(0); } }
+        .stagger { opacity:0; animation:fadeUp 0.55s cubic-bezier(0.22,0.61,0.36,1) forwards; }
         .marquee-track { display:flex;animation:marquee 15s linear infinite; }
         .marquee-wrap:hover .marquee-track { animation-play-state:paused; }
         .faq-row { cursor:pointer;transition:background 0.15s ease; }
@@ -507,27 +519,27 @@ export default function PublicProfile() {
       <div style={{ maxWidth:'680px',margin:'0 auto',padding:'0 0 100px' }}>
         <div style={{ textAlign:'center',background:'#f1f0ee' }}>
           {profile?.vid_1 && (
-            <div style={{ width:'100%',height:'240px',overflow:'hidden' }}>
+            <div className="stagger" style={{ animationDelay:'0s',width:'100%',height:'240px',overflow:'hidden' }}>
               <video autoPlay muted loop playsInline style={{ width:'100%',height:'100%',objectFit:'cover' }}><source src={profile.vid_1} /></video>
             </div>
           )}
           {!profile?.vid_1 && <div style={{ height:'80px' }} />}
 
           <div style={{ marginTop:profile?.vid_1 ? '-55px' : '0',position:'relative',zIndex:2,paddingBottom:'8px' }}>
-            {profile?.picture_url && <div style={{ width:'110px',height:'110px',borderRadius:'50%',background:'url(' + profile.picture_url + ') center/cover',backgroundSize:'cover',margin:'0 auto 24px',border:'4px solid #f1f0ee',boxShadow:'0 4px 24px rgba(12,37,32,0.15)' }} />}
-            <h1 style={{ fontFamily:"'ITC Symbol',Georgia,serif",letterSpacing:'-0.03em',fontSize:'36px',fontWeight:700,color:'#0c2520',margin:'0 0 10px',lineHeight:1.1,padding:'0 32px' }}>{fullName}</h1>
-            <div style={{ display:'flex',alignItems:'center',justifyContent:'center',gap:'6px',marginBottom:'16px',flexWrap:'wrap' }}>
+            {profile?.picture_url && <div className="stagger" style={{ animationDelay:'0.06s',width:'110px',height:'110px',borderRadius:'50%',background:'url(' + profile.picture_url + ') center/cover',backgroundSize:'cover',margin:'0 auto 24px',border:'4px solid #f1f0ee',boxShadow:'0 4px 24px rgba(12,37,32,0.15)' }} />}
+            <h1 className="stagger" style={{ animationDelay:'0.13s',fontFamily:"'ITC Symbol',Georgia,serif",letterSpacing:'-0.03em',fontSize:'36px',fontWeight:700,color:'#0c2520',margin:'0 0 10px',lineHeight:1.1,padding:'0 32px' }}>{fullName}</h1>
+            <div className="stagger" style={{ animationDelay:'0.19s',display:'flex',alignItems:'center',justifyContent:'center',gap:'6px',marginBottom:'16px',flexWrap:'wrap' }}>
               {profile?.location && <span style={{ fontSize:'13px',color:'#888' }}>{profile.location}</span>}
               {profile?.location && connectionCount > 0 && <span style={{ fontSize:'13px',color:'#d4d2cc' }}>·</span>}
               {connectionCount > 0 && <span style={{ fontSize:'13px',color:'#888',display:'flex',alignItems:'center',gap:'4px' }}><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#888" strokeWidth="2" strokeLinecap="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>{connectionCount} connection{connectionCount !== 1 ? 's' : ''}</span>}
             </div>
             {skills.length > 0 && (
-              <div style={{ display:'flex',gap:'6px',flexWrap:'wrap',justifyContent:'center',marginBottom:'24px',padding:'0 32px' }}>
+              <div className="stagger" style={{ animationDelay:'0.25s',display:'flex',gap:'6px',flexWrap:'wrap',justifyContent:'center',marginBottom:'24px',padding:'0 32px' }}>
                 {skills.map(s => <span key={s.id} style={{ padding:'5px 14px',borderRadius:'20px',fontSize:'12px',fontWeight:500,background:'#e8e4de',color:'#0c2520' }}>{s.name}</span>)}
               </div>
             )}
             {!isOwnProfile && currentUserId && (
-              <div style={{ marginBottom:'8px' }}>
+              <div className="stagger" style={{ animationDelay:'0.31s',marginBottom:'8px' }}>
                 <button onClick={handleConnect} disabled={connectStatus !== 'none'} style={{ padding:'11px 28px',borderRadius:'30px',border:'none',cursor:connectStatus === 'none' ? 'pointer' : 'default',background:connectStatus === 'connected' ? '#4ade80' : connectStatus === 'pending' ? '#e8e4de' : '#0c2520',color:connectStatus === 'connected' ? '#061410' : connectStatus === 'pending' ? '#888' : '#f1f0ee',fontSize:'14px',fontWeight:500,fontFamily:'inherit' }}>
                   {connectStatus === 'connected' ? 'Connected' : connectStatus === 'pending' ? 'Request sent' : 'Connect'}
                 </button>
@@ -536,9 +548,11 @@ export default function PublicProfile() {
           </div>
         </div>
 
-        {sectionOrder.map(id => renderSection(id))}
+        {renderedSections.map((node, i) => (
+          <div key={i} className="stagger" style={{ animationDelay: (0.4 + i * 0.1) + 's' }}>{node}</div>
+        ))}
 
-        <div style={{ textAlign:'center',padding:'0 32px' }}>
+        <div className="stagger" style={{ animationDelay: (0.4 + renderedSections.length * 0.1) + 's',textAlign:'center',padding:'0 32px' }}>
           <a href="/" style={{ fontFamily:"'ITC Symbol',Georgia,serif",letterSpacing:'-0.03em',fontSize:'15px',color:'#0c2520',textDecoration:'none' }}>theident</a>
           <p style={{ fontSize:'11px',color:'#aaa',margin:'6px 0 0' }}>The performing arts platform</p>
         </div>
