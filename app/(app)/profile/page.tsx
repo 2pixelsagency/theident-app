@@ -335,22 +335,21 @@ export default function AccountPage() {
           ))}
         </div>
 
-        {/* Network — quick access to connections */}
-        {connections.length > 0 && (
-          <div style={{ marginBottom: '24px' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
-              <p style={{ fontSize: '11px', color: '#888', textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 600, margin: 0 }}>Network</p>
-              <Link href="/connections" style={{ fontSize: '12px', color: '#0c2520', textDecoration: 'none', fontWeight: 500 }}>See all</Link>
-            </div>
+{/* Network — connections or suggestions to connect */}
+        <div style={{ marginBottom: '24px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+            <p style={{ fontSize: '11px', color: '#888', textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 600, margin: 0 }}>Network</p>
+            <Link href={connections.length > 0 ? '/connections' : '/browse'} style={{ fontSize: '12px', color: '#0c2520', textDecoration: 'none', fontWeight: 500 }}>{connections.length > 0 ? 'See all' : 'Browse'}</Link>
+          </div>
+
+          {connections.length > 0 ? (
             <div className="scroll-row" style={{ display: 'flex', gap: '14px', overflowX: 'auto', paddingBottom: '4px', scrollbarWidth: 'none' }}>
-              {/* Find new people bubble */}
               <Link href="/browse" style={{ textDecoration: 'none', flexShrink: 0, width: '64px', textAlign: 'center' }}>
                 <div style={{ width: '60px', height: '60px', borderRadius: '50%', border: '2px dashed #d4d2cc', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 6px' }}>
                   <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#888" strokeWidth="2" strokeLinecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
                 </div>
                 <p style={{ fontSize: '11px', color: '#888', margin: 0, fontWeight: 500 }}>Find</p>
               </Link>
-
               {connections.map(c => {
                 var online2 = c.last_active && (Date.now() - new Date(c.last_active).getTime()) < 15 * 60 * 1000
                 return (
@@ -366,8 +365,40 @@ export default function AccountPage() {
                 )
               })}
             </div>
-          </div>
-        )}
+          ) : networkSuggestions.length > 0 ? (
+            <>
+              <div className="scroll-row" style={{ display: 'flex', gap: '14px', overflowX: 'auto', paddingBottom: '4px', scrollbarWidth: 'none' }}>
+                {networkSuggestions.map(c => (
+                  <Link key={c.id} href={c.slug ? '/' + c.slug + '?from=app' : '#'} style={{ textDecoration: 'none', flexShrink: 0, width: '64px', textAlign: 'center' }}>
+                    <div style={{ width: '60px', height: '60px', borderRadius: '50%', background: c.picture_url ? 'url(' + c.picture_url + ') center/cover' : '#e8efea', backgroundSize: 'cover', border: '2px solid #e0ddd5', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 6px' }}>
+                      {!c.picture_url && <span style={{ fontSize: '18px', fontWeight: 700, color: '#92d7af', fontFamily: "'ITC Symbol',Georgia,serif" }}>{(c.first_name || '?')[0]}</span>}
+                    </div>
+                    <p style={{ fontSize: '11px', color: '#0c2520', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontWeight: 500 }}>{c.first_name}</p>
+                  </Link>
+                ))}
+                <Link href="/browse" style={{ textDecoration: 'none', flexShrink: 0, width: '64px', textAlign: 'center' }}>
+                  <div style={{ width: '60px', height: '60px', borderRadius: '50%', border: '2px dashed #d4d2cc', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 6px' }}>
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#888" strokeWidth="2" strokeLinecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                  </div>
+                  <p style={{ fontSize: '11px', color: '#888', margin: 0, fontWeight: 500 }}>More</p>
+                </Link>
+              </div>
+              <p style={{ fontSize: '12px', color: '#888', margin: '10px 0 0' }}>Connect with performers to grow your network</p>
+            </>
+          ) : (
+            <Link href="/browse" style={{ textDecoration: 'none' }}>
+              <div style={{ background: '#0c2520', borderRadius: '16px', padding: '20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div>
+                  <p style={{ fontFamily: "'ITC Symbol',Georgia,serif", letterSpacing: '-0.03em', fontSize: '16px', fontWeight: 700, color: '#f1f0ee', margin: '0 0 4px' }}>Build your network</p>
+                  <p style={{ fontSize: '12px', color: '#92d7af', margin: 0 }}>Find performers to collaborate with</p>
+                </div>
+                <div style={{ width: '36px', height: '36px', borderRadius: '50%', background: '#92d7af', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#0c2520" strokeWidth="2.5" strokeLinecap="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+                </div>
+              </div>
+            </Link>
+          )}
+        </div>
 
         {/* Coming up */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
