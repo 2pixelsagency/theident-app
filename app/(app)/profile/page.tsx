@@ -45,6 +45,45 @@ function ProgressRing({ percent, color, label, value }: { percent: number; color
   )
 }
 
+function MiniCalendar({ eventDates }: { eventDates: Set<string> }) {
+  const now = new Date()
+  const year = now.getFullYear(), month = now.getMonth()
+  const first = new Date(year, month, 1)
+  const lead = (first.getDay() + 6) % 7
+  const dim = new Date(year, month + 1, 0).getDate()
+  const todayKey = dateStr(now)
+  const cells: (number | null)[] = []
+  for (let i = 0; i < lead; i++) cells.push(null)
+  for (let d = 1; d <= dim; d++) cells.push(d)
+  const wk = ['M', 'T', 'W', 'T', 'F', 'S', 'S']
+  return (
+    <Link href="/calendar" style={{ textDecoration: 'none', flex: 1 }}>
+      <div className="tap" style={{ background: 'white', border: '1px solid #ebe8e1', borderRadius: '16px', padding: '14px 12px', height: '100%' }}>
+        <p style={{ fontFamily: "'ITC Symbol',Georgia,serif", letterSpacing: '-0.03em', fontSize: '14px', fontWeight: 700, color: '#0c2520', margin: '0 0 10px' }}>{now.toLocaleDateString('en-GB', { month: 'long' })}</p>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7,1fr)', gap: '2px', marginBottom: '4px' }}>
+          {wk.map((w, i) => <span key={i} style={{ fontSize: '9px', color: '#bbb', textAlign: 'center', fontWeight: 600 }}>{w}</span>)}
+        </div>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7,1fr)', gap: '2px' }}>
+          {cells.map((d, i) => {
+            if (d === null) return <span key={i} />
+            const key = year + '-' + pad(month + 1) + '-' + pad(d)
+            const isToday = key === todayKey
+            const hasEvent = eventDates.has(key)
+            return (
+              <div key={i} style={{ height: '24px', display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative' }}>
+                <div style={{ width: '21px', height: '21px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: isToday ? '#0c2520' : 'transparent' }}>
+                  <span style={{ fontSize: '10px', fontWeight: isToday || hasEvent ? 700 : 400, color: isToday ? '#f1f0ee' : hasEvent ? '#0c2520' : '#bbb' }}>{d}</span>
+                </div>
+                {hasEvent && !isToday && <div style={{ width: '4px', height: '4px', borderRadius: '50%', background: '#4ade80', position: 'absolute', bottom: '0' }} />}
+              </div>
+            )
+          })}
+        </div>
+      </div>
+    </Link>
+  )
+}
+
 function CropModal({ file, onSave, onClose }: { file: File; onSave: (blob: Blob) => void; onClose: () => void }) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const [img, setImg] = useState<HTMLImageElement | null>(null)
@@ -107,13 +146,13 @@ export default function Greenroom() {
   const [myCommunities, setMyCommunities] = useState<Community[]>([])
   const [suggested, setSuggested] = useState<Community[]>([])
   const [weekEvents, setWeekEvents] = useState<CalEvent[]>([])
+  const [eventDates, setEventDates] = useState<Set<string>>(new Set())
   const [stats, setStats] = useState({ applications: 0, saved: 0, posted: 0, communities: 0 })
   const [notifications, setNotifications] = useState<any[]>([])
   const [showNotifications, setShowNotifications] = useState(false)
   const [completion, setCompletion] = useState(0)
   const [connections, setConnections] = useState<any[]>([])
   const [networkSuggestions, setNetworkSuggestions] = useState<any[]>([])
-  const [viewsTotal, setViewsTotal] = useState(0)
   const [viewsWeek, setViewsWeek] = useState(0)
   const [period, setPeriod] = useState<Period>('W')
   const [viewDates, setViewDates] = useState<Date[]>([])
@@ -121,8 +160,6 @@ export default function Greenroom() {
   const [activeDates, setActiveDates] = useState<Set<string>>(new Set())
   const [streak, setStreak] = useState(0)
   const notifRef = useRef<HTMLDivElement>(null)
-
-  const isOnline = (la: string | null) => { if (!la) return false; return (Date.now() - new Date(la).getTime()) < 15 * 60 * 1000 }
 
   useEffect(() => {
     const handler = (e: MouseEvent) => { if (notifRef.current && !notifRef.current.contains(e.target as Node)) setShowNotifications(false) }
@@ -146,17 +183,14 @@ export default function Greenroom() {
 
       supabase.from('notifications').select('*').eq('profile_id', user.id).eq('read', false).order('created_at', { ascending: false }).limit(10).then(({ data }) => setNotifications(data || []))
 
-      // Profile views (counts + raw dates)
       try {
         const { data: vrows } = await supabase.from('profile_views').select('created_at').eq('profile_id', user.id)
         const dates = (vrows || []).map((v: any) => new Date(v.created_at))
         setViewDates(dates)
-        setViewsTotal(dates.length)
         const weekAgo = Date.now() - 7 * 86400000
         setViewsWeek(dates.filter(d => d.getTime() >= weekAgo).length)
       } catch {}
 
-      // Applications (count + dates)
       let appCount = 0
       try {
         const { data: arows } = await supabase.from('applications').select('created_at').eq('profile_id', user.id)
@@ -168,7 +202,6 @@ export default function Greenroom() {
       try { const r = await supabase.from('saved_jobs').select('id', { count: 'exact', head: true }).eq('profile_id', user.id); savedCount = r.count || 0 } catch {}
       try { const r = await supabase.from('jobs').select('id', { count: 'exact', head: true }).eq('created_by', user.id); postedCount = r.count || 0 } catch {}
 
-      // Activity streak
       try { await supabase.from('daily_activity').upsert({ profile_id: user.id, activity_date: dateStr(new Date()) }, { onConflict: 'profile_id,activity_date' }) } catch {}
       try {
         const cutoff = dateStr(new Date(Date.now() - 90 * 86400000))
@@ -180,7 +213,6 @@ export default function Greenroom() {
         setStreak(s)
       } catch {}
 
-      // Communities (single count query)
       const { data: myMems } = await supabase.from('community_members').select('community_id, communities(id, name, slug, icon_url, cover_url, category)').eq('profile_id', user.id).eq('status', 'approved')
       const myComms = (myMems || []).filter((m: any) => m.communities).map((m: any) => m.communities)
       const myCommIds = myComms.map((c: any) => c.id)
@@ -196,7 +228,6 @@ export default function Greenroom() {
       setSuggested(suggestedRaw.map((c: any) => ({ ...c, member_count: countMap.get(c.id) || 0 })))
       setStats({ applications: appCount, saved: savedCount, posted: postedCount, communities: myComms.length })
 
-      // Network
       try {
         const { data: conns } = await supabase.from('connections').select('requester_id, receiver_id, status').or('requester_id.eq.' + user.id + ',receiver_id.eq.' + user.id).eq('status', 'accepted')
         const otherIds = (conns || []).map((c: any) => c.requester_id === user.id ? c.receiver_id : c.requester_id)
@@ -210,9 +241,9 @@ export default function Greenroom() {
         setNetworkSuggestions(sugg || [])
       } catch {}
 
-      // Upcoming events
       try {
         const { data: allEvents } = await supabase.from('calendar_events').select('*').eq('profile_id', user.id)
+        setEventDates(new Set((allEvents || []).map((e: any) => e.start_date)))
         const todayStr = dateStr(new Date())
         const upcoming = (allEvents || []).filter((e: any) => e.start_date >= todayStr).sort((a: any, b: any) => a.start_date.localeCompare(b.start_date)).slice(0, 5)
         setWeekEvents(upcoming)
@@ -242,11 +273,8 @@ export default function Greenroom() {
   if (loading) return <div style={{ minHeight: '100vh', background: '#f1f0ee' }} />
 
   const nowD = new Date()
-  const online = isOnline(profile?.last_active || null)
   const unreadCount = notifications.length
-  const fullName = ((profile?.first_name || '') + ' ' + (profile?.last_name || '')).trim()
 
-  // Activity computed
   const pCut = new Date(Date.now() - PERIOD_DAYS[period] * 86400000)
   const viewsInPeriod = viewDates.filter(d => d >= pCut).length
   const appsInPeriod = appDates.filter(d => d >= pCut).length
@@ -262,7 +290,6 @@ export default function Greenroom() {
   const viewsThisMonthTotal = dailyViews.reduce((a, b) => a + b, 0)
   const monthName = nowD.toLocaleDateString('en-GB', { month: 'long' })
 
-  // PA focus — surfaces the single most relevant action
   const nextEvent = weekEvents[0]
   const nextAction = !profile?.picture_url ? { label: 'Add a profile photo', sub: 'Profiles with a photo get 4x more views', href: '/profile/edit' }
     : !profile?.bio ? { label: 'Write your bio', sub: 'Tell casting who you are', href: '/profile/edit' }
@@ -288,10 +315,11 @@ export default function Greenroom() {
     { label: 'Calendar', sub: 'Auditions and bookings', href: '/calendar', icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg> },
     { label: 'My applications', sub: stats.applications + ' submitted', href: '/applications', icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg> },
     { label: 'My posted jobs', sub: stats.posted + ' active', href: '/my-jobs', icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/></svg> },
+    { label: 'Saved jobs', sub: stats.saved + ' bookmarked', href: '/saved', icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg> },
     { label: 'Expenses', sub: 'Receipts and spending', href: '/expenses', icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg> },
+    { label: 'Connections', sub: connections.length + ' collaborators', href: '/connections', icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/></svg> },
     { label: 'Customise your Ident', sub: 'Reorder and toggle sections', href: '/profile/customise', icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg> },
     { label: 'Billing', sub: 'Plan and payments', href: '/billing', icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg> },
-    { label: 'Notifications', sub: 'Email and push alerts', href: '/notifications', icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg> },
     { label: 'Password & security', sub: 'Change your password', href: '/security', icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg> },
   ]
 
@@ -338,19 +366,24 @@ export default function Greenroom() {
                 </div>
               )}
             </div>
-            <Link href="/profile" style={{ textDecoration: 'none', flexShrink: 0, position: 'relative' }}>
-              <div style={{ width: '44px', height: '44px', borderRadius: '50%', background: profile?.picture_url ? 'url(' + profile.picture_url + ') center/cover' : '#e8efea', backgroundSize: 'cover', border: '2px solid #e6e2d9' }} />
-              {online && <div style={{ position: 'absolute', bottom: '0', right: '0', width: '11px', height: '11px', borderRadius: '50%', background: '#4ade80', border: '2px solid #f1f0ee' }} />}
-            </Link>
+            <label style={{ cursor: 'pointer', position: 'relative', flexShrink: 0 }}>
+              <div style={{ width: '44px', height: '44px', borderRadius: '50%', background: profile?.picture_url ? 'url(' + profile.picture_url + ') center/cover' : '#e8efea', backgroundSize: 'cover', border: '2px solid #e6e2d9', overflow: 'hidden' }}>
+                {uploading && <div style={{ width: '100%', height: '100%', background: 'rgba(12,37,32,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><div style={{ width: '13px', height: '13px', border: '2px solid #f1f0ee', borderTopColor: 'transparent', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} /></div>}
+              </div>
+              <div style={{ position: 'absolute', bottom: '-2px', right: '-2px', width: '18px', height: '18px', borderRadius: '50%', background: '#92d7af', border: '2px solid #f1f0ee', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="#0c2520" strokeWidth="2.5" strokeLinecap="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+              </div>
+              <input type="file" accept="image/*" onChange={handleFileSelect} style={{ display: 'none' }} />
+            </label>
           </div>
         </div>
       </div>
 
       <div style={{ padding: '0 16px' }}>
 
-        {/* PA FOCUS CARD */}
+        {/* UP NEXT (focus) */}
         <Link href={focus.href} style={{ textDecoration: 'none' }}>
-          <div className="stagger tap" style={{ animationDelay: '0.05s', background: focus.tone === 'dark' ? '#0c2520' : '#92d7af', borderRadius: '20px', padding: '18px', marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '14px', position: 'relative', overflow: 'hidden' }}>
+          <div className="stagger tap" style={{ animationDelay: '0.05s', background: focus.tone === 'dark' ? '#0c2520' : '#92d7af', borderRadius: '20px', padding: '18px', marginBottom: '24px', display: 'flex', alignItems: 'center', gap: '14px', position: 'relative', overflow: 'hidden' }}>
             <div style={{ position: 'absolute', top: '-30px', right: '-20px', width: '120px', height: '120px', borderRadius: '50%', background: focus.tone === 'dark' ? 'rgba(146,215,175,0.08)' : 'rgba(255,255,255,0.18)' }} />
             <div style={{ width: '46px', height: '46px', borderRadius: '13px', background: focus.tone === 'dark' ? 'rgba(146,215,175,0.15)' : 'rgba(255,255,255,0.35)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, position: 'relative' }}>{focus.icon}</div>
             <div style={{ flex: 1, position: 'relative' }}>
@@ -362,38 +395,8 @@ export default function Greenroom() {
           </div>
         </Link>
 
-        {/* YOUR IDENT (hero) */}
-        <div className="stagger" style={{ animationDelay: '0.1s', background: '#061410', borderRadius: '20px', padding: '20px', marginBottom: '12px', position: 'relative', overflow: 'hidden' }}>
-          <div style={{ position: 'absolute', bottom: '-40px', left: '-30px', width: '160px', height: '160px', borderRadius: '50%', background: 'rgba(146,215,175,0.06)' }} />
-          <div style={{ display: 'flex', alignItems: 'center', gap: '14px', marginBottom: '16px', position: 'relative' }}>
-            <label style={{ position: 'relative', cursor: 'pointer', flexShrink: 0 }}>
-              <div style={{ width: '64px', height: '64px', borderRadius: '50%', background: profile?.picture_url ? 'url(' + profile.picture_url + ') center/cover' : '#1a3a32', backgroundSize: 'cover', border: '2px solid #92d7af', overflow: 'hidden' }}>
-                {uploading && <div style={{ width: '100%', height: '100%', background: 'rgba(12,37,32,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><div style={{ width: '14px', height: '14px', border: '2px solid #f1f0ee', borderTopColor: 'transparent', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} /></div>}
-              </div>
-              <div style={{ position: 'absolute', bottom: '-2px', right: '-2px', width: '22px', height: '22px', borderRadius: '50%', background: '#92d7af', border: '2px solid #061410', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="#0c2520" strokeWidth="2.5" strokeLinecap="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
-              </div>
-              <input type="file" accept="image/*" onChange={handleFileSelect} style={{ display: 'none' }} />
-            </label>
-            <div style={{ flex: 1 }}>
-              <p style={{ fontFamily: "'ITC Symbol',Georgia,serif", letterSpacing: '-0.03em', fontSize: '20px', fontWeight: 700, color: '#f1f0ee', margin: '0 0 3px', lineHeight: 1.1 }}>{fullName || 'Your Ident'}</p>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <div style={{ flex: 1, background: 'rgba(255,255,255,0.1)', borderRadius: '4px', height: '5px', overflow: 'hidden' }}>
-                  <div style={{ width: completion + '%', height: '100%', background: '#92d7af', transition: 'width 0.6s ease' }} />
-                </div>
-                <span style={{ fontSize: '11px', color: '#92d7af', fontWeight: 600 }}>{completion}%</span>
-              </div>
-            </div>
-          </div>
-          <div style={{ position: 'relative' }}>
-            <Link href="/profile/edit" style={{ textDecoration: 'none' }}>
-              <div className="tap" style={{ background: '#92d7af', color: '#0c2520', padding: '11px', borderRadius: '22px', fontSize: '13px', fontWeight: 600, textAlign: 'center' }}>Edit your Ident</div>
-            </Link>
-          </div>
-        </div>
-
         {/* YOUR ACTIVITY */}
-        <div className="stagger" style={{ animationDelay: '0.15s', marginBottom: '24px' }}>
+        <div className="stagger" style={{ animationDelay: '0.1s', marginBottom: '24px' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
             <p style={{ fontSize: '11px', color: '#999', textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 700, margin: 0 }}>Your activity</p>
             <div style={{ display: 'flex', background: '#e6e2d9', borderRadius: '20px', padding: '3px' }}>
@@ -409,28 +412,27 @@ export default function Greenroom() {
             <ProgressRing percent={appsPct} color="#92d7af" value={appsInPeriod + '/' + GOALS[period].apps} label="applied" />
           </div>
 
-          {/* Streak */}
-          <div style={{ background: '#0c2520', borderRadius: '18px', padding: '18px', marginBottom: '12px', position: 'relative', overflow: 'hidden' }}>
-            <div style={{ position: 'absolute', top: '-30px', right: '-30px', width: '110px', height: '110px', borderRadius: '50%', background: 'rgba(146,215,175,0.08)' }} />
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '14px', position: 'relative' }}>
-              <div style={{ width: '46px', height: '46px', borderRadius: '13px', background: 'rgba(74,222,128,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+          {/* Streak — light */}
+          <div style={{ background: 'white', border: '1px solid #ebe8e1', borderRadius: '18px', padding: '18px', marginBottom: '12px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '14px' }}>
+              <div style={{ width: '46px', height: '46px', borderRadius: '13px', background: '#e8efea', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="#4ade80" stroke="none"><path d="M12 2c1 3-1 5-2 6-1.5 1.5-3 3-3 6a5 5 0 0 0 10 0c0-1.5-.5-3-1.5-4 .5 2-.5 3-1.5 3 .5-2-.5-4-2-5 .5 2-1 3-1 4-1-1-1-2-1-3 0-2 2-4 3-7z"/></svg>
               </div>
               <div style={{ flex: 1 }}>
-                <p style={{ fontFamily: "'ITC Symbol',Georgia,serif", letterSpacing: '-0.03em', fontSize: '24px', fontWeight: 700, color: '#f1f0ee', margin: 0, lineHeight: 1 }}>{streak} day{streak === 1 ? '' : 's'}</p>
-                <p style={{ fontSize: '12px', color: '#92d7af', margin: '3px 0 0' }}>{streak > 0 ? 'Show up tomorrow to keep it going' : 'Start your streak today'}</p>
+                <p style={{ fontFamily: "'ITC Symbol',Georgia,serif", letterSpacing: '-0.03em', fontSize: '24px', fontWeight: 700, color: '#0c2520', margin: 0, lineHeight: 1 }}>{streak} day{streak === 1 ? '' : 's'}</p>
+                <p style={{ fontSize: '12px', color: '#999', margin: '3px 0 0' }}>{streak > 0 ? 'Show up tomorrow to keep it going' : 'Start your streak today'}</p>
               </div>
             </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', position: 'relative' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
               {weekDays.map((d, i) => {
                 const active = activeDates.has(dateStr(d))
                 const isFuture = d > nowD
                 return (
                   <div key={i} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px' }}>
-                    <div style={{ width: '28px', height: '28px', borderRadius: '50%', background: active ? '#4ade80' : 'transparent', border: active ? 'none' : '1.5px solid rgba(255,255,255,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: isFuture ? 0.4 : 1 }}>
+                    <div style={{ width: '28px', height: '28px', borderRadius: '50%', background: active ? '#4ade80' : 'transparent', border: active ? 'none' : '1.5px solid #e6e2d9', display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: isFuture ? 0.5 : 1 }}>
                       {active && <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#061410" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>}
                     </div>
-                    <span style={{ fontSize: '10px', color: 'rgba(241,240,238,0.5)', fontWeight: 500 }}>{dayLetters[i]}</span>
+                    <span style={{ fontSize: '10px', color: '#aaa', fontWeight: 500 }}>{dayLetters[i]}</span>
                   </div>
                 )
               })}
@@ -459,25 +461,8 @@ export default function Greenroom() {
           </div>
         </div>
 
-        {/* QUICK STATS */}
-        <div className="stagger" style={{ animationDelay: '0.2s', display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '8px', marginBottom: '24px' }}>
-          {[
-            { label: 'Applied', value: stats.applications, href: '/applications' },
-            { label: 'Saved', value: stats.saved, href: '/saved' },
-            { label: 'Posted', value: stats.posted, href: '/my-jobs' },
-            { label: 'Groups', value: stats.communities, href: '/communities' },
-          ].map(s => (
-            <Link key={s.label} href={s.href} style={{ textDecoration: 'none' }}>
-              <div className="tap" style={{ background: 'white', borderRadius: '14px', padding: '12px 8px', textAlign: 'center', border: '1px solid #ebe8e1' }}>
-                <p style={{ fontFamily: "'ITC Symbol',Georgia,serif", letterSpacing: '-0.03em', fontSize: '22px', fontWeight: 700, color: '#0c2520', margin: '0 0 2px', lineHeight: 1 }}>{s.value}</p>
-                <p style={{ fontSize: '10px', color: '#999', margin: 0, fontWeight: 500 }}>{s.label}</p>
-              </div>
-            </Link>
-          ))}
-        </div>
-
         {/* NETWORK */}
-        <div className="stagger" style={{ animationDelay: '0.25s', marginBottom: '24px' }}>
+        <div className="stagger" style={{ animationDelay: '0.15s', marginBottom: '24px' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
             <p style={{ fontSize: '11px', color: '#999', textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 700, margin: 0 }}>Network</p>
             <Link href={connections.length > 0 ? '/connections' : '/browse'} style={{ fontSize: '12px', color: '#0c2520', textDecoration: 'none', fontWeight: 600 }}>{connections.length > 0 ? 'See all' : 'Browse'}</Link>
@@ -540,54 +525,50 @@ export default function Greenroom() {
           )}
         </div>
 
-        {/* COMING UP */}
-        <div className="stagger" style={{ animationDelay: '0.3s' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
-            <p style={{ fontSize: '11px', color: '#999', textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 700, margin: 0 }}>Coming up</p>
-            <Link href="/calendar" style={{ fontSize: '12px', color: '#0c2520', textDecoration: 'none', fontWeight: 600 }}>See all</Link>
+        {/* CALENDAR SPLIT */}
+        <div className="stagger" style={{ animationDelay: '0.2s', marginBottom: '24px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+            <p style={{ fontSize: '11px', color: '#999', textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 700, margin: 0 }}>Calendar</p>
+            <Link href="/calendar" style={{ fontSize: '12px', color: '#0c2520', textDecoration: 'none', fontWeight: 600 }}>Open</Link>
           </div>
-          {weekEvents.length === 0 ? (
-            <Link href="/calendar" style={{ textDecoration: 'none' }}>
-              <div className="tap" style={{ background: 'white', borderRadius: '14px', padding: '16px', marginBottom: '24px', border: '1px solid #ebe8e1', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div style={{ display: 'flex', gap: '10px', alignItems: 'stretch' }}>
+            <MiniCalendar eventDates={eventDates} />
+            <div style={{ flex: 1, background: 'white', border: '1px solid #ebe8e1', borderRadius: '16px', padding: '14px 12px', display: 'flex', flexDirection: 'column' }}>
+              <p style={{ fontFamily: "'ITC Symbol',Georgia,serif", letterSpacing: '-0.03em', fontSize: '14px', fontWeight: 700, color: '#0c2520', margin: '0 0 10px' }}>Up next</p>
+              {weekEvents.length === 0 ? (
+                <Link href="/calendar" style={{ textDecoration: 'none', flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
+                  <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: '#e8efea', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#0c2520" strokeWidth="2.5" strokeLinecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                  </div>
+                  <p style={{ fontSize: '11px', color: '#999', margin: 0, textAlign: 'center' }}>Nothing scheduled</p>
+                </Link>
+              ) : (
                 <div>
-                  <p style={{ fontSize: '14px', fontWeight: 600, color: '#0c2520', margin: '0 0 2px' }}>Nothing scheduled</p>
-                  <p style={{ fontSize: '12px', color: '#999', margin: 0 }}>Add your next audition or booking</p>
-                </div>
-                <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: '#e8efea', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#0c2520" strokeWidth="2.5" strokeLinecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-                </div>
-              </div>
-            </Link>
-          ) : (
-            <div style={{ marginBottom: '24px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
-              {weekEvents.map(e => {
-                const dObj = new Date(e.start_date + 'T12:00:00')
-                const isToday = e.start_date === dateStr(nowD)
-                return (
-                  <Link key={e.id} href="/calendar" style={{ textDecoration: 'none' }}>
-                    <div className="tap" style={{ background: 'white', borderRadius: '14px', border: '1px solid #ebe8e1', padding: '14px', display: 'flex', alignItems: 'center', gap: '12px' }}>
-                      <div style={{ background: '#0c2520', color: '#f1f0ee', borderRadius: '12px', padding: '8px 12px', minWidth: '52px', textAlign: 'center' }}>
-                        <p style={{ fontSize: '10px', fontWeight: 600, margin: 0, textTransform: 'uppercase' }}>{isToday ? 'Today' : dObj.toLocaleDateString('en-GB', { weekday: 'short' })}</p>
-                        <p style={{ fontFamily: "'ITC Symbol',Georgia,serif", letterSpacing: '-0.03em', fontSize: '20px', fontWeight: 700, margin: 0, lineHeight: 1 }}>{dObj.getDate()}</p>
-                      </div>
-                      <div style={{ flex: 1 }}>
-                        <p style={{ fontSize: '14px', fontWeight: 600, color: '#0c2520', margin: '0 0 2px' }}>{e.title}</p>
-                        <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
-                          <span style={{ fontSize: '10px', color: '#0c2520', background: '#e8efea', padding: '2px 8px', borderRadius: '4px', fontWeight: 500, textTransform: 'capitalize' }}>{e.event_type}</span>
-                          {e.start_time && <span style={{ fontSize: '11px', color: '#aaa' }}>{e.start_time.slice(0, 5)}</span>}
+                  {weekEvents.slice(0, 4).map((e, i) => {
+                    const dObj = new Date(e.start_date + 'T12:00:00')
+                    const isToday = e.start_date === dateStr(nowD)
+                    const lbl = isToday ? 'Today' : dObj.toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric' })
+                    return (
+                      <Link key={e.id} href="/calendar" style={{ textDecoration: 'none' }}>
+                        <div style={{ display: 'flex', gap: '8px', padding: '8px 0', borderBottom: i < Math.min(weekEvents.length, 4) - 1 ? '1px solid #f3f0e9' : 'none' }}>
+                          <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#4ade80', marginTop: '5px', flexShrink: 0 }} />
+                          <div style={{ flex: 1, minWidth: 0 }}>
+                            <p style={{ fontSize: '12px', fontWeight: 600, color: '#0c2520', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{e.title}</p>
+                            <p style={{ fontSize: '10px', color: '#999', margin: '1px 0 0' }}>{lbl}{e.start_time ? ' · ' + e.start_time.slice(0, 5) : ''}</p>
+                          </div>
                         </div>
-                      </div>
-                    </div>
-                  </Link>
-                )
-              })}
+                      </Link>
+                    )
+                  })}
+                </div>
+              )}
             </div>
-          )}
+          </div>
         </div>
 
         {/* COMMUNITIES */}
         {myCommunities.length > 0 && (
-          <div className="stagger" style={{ animationDelay: '0.35s' }}>
+          <div className="stagger" style={{ animationDelay: '0.25s' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
               <p style={{ fontSize: '11px', color: '#999', textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 700, margin: 0 }}>Your communities</p>
               <Link href="/communities" style={{ fontSize: '12px', color: '#0c2520', textDecoration: 'none', fontWeight: 600 }}>See all</Link>
@@ -612,7 +593,7 @@ export default function Greenroom() {
         )}
 
         {suggested.length > 0 && (
-          <div className="stagger" style={{ animationDelay: '0.4s' }}>
+          <div className="stagger" style={{ animationDelay: '0.3s' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
               <p style={{ fontSize: '11px', color: '#999', textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 700, margin: 0 }}>Suggested for you</p>
               <Link href="/communities" style={{ fontSize: '12px', color: '#0c2520', textDecoration: 'none', fontWeight: 600 }}>Discover</Link>
@@ -637,7 +618,7 @@ export default function Greenroom() {
         )}
 
         {/* MORE */}
-        <div className="stagger" style={{ animationDelay: '0.45s' }}>
+        <div className="stagger" style={{ animationDelay: '0.35s' }}>
           <p style={{ fontSize: '11px', color: '#999', textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 700, margin: '0 0 8px' }}>More</p>
           <div style={{ background: 'white', borderRadius: '16px', overflow: 'hidden', border: '1px solid #ebe8e1', marginBottom: '16px' }}>
             {menuItems.map((item, i) => (
