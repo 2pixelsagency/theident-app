@@ -32,7 +32,7 @@ function ProgressRing({ percent, color, label, value }: { percent: number; color
     <div style={{ background: 'white', border: '1px solid #ebe8e1', borderRadius: '18px', padding: '14px 6px', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
       <div style={{ position: 'relative', width: size + 'px', height: size + 'px', marginBottom: '8px' }}>
         <svg width={size} height={size} style={{ transform: 'rotate(-90deg)' }}>
-          <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="#eeebe4" strokeWidth={stroke} style={{ stroke: '#ece9e1' }} />
+          <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="#ece9e1" strokeWidth={stroke} />
           <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke={color} strokeWidth={stroke} strokeLinecap="round" strokeDasharray={circ} strokeDashoffset={offset} style={{ transition: 'stroke-dashoffset 1.2s cubic-bezier(0.22,0.61,0.36,1)' }} />
         </svg>
         <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -242,12 +242,9 @@ export default function Greenroom() {
   if (loading) return <div style={{ minHeight: '100vh', background: '#f1f0ee' }} />
 
   const nowD = new Date()
-  const hour = nowD.getHours()
-  const greeting = hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening'
   const online = isOnline(profile?.last_active || null)
   const unreadCount = notifications.length
   const fullName = ((profile?.first_name || '') + ' ' + (profile?.last_name || '')).trim()
-  const firstName = profile?.first_name || 'there'
 
   // Activity computed
   const pCut = new Date(Date.now() - PERIOD_DAYS[period] * 86400000)
@@ -262,6 +259,7 @@ export default function Greenroom() {
   const daysInMonth = new Date(nowD.getFullYear(), nowD.getMonth() + 1, 0).getDate()
   const dailyViews = Array.from({ length: daysInMonth }, (_, i) => { const key = nowD.getFullYear() + '-' + pad(nowD.getMonth() + 1) + '-' + pad(i + 1); return viewDates.filter(d => dateStr(d) === key).length })
   const maxDaily = Math.max(1, ...dailyViews)
+  const viewsThisMonthTotal = dailyViews.reduce((a, b) => a + b, 0)
   const monthName = nowD.toLocaleDateString('en-GB', { month: 'long' })
 
   // PA focus — surfaces the single most relevant action
@@ -317,11 +315,11 @@ export default function Greenroom() {
       {toast && <div className="toast-anim" style={{ position: 'fixed', bottom: '110px', left: '50%', transform: 'translateX(-50%)', background: '#0c2520', color: '#f1f0ee', padding: '12px 24px', borderRadius: '30px', fontSize: '13px', fontWeight: 500, zIndex: 300, whiteSpace: 'nowrap' }}>{toast}</div>}
 
       {/* Header */}
-      <div className="stagger" style={{ animationDelay: '0s', padding: '24px 16px 14px' }}>
+      <div className="stagger" style={{ animationDelay: '0s', padding: '24px 16px 16px' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div>
-            <p style={{ fontSize: '12px', color: '#999', margin: '0 0 3px', letterSpacing: '0.02em' }}>{nowD.toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' })}</p>
-            <p style={{ fontFamily: "'ITC Symbol',Georgia,serif", letterSpacing: '-0.03em', fontSize: '22px', color: '#0c2520', margin: 0, fontWeight: 700, lineHeight: 1.15 }}>{greeting}, {firstName}</p>
+            <p style={{ fontSize: '12px', color: '#888', margin: '0 0 3px', letterSpacing: '0.02em' }}>{nowD.toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' })}</p>
+            <p style={{ fontFamily: "'ITC Symbol',Georgia,serif", letterSpacing: '-0.03em', fontSize: '20px', color: '#0c2520', margin: 0, fontWeight: 500, lineHeight: 1.2 }}>Greenroom</p>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             <div ref={notifRef} style={{ position: 'relative' }}>
@@ -387,12 +385,9 @@ export default function Greenroom() {
               </div>
             </div>
           </div>
-          <div style={{ display: 'flex', gap: '8px', position: 'relative' }}>
-            <Link href="/profile/edit" style={{ flex: 1, textDecoration: 'none' }}>
+          <div style={{ position: 'relative' }}>
+            <Link href="/profile/edit" style={{ textDecoration: 'none' }}>
               <div className="tap" style={{ background: '#92d7af', color: '#0c2520', padding: '11px', borderRadius: '22px', fontSize: '13px', fontWeight: 600, textAlign: 'center' }}>Edit your Ident</div>
-            </Link>
-            <Link href={'/' + (profile?.slug || '') + '?from=app'} style={{ flex: 1, textDecoration: 'none' }}>
-              <div className="tap" style={{ background: 'rgba(255,255,255,0.1)', color: '#f1f0ee', padding: '11px', borderRadius: '22px', fontSize: '13px', fontWeight: 500, textAlign: 'center', border: '1px solid rgba(255,255,255,0.15)' }}>View public</div>
             </Link>
           </div>
         </div>
@@ -443,22 +438,24 @@ export default function Greenroom() {
           </div>
 
           {/* Monthly chart */}
-          <div style={{ background: 'white', border: '1px solid #ebe8e1', borderRadius: '16px', padding: '16px' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
-              <p style={{ fontFamily: "'ITC Symbol',Georgia,serif", letterSpacing: '-0.03em', fontSize: '15px', fontWeight: 700, color: '#0c2520', margin: 0 }}>This month</p>
-              <span style={{ fontSize: '12px', color: '#999' }}>{monthName}</span>
+          <div style={{ background: 'white', border: '1px solid #ebe8e1', borderRadius: '16px', padding: '18px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '16px' }}>
+              <div>
+                <p style={{ fontFamily: "'ITC Symbol',Georgia,serif", letterSpacing: '-0.03em', fontSize: '15px', fontWeight: 500, color: '#0c2520', margin: 0 }}>Profile views</p>
+                <p style={{ fontSize: '11px', color: '#999', margin: '2px 0 0' }}>{monthName}</p>
+              </div>
+              <p style={{ fontFamily: "'ITC Symbol',Georgia,serif", letterSpacing: '-0.03em', fontSize: '22px', fontWeight: 700, color: '#0c2520', margin: 0 }}>{viewsThisMonthTotal}</p>
             </div>
-            <div style={{ display: 'flex', alignItems: 'flex-end', gap: '2px', height: '88px' }}>
+            <div style={{ display: 'flex', alignItems: 'flex-end', gap: '3px', height: '70px' }}>
               {dailyViews.map((count, i) => {
                 const isToday = i + 1 === nowD.getDate()
                 return (
                   <div key={i} style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'flex-end', height: '100%' }}>
-                    <div style={{ height: (count / maxDaily) * 100 + '%', minHeight: count > 0 ? '4px' : '0', background: isToday ? '#0c2520' : '#92d7af', borderRadius: '3px 3px 0 0', opacity: count > 0 ? 1 : 0.15, transition: 'height 0.8s cubic-bezier(0.22,0.61,0.36,1)' }} />
+                    <div style={{ height: (count / maxDaily) * 100 + '%', minHeight: count > 0 ? '4px' : '2px', background: isToday ? '#0c2520' : '#cfe6da', borderRadius: '2px', transition: 'height 0.8s cubic-bezier(0.22,0.61,0.36,1)' }} />
                   </div>
                 )
               })}
             </div>
-            <p style={{ fontSize: '11px', color: '#999', textAlign: 'center', margin: '10px 0 0' }}>Profile views per day</p>
           </div>
         </div>
 
