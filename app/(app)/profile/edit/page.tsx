@@ -161,7 +161,7 @@ export default function EditProfile() {
           <Field label="Last name"><input className="fld" style={inputStyle} value={form.last_name} onChange={e => set('last_name', e.target.value)} /></Field>
           <Field label="What I do" hint="e.g. Actor · Musical theatre · Dancer"><input className="fld" style={inputStyle} value={form.what_i_do} onChange={e => set('what_i_do', e.target.value)} placeholder="Actor" /></Field>
           <Field label="Location" hint="City or region casting can search by"><input className="fld" style={inputStyle} value={form.location} onChange={e => set('location', e.target.value)} placeholder="London, UK" /></Field>
-          <Field label="Height" hint="However you list it, e.g. 5'10\" / 178cm"><input className="fld" style={inputStyle} value={form.height} onChange={e => set('height', e.target.value)} placeholder={`5'10" / 178cm`} /></Field>
+          <Field label="Height" hint={"However you list it, e.g. 5'10\" / 178cm"}><input className="fld" style={inputStyle} value={form.height} onChange={e => set('height', e.target.value)} placeholder="5 ft 10 / 178cm" /></Field>
         </Section>
 
         {/* CASTING DETAILS */}
