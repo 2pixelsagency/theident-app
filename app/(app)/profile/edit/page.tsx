@@ -86,9 +86,10 @@ export default function EditProfile() {
       const { data } = await supabase.from('profiles')
         .select('first_name,last_name,location,what_i_do,height,gender_id,ethnicity_id,hair_colour_id,eye_colour_id,minimum_age,maximum_age,date_of_birth,bio,summary,testimonial_1,testimonial_2,testimonial_3,availability_status,available_from,production_until,agent_name,agent_phone,agent_email')
         .eq('id', user.id).single()
-      if (data) {
+if (data) {
+        const row = data as Record<string, any>
         const next: any = { ...EMPTY }
-        Object.keys(EMPTY).forEach(k => { next[k] = data[k] === null || data[k] === undefined ? '' : String(data[k]) })
+        Object.keys(EMPTY).forEach(k => { next[k] = row[k] === null || row[k] === undefined ? '' : String(row[k]) })
         setForm(next)
       }
       setLoading(false)
