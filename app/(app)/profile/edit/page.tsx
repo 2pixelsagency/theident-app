@@ -268,19 +268,16 @@ export default function EditProfile() {
 const handleCropSave = async (blob: Blob) => {
     if (!profile) return
     setCropFile(null); setSaving(true)
-    const { data: { session }, error: sErr } = await supabase.auth.getSession()
-    console.log('SESSION:', session)
-    console.log('SESSION ERROR:', sErr)
-    console.log('USER ID on profile:', profile.id)
-    console.log('USER ID in session:', session?.user?.id)
-    if (!session) { setSaving(false); showToast('NO SESSION — token missing'); return }
-    if (session.user.id !== profile.id) { setSaving(false); showToast('ID MISMATCH: ' + session.user.id.slice(0,8) + ' vs ' + profile.id.slice(0,8)); return }
     const path = profile.id + '/headshot-' + Date.now() + '.jpg'
-    const { error: upErr } = await supabase.storage.from('headshots').upload(path, blob, { upsert: false, contentType: 'image/jpeg' })
-    if (upErr) { setSaving(false); showToast('UPLOAD: ' + upErr.message); console.error(upErr); return }
-    const { data: { publicUrl } } = supabase.storage.from('headshots').getPublicUrl(path)
-    await supabase.from('profiles').update({ picture_url: publicUrl }).eq('id', profile.id)
-    setProfile({ ...profile, picture_url: publicUrl }); showToast('Photo updated'); setSaving(false)
+    const { error } = await supabase.storage.from('headshots').upload(path, blob, { contentType: 'image/jpeg', upsert: false })
+    if (!error) {
+      const { data: { publicUrl } } = supabase.storage.from('headshots').getPublicUrl(path)
+      await supabase.from('profiles').update({ picture_url: publicUrl }).eq('id', profile.id)
+      setProfile({ ...profile, picture_url: publicUrl }); showToast('Photo updated')
+    } else {
+      showToast('Upload failed: ' + error.message); console.error(error)
+    }
+    setSaving(false)
   }
   const uploadThumb = async (file: File, i: number) => {
     if (!profile) return
