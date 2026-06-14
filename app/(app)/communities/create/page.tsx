@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
+import AppHeader from '@/components/AppHeader'
 
 const CATEGORIES = ['Dance','Acting','Singing','Fitness','College','Agency','Other']
 
@@ -17,8 +18,9 @@ export default function CreateCommunity() {
   const handleCreate = async () => {
     if (!name.trim()) return
     setSaving(true)
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) return
+    const { data: { session } } = await supabase.auth.getSession()
+    const user = session?.user
+    if (!user) { setSaving(false); return }
     const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') + '-' + Date.now().toString(36)
     const { data, error } = await supabase.from('communities').insert({ name, slug, description: description || null, category, is_private: isPrivate, owner_id: user.id }).select().single()
     if (data) {
@@ -34,14 +36,10 @@ export default function CreateCommunity() {
 
   return (
     <div style={{ fontFamily: 'system-ui, sans-serif', background: '#f1f0ee', minHeight: '100vh', paddingBottom: '120px' }}>
-      <div style={{ padding: '24px 16px' }}>
-        <button onClick={() => router.back()} style={{ background: 'none', border: 'none', fontSize: '13px', color: '#888', cursor: 'pointer', fontFamily: 'inherit', display: 'flex', alignItems: 'center', gap: '4px', marginBottom: '16px', padding: 0 }}>
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#888" strokeWidth="2" strokeLinecap="round"><path d="M19 12H5"/><path d="M12 19l-7-7 7-7"/></svg>
-          Back
-        </button>
+      {/* Header */}
+      <AppHeader title="Create a community" showBack fallback="/communities" />
 
-        <p style={{ fontFamily: "'ITC Symbol',Georgia,serif", letterSpacing: '-0.03em', fontSize: '22px', fontWeight: 700, color: '#0c2520', margin: '0 0 24px' }}>Create a community</p>
-
+      <div style={{ padding: '0 16px' }}>
         <label style={labelStyle}>Name</label>
         <input value={name} onChange={e => setName(e.target.value)} placeholder="e.g. House of Jazz" style={{ ...inputStyle, marginBottom: '14px' }} />
 
