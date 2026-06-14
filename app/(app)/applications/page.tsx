@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
+import AppHeader from '@/components/AppHeader'
 
 type Application = {
   id: string
@@ -31,7 +32,8 @@ export default function ApplicationsPage() {
 
   useEffect(() => {
     const load = async () => {
-      const { data: { user } } = await supabase.auth.getUser()
+      const { data: { session } } = await supabase.auth.getSession()
+      const user = session?.user
       if (!user) { router.push('/login'); return }
       const { data } = await supabase.from('applications').select('*, jobs(project_role, project_in, job_title, company, production_company, is_side_hustle, location)').eq('profile_id', user.id).order('created_at', { ascending: false })
       setApplications(data || [])
@@ -56,9 +58,10 @@ export default function ApplicationsPage() {
 
   return (
     <div style={{ fontFamily: 'system-ui, sans-serif', background: '#f1f0ee', minHeight: '100vh', paddingBottom: '120px' }}>
-      <div style={{ padding: '24px 16px 16px' }}>
-        <p style={{ fontFamily: "'ITC Symbol',Georgia,serif", letterSpacing: '-0.03em', fontSize: '22px', fontWeight: 700, color: '#0c2520', margin: '0 0 16px' }}>My applications</p>
+      {/* Header */}
+      <AppHeader title="My applications" showBack />
 
+      <div style={{ padding: '0 16px' }}>
         <div style={{ display: 'flex', gap: '6px', overflowX: 'auto', marginBottom: '20px', paddingBottom: '4px' }}>
           {(['all', 'submitted', 'reviewed', 'accepted', 'rejected'] as const).map(f => (
             <button key={f} onClick={() => setFilter(f)} style={{ padding: '7px 14px', borderRadius: '20px', fontSize: '12px', cursor: 'pointer', fontFamily: 'inherit', border: filter === f ? 'none' : '1px solid #e0ddd5', background: filter === f ? '#0c2520' : 'white', color: filter === f ? '#f1f0ee' : '#888', fontWeight: filter === f ? 600 : 400, textTransform: 'capitalize', whiteSpace: 'nowrap', WebkitTapHighlightColor: 'transparent' }}>{f}</button>
@@ -83,7 +86,7 @@ export default function ApplicationsPage() {
                   <div style={{ background: 'white', borderRadius: '14px', border: '1px solid #e8e4de', padding: '16px' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', marginBottom: '8px' }}>
                       <div>
-                        <p style={{ fontFamily: "'ITC Symbol',Georgia,serif", letterSpacing: '-0.03em', fontSize: '15px', fontWeight: 700, color: '#0c2520', margin: '0 0 3px' }}>{title || 'Untitled'}</p>
+                        <p style={{ fontFamily: "'ITC Symbol',Georgia,serif", letterSpacing: '-0.03em', fontSize: '15px', fontWeight: 500, color: '#0c2520', margin: '0 0 3px' }}>{title || 'Untitled'}</p>
                         {subtitle && <p style={{ fontSize: '12px', color: '#666', margin: 0, fontStyle: 'italic' }}>In {subtitle}</p>}
                       </div>
                       <span style={{ background: sc.bg, color: sc.color, padding: '3px 10px', borderRadius: '20px', fontSize: '10px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em', flexShrink: 0 }}>{app.status}</span>
