@@ -21,7 +21,8 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     const load = async () => {
-      const { data: { user } } = await supabase.auth.getUser()
+      const { data: { session } } = await supabase.auth.getSession()
+      const user = session?.user
       if (!user) { router.push('/login'); return }
       const { data: p } = await supabase.from('profiles').select('id, first_name, last_name, picture_url, slug').eq('id', user.id).single()
       setProfile(p)
@@ -135,14 +136,15 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
           {navItem('/dashboard', 'Jobs')}
-          {navItem('/saved', 'Saved Jobs')}
-          {navItem('/post-job', 'Post a job')}
           {navItem('/browse', 'Browse Talent')}
+          {navItem('/messages', 'Messages')}
+          {navItem('/post-job', 'Post a job')}
+          {navItem('/saved', 'Saved Jobs')}
           {navItem('/connections', 'Connections')}
         </div>
         <div style={{ marginTop: '32px', paddingTop: '20px', borderTop: '1px solid #e8e6e0' }}>
           <p style={{ fontSize: '10px', color: '#999', textTransform: 'uppercase', letterSpacing: '0.08em', margin: '0 0 8px 14px', fontWeight: 600 }}>Your settings</p>
-          {navItem('/profile', 'Account')}
+          {navItem('/profile', 'Greenroom')}
           {navItem('/billing', 'Billing')}
           <button onClick={handleLogout} className="desk-nav-item" style={{ display: 'block', width: '100%', padding: '12px 14px', background: 'transparent', border: 'none', borderRadius: '8px', textAlign: 'left', cursor: 'pointer', fontSize: '14px', color: '#0c2520', fontFamily: 'inherit' }}>Logout</button>
         </div>
@@ -167,11 +169,14 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
               <span>Jobs</span>
             </Link>
 
-            <Link href="/saved" className={'mob-nav-btn' + (isActive('/saved') ? ' active' : '')}>
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={isActive('/saved') ? '#0c2520' : '#aaa'} strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/>
+            <Link href="/browse" className={'mob-nav-btn' + (isActive('/browse') ? ' active' : '')}>
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={isActive('/browse') ? '#0c2520' : '#aaa'} strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                <circle cx="9" cy="7" r="4"/>
+                <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+                <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
               </svg>
-              <span>Saved</span>
+              <span>Talent</span>
             </Link>
 
             <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', paddingBottom: '12px' }}>
@@ -185,14 +190,11 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
               </Link>
             </div>
 
-            <Link href="/browse" className={'mob-nav-btn' + (isActive('/browse') ? ' active' : '')}>
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={isActive('/browse') ? '#0c2520' : '#aaa'} strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
-                <circle cx="9" cy="7" r="4"/>
-                <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
-                <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+            <Link href="/messages" className={'mob-nav-btn' + (isActive('/messages') ? ' active' : '')}>
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={isActive('/messages') ? '#0c2520' : '#aaa'} strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
               </svg>
-              <span>Talent</span>
+              <span>Messages</span>
             </Link>
 
             <Link href="/profile" className={'mob-nav-btn' + (isActive('/profile') ? ' active' : '')}>
@@ -200,7 +202,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                 <circle cx="12" cy="8" r="4"/>
                 <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/>
               </svg>
-              <span>Account</span>
+              <span>Greenroom</span>
             </Link>
 
           </div>
