@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
+import AppHeader from '@/components/AppHeader'
 
 type TalentProfile = {
   id: string
@@ -83,12 +84,8 @@ export default function BrowseTalent() {
   const [searchQuery, setSearchQuery] = useState('')
   const [showFilters, setShowFilters] = useState(false)
   const [currentUserId, setCurrentUserId] = useState<string | null>(null)
-  const [currentProfile, setCurrentProfile] = useState<{ first_name: string | null; picture_url: string | null } | null>(null)
   const [connectionStatuses, setConnectionStatuses] = useState<Record<string, string>>({})
-  const [notifications, setNotifications] = useState<any[]>([])
-  const [showNotifications, setShowNotifications] = useState(false)
   const [page, setPage] = useState(1)
-  const notifRef = useRef<HTMLDivElement>(null)
 
   const [genders, setGenders] = useState<Gender[]>([])
   const [allSkills, setAllSkills] = useState<Skill[]>([])
@@ -105,14 +102,6 @@ export default function BrowseTalent() {
     if (!lastActive) return false
     return (Date.now() - new Date(lastActive).getTime()) < 15 * 60 * 1000
   }
-
-  useEffect(() => {
-    const handleClickOutside = (e: MouseEvent) => {
-      if (notifRef.current && !notifRef.current.contains(e.target as Node)) setShowNotifications(false)
-    }
-    document.addEventListener('mousedown', handleClickOutside)
-    return () => document.removeEventListener('mousedown', handleClickOutside)
-  }, [])
 
   useEffect(() => {
     const load = async () => {
@@ -134,8 +123,6 @@ export default function BrowseTalent() {
       if (user) {
         setCurrentUserId(user.id)
         supabase.from('profiles').update({ last_active: new Date().toISOString() }).eq('id', user.id).then(() => {})
-        supabase.from('profiles').select('first_name, picture_url').eq('id', user.id).single().then(({ data }) => { if (data) setCurrentProfile(data) })
-        supabase.from('notifications').select('*').eq('profile_id', user.id).eq('read', false).order('created_at', { ascending: false }).limit(10).then(({ data }) => setNotifications(data || []))
       }
 
       if (profileData) {
@@ -215,7 +202,7 @@ export default function BrowseTalent() {
       })
     }
     setProfiles(filtered)
-    setPage(1) // reset to first page whenever filters change
+    setPage(1)
   }, [searchQuery, selectedGender, selectedSkills, locationFilter, availabilityFilter, minAge, maxAge, allProfiles, currentUserId, allSkills])
 
   const handleConnect = async (profileId: string) => {
@@ -231,9 +218,7 @@ export default function BrowseTalent() {
 
   const hasActiveFilters = selectedGender !== null || selectedSkills.length > 0 || !!locationFilter || !!availabilityFilter || minAge > 0 || maxAge < 100
   const activeFilterCount = (selectedGender !== null ? 1 : 0) + (selectedSkills.length > 0 ? 1 : 0) + (locationFilter ? 1 : 0) + (availabilityFilter ? 1 : 0) + (minAge > 0 || maxAge < 100 ? 1 : 0)
-  const unreadCount = notifications.length
 
-  // Pagination
   const totalPages = Math.max(1, Math.ceil(profiles.length / PER_PAGE))
   const currentPage = Math.min(page, totalPages)
   const pageStart = (currentPage - 1) * PER_PAGE
@@ -247,14 +232,12 @@ export default function BrowseTalent() {
   if (loading) return <div style={{ minHeight: '100vh', background: '#f1f0ee' }} />
 
   return (
-    <div style={{ fontFamily: 'system-ui, sans-serif' }}>
+    <div style={{ fontFamily: 'system-ui, sans-serif', background: '#f1f0ee', minHeight: '100vh' }}>
       <style>{`
         @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
         @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
-        @keyframes popIn { from { opacity: 0; transform: scale(0.92) translateY(-4px); } to { opacity: 1; transform: scale(1) translateY(0); } }
         .fade-in { animation: fadeIn 0.5s ease-out; }
         .sheet { animation: slideUp 0.3s cubic-bezier(0.32, 0.72, 0, 1); }
-        .notif-popup { animation: popIn 0.2s ease-out; }
         .talent-card { transition: transform 0.15s ease; -webkit-tap-highlight-color: transparent; }
         .talent-card:active { transform: scale(0.98); }
         .range-slider { -webkit-appearance: none; width: 100%; height: 4px; background: #e0ddd5; border-radius: 2px; outline: none; }
@@ -262,7 +245,6 @@ export default function BrowseTalent() {
         input[type=text]:focus, input[type=search]:focus { border-color: #0c2520 !important; outline: none; box-shadow: 0 0 0 1px #0c2520; }
         .filter-chip { padding: 8px 14px; border-radius: 20px; font-size: 13px; cursor: pointer; font-family: inherit; border: 1px solid #e0ddd5; background: white; color: #0c2520; transition: all 0.15s ease; -webkit-tap-highlight-color: transparent; }
         .filter-chip.on { background: #0c2520; color: #f1f0ee; border-color: #0c2520; }
-        .notif-row:hover { background: #f5f3ee; }
         .page-btn { min-width: 36px; height: 36px; border-radius: 10px; border: 1px solid #e0ddd5; background: white; color: #0c2520; font-size: 13px; font-weight: 500; cursor: pointer; font-family: inherit; display: flex; align-items: center; justify-content: center; -webkit-tap-highlight-color: transparent; }
         .page-btn.on { background: #0c2520; color: #f1f0ee; border-color: #0c2520; }
         .page-btn:disabled { opacity: 0.4; cursor: default; }
@@ -331,62 +313,7 @@ export default function BrowseTalent() {
       <div className="fade-in">
 
         {/* Header */}
-        <div style={{ padding: '24px 16px 16px' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <div>
-              <p style={{ fontSize: '12px', color: '#888', margin: '0 0 3px', letterSpacing: '0.02em' }}>
-                {new Date().toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' })}
-              </p>
-              <p style={{ fontFamily: "'ITC Symbol',Georgia,serif", letterSpacing: '-0.03em', fontSize: '20px', color: '#0c2520', margin: 0, fontWeight: 500, lineHeight: 1.2 }}>
-                Browse talent
-              </p>
-            </div>
-
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <div ref={notifRef} style={{ position: 'relative' }}>
-                <button onClick={() => setShowNotifications(!showNotifications)}
-                  style={{ width: '30px', height: '30px', borderRadius: '50%', background: 'white', border: '1px solid #e0ddd5', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', position: 'relative', flexShrink: 0, WebkitTapHighlightColor: 'transparent' }}>
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#0c2520" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/>
-                  </svg>
-                  {unreadCount > 0 && (
-                    <div style={{ position: 'absolute', top: '5px', right: '5px', width: '6px', height: '6px', borderRadius: '50%', background: '#4ade80', border: '1.5px solid #f1f0ee' }} />
-                  )}
-                </button>
-                {showNotifications && (
-                  <div className="notif-popup" style={{ position: 'absolute', top: 'calc(100% + 8px)', right: 0, width: '280px', background: 'white', borderRadius: '16px', border: '1px solid #e8e4de', boxShadow: '0 8px 32px rgba(12,37,32,0.12)', zIndex: 300, overflow: 'hidden' }}>
-                    <div style={{ padding: '14px 16px 10px', borderBottom: '1px solid #f0ede5' }}>
-                      <p style={{ fontFamily: "'ITC Symbol',Georgia,serif", letterSpacing: '-0.03em', fontSize: '15px', fontWeight: 700, color: '#0c2520', margin: 0 }}>Notifications</p>
-                    </div>
-                    {notifications.length === 0 ? (
-                      <div style={{ padding: '24px 16px', textAlign: 'center' }}>
-                        <p style={{ fontSize: '13px', color: '#888', margin: 0 }}>No new notifications</p>
-                      </div>
-                    ) : (
-                      <div>
-                        {notifications.slice(0, 5).map((n: any) => (
-                          <div key={n.id} className="notif-row" style={{ padding: '10px 16px', borderBottom: '1px solid #f0ede5', cursor: 'pointer' }}
-                            onClick={() => { if (n.data && n.data.url) router.push(n.data.url) }}>
-                            <p style={{ fontSize: '13px', color: '#0c2520', margin: '0 0 2px', fontWeight: 500 }}>{n.body}</p>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                )}
-              </div>
-
-              <Link href="/profile" style={{ textDecoration: 'none', flexShrink: 0, position: 'relative' }}>
-                <div style={{
-                  width: '46px', height: '46px', borderRadius: '50%',
-                  background: currentProfile?.picture_url ? 'url(' + currentProfile.picture_url + ') center/cover' : '#e8efea',
-                  backgroundSize: 'cover', border: '2px solid #e0ddd5',
-                }} />
-                <div style={{ position: 'absolute', bottom: '1px', right: '1px', width: '10px', height: '10px', borderRadius: '50%', background: '#4ade80', border: '2px solid #f1f0ee' }} />
-              </Link>
-            </div>
-          </div>
-        </div>
+        <AppHeader title="Browse talent" />
 
         {/* Search */}
         <div style={{ padding: '0 16px 16px' }}>
@@ -425,7 +352,6 @@ export default function BrowseTalent() {
                 const fullName = ((p.first_name || '') + ' ' + (p.last_name || '')).trim()
                 const online = isOnline(p.last_active)
                 const primarySkill = p.skills[0]
-                const isVerified = false
                 return (
                   <div key={p.id} className="talent-card" style={{ background: 'white', borderRadius: '14px', overflow: 'hidden', border: '1px solid #e8e4de', display: 'flex', flexDirection: 'column' }}>
 
@@ -454,13 +380,7 @@ export default function BrowseTalent() {
                     <div style={{ padding: '10px 10px 12px', display: 'flex', flexDirection: 'column', flex: 1 }}>
                       <Link href={p.slug ? '/' + p.slug + '?from=app' : '#'} style={{ textDecoration: 'none' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '4px', marginBottom: '2px' }}>
-                          <p style={{ fontFamily: "'ITC Symbol',Georgia,serif", letterSpacing: '-0.03em', fontSize: '15px', fontWeight: 700, color: '#0c2520', margin: 0, lineHeight: 1.1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1 }}>{fullName}</p>
-                          {isVerified && (
-                            <svg width="12" height="12" viewBox="0 0 24 24" fill="#0c2520" stroke="none" style={{ flexShrink: 0 }}>
-                              <path d="M12 2L9.5 5 6 4l-1 3.5L2 9l2 3-2 3 3 1.5L6 20l3.5-1 2.5 3 2.5-3 3.5 1 1-3.5L22 15l-2-3 2-3-3-1.5L18 4l-3.5 1z"/>
-                              <polyline points="9 12 11 14 15 10" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
-                            </svg>
-                          )}
+                          <p style={{ fontFamily: "'ITC Symbol',Georgia,serif", letterSpacing: '-0.03em', fontSize: '15px', fontWeight: 500, color: '#0c2520', margin: 0, lineHeight: 1.1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1 }}>{fullName}</p>
                         </div>
                       </Link>
 
