@@ -268,16 +268,19 @@ export default function EditProfile() {
 const handleCropSave = async (blob: Blob) => {
     if (!profile) return
     setCropFile(null); setSaving(true)
-    const { data: { session } } = await supabase.auth.getSession()
-    if (!session) { setSaving(false); showToast('Not signed in — refresh and try again'); return }
+    const { data: { session }, error: sErr } = await supabase.auth.getSession()
+    console.log('SESSION:', session)
+    console.log('SESSION ERROR:', sErr)
+    console.log('USER ID on profile:', profile.id)
+    console.log('USER ID in session:', session?.user?.id)
+    if (!session) { setSaving(false); showToast('NO SESSION — token missing'); return }
+    if (session.user.id !== profile.id) { setSaving(false); showToast('ID MISMATCH: ' + session.user.id.slice(0,8) + ' vs ' + profile.id.slice(0,8)); return }
     const path = profile.id + '/headshot-' + Date.now() + '.jpg'
     const { error: upErr } = await supabase.storage.from('headshots').upload(path, blob, { upsert: true, contentType: 'image/jpeg' })
-    if (upErr) { setSaving(false); showToast('Upload: ' + upErr.message); console.error('upload error', upErr); return }
+    if (upErr) { setSaving(false); showToast('UPLOAD: ' + upErr.message); console.error(upErr); return }
     const { data: { publicUrl } } = supabase.storage.from('headshots').getPublicUrl(path)
-    const { error: dbErr } = await supabase.from('profiles').update({ picture_url: publicUrl }).eq('id', profile.id)
-    if (dbErr) { setSaving(false); showToast('Save: ' + dbErr.message); console.error('db error', dbErr); return }
-    setProfile({ ...profile, picture_url: publicUrl }); showToast('Photo updated')
-    setSaving(false)
+    await supabase.from('profiles').update({ picture_url: publicUrl }).eq('id', profile.id)
+    setProfile({ ...profile, picture_url: publicUrl }); showToast('Photo updated'); setSaving(false)
   }
   const uploadThumb = async (file: File, i: number) => {
     if (!profile) return
