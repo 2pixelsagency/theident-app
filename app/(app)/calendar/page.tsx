@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
+import AppHeader from '@/components/AppHeader'
 
 type CalendarEvent = {
   id: string
@@ -87,7 +88,8 @@ export default function CalendarPage() {
 
   useEffect(() => {
     const load = async () => {
-      const { data: { user } } = await supabase.auth.getUser()
+      const { data: { session } } = await supabase.auth.getSession()
+      const user = session?.user
       if (!user) { router.push('/login'); return }
       setProfileId(user.id)
       const { data } = await supabase.from('calendar_events').select('*').eq('profile_id', user.id).order('start_date').order('start_time')
@@ -163,21 +165,21 @@ export default function CalendarPage() {
       {toast && <div className="toast-anim" style={{ position:'fixed',bottom:'100px',left:'50%',transform:'translateX(-50%)',background:'#0c2520',color:'#f1f0ee',padding:'12px 24px',borderRadius:'30px',fontSize:'13px',fontWeight:500,zIndex:700,whiteSpace:'nowrap' }}>{toast}</div>}
 
       {/* Header */}
-      <div style={{ padding:'24px 16px 16px' }}>
-        <div style={{ display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:'20px' }}>
-          <p style={{ fontFamily:"'ITC Symbol',Georgia,serif",letterSpacing:'-0.03em',fontSize:'22px',fontWeight:700,color:'#0c2520',margin:0 }}>Calendar</p>
-          <div style={{ display:'flex',gap:'8px' }}>
-            <button onClick={goToToday} style={{ background:'white',border:'1px solid #e0ddd5',padding:'8px 14px',borderRadius:'20px',fontSize:'12px',fontWeight:500,cursor:'pointer',fontFamily:'inherit',color:'#0c2520' }}>Today</button>
-            <button onClick={() => openAdd()} style={{ background:'#0c2520',border:'none',padding:'8px 14px',borderRadius:'20px',fontSize:'12px',fontWeight:500,cursor:'pointer',fontFamily:'inherit',color:'#f1f0ee' }}>+ Add</button>
-          </div>
-        </div>
+      <AppHeader title="Calendar" showBack />
 
+      {/* Today / Add */}
+      <div style={{ padding:'0 16px 16px',display:'flex',justifyContent:'flex-end',gap:'8px' }}>
+        <button onClick={goToToday} style={{ background:'white',border:'1px solid #e0ddd5',padding:'8px 14px',borderRadius:'20px',fontSize:'12px',fontWeight:500,cursor:'pointer',fontFamily:'inherit',color:'#0c2520' }}>Today</button>
+        <button onClick={() => openAdd()} style={{ background:'#0c2520',border:'none',padding:'8px 14px',borderRadius:'20px',fontSize:'12px',fontWeight:500,cursor:'pointer',fontFamily:'inherit',color:'#f1f0ee' }}>+ Add</button>
+      </div>
+
+      <div style={{ padding:'0 16px 16px' }}>
         {/* Month nav */}
         <div style={{ display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:'20px' }}>
           <button onClick={prevMonth} style={{ background:'none',border:'none',cursor:'pointer',padding:'8px' }}>
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#0c2520" strokeWidth="2" strokeLinecap="round"><path d="M15 18l-6-6 6-6"/></svg>
           </button>
-          <p style={{ fontFamily:"'ITC Symbol',Georgia,serif",letterSpacing:'-0.03em',fontSize:'18px',fontWeight:700,color:'#0c2520',margin:0 }}>{MONTHS[currentMonth]} {currentYear}</p>
+          <p style={{ fontFamily:"'ITC Symbol',Georgia,serif",letterSpacing:'-0.03em',fontSize:'18px',fontWeight:500,color:'#0c2520',margin:0 }}>{MONTHS[currentMonth]} {currentYear}</p>
           <button onClick={nextMonth} style={{ background:'none',border:'none',cursor:'pointer',padding:'8px' }}>
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#0c2520" strokeWidth="2" strokeLinecap="round"><path d="M9 18l6-6-6-6"/></svg>
           </button>
@@ -198,7 +200,7 @@ export default function CalendarPage() {
             return (
               <div key={i} className="cal-day" onClick={() => setSelectedDate(isSelected ? null : dateStr)}
                 style={{ aspectRatio:'1',display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',borderRadius:'12px',background:isSelected ? '#0c2520' : isToday ? '#e8efea' : 'transparent',position:'relative',gap:'3px' }}>
-                <span style={{ fontSize:'14px',fontWeight:isToday ? 700 : 400,color:isSelected ? '#f1f0ee' : day.isCurrentMonth ? '#0c2520' : '#ccc' }}>{day.date}</span>
+                <span style={{ fontSize:'14px',fontWeight:isToday ? 600 : 400,color:isSelected ? '#f1f0ee' : day.isCurrentMonth ? '#0c2520' : '#ccc' }}>{day.date}</span>
                 {dayEvents.length > 0 && (
                   <div style={{ display:'flex',gap:'2px' }}>
                     {dayEvents.slice(0, 3).map((e, j) => <div key={j} style={{ width:'5px',height:'5px',borderRadius:'50%',background:isSelected ? '#4ade80' : getTypeColor(e.event_type) }} />)}
@@ -279,7 +281,7 @@ export default function CalendarPage() {
             <div style={{ display:'flex',justifyContent:'center',padding:'12px 0 4px' }}><div style={{ width:'36px',height:'4px',borderRadius:'2px',background:'#d4d2cc' }} /></div>
             <div style={{ padding:'8px 20px 24px' }}>
               <div style={{ display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:'20px' }}>
-                <p style={{ fontFamily:"'ITC Symbol',Georgia,serif",letterSpacing:'-0.03em',fontSize:'18px',fontWeight:700,color:'#0c2520',margin:0 }}>{editingEvent ? 'Edit event' : 'New event'}</p>
+                <p style={{ fontFamily:"'ITC Symbol',Georgia,serif",letterSpacing:'-0.03em',fontSize:'18px',fontWeight:500,color:'#0c2520',margin:0 }}>{editingEvent ? 'Edit event' : 'New event'}</p>
                 <button onClick={() => setShowAdd(false)} style={{ background:'#0c2520',border:'none',borderRadius:'50%',width:'32px',height:'32px',display:'flex',alignItems:'center',justifyContent:'center',cursor:'pointer' }}>
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#f1f0ee" strokeWidth="2.5" strokeLinecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
                 </button>
