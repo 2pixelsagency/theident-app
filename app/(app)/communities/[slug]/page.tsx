@@ -47,30 +47,47 @@ export default function CommunityDetail() {
 
   useEffect(() => {
     const load = async () => {
-      const { data: { user } } = await supabase.auth.getUser()
+      const { data: { session } } = await supabase.auth.getSession()
+      const user = session?.user
       if (!user) { router.push('/login'); return }
       setUserId(user.id)
       const { data: comm } = await supabase.from('communities').select('*').eq('slug', slug).single()
       if (!comm) { setLoading(false); return }
       setCommunity(comm)
-      const { data: cats } = await supabase.from('community_categories').select('*').eq('community_id', comm.id).order('sort_order')
+      const [{ data: cats }, { data: mem }] = await Promise.all([
+        supabase.from('community_categories').select('*').eq('community_id', comm.id).order('sort_order'),
+        supabase.from('community_members').select('*, profiles(first_name, last_name, picture_url, slug)').eq('community_id', comm.id).order('joined_at'),
+      ])
       setCategories(cats || [])
-      const { data: mem } = await supabase.from('community_members').select('*, profiles(first_name, last_name, picture_url, slug)').eq('community_id', comm.id).order('joined_at')
       setMembers(mem || [])
       const myMem = (mem || []).find(m => m.profile_id === user.id)
       if (myMem) setMembership({ role: myMem.role, status: myMem.status })
+
       if (!comm.is_private || myMem?.status === 'approved') {
         const { data: postsData } = await supabase.from('community_posts').select('*, profiles(first_name, last_name, picture_url)').eq('community_id', comm.id).order('is_pinned', { ascending: false }).order('created_at', { ascending: false })
-        if (postsData) {
-          const withExtras = await Promise.all(postsData.map(async p => {
-            const { data: votes } = await supabase.from('community_post_likes').select('vote_type').eq('post_id', p.id)
-            const ups = (votes || []).filter(v => v.vote_type === 'up').length
-            const downs = (votes || []).filter(v => v.vote_type === 'down').length
-            const { data: myVote } = await supabase.from('community_post_likes').select('vote_type').eq('post_id', p.id).eq('profile_id', user.id).maybeSingle()
-            const { data: repliesData } = await supabase.from('community_post_replies').select('*, profiles(first_name, last_name, picture_url)').eq('post_id', p.id).order('created_at')
-            return { ...p, upvotes: ups, downvotes: downs, my_vote: myVote?.vote_type || null, replies: repliesData || [], reply_count: (repliesData || []).length }
-          }))
+        if (postsData && postsData.length) {
+          const postIds = postsData.map(p => p.id)
+          // Batch: all votes + all replies for every post in two queries (was N+1 before)
+          const [{ data: allVotes }, { data: allReplies }] = await Promise.all([
+            supabase.from('community_post_likes').select('post_id, profile_id, vote_type').in('post_id', postIds),
+            supabase.from('community_post_replies').select('*, profiles(first_name, last_name, picture_url)').in('post_id', postIds).order('created_at'),
+          ])
+          const votesByPost = new Map<string, any[]>()
+          ;(allVotes || []).forEach((v: any) => { const a = votesByPost.get(v.post_id) || []; a.push(v); votesByPost.set(v.post_id, a) })
+          const repliesByPost = new Map<string, any[]>()
+          ;(allReplies || []).forEach((r: any) => { const a = repliesByPost.get(r.post_id) || []; a.push(r); repliesByPost.set(r.post_id, a) })
+
+          const withExtras = postsData.map(p => {
+            const votes = votesByPost.get(p.id) || []
+            const ups = votes.filter((v: any) => v.vote_type === 'up').length
+            const downs = votes.filter((v: any) => v.vote_type === 'down').length
+            const mine = votes.find((v: any) => v.profile_id === user.id)?.vote_type || null
+            const reps = repliesByPost.get(p.id) || []
+            return { ...p, upvotes: ups, downvotes: downs, my_vote: mine, replies: reps, reply_count: reps.length }
+          })
           setPosts(withExtras)
+        } else {
+          setPosts([])
         }
       }
       setLoading(false)
@@ -84,7 +101,7 @@ export default function CommunityDetail() {
   const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>, type: 'cover' | 'icon') => {
     const file = e.target.files?.[0]; if (!file || !community) return; setUploading(true)
     const path = 'communities/' + community.id + '/' + type + '-' + Date.now() + '.jpg'
-    const { error } = await supabase.storage.from('headshots').upload(path, file, { upsert: true })
+    const { error } = await supabase.storage.from('headshots').upload(path, file)
     if (!error) { const { data: { publicUrl } } = supabase.storage.from('headshots').getPublicUrl(path); const update = type === 'cover' ? { cover_url: publicUrl } : { icon_url: publicUrl }; await supabase.from('communities').update(update).eq('id', community.id); setCommunity({ ...community, ...update }); showToast(type === 'cover' ? 'Cover updated' : 'Profile picture updated') }
     setUploading(false); e.target.value = ''
   }
@@ -148,7 +165,7 @@ export default function CommunityDetail() {
           <div style={{ display: 'flex', alignItems: 'end', gap: '14px' }}>
             <div style={{ position: 'relative', flexShrink: 0 }}>
               <div style={{ width: '68px', height: '68px', borderRadius: '50%', border: '4px solid #f1f0ee', background: community.icon_url ? 'url(' + community.icon_url + ') center/cover' : '#0c2520', backgroundSize: 'cover', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 2px 8px rgba(0,0,0,0.15)' }}>
-                {!community.icon_url && <span style={{ fontSize: '28px', fontWeight: 700, color: '#f1f0ee' }}>{community.name[0]}</span>}
+                {!community.icon_url && <span style={{ fontSize: '28px', fontWeight: 500, color: '#f1f0ee' }}>{community.name[0]}</span>}
               </div>
               {isOwner && (
                 <button onClick={() => iconRef.current?.click()} style={{ position: 'absolute', bottom: '0', right: '0', width: '24px', height: '24px', borderRadius: '50%', background: '#0c2520', border: '2px solid #f1f0ee', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
@@ -162,7 +179,7 @@ export default function CommunityDetail() {
           {/* Name + badges — below the pic */}
           <div style={{ marginTop: '10px' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
-              <p style={{ fontFamily: "'ITC Symbol',Georgia,serif", letterSpacing: '-0.03em', fontSize: '24px', fontWeight: 700, color: '#0c2520', margin: 0 }}>{community.name}</p>
+              <p style={{ fontFamily: "'ITC Symbol',Georgia,serif", letterSpacing: '-0.03em', fontSize: '24px', fontWeight: 500, color: '#0c2520', margin: 0 }}>{community.name}</p>
               {community.is_private && <div style={{ background: '#0c2520', borderRadius: '50%', width: '20px', height: '20px', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#4ade80" strokeWidth="2.5" strokeLinecap="round"><polyline points="20 6 9 17 4 12"/></svg></div>}
             </div>
             <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
@@ -178,7 +195,7 @@ export default function CommunityDetail() {
           <div style={{ display: 'flex', alignItems: 'center', marginBottom: '16px' }}>
             <div style={{ display: 'flex' }}>
               {approvedMembers.slice(0, 10).map((m, i) => <div key={m.id} style={{ width: '30px', height: '30px', borderRadius: '50%', border: '2px solid #f1f0ee', background: m.profiles?.picture_url ? 'url(' + m.profiles.picture_url + ') center/cover' : '#e8e4de', backgroundSize: 'cover', marginLeft: i > 0 ? '-8px' : '0', zIndex: 10 - i, position: 'relative' }} />)}
-              {approvedMembers.length > 10 && <div style={{ width: '30px', height: '30px', borderRadius: '50%', border: '2px solid #f1f0ee', background: '#0c2520', marginLeft: '-8px', zIndex: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}><span style={{ fontSize: '8px', fontWeight: 700, color: '#f1f0ee' }}>+{approvedMembers.length - 10}</span></div>}
+              {approvedMembers.length > 10 && <div style={{ width: '30px', height: '30px', borderRadius: '50%', border: '2px solid #f1f0ee', background: '#0c2520', marginLeft: '-8px', zIndex: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}><span style={{ fontSize: '8px', fontWeight: 600, color: '#f1f0ee' }}>+{approvedMembers.length - 10}</span></div>}
             </div>
           </div>
         )}
