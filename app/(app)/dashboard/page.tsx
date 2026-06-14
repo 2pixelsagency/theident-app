@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
+import AppHeader from '@/components/AppHeader'
 
 type Lookup = { id: number; name: string }
 
@@ -35,15 +36,6 @@ type ScoredJob = Job & {
   matchTier: 'strong' | 'good' | 'none'
   matchReasons: string[]
   excluded: boolean
-}
-
-type Notification = {
-  id: string
-  type: 'job_match' | 'profile_view' | 'connection_request' | 'connection_accepted'
-  message: string
-  time: string
-  read: boolean
-  data?: any
 }
 
 type SortOption = 'newest' | 'oldest' | 'az' | 'za'
@@ -89,67 +81,13 @@ function CountLoader({ onDone }: { onDone: () => void }) {
       <div style={{ display: 'flex', gap: '20px', alignItems: 'center' }}>
         {counts.map((n, i) => (
           <span key={n} style={{
-            fontFamily: 'Georgia, serif', fontSize: '52px', fontWeight: 500,
+            fontFamily: "'ITC Symbol',Georgia,serif", fontSize: '52px', fontWeight: 500,
             color: i === step - 1 ? '#4ade80' : '#f1f0ee',
             opacity: i < step ? (i === step - 1 ? 1 : 0.12) : 0,
             animation: i < step ? 'countPop 0.32s ease-out forwards' : 'none',
             transition: 'color 0.1s ease', letterSpacing: '0.02em',
           }}>{n}</span>
         ))}
-      </div>
-    </div>
-  )
-}
-
-function CropModal({ file, onSave, onClose }: { file: File; onSave: (blob: Blob) => void; onClose: () => void }) {
-  const canvasRef = useRef<HTMLCanvasElement>(null)
-  const [img, setImg] = useState<HTMLImageElement | null>(null)
-  const [zoom, setZoom] = useState(1)
-  const [offset, setOffset] = useState({ x: 0, y: 0 })
-  const [dragging, setDragging] = useState(false)
-  const [dragStart, setDragStart] = useState({ x: 0, y: 0 })
-  const SIZE = 280
-
-  useEffect(() => {
-    const image = new Image()
-    image.onload = () => setImg(image)
-    image.src = URL.createObjectURL(file)
-    return () => URL.revokeObjectURL(image.src)
-  }, [file])
-
-  useEffect(() => {
-    if (!img || !canvasRef.current) return
-    const ctx = canvasRef.current.getContext('2d')
-    if (!ctx) return
-    ctx.clearRect(0, 0, SIZE, SIZE)
-    const scale = Math.max(SIZE / img.width, SIZE / img.height) * zoom
-    const w = img.width * scale
-    const h = img.height * scale
-    const x = (SIZE - w) / 2 + offset.x
-    const y = (SIZE - h) / 2 + offset.y
-    ctx.drawImage(img, x, y, w, h)
-  }, [img, zoom, offset])
-
-  return (
-    <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', zIndex: 500, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px' }}>
-      <div style={{ background: '#f1f0ee', borderRadius: '20px', padding: '24px', maxWidth: '340px', width: '100%' }}>
-        <p style={{ fontFamily: 'Georgia, serif', fontSize: '18px', fontWeight: 500, color: '#0c2520', margin: '0 0 16px', textAlign: 'center' }}>Crop photo</p>
-        <div style={{ width: SIZE + 'px', height: SIZE + 'px', margin: '0 auto 16px', position: 'relative', borderRadius: '50%', overflow: 'hidden', border: '3px solid #e0ddd5', touchAction: 'none' }}>
-          <canvas ref={canvasRef} width={SIZE} height={SIZE}
-            onPointerDown={e => { setDragging(true); setDragStart({ x: e.clientX - offset.x, y: e.clientY - offset.y }) }}
-            onPointerMove={e => { if (dragging) setOffset({ x: e.clientX - dragStart.x, y: e.clientY - dragStart.y }) }}
-            onPointerUp={() => setDragging(false)} onPointerLeave={() => setDragging(false)}
-            style={{ width: '100%', height: '100%', cursor: dragging ? 'grabbing' : 'grab' }} />
-        </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '20px', padding: '0 8px' }}>
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#888" strokeWidth="2" strokeLinecap="round"><circle cx="12" cy="12" r="3"/></svg>
-          <input type="range" min="1" max="3" step="0.05" value={zoom} onChange={e => setZoom(parseFloat(e.target.value))} style={{ flex: 1, accentColor: '#0c2520' }} />
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#888" strokeWidth="2" strokeLinecap="round"><circle cx="12" cy="12" r="5"/></svg>
-        </div>
-        <div style={{ display: 'flex', gap: '10px' }}>
-          <button onClick={onClose} style={{ flex: 1, padding: '14px', borderRadius: '30px', border: '1px solid #e0ddd5', background: 'white', color: '#0c2520', fontSize: '14px', fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit' }}>Cancel</button>
-          <button onClick={() => { if (!canvasRef.current) return; canvasRef.current.toBlob(blob => { if (blob) onSave(blob) }, 'image/jpeg', 0.9) }} style={{ flex: 1, padding: '14px', borderRadius: '30px', border: 'none', background: '#0c2520', color: '#f1f0ee', fontSize: '14px', fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit' }}>Save</button>
-        </div>
       </div>
     </div>
   )
@@ -258,11 +196,6 @@ export default function Dashboard() {
   const [removedIds, setRemovedIds] = useState<Set<string>>(new Set())
   const [loading, setLoading] = useState(true)
   const [profile, setProfile] = useState<{ first_name: string | null; picture_url: string | null; id: string } | null>(null)
-  const [showNotifications, setShowNotifications] = useState(false)
-  const [notifications, setNotifications] = useState<Notification[]>([])
-  const notifRef = useRef<HTMLDivElement>(null)
-  const [cropFile, setCropFile] = useState<File | null>(null)
-  const [uploading, setUploading] = useState(false)
   const [actionToast, setActionToast] = useState<ActionToast | null>(null)
   const [viewRemoved, setViewRemoved] = useState(false)
 
@@ -296,14 +229,6 @@ export default function Dashboard() {
     if (diffDays < 30) return Math.floor(diffDays / 7) + ' weeks ago'
     return 'Last month'
   }
-
-  useEffect(() => {
-    const handleClickOutside = (e: MouseEvent) => {
-      if (notifRef.current && !notifRef.current.contains(e.target as Node)) setShowNotifications(false)
-    }
-    document.addEventListener('mousedown', handleClickOutside)
-    return () => document.removeEventListener('mousedown', handleClickOutside)
-  }, [])
 
   useEffect(() => {
     if (!actionToast) return
@@ -348,17 +273,6 @@ export default function Dashboard() {
   }, [])
 
   useEffect(() => {
-    if (!profile) return
-    const loadNotifs = async () => {
-      const { data } = await supabase.from('notifications').select('*').eq('profile_id', profile.id).order('created_at', { ascending: false }).limit(20)
-      if (data && data.length > 0) {
-        setNotifications(data.map(n => ({ id: n.id, type: n.type, message: n.body, time: formatRelativeDate(n.created_at), read: n.read, data: n.data })))
-      }
-    }
-    loadNotifs()
-  }, [profile])
-
-  useEffect(() => {
     const scoreJob = (job: Job, jobSkills: Set<number>): ScoredJob => {
       let score = 0; const reasons: string[] = []; let excluded = false
       if (job.gender_ids && job.gender_ids.length > 0) { if (userGenderId && job.gender_ids.includes(userGenderId)) { score += 5; reasons.push('Gender matches') } else { excluded = true } } else { score += 5 }
@@ -373,7 +287,6 @@ export default function Dashboard() {
     }
 
     const loadJobs = async () => {
-      // Removed jobs view
       if (viewRemoved) {
         if (!profile) { setJobs([]); return }
         const { data: rem } = await supabase.from('removed_jobs').select('created_at, jobs(*)').eq('profile_id', profile.id).order('created_at', { ascending: false })
@@ -392,7 +305,6 @@ export default function Dashboard() {
       const jobSkillsMap = new Map<string, Set<number>>()
       if (jobIds.length > 0) { const { data: jobSkillsData } = await supabase.from('job_skills').select('job_id, skill_id').in('job_id', jobIds); (jobSkillsData || []).forEach(js => { if (!jobSkillsMap.has(js.job_id)) jobSkillsMap.set(js.job_id, new Set()); jobSkillsMap.get(js.job_id)!.add(js.skill_id) }) }
       const scored: ScoredJob[] = result.map(job => scoreJob(job, jobSkillsMap.get(job.id) || new Set())); let filtered = scored
-      // Exclude actioned jobs (removed or saved)
       filtered = filtered.filter(j => !removedIds.has(j.id) && !savedIds.has(j.id))
       if (matchFilter === 'strong') filtered = filtered.filter(j => j.matchTier === 'strong')
       if (matchFilter === 'good_strong') filtered = filtered.filter(j => j.matchTier === 'strong' || j.matchTier === 'good')
@@ -404,24 +316,11 @@ export default function Dashboard() {
 
   const clearAllFilters = () => { setSelectedProductionTypes([]); setMinAge(0); setMaxAge(100); setLocationSearch(''); setKeywordSearch(''); setMatchFilter('all') }
 
-  const markAllRead = async () => {
-    if (!profile) return
-    await supabase.from('notifications').update({ read: true }).eq('profile_id', profile.id).eq('read', false)
-    setNotifications(prev => prev.map(n => ({ ...n, read: true })))
-  }
-
-  const handleNotifClick = async (n: Notification) => {
-    if (!n.read) { await supabase.from('notifications').update({ read: true }).eq('id', n.id); setNotifications(prev => prev.map(x => x.id === n.id ? { ...x, read: true } : x)) }
-    setShowNotifications(false); if (n.data && n.data.url) router.push(n.data.url)
-  }
-
   const hasActiveFilters = selectedProductionTypes.length > 0 || minAge > 0 || maxAge < 100 || !!locationSearch || !!keywordSearch || matchFilter !== 'all'
   const activeFilterCount = selectedProductionTypes.length + (minAge > 0 || maxAge < 100 ? 1 : 0) + (locationSearch ? 1 : 0) + (matchFilter !== 'all' ? 1 : 0)
-  const unreadCount = notifications.filter(n => !n.read).length
   const getProductionTypeName = (id: number | null) => productionTypes.find(pt => pt.id === id)?.name || null
   const getSentBy = (job: Job) => job.is_side_hustle ? job.company : (job.casting_team || job.production_company)
 
-  // Swipe / button actions
   const handleRemoveJob = async (jobId: string) => {
     const idx = jobs.findIndex(j => j.id === jobId)
     const job = jobs[idx]
@@ -461,23 +360,6 @@ export default function Dashboard() {
     setJobs(prev => prev.filter(j => j.id !== jobId))
   }
 
-  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => { const file = e.target.files?.[0]; if (file) setCropFile(file); e.target.value = '' }
-
-  const handleCropSave = async (blob: Blob) => {
-    if (!profile) return; setUploading(true); setCropFile(null)
-    const path = profile.id + '/headshot-' + Date.now() + '.jpg'
-    const { error } = await supabase.storage.from('headshots').upload(path, blob, { upsert: true, contentType: 'image/jpeg' })
-    if (!error) { const { data: { publicUrl } } = supabase.storage.from('headshots').getPublicUrl(path); await supabase.from('profiles').update({ picture_url: publicUrl }).eq('id', profile.id); setProfile(prev => prev ? { ...prev, picture_url: publicUrl } : prev) }
-    setUploading(false)
-  }
-
-  const notifIcon = (type: Notification['type']) => {
-    if (type === 'job_match') return <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#4ade80" strokeWidth="2" strokeLinecap="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
-    if (type === 'profile_view') return <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#92d7af" strokeWidth="2" strokeLinecap="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
-    if (type === 'connection_request' || type === 'connection_accepted') return <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#92d7af" strokeWidth="2" strokeLinecap="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-    return <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#a8c4b4" strokeWidth="2" strokeLinecap="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-  }
-
   if (showLoader) {
     return (
       <div style={{ minHeight: '100vh', background: '#f1f0ee' }}>
@@ -490,14 +372,9 @@ export default function Dashboard() {
     <div style={{ fontFamily: 'system-ui, sans-serif', background: '#f1f0ee', minHeight: '100vh' }}>
       <style>{`
         @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
-        @keyframes greetIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-        @keyframes popIn { from { opacity: 0; transform: scale(0.92) translateY(-4px); } to { opacity: 1; transform: scale(1) translateY(0); } }
-        @keyframes nameFade { from { opacity: 0; } to { opacity: 1; } }
         @keyframes toastIn { from { opacity: 0; transform: translateX(-50%) translateY(10px); } to { opacity: 1; transform: translateX(-50%) translateY(0); } }
-        .name-fade { animation: nameFade 0.4s ease-out both; }
-        .greet-in { animation: greetIn 0.6s ease-out both; }
+        @keyframes spin { to { transform: rotate(360deg); } }
         .sheet { animation: slideUp 0.3s cubic-bezier(0.32, 0.72, 0, 1); }
-        .notif-popup { animation: popIn 0.2s ease-out; }
         .toast-anim { animation: toastIn 0.25s ease-out; }
         .job-card:hover { box-shadow: 0 6px 20px rgba(12,37,32,0.08); }
         .spot-scroll { display: flex; gap: 12px; overflow-x: auto; padding-bottom: 8px; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
@@ -507,16 +384,13 @@ export default function Dashboard() {
         input[type=text]:focus, input[type=search]:focus { border-color: #0c2520 !important; outline: none; box-shadow: 0 0 0 1px #0c2520; }
         .prod-chip { padding: 8px 14px; border-radius: 20px; font-size: 13px; cursor: pointer; font-family: inherit; border: 1px solid #e0ddd5; background: white; color: #0c2520; transition: all 0.15s ease; -webkit-tap-highlight-color: transparent; }
         .prod-chip.on { background: #0c2520; color: #f1f0ee; border-color: #0c2520; }
-        .notif-row:hover { background: #f5f3ee; }
       `}</style>
-
-      {cropFile && <CropModal file={cropFile} onSave={handleCropSave} onClose={() => setCropFile(null)} />}
 
       {/* Undo toast */}
       {actionToast && (
         <div className="toast-anim" style={{ position: 'fixed', bottom: '110px', left: '50%', transform: 'translateX(-50%)', background: '#0c2520', color: '#f1f0ee', padding: '10px 14px 10px 18px', borderRadius: '30px', fontSize: '13px', fontWeight: 500, zIndex: 400, display: 'flex', alignItems: 'center', gap: '14px', whiteSpace: 'nowrap', boxShadow: '0 8px 24px rgba(12,37,32,0.3)' }}>
           <span>{actionToast.type === 'removed' ? 'Removed' : 'Saved'}</span>
-          <button onClick={undoAction} style={{ background: 'transparent', border: 'none', color: '#92d7af', fontSize: '13px', fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', padding: 0 }}>Undo</button>
+          <button onClick={undoAction} style={{ background: 'transparent', border: 'none', color: '#92d7af', fontSize: '13px', fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', padding: 0 }}>Undo</button>
         </div>
       )}
 
@@ -536,7 +410,6 @@ export default function Dashboard() {
               </div>
             </div>
 
-            {/* Removed jobs view toggle */}
             <p style={{ fontSize: '11px', color: '#888', textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 600, margin: '0 0 10px' }}>View</p>
             <button onClick={() => setViewRemoved(v => !v)} style={{ width: '100%', display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '14px 16px', borderRadius: '12px', border: viewRemoved ? 'none' : '1px solid #e0ddd5', background: viewRemoved ? '#0c2520' : 'white', color: viewRemoved ? '#f1f0ee' : '#0c2520', cursor: 'pointer', fontFamily: 'inherit', marginBottom: '24px' }}>
               <span style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '14px', fontWeight: 500 }}>
@@ -586,65 +459,17 @@ export default function Dashboard() {
       )}
 
       <div>
-        {/* Greeting */}
-        <div style={{ padding: '24px 16px 16px' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <div className="greet-in">
-              <p style={{ fontSize: '12px', color: '#888', margin: '0 0 3px', letterSpacing: '0.02em' }}>
-                {new Date().toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' })}
-              </p>
-              <p style={{ fontFamily: "'ITC Symbol',Georgia,serif", letterSpacing: '-0.03em', fontSize: '20px', color: '#0c2520', margin: 0, fontWeight: 500, lineHeight: 1.2 }}>
-                Hey, <span className="name-fade">{profile?.first_name || ''}</span>
-              </p>
+        {/* Header */}
+        <AppHeader title={'Hey, ' + (profile?.first_name || '')} />
+
+        {/* Saved pill */}
+        <div style={{ padding: '0 16px 12px', display: 'flex', justifyContent: 'flex-end' }}>
+          <Link href="/saved" style={{ textDecoration: 'none' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', background: 'white', border: '1px solid #e6e2d9', borderRadius: '20px', padding: '8px 14px' }}>
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#0c2520" strokeWidth="2" strokeLinecap="round"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>
+              <span style={{ fontSize: '13px', color: '#0c2520', fontWeight: 500 }}>Saved</span>
             </div>
-
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <div ref={notifRef} style={{ position: 'relative' }}>
-                <button onClick={() => setShowNotifications(!showNotifications)} style={{ width: '30px', height: '30px', borderRadius: '50%', background: 'white', border: '1px solid #e0ddd5', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', position: 'relative', flexShrink: 0, WebkitTapHighlightColor: 'transparent' }}>
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#0c2520" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/>
-                  </svg>
-                  {unreadCount > 0 && <div style={{ position: 'absolute', top: '5px', right: '5px', width: '6px', height: '6px', borderRadius: '50%', background: '#4ade80', border: '1.5px solid #f1f0ee' }} />}
-                </button>
-
-                {showNotifications && (
-                  <div className="notif-popup" style={{ position: 'absolute', top: 'calc(100% + 8px)', right: 0, width: '300px', background: 'white', borderRadius: '16px', border: '1px solid #e8e4de', boxShadow: '0 8px 32px rgba(12,37,32,0.12)', zIndex: 300, overflow: 'hidden' }}>
-                    <div style={{ padding: '14px 16px 10px', borderBottom: '1px solid #f0ede5', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <p style={{ fontFamily: "'ITC Symbol',Georgia,serif", letterSpacing: '-0.03em', fontSize: '15px', fontWeight: 700, color: '#0c2520', margin: 0 }}>Notifications</p>
-                      {unreadCount > 0 && <button onClick={markAllRead} style={{ background: 'none', border: 'none', fontSize: '11px', color: '#888', cursor: 'pointer', fontFamily: 'inherit', textDecoration: 'underline' }}>Mark all read</button>}
-                    </div>
-                    {notifications.length === 0 ? (
-                      <div style={{ padding: '28px 16px', textAlign: 'center' }}>
-                        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#d4d2cc" strokeWidth="1.5" strokeLinecap="round" style={{ marginBottom: '10px' }}><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
-                        <p style={{ fontSize: '13px', color: '#888', margin: 0 }}>No notifications yet</p>
-                      </div>
-                    ) : (
-                      <div>
-                        {notifications.map((n, i) => (
-                          <div key={n.id} className="notif-row" onClick={() => handleNotifClick(n)} style={{ display: 'flex', gap: '12px', padding: '12px 16px', borderBottom: i < notifications.length - 1 ? '1px solid #f0ede5' : 'none', background: n.read ? 'white' : '#fafef9', cursor: 'pointer', transition: 'background 0.15s ease' }}>
-                            <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: '#f1f0ee', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>{notifIcon(n.type)}</div>
-                            <div style={{ flex: 1 }}>
-                              <p style={{ fontSize: '13px', color: '#0c2520', margin: '0 0 2px', fontWeight: n.read ? 400 : 500, lineHeight: 1.3 }}>{n.message}</p>
-                              <p style={{ fontSize: '11px', color: '#aaa', margin: 0 }}>{n.time}</p>
-                            </div>
-                            {!n.read && <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#4ade80', flexShrink: 0, marginTop: '6px' }} />}
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                )}
-              </div>
-
-              <label style={{ cursor: 'pointer', position: 'relative', flexShrink: 0 }}>
-                <div style={{ width: '46px', height: '46px', borderRadius: '50%', background: profile?.picture_url ? 'url(' + profile.picture_url + ') center/cover no-repeat' : '#e8efea', backgroundSize: 'cover', border: '2px solid #e0ddd5', overflow: 'hidden' }}>
-                  {uploading && <div style={{ width: '100%', height: '100%', background: 'rgba(12,37,32,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><div style={{ width: '14px', height: '14px', border: '2px solid #f1f0ee', borderTopColor: 'transparent', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} /></div>}
-                </div>
-                <div style={{ position: 'absolute', bottom: '1px', right: '1px', width: '10px', height: '10px', borderRadius: '50%', background: '#4ade80', border: '2px solid #f1f0ee' }} />
-                <input type="file" accept="image/*" style={{ display: 'none' }} onChange={handleFileSelect} />
-              </label>
-            </div>
-          </div>
+          </Link>
         </div>
 
         {/* Search */}
@@ -674,7 +499,7 @@ export default function Dashboard() {
                     <Link key={job.id} href={'/jobs/' + job.id} style={{ textDecoration: 'none', flexShrink: 0 }}>
                       <div className="job-card" style={{ width: '220px', minHeight: '170px', background: isMint ? '#92d7af' : '#061410', borderRadius: '14px', padding: '18px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
                         <div>
-                          <p style={{ fontSize: '10px', color: isMint ? '#0c2520' : '#4ade80', margin: '0 0 8px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Spotlight</p>
+                          <p style={{ fontSize: '10px', color: isMint ? '#0c2520' : '#4ade80', margin: '0 0 8px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Spotlight</p>
                           <h3 style={{ fontFamily: "'ITC Symbol',Georgia,serif", letterSpacing: '-0.03em', fontSize: '15px', color: isMint ? '#0c2520' : '#f1f0ee', margin: '0 0 4px', fontWeight: 500, lineHeight: 1.2 }}>{title}</h3>
                           {subtitle && <p style={{ fontSize: '11px', color: isMint ? '#0c2520' : '#6b9e8a', margin: '0 0 10px', fontStyle: 'italic' }}>In {subtitle}</p>}
                           <div style={{ display: 'flex', gap: '5px', flexWrap: 'wrap' }}>
@@ -683,7 +508,7 @@ export default function Dashboard() {
                           </div>
                         </div>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '12px' }}>
-                          {job.salary ? <span style={{ fontSize: '11px', background: isMint ? '#0c2520' : '#4ade80', color: isMint ? '#f1f0ee' : '#061410', padding: '3px 8px', borderRadius: '6px', fontWeight: 700 }}>{job.salary}</span> : <span />}
+                          {job.salary ? <span style={{ fontSize: '11px', background: isMint ? '#0c2520' : '#4ade80', color: isMint ? '#f1f0ee' : '#061410', padding: '3px 8px', borderRadius: '6px', fontWeight: 600 }}>{job.salary}</span> : <span />}
                           <span style={{ fontSize: '11px', color: isMint ? '#0c2520' : '#6b9e8a' }}>{formatRelativeDate(job.created_at)}</span>
                         </div>
                       </div>
