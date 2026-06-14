@@ -4,8 +4,8 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
-import AppHeader from '@/app/components/AppHeader'
-import Avatar from '@/app/components/Avatar'
+import AppHeader from '@/components/AppHeader'
+import Avatar from '@/components/Avatar'
 
 export default function Messages() {
   const router = useRouter()
@@ -28,10 +28,9 @@ export default function Messages() {
         const { data } = await supabase.from('profiles').select('id, first_name, last_name, picture_url, slug, last_active').in('id', otherIds)
         profs = data || []
       }
-      // unread counts
       const { data: unread } = await supabase.from('messages')
         .select('conversation_id').eq('read', false).neq('sender_id', me)
-        .in('conversation_id', list.map((c: any) => c.id).length ? list.map((c: any) => c.id) : ['none'])
+        .in('conversation_id', list.length ? list.map((c: any) => c.id) : ['none'])
       const unreadMap = new Map<string, number>()
       ;(unread || []).forEach((m: any) => unreadMap.set(m.conversation_id, (unreadMap.get(m.conversation_id) || 0) + 1))
 
