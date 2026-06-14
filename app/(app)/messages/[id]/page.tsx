@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
-import Avatar from '@/app/components/Avatar'
+import Avatar from '@/components/Avatar'
 
 export default function Thread() {
   const params = useParams()
@@ -29,13 +29,11 @@ export default function Thread() {
         supabase.from('messages').select('*').eq('conversation_id', convoId).order('created_at'),
       ])
       setOther(prof); setMessages(msgs || []); setLoading(false)
-      // mark their messages read
       await supabase.from('messages').update({ read: true }).eq('conversation_id', convoId).neq('sender_id', me).eq('read', false)
     }
     load()
   }, [convoId])
 
-  // realtime subscription
   useEffect(() => {
     const channel = supabase.channel('thread-' + convoId)
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages', filter: 'conversation_id=eq.' + convoId },
@@ -57,7 +55,6 @@ export default function Thread() {
 
   return (
     <div style={{ fontFamily: 'system-ui, sans-serif', background: '#f1f0ee', minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
-      {/* Thread header */}
       <div style={{ padding: '16px', display: 'flex', alignItems: 'center', gap: '12px', borderBottom: '1px solid #ebe8e1', background: '#f1f0ee', position: 'sticky', top: 0, zIndex: 10 }}>
         <button onClick={() => router.push('/messages')} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, display: 'flex' }}>
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#0c2520" strokeWidth="2" strokeLinecap="round"><path d="M15 18l-6-6 6-6" /></svg>
@@ -66,7 +63,6 @@ export default function Thread() {
         <p style={{ fontSize: '16px', fontWeight: 500, color: '#0c2520', margin: 0 }}>{((other?.first_name || '') + ' ' + (other?.last_name || '')).trim()}</p>
       </div>
 
-      {/* Messages */}
       <div style={{ flex: 1, overflowY: 'auto', padding: '16px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
         {messages.map(m => {
           const mine = m.sender_id === uid
@@ -79,7 +75,6 @@ export default function Thread() {
         <div ref={endRef} />
       </div>
 
-      {/* Composer */}
       <div style={{ padding: '12px 16px calc(env(safe-area-inset-bottom) + 12px)', borderTop: '1px solid #ebe8e1', background: '#f1f0ee', display: 'flex', gap: '8px', alignItems: 'center' }}>
         <input value={text} onChange={e => setText(e.target.value)} onKeyDown={e => { if (e.key === 'Enter') send() }} placeholder="Message…" style={{ flex: 1, padding: '12px 16px', borderRadius: '24px', border: '1px solid #e0ddd5', fontSize: '14px', fontFamily: 'inherit', background: 'white', color: '#0c2520', outline: 'none' }} />
         <button onClick={send} disabled={!text.trim()} style={{ width: '42px', height: '42px', borderRadius: '50%', background: text.trim() ? '#0c2520' : '#d4d2cc', border: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: text.trim() ? 'pointer' : 'default', flexShrink: 0 }}>
