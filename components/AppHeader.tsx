@@ -1,66 +1,15 @@
-'use client'
-
-import { useState, useEffect, useRef } from 'react'
-import { useRouter } from 'next/navigation'
-import Link from 'next/link'
-import { supabase } from '@/lib/supabase'
-
-export default function AppHeader({ title, showBack = false, fallback = '/profile' }: { title: string; showBack?: boolean; fallback?: string }) {
-  const router = useRouter()
-  const [profile, setProfile] = useState<any>(null)
-  const [notes, setNotes] = useState<any[]>([])
-  const [bellOpen, setBellOpen] = useState(false)
-  const [menuOpen, setMenuOpen] = useState(false)
-  const bellRef = useRef<HTMLDivElement>(null)
-  const menuRef = useRef<HTMLDivElement>(null)
-
-  useEffect(() => {
-    const load = async () => {
-      const { data: { session } } = await supabase.auth.getSession()
-      if (!session) return
-      const [{ data: p }, { data: n }] = await Promise.all([
-        supabase.from('profiles').select('first_name, picture_url, slug').eq('id', session.user.id).single(),
-        supabase.from('notifications').select('*').eq('profile_id', session.user.id).eq('read', false).order('created_at', { ascending: false }).limit(10),
-      ])
-      setProfile(p); setNotes(n || [])
-    }
-    load()
-  }, [])
-
-  useEffect(() => {
-    const h = (e: MouseEvent) => {
-      if (bellRef.current && !bellRef.current.contains(e.target as Node)) setBellOpen(false)
-      if (menuRef.current && !menuRef.current.contains(e.target as Node)) setMenuOpen(false)
-    }
-    document.addEventListener('mousedown', h)
-    return () => document.removeEventListener('mousedown', h)
-  }, [])
-
-  const openNote = async (n: any) => {
-    try { await supabase.from('notifications').update({ read: true }).eq('id', n.id) } catch {}
-    setNotes(prev => prev.filter(x => x.id !== n.id)); setBellOpen(false)
-    if (n.data && n.data.url) router.push(n.data.url)
-  }
-  const back = () => { if (window.history.length > 1) router.back(); else router.push(fallback) }
-  const logout = async () => { await supabase.auth.signOut(); router.push('/login') }
-
-  const menuItems = [
-    { label: 'Billing', href: '/billing' },
-    { label: 'Settings', href: '/security' },
-    { label: 'View profile', href: profile?.slug ? '/' + profile.slug + '?from=app' : '/profile' },
-  ]
-
-  return (
+return (
     <div style={{ padding: '24px 16px 16px' }}>
-      {showBack && (
-        <button onClick={back} style={{ background: 'none', border: 'none', fontSize: '13px', color: '#888', cursor: 'pointer', fontFamily: 'inherit', display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '14px', padding: 0, WebkitTapHighlightColor: 'transparent' }}>
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#888" strokeWidth="2" strokeLinecap="round"><path d="M19 12H5" /><path d="M12 19l-7-7 7-7" /></svg>
-          Back
-        </button>
-      )}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <div>
-          <p style={{ fontSize: '12px', color: '#888', margin: '0 0 3px' }}>{new Date().toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' })}</p>
+          {showBack ? (
+            <button onClick={back} style={{ background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit', display: 'flex', alignItems: 'center', gap: '5px', padding: 0, marginBottom: '3px', color: '#888', fontSize: '12px', WebkitTapHighlightColor: 'transparent' }}>
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#888" strokeWidth="2" strokeLinecap="round"><path d="M19 12H5" /><path d="M12 19l-7-7 7-7" /></svg>
+              Back
+            </button>
+          ) : (
+            <p style={{ fontSize: '12px', color: '#888', margin: '0 0 3px' }}>{new Date().toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' })}</p>
+          )}
           <p style={{ fontFamily: "'ITC Symbol',Georgia,serif", letterSpacing: '-0.03em', fontSize: '20px', color: '#0c2520', margin: 0, fontWeight: 500, lineHeight: 1.2 }}>{title}</p>
         </div>
 
@@ -108,4 +57,3 @@ export default function AppHeader({ title, showBack = false, fallback = '/profil
       </div>
     </div>
   )
-}
