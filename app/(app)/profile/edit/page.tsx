@@ -265,16 +265,18 @@ export default function EditProfile() {
     setFaqs(valid); setSaving(false); setEditing(null); showToast('Saved')
   }
 
-  const handleCropSave = async (blob: Blob) => {
+const handleCropSave = async (blob: Blob) => {
     if (!profile) return
     setCropFile(null); setSaving(true)
+    const { data: { session } } = await supabase.auth.getSession()
+    if (!session) { setSaving(false); showToast('Not signed in — refresh and try again'); return }
     const path = profile.id + '/headshot-' + Date.now() + '.jpg'
-    const { error } = await supabase.storage.from('headshots').upload(path, blob, { upsert: true, contentType: 'image/jpeg' })
-    if (!error) {
-      const { data: { publicUrl } } = supabase.storage.from('headshots').getPublicUrl(path)
-      await supabase.from('profiles').update({ picture_url: publicUrl }).eq('id', profile.id)
-      setProfile({ ...profile, picture_url: publicUrl }); showToast('Photo updated')
-    }
+    const { error: upErr } = await supabase.storage.from('headshots').upload(path, blob, { upsert: true, contentType: 'image/jpeg' })
+    if (upErr) { setSaving(false); showToast('Upload: ' + upErr.message); console.error('upload error', upErr); return }
+    const { data: { publicUrl } } = supabase.storage.from('headshots').getPublicUrl(path)
+    const { error: dbErr } = await supabase.from('profiles').update({ picture_url: publicUrl }).eq('id', profile.id)
+    if (dbErr) { setSaving(false); showToast('Save: ' + dbErr.message); console.error('db error', dbErr); return }
+    setProfile({ ...profile, picture_url: publicUrl }); showToast('Photo updated')
     setSaving(false)
   }
   const uploadThumb = async (file: File, i: number) => {
