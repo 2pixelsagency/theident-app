@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
+import AppHeader from '@/components/AppHeader'
 
 type Lookup = { id: number; name: string }
 type Skill = { id: number; name: string; category_id: number | null }
@@ -69,7 +70,8 @@ export default function PostJob() {
 
   useEffect(() => {
     const load = async () => {
-      const { data: { user } } = await supabase.auth.getUser()
+      const { data: { session } } = await supabase.auth.getSession()
+      const user = session?.user
       if (user?.email) { setCastingEmail(user.email); setApplyEmail(user.email) }
       const [pt, g, e, h, ey, s, sc] = await Promise.all([
         supabase.from('production_types').select('id, name').order('name'),
@@ -120,7 +122,8 @@ export default function PostJob() {
     if (err) { alert(err); return }
     if (spotlightJob && !showPayment && !processing) { setShowPayment(true); return }
     setSaving(true)
-    const { data: { user } } = await supabase.auth.getUser()
+    const { data: { session } } = await supabase.auth.getSession()
+    const user = session?.user
     if (!user) { router.push('/signup'); return }
     const salary = salaryType === 'Paid' ? salaryAmount : salaryType
     const spotlightFields = spotlightJob ? { is_spotlighted: true, spotlight_expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString() } : {}
@@ -153,7 +156,7 @@ export default function PostJob() {
 
   const inputStyle: React.CSSProperties = { width: '100%', padding: '12px', border: '1px solid #e0ddd5', borderRadius: '8px', fontSize: '14px', background: 'white', boxSizing: 'border-box', outline: 'none', fontFamily: 'inherit' }
   const labelStyle: React.CSSProperties = { display: 'block', fontSize: '12px', color: '#0c2520', marginBottom: '6px', fontWeight: 500 }
-  const sectionStyle: React.CSSProperties = { fontFamily: "'ITC Symbol',Georgia,serif", letterSpacing: '-0.03em', fontSize: '17px', fontWeight: 700, color: '#0c2520', margin: '28px 0 14px' }
+  const sectionStyle: React.CSSProperties = { fontFamily: "'ITC Symbol',Georgia,serif", letterSpacing: '-0.03em', fontSize: '17px', fontWeight: 500, color: '#0c2520', margin: '28px 0 14px' }
 
   const MultiSelectPills = ({ items, selected, setSelected, hint }: { items: Lookup[]; selected: number[]; setSelected: (v: number[]) => void; hint?: string }) => (
     <div>
@@ -203,7 +206,7 @@ export default function PostJob() {
   )
 
   return (
-    <div>
+    <div style={{ background: '#f1f0ee', minHeight: '100vh', fontFamily: 'system-ui, sans-serif' }}>
       <style>{`
         @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
         .fade-in { animation: fadeIn 0.5s ease-out; }
@@ -221,17 +224,12 @@ export default function PostJob() {
         input[type="number"] { -moz-appearance: textfield; }
       `}</style>
 
-      {/* Header — matches app standard */}
-      <div style={{ padding: '24px 16px 16px' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '12px' }}>
-          <div>
-            <p style={{ fontSize: '12px', color: '#888', margin: '0 0 3px', letterSpacing: '0.02em' }}>
-              {new Date().toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' })}
-            </p>
-            <p style={{ fontFamily: "'ITC Symbol',Georgia,serif", letterSpacing: '-0.03em', fontSize: '20px', color: '#0c2520', margin: 0, fontWeight: 500, lineHeight: 1.2 }}>Post a job</p>
-          </div>
-          <button onClick={() => router.push('/dashboard')} style={{ background: 'transparent', border: '1px solid #e0ddd5', padding: '8px 16px', borderRadius: '20px', fontSize: '13px', cursor: 'pointer', color: '#0c2520', fontFamily: 'inherit', flexShrink: 0 }}>Cancel</button>
-        </div>
+      {/* Header */}
+      <AppHeader title="Post a job" showBack fallback="/dashboard" />
+
+      {/* Cancel */}
+      <div style={{ maxWidth: '700px', margin: '0 auto', padding: '0 16px 8px', display: 'flex', justifyContent: 'flex-end' }}>
+        <button onClick={() => router.push('/dashboard')} style={{ background: 'transparent', border: '1px solid #e0ddd5', padding: '8px 16px', borderRadius: '20px', fontSize: '13px', cursor: 'pointer', color: '#0c2520', fontFamily: 'inherit' }}>Cancel</button>
       </div>
 
       <div className="fade-in" style={{ padding: '0 16px 100px', maxWidth: '700px', margin: '0 auto' }}>
@@ -241,7 +239,7 @@ export default function PostJob() {
         <div style={{ background: '#92d7af', border: '1px solid #6db98a', borderRadius: '12px', padding: '16px 18px', marginBottom: '12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '16px' }}>
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
-              <p style={{ fontFamily: "'ITC Symbol',Georgia,serif", letterSpacing: '-0.03em', fontWeight: 700, fontSize: '15px', color: '#0c2520', margin: 0 }}>Spotlight this job</p>
+              <p style={{ fontFamily: "'ITC Symbol',Georgia,serif", letterSpacing: '-0.03em', fontWeight: 500, fontSize: '15px', color: '#0c2520', margin: 0 }}>Spotlight this job</p>
               <span style={{ background: '#0c2520', color: '#f1f0ee', padding: '2px 8px', borderRadius: '4px', fontSize: '11px', fontWeight: 500 }}>£5</span>
             </div>
             <p style={{ fontSize: '12px', color: '#0c2520', margin: 0 }}>Featured at the top of the dashboard for 7 days. Get booked faster.</p>
@@ -251,7 +249,7 @@ export default function PostJob() {
 
         <div style={{ background: 'white', border: '1px solid #e8e6e0', borderRadius: '12px', padding: '16px 18px', marginBottom: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '16px' }}>
           <div>
-            <p style={{ fontFamily: "'ITC Symbol',Georgia,serif", letterSpacing: '-0.03em', fontWeight: 700, fontSize: '15px', color: '#0c2520', margin: '0 0 4px' }}>Side Hustle</p>
+            <p style={{ fontFamily: "'ITC Symbol',Georgia,serif", letterSpacing: '-0.03em', fontWeight: 500, fontSize: '15px', color: '#0c2520', margin: '0 0 4px' }}>Side Hustle</p>
             <p style={{ fontSize: '12px', color: '#666', margin: 0 }}>Toggle for non-industry jobs (teaching, hospitality, etc.)</p>
           </div>
           <div className={'toggle-switch' + (isSideHustle ? ' on' : '')} onClick={() => setIsSideHustle(!isSideHustle)}><div className="toggle-knob" /></div>
@@ -296,7 +294,7 @@ export default function PostJob() {
               )}
               {selectedSkills.length > 0 && (
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginTop: '10px' }}>
-                  {selectedSkills.map(skillId => { const skill = skills.find(s => s.id === skillId); const cat = getCategoryForSkill(skillId); if (!skill) return null; return <span key={skillId} style={{ background: cat?.color || '#e8efea', color: cat?.text_color || '#0c2520', padding: '4px 10px', borderRadius: '6px', fontSize: '12px', display: 'flex', alignItems: 'center', gap: '6px' }}>{skill.name}<button onClick={() => toggleInArray(selectedSkills, setSelectedSkills, skillId)} style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: 'inherit', fontSize: '14px', padding: 0, lineHeight: 1 }}>x</button></span> })}
+                  {selectedSkills.map(skillId => { const skill = skills.find(s => s.id === skillId); const cat = getCategoryForSkill(skillId); if (!skill) return null; return <span key={skillId} style={{ background: cat?.color || '#e8efea', color: cat?.text_color || '#0c2520', padding: '4px 10px', borderRadius: '6px', fontSize: '12px', display: 'flex', alignItems: 'center', gap: '6px' }}>{skill.name}<button onClick={() => toggleInArray(selectedSkills, setSelectedSkills, skillId)} style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: 'inherit', fontSize: '15px', padding: 0, lineHeight: 1 }}>×</button></span> })}
                 </div>
               )}
             </div>
@@ -380,7 +378,7 @@ export default function PostJob() {
         {showPayment && (
           <div style={{ position: 'fixed', inset: 0, background: 'rgba(12, 37, 32, 0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 100, padding: '20px' }}>
             <div style={{ background: 'white', borderRadius: '16px', padding: '28px', maxWidth: '420px', width: '100%' }}>
-              <h2 style={{ fontFamily: "'ITC Symbol',Georgia,serif", letterSpacing: '-0.03em', fontSize: '22px', fontWeight: 700, color: '#0c2520', margin: '0 0 6px' }}>Spotlight your job</h2>
+              <h2 style={{ fontFamily: "'ITC Symbol',Georgia,serif", letterSpacing: '-0.03em', fontSize: '22px', fontWeight: 500, color: '#0c2520', margin: '0 0 6px' }}>Spotlight your job</h2>
               <p style={{ fontSize: '13px', color: '#666', margin: '0 0 24px' }}>£5 to feature your job at the top of the dashboard for 7 days.</p>
               <div style={{ marginBottom: '12px' }}><label style={labelStyle}>Card Number</label><input type="text" value={cardNumber} onChange={e => setCardNumber(e.target.value)} placeholder="1234 5678 9012 3456" style={inputStyle} /></div>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '20px' }}>
