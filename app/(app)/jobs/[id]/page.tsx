@@ -74,19 +74,24 @@ export default function JobDetail() {
       const { data: js } = await supabase.from('job_skills').select('skill_id').eq('job_id', jobId)
       if (js && js.length > 0) {
         const skillIds = js.map(x => x.skill_id)
-        const { data: skillsData } = await supabase.from('skills').select('id, name, category_id').in('id', skillIds)
-        const { data: cats } = await supabase.from('skills_categories').select('id, name, color, text_color')
+        const [{ data: skillsData }, { data: cats }] = await Promise.all([
+          supabase.from('skills').select('id, name, category_id').in('id', skillIds),
+          supabase.from('skills_categories').select('id, name, color, text_color'),
+        ])
         if (skillsData) {
           setJobSkills(skillsData.map(s => ({ ...s, category: cats?.find(c => c.id === s.category_id) })))
         }
       }
 
-      const { data: { user } } = await supabase.auth.getUser()
+      const { data: { session } } = await supabase.auth.getSession()
+      const user = session?.user
       if (user) {
         setCurrentUserId(user.id)
-        const { data: sj } = await supabase.from('saved_jobs').select('job_id').eq('profile_id', user.id).eq('job_id', jobId).maybeSingle()
+        const [{ data: sj }, { data: existingApp }] = await Promise.all([
+          supabase.from('saved_jobs').select('job_id').eq('profile_id', user.id).eq('job_id', jobId).maybeSingle(),
+          supabase.from('applications').select('id').eq('job_id', jobId).eq('profile_id', user.id).maybeSingle(),
+        ])
         if (sj) setSaved(true)
-        const { data: existingApp } = await supabase.from('applications').select('id').eq('job_id', jobId).eq('profile_id', user.id).maybeSingle()
         if (existingApp) setHasApplied(true)
       }
 
@@ -98,7 +103,8 @@ export default function JobDetail() {
   const showToastMsg = (msg: string) => { setToast(msg); setTimeout(() => setToast(null), 3000) }
 
   const toggleSaved = async () => {
-    const { data: { user } } = await supabase.auth.getUser()
+    const { data: { session } } = await supabase.auth.getSession()
+    const user = session?.user
     if (!user) { router.push('/login'); return }
     if (saved) {
       await supabase.from('saved_jobs').delete().eq('profile_id', user.id).eq('job_id', jobId)
@@ -140,13 +146,13 @@ export default function JobDetail() {
   const subtitle = job.is_side_hustle ? job.company : job.project_in
 
   return (
-    <div style={{ minHeight: '100vh', background: 'white', fontFamily: 'system-ui, sans-serif' }}>
+    <div style={{ minHeight: '100vh', background: '#f1f0ee', fontFamily: 'system-ui, sans-serif' }}>
       <style>{`
         @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
         @keyframes toastIn { from { opacity: 0; transform: translateX(-50%) translateY(8px); } to { opacity: 1; transform: translateX(-50%) translateY(0); } }
         .fade-in { animation: fadeIn 0.4s ease-out; }
         .toast-anim { animation: toastIn 0.25s ease-out; }
-        .section-card { background: #f9f8f6; border-radius: 14px; padding: 20px; margin-bottom: 10px; }
+        .section-card { background: white; border: 1px solid #e8e4de; border-radius: 14px; padding: 20px; margin-bottom: 10px; }
         .apply-btn-main { transition: opacity 0.2s ease, transform 0.1s ease; -webkit-tap-highlight-color: transparent; }
         .apply-btn-main:active { opacity: 0.85; transform: scale(0.98); }
       `}</style>
@@ -156,7 +162,8 @@ export default function JobDetail() {
       )}
 
       {/* Header */}
-      <div style={{ background: '#061410', padding: '0 20px 24px', paddingTop: 'max(56px, env(safe-area-inset-top))' }}>
+      <div style={{ paddingTop: 'max(12px, env(safe-area-inset-top))', paddingLeft: '16px', paddingRight: '16px', paddingBottom: '4px' }}>
+        <div style={{ background: '#061410', borderRadius: '24px', padding: '18px 20px 24px' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
           <button onClick={() => router.back()} style={{ background: 'rgba(255,255,255,0.12)', border: 'none', borderRadius: '50%', width: '40px', height: '40px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', WebkitTapHighlightColor: 'transparent' }}>
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#f1f0ee" strokeWidth="2.2" strokeLinecap="round"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
@@ -167,7 +174,7 @@ export default function JobDetail() {
         </div>
 
         {job.is_spotlighted && <span style={{ display: 'inline-block', background: '#92d7af', color: '#0c2520', padding: '3px 10px', borderRadius: '5px', fontSize: '10px', fontWeight: 600, letterSpacing: '0.05em', textTransform: 'uppercase', marginBottom: '10px' }}>Spotlight</span>}
-        <h1 style={{ fontFamily: "'ITC Symbol',Georgia,serif", letterSpacing: '-0.03em', fontSize: '26px', fontWeight: 700, color: '#f1f0ee', margin: '0 0 6px', lineHeight: 1.2 }}>{title}</h1>
+        <h1 style={{ fontFamily: "'ITC Symbol',Georgia,serif", letterSpacing: '-0.03em', fontSize: '26px', fontWeight: 500, color: '#f1f0ee', margin: '0 0 6px', lineHeight: 1.2 }}>{title}</h1>
         {subtitle && <p style={{ fontSize: '14px', color: '#a8c4b4', margin: '0 0 16px', fontStyle: 'italic' }}>In {subtitle}</p>}
 
         <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
@@ -176,6 +183,7 @@ export default function JobDetail() {
           {job.salary && <span style={{ background: '#92d7af', color: '#0c2520', padding: '5px 12px', borderRadius: '20px', fontSize: '12px', fontWeight: 600 }}>{job.salary}</span>}
           {job.audition_friendly && <span style={{ background: 'rgba(255,255,255,0.12)', color: '#f1f0ee', padding: '5px 12px', borderRadius: '20px', fontSize: '12px' }}>Audition friendly</span>}
           {job.dbs_required && <span style={{ background: 'rgba(255,165,0,0.2)', color: '#ffd580', padding: '5px 12px', borderRadius: '20px', fontSize: '12px' }}>DBS required</span>}
+        </div>
         </div>
       </div>
 
