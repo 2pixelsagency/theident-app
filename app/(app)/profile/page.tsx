@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
+import AppHeader from '@/components/AppHeader'
 
 type Profile = {
   id: string; first_name: string | null; last_name: string | null; picture_url: string | null
@@ -87,65 +88,15 @@ function MiniCalendar({ eventDates }: { eventDates: Set<string> }) {
   )
 }
 
-function CropModal({ file, onSave, onClose }: { file: File; onSave: (blob: Blob) => void; onClose: () => void }) {
-  const canvasRef = useRef<HTMLCanvasElement>(null)
-  const [img, setImg] = useState<HTMLImageElement | null>(null)
-  const [zoom, setZoom] = useState(1)
-  const [offset, setOffset] = useState({ x: 0, y: 0 })
-  const [dragging, setDragging] = useState(false)
-  const [dragStart, setDragStart] = useState({ x: 0, y: 0 })
-  const SIZE = 280
-  useEffect(() => {
-    const image = new Image(); image.onload = () => setImg(image); image.src = URL.createObjectURL(file)
-    return () => URL.revokeObjectURL(image.src)
-  }, [file])
-  useEffect(() => {
-    if (!img || !canvasRef.current) return
-    const ctx = canvasRef.current.getContext('2d'); if (!ctx) return
-    ctx.clearRect(0, 0, SIZE, SIZE)
-    const scale = Math.max(SIZE / img.width, SIZE / img.height) * zoom
-    const w = img.width * scale, h = img.height * scale
-    ctx.drawImage(img, (SIZE - w) / 2 + offset.x, (SIZE - h) / 2 + offset.y, w, h)
-  }, [img, zoom, offset])
-  return (
-    <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', zIndex: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px' }}>
-      <div style={{ background: '#f1f0ee', borderRadius: '20px', padding: '24px', maxWidth: '340px', width: '100%' }}>
-        <p style={{ fontFamily: "'ITC Symbol',Georgia,serif", letterSpacing: '-0.03em', fontSize: '18px', fontWeight: 500, color: '#0c2520', margin: '0 0 16px', textAlign: 'center' }}>Crop photo</p>
-        <div style={{ width: SIZE + 'px', height: SIZE + 'px', margin: '0 auto 16px', position: 'relative', borderRadius: '50%', overflow: 'hidden', border: '3px solid #e0ddd5', touchAction: 'none' }}>
-          <canvas ref={canvasRef} width={SIZE} height={SIZE}
-            onPointerDown={e => { setDragging(true); setDragStart({ x: e.clientX - offset.x, y: e.clientY - offset.y }) }}
-            onPointerMove={e => { if (dragging) setOffset({ x: e.clientX - dragStart.x, y: e.clientY - dragStart.y }) }}
-            onPointerUp={() => setDragging(false)} onPointerLeave={() => setDragging(false)}
-            style={{ width: '100%', height: '100%', cursor: dragging ? 'grabbing' : 'grab' }} />
-        </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '20px', padding: '0 8px' }}>
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#888" strokeWidth="2" strokeLinecap="round"><circle cx="12" cy="12" r="3"/></svg>
-          <input type="range" min="1" max="3" step="0.05" value={zoom} onChange={e => setZoom(parseFloat(e.target.value))} style={{ flex: 1, accentColor: '#0c2520' }} />
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#888" strokeWidth="2" strokeLinecap="round"><circle cx="12" cy="12" r="5"/></svg>
-        </div>
-        <div style={{ display: 'flex', gap: '10px' }}>
-          <button onClick={onClose} style={{ flex: 1, padding: '14px', borderRadius: '30px', border: '1px solid #e0ddd5', background: 'white', color: '#0c2520', fontSize: '14px', fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit' }}>Cancel</button>
-          <button onClick={() => { if (!canvasRef.current) return; canvasRef.current.toBlob(b => { if (b) onSave(b) }, 'image/jpeg', 0.9) }} style={{ flex: 1, padding: '14px', borderRadius: '30px', border: 'none', background: '#0c2520', color: '#f1f0ee', fontSize: '14px', fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit' }}>Save</button>
-        </div>
-      </div>
-    </div>
-  )
-}
-
 export default function Greenroom() {
   const router = useRouter()
   const [userId, setUserId] = useState<string | null>(null)
   const [profile, setProfile] = useState<Profile | null>(null)
   const [loading, setLoading] = useState(true)
-  const [uploading, setUploading] = useState(false)
-  const [toast, setToast] = useState<string | null>(null)
-  const [cropFile, setCropFile] = useState<File | null>(null)
   const [communities, setCommunities] = useState<Community[]>([])
   const [weekEvents, setWeekEvents] = useState<CalEvent[]>([])
   const [eventDates, setEventDates] = useState<Set<string>>(new Set())
   const [postedJobs, setPostedJobs] = useState<PostedJob[]>([])
-  const [notifications, setNotifications] = useState<any[]>([])
-  const [showNotifications, setShowNotifications] = useState(false)
   const [completion, setCompletion] = useState(0)
   const [connections, setConnections] = useState<any[]>([])
   const [viewDates, setViewDates] = useState<Date[]>([])
@@ -160,14 +111,7 @@ export default function Greenroom() {
   const [notes, setNotes] = useState('')
   const [savingNotes, setSavingNotes] = useState(false)
   const [savedTick, setSavedTick] = useState(false)
-  const notifRef = useRef<HTMLDivElement>(null)
   const saveTimer = useRef<any>(null)
-
-  useEffect(() => {
-    const handler = (e: MouseEvent) => { if (notifRef.current && !notifRef.current.contains(e.target as Node)) setShowNotifications(false) }
-    document.addEventListener('mousedown', handler)
-    return () => document.removeEventListener('mousedown', handler)
-  }, [])
 
   useEffect(() => {
     if (loading) return
@@ -189,7 +133,7 @@ export default function Greenroom() {
 
       const cutoff90 = dateStr(new Date(Date.now() - 90 * 86400000))
 
-      const [pRes, notesRes, viewsRes, appsRes, savedRes, jobsRes, actRes, myMemsRes, allCommsRes, connsRes, eventsRes, dismissedRes, notifRes] = await Promise.all([
+      const [pRes, notesRes, viewsRes, appsRes, savedRes, jobsRes, actRes, myMemsRes, allCommsRes, connsRes, eventsRes, dismissedRes] = await Promise.all([
         supabase.from('profiles').select('*').eq('id', uid).single(),
         supabase.from('notes').select('content').eq('profile_id', uid).maybeSingle(),
         supabase.from('profile_views').select('created_at').eq('profile_id', uid),
@@ -202,7 +146,6 @@ export default function Greenroom() {
         supabase.from('connections').select('requester_id, receiver_id, status').or('requester_id.eq.' + uid + ',receiver_id.eq.' + uid).eq('status', 'accepted'),
         supabase.from('calendar_events').select('id, title, start_date, start_time, event_type').eq('profile_id', uid),
         supabase.from('dismissed_cards').select('card_key').eq('profile_id', uid),
-        supabase.from('notifications').select('*').eq('profile_id', uid).eq('read', false).order('created_at', { ascending: false }).limit(10),
       ])
 
       const p = pRes.data as Profile | null
@@ -216,7 +159,6 @@ export default function Greenroom() {
       const apps = appsRes.data || []
       setAppDates(apps.map((a: any) => new Date(a.created_at)))
       setAudDates(apps.filter((a: any) => (STAGE_RANK[a.status] ?? 0) >= AUDITION_THRESHOLD).map((a: any) => new Date(a.created_at)))
-      setNotifications(notifRes.data || [])
       setDismissed((dismissedRes.data || []).map((d: any) => d.card_key))
 
       const actSet = new Set((actRes.data || []).map((a: any) => a.activity_date))
@@ -272,20 +214,6 @@ export default function Greenroom() {
     }, 700)
   }
 
-  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => { const f = e.target.files?.[0]; if (f) setCropFile(f); e.target.value = '' }
-  const handleCropSave = async (blob: Blob) => {
-    if (!profile) return
-    setUploading(true); setCropFile(null)
-    const path = profile.id + '/headshot-' + Date.now() + '.jpg'
-    const { error } = await supabase.storage.from('headshots').upload(path, blob, { upsert: true, contentType: 'image/jpeg' })
-    if (!error) {
-      const { data: { publicUrl } } = supabase.storage.from('headshots').getPublicUrl(path)
-      await supabase.from('profiles').update({ picture_url: publicUrl }).eq('id', profile.id)
-      setProfile({ ...profile, picture_url: publicUrl })
-      setToast('Profile photo updated'); setTimeout(() => setToast(null), 3000)
-    }
-    setUploading(false)
-  }
   const handleLogout = async () => { await supabase.auth.signOut(); router.push('/login') }
   const dismissNudge = () => { setNudgeOpen(false); try { sessionStorage.setItem('ident_nudge_seen', '1') } catch {} }
   const dismissRing = async (key: string) => {
@@ -296,7 +224,6 @@ export default function Greenroom() {
   if (loading) return <div style={{ minHeight: '100vh', background: '#f1f0ee' }} />
 
   const nowD = new Date()
-  const unreadCount = notifications.length
   const fullName = ((profile?.first_name || '') + ' ' + (profile?.last_name || '')).trim()
   const publicHref = profile?.slug ? '/' + profile.slug + '?from=app' : '/profile'
 
@@ -358,15 +285,10 @@ export default function Greenroom() {
   return (
     <div style={{ fontFamily: 'system-ui, sans-serif', background: '#f1f0ee', minHeight: '100vh', paddingBottom: '100px' }}>
       <style>{`
-        @keyframes toastIn { from { opacity:0; transform:translateX(-50%) translateY(8px);} to { opacity:1; transform:translateX(-50%) translateY(0);} }
-        @keyframes spin { to { transform: rotate(360deg);} }
-        @keyframes popInMenu { from { opacity:0; transform:scale(0.92) translateY(-4px);} to { opacity:1; transform:scale(1) translateY(0);} }
         @keyframes fadeUp { from { opacity:0; transform:translateY(12px);} to { opacity:1; transform:translateY(0);} }
         @keyframes overlayIn { from { opacity:0;} to { opacity:1;} }
         @keyframes popupIn { from { opacity:0; transform:scale(0.94) translateY(10px);} to { opacity:1; transform:scale(1) translateY(0);} }
         .stagger { opacity:0; animation:fadeUp 0.5s cubic-bezier(0.22,0.61,0.36,1) forwards; }
-        .toast-anim { animation: toastIn 0.25s ease-out; }
-        .notif-popup { animation: popInMenu 0.2s ease-out; }
         .ov { animation: overlayIn 0.25s ease-out; }
         .pp { animation: popupIn 0.32s cubic-bezier(0.22,0.61,0.36,1); }
         .tap { -webkit-tap-highlight-color: transparent; transition: transform 0.12s ease; cursor: pointer; }
@@ -375,9 +297,6 @@ export default function Greenroom() {
         .row::-webkit-scrollbar { display:none; }
         .row { scrollbar-width:none; }
       `}</style>
-
-      {cropFile && <CropModal file={cropFile} onSave={handleCropSave} onClose={() => setCropFile(null)} />}
-      {toast && <div className="toast-anim" style={{ position: 'fixed', bottom: '110px', left: '50%', transform: 'translateX(-50%)', background: '#0c2520', color: '#f1f0ee', padding: '12px 24px', borderRadius: '30px', fontSize: '13px', fontWeight: 500, zIndex: 300, whiteSpace: 'nowrap' }}>{toast}</div>}
 
       {/* NUDGE POPUP */}
       {nudgeOpen && (
@@ -422,41 +341,7 @@ export default function Greenroom() {
       )}
 
       {/* Header */}
-      <div className="stagger" style={{ animationDelay: '0s', padding: '24px 16px 16px' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <div>
-            <p style={{ fontSize: '12px', color: '#888', margin: '0 0 3px' }}>{nowD.toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' })}</p>
-            <p style={{ fontFamily: "'ITC Symbol',Georgia,serif", letterSpacing: '-0.03em', fontSize: '20px', color: '#0c2520', margin: 0, fontWeight: 500 }}>Greenroom</p>
-          </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <div ref={notifRef} style={{ position: 'relative' }}>
-              <button onClick={() => setShowNotifications(!showNotifications)} className="tap" style={{ width: '38px', height: '38px', borderRadius: '50%', background: 'white', border: '1px solid #e6e2d9', display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative' }}>
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#0c2520" strokeWidth="1.7" strokeLinecap="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
-                {unreadCount > 0 && <div style={{ position: 'absolute', top: '8px', right: '8px', width: '7px', height: '7px', borderRadius: '50%', background: '#4ade80', border: '1.5px solid white' }} />}
-              </button>
-              {showNotifications && (
-                <div className="notif-popup" style={{ position: 'absolute', top: 'calc(100% + 8px)', right: 0, width: '280px', background: 'white', borderRadius: '16px', border: '1px solid #ebe8e1', boxShadow: '0 12px 36px rgba(12,37,32,0.14)', zIndex: 300, overflow: 'hidden' }}>
-                  <div style={{ padding: '14px 16px 10px', borderBottom: '1px solid #f0ede5' }}>
-                    <p style={{ fontFamily: "'ITC Symbol',Georgia,serif", letterSpacing: '-0.03em', fontSize: '15px', fontWeight: 500, color: '#0c2520', margin: 0 }}>Notifications</p>
-                  </div>
-                  {notifications.length === 0 ? <div style={{ padding: '24px 16px', textAlign: 'center' }}><p style={{ fontSize: '13px', color: '#999', margin: 0 }}>You're all caught up</p></div> : (
-                    <div>{notifications.slice(0, 5).map((n: any) => <div key={n.id} style={{ padding: '11px 16px', borderBottom: '1px solid #f0ede5', cursor: 'pointer' }} onClick={() => { if (n.data && n.data.url) router.push(n.data.url) }}><p style={{ fontSize: '13px', color: '#0c2520', margin: 0, fontWeight: 500 }}>{n.body}</p></div>)}</div>
-                  )}
-                </div>
-              )}
-            </div>
-            <label style={{ cursor: 'pointer', position: 'relative', flexShrink: 0 }}>
-              <div style={{ width: '44px', height: '44px', borderRadius: '50%', background: profile?.picture_url ? 'url(' + profile.picture_url + ') center/cover' : '#e8efea', backgroundSize: 'cover', border: '2px solid #e6e2d9', overflow: 'hidden' }}>
-                {uploading && <div style={{ width: '100%', height: '100%', background: 'rgba(12,37,32,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><div style={{ width: '13px', height: '13px', border: '2px solid #f1f0ee', borderTopColor: 'transparent', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} /></div>}
-              </div>
-              <div style={{ position: 'absolute', bottom: '-2px', right: '-2px', width: '18px', height: '18px', borderRadius: '50%', background: '#92d7af', border: '2px solid #f1f0ee', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="#0c2520" strokeWidth="2.5" strokeLinecap="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
-              </div>
-              <input type="file" accept="image/*" onChange={handleFileSelect} style={{ display: 'none' }} />
-            </label>
-          </div>
-        </div>
-      </div>
+      <AppHeader title="Greenroom" />
 
       <div style={{ padding: '0 16px' }}>
         {/* PROFILE CARD — edit / view */}
