@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
+import AppHeader from '@/components/AppHeader'
 
 type Applicant = {
   id: string
@@ -34,18 +35,22 @@ export default function JobApplicants() {
 
   useEffect(() => {
     const load = async () => {
-      const { data: { user } } = await supabase.auth.getUser()
+      const { data: { session } } = await supabase.auth.getSession()
+      const user = session?.user
       if (!user) { router.push('/login'); return }
       const { data: jobData } = await supabase.from('jobs').select('id, project_role, project_in, job_title, company, is_side_hustle').eq('id', jobId).eq('created_by', user.id).single()
       if (!jobData) { router.push('/my-jobs'); return }
       setJob(jobData)
       const { data: apps } = await supabase.from('applications').select('*, profiles(first_name, last_name, picture_url, slug, location)').eq('job_id', jobId).order('created_at', { ascending: false })
-      if (apps) {
-        const withFiles = await Promise.all(apps.map(async a => {
-          const { data: fileData } = await supabase.from('application_files').select('id, file_url, file_type, file_name').eq('application_id', a.id)
-          return { ...a, files: fileData || [] }
-        }))
-        setApplicants(withFiles)
+      if (apps && apps.length) {
+        // One query for all files across these applications, then group in memory (was N+1 before)
+        const appIds = apps.map(a => a.id)
+        const { data: allFiles } = await supabase.from('application_files').select('id, application_id, file_url, file_type, file_name').in('application_id', appIds)
+        const filesByApp = new Map<string, any[]>()
+        ;(allFiles || []).forEach((f: any) => { const a = filesByApp.get(f.application_id) || []; a.push(f); filesByApp.set(f.application_id, a) })
+        setApplicants(apps.map(a => ({ ...a, files: filesByApp.get(a.id) || [] })))
+      } else {
+        setApplicants([])
       }
       setLoading(false)
     }
@@ -91,13 +96,10 @@ export default function JobApplicants() {
 
       {toast && <div className="toast-anim" style={{ position: 'fixed', bottom: '100px', left: '50%', transform: 'translateX(-50%)', background: '#0c2520', color: '#f1f0ee', padding: '12px 24px', borderRadius: '30px', fontSize: '13px', fontWeight: 500, zIndex: 700, whiteSpace: 'nowrap' }}>{toast}</div>}
 
-      <div style={{ padding: '24px 16px' }}>
-        <button onClick={() => router.push('/my-jobs')} style={{ background: 'none', border: 'none', fontSize: '13px', color: '#888', cursor: 'pointer', fontFamily: 'inherit', display: 'flex', alignItems: 'center', gap: '4px', marginBottom: '12px', padding: 0 }}>
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#888" strokeWidth="2" strokeLinecap="round"><path d="M19 12H5"/><path d="M12 19l-7-7 7-7"/></svg>
-          Back to my jobs
-        </button>
+      {/* Header */}
+      <AppHeader title={title || 'Applicants'} showBack fallback="/my-jobs" />
 
-        <p style={{ fontFamily: "'ITC Symbol',Georgia,serif", letterSpacing: '-0.03em', fontSize: '22px', fontWeight: 700, color: '#0c2520', margin: '0 0 4px' }}>{title}</p>
+      <div style={{ padding: '0 16px' }}>
         <p style={{ fontSize: '13px', color: '#888', margin: '0 0 20px' }}>{applicants.length} applicant{applicants.length !== 1 ? 's' : ''}</p>
 
         {/* Filter */}
@@ -152,11 +154,11 @@ export default function JobApplicants() {
               <div style={{ display: 'flex', alignItems: 'center', gap: '14px', marginBottom: '20px' }}>
                 <div style={{ width: '56px', height: '56px', borderRadius: '50%', background: selectedApp.profiles?.picture_url ? 'url(' + selectedApp.profiles.picture_url + ') center/cover' : '#e8e4de', backgroundSize: 'cover', flexShrink: 0 }} />
                 <div style={{ flex: 1 }}>
-                  <p style={{ fontFamily: "'ITC Symbol',Georgia,serif", letterSpacing: '-0.03em', fontSize: '18px', fontWeight: 700, color: '#0c2520', margin: '0 0 2px' }}>{(selectedApp.profiles?.first_name || '') + ' ' + (selectedApp.profiles?.last_name || '')}</p>
+                  <p style={{ fontFamily: "'ITC Symbol',Georgia,serif", letterSpacing: '-0.03em', fontSize: '18px', fontWeight: 500, color: '#0c2520', margin: '0 0 2px' }}>{(selectedApp.profiles?.first_name || '') + ' ' + (selectedApp.profiles?.last_name || '')}</p>
                   {selectedApp.profiles?.location && <p style={{ fontSize: '12px', color: '#888', margin: 0 }}>{selectedApp.profiles.location}</p>}
                 </div>
                 {selectedApp.profiles?.slug && (
-                  <Link href={'/' + selectedApp.profiles.slug} target="_blank" style={{ background: '#0c2520', color: '#f1f0ee', padding: '8px 14px', borderRadius: '20px', fontSize: '11px', fontWeight: 500, textDecoration: 'none', whiteSpace: 'nowrap' }}>View Ident</Link>
+                  <Link href={'/' + selectedApp.profiles.slug + '?from=app'} target="_blank" style={{ background: '#0c2520', color: '#f1f0ee', padding: '8px 14px', borderRadius: '20px', fontSize: '11px', fontWeight: 500, textDecoration: 'none', whiteSpace: 'nowrap' }}>View Ident</Link>
                 )}
               </div>
 
