@@ -21,49 +21,69 @@ export default function EnableNotifications() {
   useEffect(() => {
     if (typeof window === 'undefined') return
     if (!('serviceWorker' in navigator) || !('PushManager' in window) || !('Notification' in window)) return
-    if (Notification.permission === 'granted') {
-      subscribe().catch(() => {})
-    } else if (Notification.permission === 'default') {
-      setShow(true)
-    }
+    ;(async () => {
+      try {
+        const reg = await navigator.serviceWorker.register('/sw.js')
+        await navigator.serviceWorker.ready
+        const existing = await reg.pushManager.getSubscription()
+        if (existing && Notification.permission === 'granted') {
+          await saveSubscription(existing)
+          setShow(false)
+        } else {
+          setShow(true)
+        }
+      } catch {
+        setShow(true)
+      }
+    })()
   }, [])
 
-  const subscribe = async () => {
-    if (!VAPID) { console.log('No VAPID public key set'); return }
+  const saveSubscription = async (sub: PushSubscription) => {
     const { data: { session } } = await supabase.auth.getSession()
     const user = session?.user
-    if (!user) return
-
-    const reg = await navigator.serviceWorker.register('/sw.js')
-    await navigator.serviceWorker.ready
-
-    let sub = await reg.pushManager.getSubscription()
-    if (!sub) {
-      sub = await reg.pushManager.subscribe({
-        userVisibleOnly: true,
-        applicationServerKey: urlBase64ToUint8Array(VAPID),
-      })
-    }
-
+    if (!user) return { error: { message: 'Not signed in' } }
     const json: any = sub.toJSON()
-    await supabase.from('push_subscriptions').upsert({
+    const { error } = await supabase.from('push_subscriptions').upsert({
       profile_id: user.id,
       endpoint: json.endpoint,
       p256dh: json.keys?.p256dh,
       auth: json.keys?.auth,
     }, { onConflict: 'endpoint' })
+    return { error }
   }
 
   const enable = async () => {
     setBusy(true)
     try {
+      if (!VAPID) {
+        alert('Notifications can’t start: the public key (NEXT_PUBLIC_VAPID_PUBLIC_KEY) isn’t in this build. Add it in Vercel and redeploy, then try again.')
+        setBusy(false); return
+      }
       const perm = await Notification.requestPermission()
-      if (perm === 'granted') await subscribe()
-    } catch (e) {
-      console.log('Enable notifications failed', e)
+      if (perm !== 'granted') {
+        alert('Notifications were not allowed (permission: ' + perm + '). On iPhone, make sure the app was opened from the Home Screen icon, and check iOS Settings → Notifications for The Ident.')
+        setBusy(false); return
+      }
+      const reg = await navigator.serviceWorker.register('/sw.js')
+      await navigator.serviceWorker.ready
+      let sub = await reg.pushManager.getSubscription()
+      if (!sub) {
+        sub = await reg.pushManager.subscribe({
+          userVisibleOnly: true,
+          applicationServerKey: urlBase64ToUint8Array(VAPID),
+        })
+      }
+      const { error } = await saveSubscription(sub)
+      if (error) {
+        alert('Couldn’t save your device:\n\n' + ((error as any).message || JSON.stringify(error)))
+        setBusy(false); return
+      }
+      alert('Notifications are on for this device.')
+      setShow(false)
+    } catch (e: any) {
+      alert('Notifications failed:\n\n' + (e?.message || String(e)))
     }
     setBusy(false)
-    setShow(false)
   }
 
   if (!show) return null
