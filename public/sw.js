@@ -1,23 +1,46 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
+// The Ident — push service worker
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-)
-
-export async function POST(request: NextRequest) {
+self.addEventListener('push', function (event) {
+  let data = {}
   try {
-    const { subscription, profile_id } = await request.json()
-    if (!subscription || !profile_id) return NextResponse.json({ error: 'Missing data' }, { status: 400 })
-
-    await supabase.from('push_subscriptions').upsert({
-      profile_id,
-      subscription,
-    }, { onConflict: 'profile_id' })
-
-    return NextResponse.json({ ok: true })
-  } catch {
-    return NextResponse.json({ error: 'Failed' }, { status: 500 })
+    data = event.data ? event.data.json() : {}
+  } catch (e) {
+    data = { title: 'The Ident', body: event.data ? event.data.text() : '' }
   }
-}
+
+  const title = data.title || 'The Ident'
+  const options = {
+    body: data.body || '',
+    icon: data.icon || '/icon-192.png',
+    badge: '/icon-192.png',
+    data: { url: data.url || '/' },
+    tag: data.tag || undefined,
+  }
+
+  event.waitUntil(self.registration.showNotification(title, options))
+})
+
+self.addEventListener('notificationclick', function (event) {
+  event.notification.close()
+  const url = (event.notification.data && event.notification.data.url) || '/'
+
+  event.waitUntil(
+    clients.matchAll({ type: 'window', includeUncontrolled: true }).then(function (list) {
+      for (const client of list) {
+        if ('focus' in client) {
+          client.navigate(url)
+          return client.focus()
+        }
+      }
+      if (clients.openWindow) return clients.openWindow(url)
+    })
+  )
+})
+
+self.addEventListener('install', function () {
+  self.skipWaiting()
+})
+
+self.addEventListener('activate', function (event) {
+  event.waitUntil(self.clients.claim())
+})
