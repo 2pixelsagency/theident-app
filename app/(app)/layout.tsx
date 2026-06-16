@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
 import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
+import EnableNotifications from '@/components/EnableNotifications'
 
 type Profile = {
   id: string
@@ -27,28 +28,6 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       const { data: p } = await supabase.from('profiles').select('id, first_name, last_name, picture_url, slug').eq('id', user.id).single()
       setProfile(p)
       setLoading(false)
-
-      if ('serviceWorker' in navigator && 'PushManager' in window) {
-        try {
-          const reg = await navigator.serviceWorker.ready
-          const existing = await reg.pushManager.getSubscription()
-          if (!existing) {
-            const vapidKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY
-            if (!vapidKey) return
-            const sub = await reg.pushManager.subscribe({
-              userVisibleOnly: true,
-              applicationServerKey: urlBase64ToUint8Array(vapidKey),
-            })
-            await fetch('/api/push-subscribe', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ subscription: sub, profile_id: user.id }),
-            })
-          }
-        } catch (err) {
-          console.log('Push registration skipped:', err)
-        }
-      }
     }
     load()
   }, [router])
@@ -85,6 +64,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
 
   return (
     <div style={{ minHeight: '100vh', background: '#f1f0ee', fontFamily: 'system-ui, sans-serif' }}>
+      <EnableNotifications />
       <style>{`
         .desktop-sidebar { display: flex; }
         .mobile-nav { display: none; }
@@ -214,15 +194,4 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       </main>
     </div>
   )
-}
-
-function urlBase64ToUint8Array(base64String: string) {
-  const padding = '='.repeat((4 - base64String.length % 4) % 4)
-  const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/')
-  const rawData = window.atob(base64)
-  const outputArray = new Uint8Array(rawData.length)
-  for (let i = 0; i < rawData.length; ++i) {
-    outputArray[i] = rawData.charCodeAt(i)
-  }
-  return outputArray
 }
