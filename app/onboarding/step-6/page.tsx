@@ -18,7 +18,8 @@ export default function OnboardingStep6() {
 
   useEffect(() => {
     const load = async () => {
-      const { data: { user } } = await supabase.auth.getUser()
+      const { data: { session } } = await supabase.auth.getSession()
+      const user = session?.user
       if (!user) { router.push('/signup'); return }
       const { data: profile } = await supabase.from('profiles').select('bio, vid_1, vid_2, vid_3, vid_4, available').eq('id', user.id).single()
       if (profile) {
@@ -36,12 +37,13 @@ export default function OnboardingStep6() {
 
   const handleVideoUpload = async (slot: 'vid1' | 'vid2' | 'vid3' | 'vid4', file: File) => {
     setUploadingVideo(slot)
-    const { data: { user } } = await supabase.auth.getUser()
+    const { data: { session } } = await supabase.auth.getSession()
+    const user = session?.user
     if (!user) { setUploadingVideo(null); return }
     if (file.size > 200 * 1024 * 1024) { alert('Video too large. Max 200MB.'); setUploadingVideo(null); return }
     const fileExt = file.name.split('.').pop()
-    const fileName = `${user.id}/${slot}-${Date.now()}.${fileExt}`
-    const { error: uploadError } = await supabase.storage.from('reels').upload(fileName, file, { upsert: true })
+    const fileName = user.id + '/' + slot + '-' + Date.now() + '.' + fileExt
+    const { error: uploadError } = await supabase.storage.from('reels').upload(fileName, file)
     if (uploadError) { alert('Video upload failed: ' + uploadError.message); setUploadingVideo(null); return }
     const { data: { publicUrl } } = supabase.storage.from('reels').getPublicUrl(fileName)
     if (slot === 'vid1') setVid1(publicUrl)
@@ -53,8 +55,9 @@ export default function OnboardingStep6() {
 
   const handleFinish = async () => {
     setSaving(true)
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) return
+    const { data: { session } } = await supabase.auth.getSession()
+    const user = session?.user
+    if (!user) { setSaving(false); return }
     await supabase.from('profiles').update({
       bio, vid_1: vid1, vid_2: vid2, vid_3: vid3, vid_4: vid4, available: currentlyIn,
     }).eq('id', user.id)
@@ -64,7 +67,7 @@ export default function OnboardingStep6() {
   const VideoSlot = ({ label, slot, value }: { label: string; slot: 'vid1' | 'vid2' | 'vid3' | 'vid4'; value: string }) => {
     const isUploading = uploadingVideo === slot
     return (
-      <label className={`reel-slot ${value ? 'filled' : ''}`} style={{
+      <label className={'reel-slot ' + (value ? 'filled' : '')} style={{
         padding: '18px 10px',
         border: value ? '1.5px solid #0c2520' : '1.5px dashed #c4c2bc',
         borderRadius: '10px', fontSize: '13px',
@@ -74,7 +77,7 @@ export default function OnboardingStep6() {
         display: 'block', fontWeight: 500,
         transition: 'all 0.2s ease',
       }}>
-        {isUploading ? 'Uploading...' : (value ? `✓ ${label} uploaded` : `+ ${label}`)}
+        {isUploading ? 'Uploading...' : (value ? ('✓ ' + label + ' uploaded') : ('+ ' + label))}
         <input type="file" accept="video/*" disabled={isUploading} onChange={(e) => { const file = e.target.files?.[0]; if (file) handleVideoUpload(slot, file) }} style={{ display: 'none' }} />
       </label>
     )
