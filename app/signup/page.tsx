@@ -18,7 +18,7 @@ export default function SignupPage() {
     setLoading(true)
     setError('')
 
-    const { error } = await supabase.auth.signUp({
+    const { data, error } = await supabase.auth.signUp({
       email,
       password,
       options: {
@@ -33,6 +33,11 @@ export default function SignupPage() {
       setError(error.message)
       setLoading(false)
     } else {
+      // Fire our custom verification email (don't block navigation)
+      const token = data.session?.access_token
+      if (token) {
+        fetch('/api/send-verification', { method: 'POST', headers: { Authorization: 'Bearer ' + token } }).catch(() => {})
+      }
       router.push('/onboarding/step-1')
     }
   }
