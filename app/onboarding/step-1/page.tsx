@@ -17,7 +17,8 @@ export default function OnboardingStep1() {
 
   useEffect(() => {
     const load = async () => {
-      const { data: { user } } = await supabase.auth.getUser()
+      const { data: { session } } = await supabase.auth.getSession()
+      const user = session?.user
       if (!user) { router.push('/signup'); return }
       const { data: profile } = await supabase.from('profiles').select('first_name, last_name, date_of_birth, location, picture_url').eq('id', user.id).single()
       if (profile) {
@@ -36,11 +37,12 @@ export default function OnboardingStep1() {
     const file = e.target.files?.[0]
     if (!file) return
     setUploadingImage(true)
-    const { data: { user } } = await supabase.auth.getUser()
+    const { data: { session } } = await supabase.auth.getSession()
+    const user = session?.user
     if (!user) { setUploadingImage(false); return }
     const fileExt = file.name.split('.').pop()
-    const fileName = `${user.id}/headshot-${Date.now()}.${fileExt}`
-    const { error: uploadError } = await supabase.storage.from('headshots').upload(fileName, file, { upsert: true })
+    const fileName = user.id + '/headshot-' + Date.now() + '.' + fileExt
+    const { error: uploadError } = await supabase.storage.from('headshots').upload(fileName, file)
     if (uploadError) { alert('Upload failed: ' + uploadError.message); setUploadingImage(false); return }
     const { data: { publicUrl } } = supabase.storage.from('headshots').getPublicUrl(fileName)
     setPictureUrl(publicUrl)
@@ -48,13 +50,15 @@ export default function OnboardingStep1() {
   }
 
   const generateSlug = async (first: string, last: string, userId: string) => {
-    const base = `${first}-${last}`
+    const base = (first + '-' + last)
       .toLowerCase()
       .trim()
       .replace(/\s+/g, '-')
       .replace(/[^a-z0-9-]/g, '')
+      .replace(/-+/g, '-')
+      .replace(/^-+|-+$/g, '')
 
-    // Check if slug already exists — if so append a number
+    // Is this clean base free (ignoring myself)?
     const { data: existing } = await supabase
       .from('profiles')
       .select('id')
@@ -64,10 +68,10 @@ export default function OnboardingStep1() {
 
     if (!existing) return base
 
-    // Try base-2, base-3 etc until unique
+    // Otherwise try base-2, base-3 ... until unique
     let n = 2
     while (true) {
-      const candidate = `${base}-${n}`
+      const candidate = base + '-' + n
       const { data: clash } = await supabase
         .from('profiles')
         .select('id')
@@ -81,22 +85,15 @@ export default function OnboardingStep1() {
 
   const handleNext = async () => {
     setSaving(true)
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) return
+    const { data: { session } } = await supabase.auth.getSession()
+    const user = session?.user
+    if (!user) { setSaving(false); return }
 
-    // Only generate slug if they have a name
+    // Always set a clean name-based slug here (this is where the name is defined),
+    // which overwrites any junk slug created at signup.
     let slug: string | undefined
     if (firstName && lastName) {
-      // Check if they already have a slug — don't overwrite it
-      const { data: existing } = await supabase
-        .from('profiles')
-        .select('slug')
-        .eq('id', user.id)
-        .single()
-
-      if (!existing?.slug) {
-        slug = await generateSlug(firstName, lastName, user.id)
-      }
+      slug = await generateSlug(firstName, lastName, user.id)
     }
 
     await supabase.from('profiles').update({
@@ -142,8 +139,8 @@ export default function OnboardingStep1() {
         {/* Headshot */}
         <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '32px' }}>
           <label
-            className={`headshot-upload ${pictureUrl ? 'has-image' : ''}`}
-            style={pictureUrl ? { backgroundImage: `url(${pictureUrl})` } : {}}
+            className={'headshot-upload ' + (pictureUrl ? 'has-image' : '')}
+            style={pictureUrl ? { backgroundImage: 'url(' + pictureUrl + ')' } : {}}
           >
             {!pictureUrl && !uploadingImage && '+ Add Headshot'}
             {uploadingImage && 'Uploading...'}
