@@ -5,28 +5,34 @@ import { supabase } from '@/lib/supabase'
 
 export default function VerifyEmailBanner() {
   const [show, setShow] = useState(false)
-  const [email, setEmail] = useState('')
   const [busy, setBusy] = useState(false)
   const [sent, setSent] = useState(false)
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    ;(async () => {
+      const { data: { session } } = await supabase.auth.getSession()
       const user = session?.user
-      // Only nudge email/password users who haven't confirmed yet.
-      // Google sign-ins arrive already confirmed, so they never see this.
-      if (user && user.email && !user.email_confirmed_at) {
-        setEmail(user.email)
-        setShow(true)
-      }
-    })
+      if (!user) return
+      // Skip anyone who signed in with Google etc. — their email is already verified
+      const provider = (user.app_metadata as any)?.provider
+      if (provider && provider !== 'email') return
+      const { data: profile } = await supabase.from('profiles').select('email_verified').eq('id', user.id).maybeSingle()
+      if (profile && profile.email_verified === false) setShow(true)
+    })()
   }, [])
 
   const resend = async () => {
     if (busy) return
     setBusy(true)
-    const { error } = await supabase.auth.resend({ type: 'signup', email })
+    const { data: { session } } = await supabase.auth.getSession()
+    const token = session?.access_token
+    if (!token) { setBusy(false); return }
+    const res = await fetch('/api/send-verification', {
+      method: 'POST',
+      headers: { Authorization: 'Bearer ' + token },
+    })
     setBusy(false)
-    if (error) { alert('Could not resend: ' + error.message); return }
+    if (!res.ok) { alert('Could not send the verification email just now. Please try again in a moment.'); return }
     setSent(true)
   }
 
@@ -38,7 +44,7 @@ export default function VerifyEmailBanner() {
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#0c2520" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" /><polyline points="22,6 12,13 2,6" /></svg>
       </div>
       <div style={{ flex: 1, minWidth: 0 }}>
-        <p style={{ fontSize: '13px', fontWeight: 500, color: '#0c2520', margin: 0, lineHeight: 1.35 }}>Verify your email to secure your account</p>
+        <p style={{ fontSize: '13px', fontWeight: 500, color: '#0c2520', margin: 0, lineHeight: 1.35 }}>{sent ? 'Verification email sent — check your inbox' : 'Verify your email to secure your account'}</p>
       </div>
       {sent ? (
         <span style={{ fontSize: '12px', color: '#4ade80', fontWeight: 600, flexShrink: 0 }}>Sent ✓</span>
