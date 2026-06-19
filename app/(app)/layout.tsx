@@ -66,6 +66,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   return (
     <div style={{ minHeight: '100vh', background: '#f1f0ee', fontFamily: 'system-ui, sans-serif' }}>
       <EnableNotifications />
+      <VerifyEmailBanner />
       <style>{`
         .desktop-sidebar { display: flex; }
         .mobile-nav { display: none; }
