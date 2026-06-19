@@ -17,7 +17,8 @@ export default function OnboardingStep4() {
 
   useEffect(() => {
     const load = async () => {
-      const { data: { user } } = await supabase.auth.getUser()
+      const { data: { session } } = await supabase.auth.getSession()
+      const user = session?.user
       if (!user) { router.push('/signup'); return }
 
       const [{ data: h }, { data: e }, { data: profile }] = await Promise.all([
@@ -39,8 +40,9 @@ export default function OnboardingStep4() {
 
   const handleNext = async () => {
     setSaving(true)
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) return
+    const { data: { session } } = await supabase.auth.getSession()
+    const user = session?.user
+    if (!user) { setSaving(false); return }
     await supabase.from('profiles').update({
       hair_colour_id: selectedHair,
       eye_colour_id: selectedEye,
