@@ -5,6 +5,7 @@ import { useRouter, usePathname } from 'next/navigation'
 import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
 import EnableNotifications from '@/components/EnableNotifications'
+import VerifyEmailBanner from '@/components/VerifyEmailBanner'
 
 type Profile = {
   id: string
