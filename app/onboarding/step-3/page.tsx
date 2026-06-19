@@ -26,7 +26,8 @@ export default function OnboardingStep3() {
 
   useEffect(() => {
     const load = async () => {
-      const { data: { user } } = await supabase.auth.getUser()
+      const { data: { session } } = await supabase.auth.getSession()
+      const user = session?.user
       if (!user) { router.push('/signup'); return }
 
       const [{ data: skillsData }, { data: profile }, { data: profileSkills }] = await Promise.all([
@@ -64,8 +65,9 @@ export default function OnboardingStep3() {
 
   const handleNext = async () => {
     setSaving(true)
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) return
+    const { data: { session } } = await supabase.auth.getSession()
+    const user = session?.user
+    if (!user) { setSaving(false); return }
     await supabase.from('profiles').update({ what_i_do: noAgent ? null : agent }).eq('id', user.id)
     await supabase.from('profile_skills').delete().eq('profile_id', user.id)
     if (selectedSkillIds.length > 0) {
