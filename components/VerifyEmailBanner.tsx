@@ -39,7 +39,7 @@ export default function VerifyEmailBanner() {
   if (!show) return null
 
   return (
-    <div style={{ position: 'fixed', left: '12px', right: '12px', bottom: 'calc(env(safe-area-inset-bottom) + 164px)', zIndex: 300, background: 'white', border: '1px solid #e8e4de', borderRadius: '16px', padding: '14px 16px', display: 'flex', alignItems: 'center', gap: '12px', boxShadow: '0 6px 24px rgba(12,37,32,0.16)' }}>
+    <div style={{ pointerEvents: 'auto', background: 'white', border: '1px solid #e8e4de', borderRadius: '16px', padding: '14px 16px', display: 'flex', alignItems: 'center', gap: '12px', boxShadow: '0 6px 24px rgba(12,37,32,0.16)' }}>
       <div style={{ width: '38px', height: '38px', borderRadius: '11px', background: '#e8efea', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#0c2520" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" /><polyline points="22,6 12,13 2,6" /></svg>
       </div>
