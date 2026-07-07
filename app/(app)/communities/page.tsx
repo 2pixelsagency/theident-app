@@ -10,7 +10,6 @@ type Community = {
   id: string; name: string; slug: string; description: string | null
   cover_url: string | null; icon_url: string | null; category: string
   is_private: boolean; member_count: number; is_member: boolean; status: string | null
-  member_pics: string[]
 }
 
 const CATEGORIES = ['All','Dance','Acting','Singing','Fitness','College','Agency','Other']
@@ -30,7 +29,6 @@ export default function CommunitiesPage() {
       const user = session?.user
       if (!user) { router.push('/login'); return }
 
-      // Two queries total: all communities, and the current user's memberships
       const [{ data: allComms }, { data: myMemberships }] = await Promise.all([
         supabase.from('communities').select('*').order('created_at', { ascending: false }),
         supabase.from('community_members').select('community_id, status').eq('profile_id', user.id),
@@ -38,36 +36,25 @@ export default function CommunitiesPage() {
       const comms = allComms || []
       const memberMap = new Map((myMemberships || []).map(m => [m.community_id, m.status]))
 
-      // One query for ALL approved members across every community (replaces the per-community loop)
+      // Count approved members per community (one query)
       const commIds = comms.map(c => c.id)
       let approved: any[] = []
       if (commIds.length) {
         const { data } = await supabase
           .from('community_members')
-          .select('community_id, profiles(picture_url)')
+          .select('community_id')
           .eq('status', 'approved')
           .in('community_id', commIds)
         approved = data || []
       }
-
-      // Build counts + pics in memory
       const countMap = new Map<string, number>()
-      const picsMap = new Map<string, string[]>()
-      approved.forEach((m: any) => {
-        countMap.set(m.community_id, (countMap.get(m.community_id) || 0) + 1)
-        const pic = m.profiles?.picture_url
-        if (pic) {
-          const arr = picsMap.get(m.community_id) || []
-          if (arr.length < 8) { arr.push(pic); picsMap.set(m.community_id, arr) }
-        }
-      })
+      approved.forEach((m: any) => countMap.set(m.community_id, (countMap.get(m.community_id) || 0) + 1))
 
       const enriched: Community[] = comms.map((c: any) => ({
         ...c,
         member_count: countMap.get(c.id) || 0,
         is_member: memberMap.has(c.id),
         status: memberMap.get(c.id) || null,
-        member_pics: picsMap.get(c.id) || [],
       }))
 
       setCommunities(enriched.filter(c => !memberMap.has(c.id) || memberMap.get(c.id) !== 'approved'))
@@ -87,10 +74,8 @@ export default function CommunitiesPage() {
 
   return (
     <div style={{ fontFamily: 'system-ui, sans-serif', background: '#f1f0ee', minHeight: '100vh', paddingBottom: '120px' }}>
-      {/* Header */}
       <AppHeader title="Communities" showBack />
 
-      {/* Create */}
       <div style={{ padding: '0 16px 12px', display: 'flex', justifyContent: 'flex-end' }}>
         <Link href="/communities/create" style={{ background: '#0c2520', color: '#f1f0ee', padding: '8px 16px', borderRadius: '20px', fontSize: '12px', fontWeight: 500, textDecoration: 'none' }}>+ Create</Link>
       </div>
@@ -124,49 +109,26 @@ export default function CommunitiesPage() {
             {filtered.map(c => (
               <Link key={c.id} href={'/communities/' + c.slug} style={{ textDecoration: 'none' }}>
                 <div style={{ background: 'white', borderRadius: '16px', border: '1px solid #e8e4de', overflow: 'hidden' }}>
-                  {/* Cover */}
-                  <div style={{ height: '100px', background: c.cover_url ? 'url(' + c.cover_url + ') center/cover' : 'linear-gradient(135deg, #0c2520, #1a4a3a)', backgroundSize: 'cover', position: 'relative' }} />
+                  {/* Banner with name overlaid */}
+                  <div style={{ height: '128px', position: 'relative', background: c.cover_url ? 'url(' + c.cover_url + ') center/cover' : 'linear-gradient(135deg, #0c2520, #1a4a3a)', backgroundSize: 'cover' }}>
+                    <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(transparent 30%, rgba(0,0,0,0.72))' }} />
 
-                  {/* Content */}
-                  <div style={{ padding: '0 16px 14px', position: 'relative' }}>
-                    {/* Profile pic overlapping cover */}
-                    <div style={{ width: '56px', height: '56px', borderRadius: '50%', border: '3px solid white', background: c.icon_url ? 'url(' + c.icon_url + ') center/cover' : '#0c2520', backgroundSize: 'cover', position: 'relative', marginTop: '-28px', marginBottom: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                      {!c.icon_url && <span style={{ fontSize: '22px', fontWeight: 500, color: '#f1f0ee' }}>{c.name[0]}</span>}
-                    </div>
+                    {c.status === 'pending' && (
+                      <span style={{ position: 'absolute', top: '10px', right: '10px', fontSize: '10px', fontWeight: 600, color: '#fff', background: 'rgba(0,0,0,0.45)', backdropFilter: 'blur(6px)', WebkitBackdropFilter: 'blur(6px)', padding: '3px 8px', borderRadius: '6px' }}>PENDING</span>
+                    )}
 
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start' }}>
-                      <div style={{ flex: 1 }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '6px' }}>
-                          <p style={{ fontFamily: "'ITC Symbol',Georgia,serif", letterSpacing: '-0.03em', fontSize: '17px', fontWeight: 500, color: '#0c2520', margin: 0 }}>{c.name}</p>
-                          {c.is_private && (
-                            <div style={{ background: '#0c2520', borderRadius: '50%', width: '16px', height: '16px', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                              <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="#4ade80" strokeWidth="3" strokeLinecap="round"><polyline points="20 6 9 17 4 12"/></svg>
-                            </div>
-                          )}
-                        </div>
-
-                        {/* Avatars + meta */}
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                          {c.member_pics.length > 0 && (
-                            <div style={{ display: 'flex' }}>
-                              {c.member_pics.slice(0, 6).map((pic, i) => (
-                                <div key={i} style={{ width: '22px', height: '22px', borderRadius: '50%', border: '2px solid white', background: 'url(' + pic + ') center/cover', backgroundSize: 'cover', marginLeft: i > 0 ? '-6px' : '0', zIndex: 6 - i, position: 'relative' }} />
-                              ))}
-                              {c.member_count > 6 && (
-                                <div style={{ width: '22px', height: '22px', borderRadius: '50%', border: '2px solid white', background: '#0c2520', marginLeft: '-6px', zIndex: 0, position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                                  <span style={{ fontSize: '7px', fontWeight: 600, color: '#f1f0ee' }}>+{c.member_count - 6}</span>
-                                </div>
-                              )}
-                            </div>
-                          )}
-                          <span style={{ fontSize: '11px', color: '#888' }}>{c.member_count} member{c.member_count !== 1 ? 's' : ''}</span>
-                          <span style={{ fontSize: '10px', color: '#888', background: '#f1f0ee', padding: '2px 8px', borderRadius: '4px' }}>{c.category}</span>
-                          {c.is_private && <span style={{ fontSize: '9px', fontWeight: 600, color: '#f59e0b', background: '#fef3c7', padding: '2px 6px', borderRadius: '4px' }}>RESTRICTED</span>}
-                        </div>
+                    <div style={{ position: 'absolute', left: '16px', right: '16px', bottom: '12px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '7px', marginBottom: '5px' }}>
+                        <p style={{ fontFamily: "'ITC Symbol',Georgia,serif", letterSpacing: '-0.03em', fontSize: '19px', fontWeight: 500, color: '#fff', margin: 0 }}>{c.name}</p>
+                        {c.is_private && (
+                          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0, opacity: 0.9 }}><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                        )}
                       </div>
-
-                      {c.status === 'pending' && <span style={{ fontSize: '10px', fontWeight: 600, color: '#f59e0b', background: '#fef3c7', padding: '3px 8px', borderRadius: '4px' }}>PENDING</span>}
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#ccc" strokeWidth="2" strokeLinecap="round" style={{ flexShrink: 0, marginTop: '4px' }}><path d="M9 18l6-6-6-6"/></svg>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <span style={{ fontSize: '11px', color: 'rgba(255,255,255,0.85)' }}>{c.member_count} member{c.member_count !== 1 ? 's' : ''}</span>
+                        <span style={{ fontSize: '10px', color: '#fff', background: 'rgba(255,255,255,0.22)', padding: '2px 8px', borderRadius: '4px' }}>{c.category}</span>
+                        {c.is_private && <span style={{ fontSize: '9px', fontWeight: 600, color: '#fde68a', background: 'rgba(0,0,0,0.4)', padding: '2px 6px', borderRadius: '4px' }}>RESTRICTED</span>}
+                      </div>
                     </div>
                   </div>
                 </div>
