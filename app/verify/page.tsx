@@ -7,6 +7,13 @@ export default function VerifyPage() {
   const [msg, setMsg] = useState('')
 
   useEffect(() => {
+    if (status === 'ok') {
+      const t = setTimeout(() => { window.location.href = '/dashboard' }, 1800)
+      return () => clearTimeout(t)
+    }
+  }, [status])
+
+  useEffect(() => {
     const token = new URLSearchParams(window.location.search).get('token')
     if (!token) { setStatus('error'); setMsg('This link is missing its verification code.'); return }
 
@@ -46,8 +53,8 @@ export default function VerifyPage() {
               <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#0c2520" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg>
             </div>
             <h1 style={{ fontFamily: "'ITC Symbol',Georgia,serif", letterSpacing: '-0.03em', fontSize: '26px', fontWeight: 500, color: '#0c2520', margin: '0 0 8px' }}>Email verified</h1>
-            <p style={{ fontSize: '14px', color: '#888', margin: '0 0 24px' }}>You&apos;re all set. Thanks for confirming your account.</p>
-            <a href="/dashboard" style={{ textDecoration: 'none' }}><span style={{ background: '#0c2520', color: '#f1f0ee', padding: '12px 28px', borderRadius: '28px', fontSize: '15px', fontWeight: 500 }}>Go to The Ident</span></a>
+            <p style={{ fontSize: '14px', color: '#888', margin: '0 0 24px' }}>You&apos;re all set — taking you into the app…</p>
+            <a href="/dashboard" style={{ textDecoration: 'none' }}><span style={{ background: '#0c2520', color: '#f1f0ee', padding: '12px 28px', borderRadius: '28px', fontSize: '15px', fontWeight: 500 }}>Open The Ident</span></a>
           </>
         )}
 
