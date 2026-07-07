@@ -13,6 +13,7 @@ export default function OnboardingStep6() {
   const [vid3, setVid3] = useState('')
   const [vid4, setVid4] = useState('')
   const [uploadingVideo, setUploadingVideo] = useState<string | null>(null)
+  const [failedSlot, setFailedSlot] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
 
@@ -36,15 +37,24 @@ export default function OnboardingStep6() {
   }, [router])
 
   const handleVideoUpload = async (slot: 'vid1' | 'vid2' | 'vid3' | 'vid4', file: File) => {
+    setFailedSlot(null)
     setUploadingVideo(slot)
     const { data: { session } } = await supabase.auth.getSession()
     const user = session?.user
     if (!user) { setUploadingVideo(null); return }
-    if (file.size > 200 * 1024 * 1024) { alert('Video too large. Max 200MB.'); setUploadingVideo(null); return }
+    if (file.size > 200 * 1024 * 1024) {
+      setUploadingVideo(null); setFailedSlot(slot)
+      alert('That video is too large — the max is 200MB. Try a shorter clip or compress it first.')
+      return
+    }
     const fileExt = file.name.split('.').pop()
     const fileName = user.id + '/' + slot + '-' + Date.now() + '.' + fileExt
     const { error: uploadError } = await supabase.storage.from('reels').upload(fileName, file)
-    if (uploadError) { alert('Video upload failed: ' + uploadError.message); setUploadingVideo(null); return }
+    if (uploadError) {
+      setUploadingVideo(null); setFailedSlot(slot)
+      alert('Upload failed: ' + uploadError.message + '\n\nIf it mentions size, your storage bucket limit may be lower than 200MB.')
+      return
+    }
     const { data: { publicUrl } } = supabase.storage.from('reels').getPublicUrl(fileName)
     if (slot === 'vid1') setVid1(publicUrl)
     if (slot === 'vid2') setVid2(publicUrl)
@@ -66,18 +76,19 @@ export default function OnboardingStep6() {
 
   const VideoSlot = ({ label, slot, value }: { label: string; slot: 'vid1' | 'vid2' | 'vid3' | 'vid4'; value: string }) => {
     const isUploading = uploadingVideo === slot
+    const isFailed = failedSlot === slot && !value
     return (
       <label className={'reel-slot ' + (value ? 'filled' : '')} style={{
         padding: '18px 10px',
-        border: value ? '1.5px solid #0c2520' : '1.5px dashed #c4c2bc',
+        border: isFailed ? '1.5px solid #c0392b' : (value ? '1.5px solid #0c2520' : '1.5px dashed #c4c2bc'),
         borderRadius: '10px', fontSize: '13px',
-        background: value ? '#e8f0eb' : 'transparent',
-        textAlign: 'center', color: '#0c2520',
+        background: isFailed ? '#fbeae8' : (value ? '#e8f0eb' : 'transparent'),
+        textAlign: 'center', color: isFailed ? '#c0392b' : '#0c2520',
         cursor: isUploading ? 'not-allowed' : 'pointer',
         display: 'block', fontWeight: 500,
         transition: 'all 0.2s ease',
       }}>
-        {isUploading ? 'Uploading...' : (value ? ('✓ ' + label + ' uploaded') : ('+ ' + label))}
+        {isUploading ? 'Uploading...' : isFailed ? ('⚠ Upload failed — tap to retry') : (value ? ('✓ ' + label + ' uploaded') : ('+ ' + label))}
         <input type="file" accept="video/*" disabled={isUploading} onChange={(e) => { const file = e.target.files?.[0]; if (file) handleVideoUpload(slot, file) }} style={{ display: 'none' }} />
       </label>
     )
