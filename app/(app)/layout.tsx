@@ -4,8 +4,7 @@ import { useState, useEffect } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
 import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
-import EnableNotifications from '@/components/EnableNotifications'
-import VerifyEmailBanner from '@/components/VerifyEmailBanner'
+import AppBanners from '@/components/AppBanners'
 
 type Profile = {
   id: string
@@ -19,18 +18,20 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter()
   const pathname = usePathname()
   const [profile, setProfile] = useState<Profile | null>(null)
-  const [loading, setLoading] = useState(true)
+  const [checked, setChecked] = useState(false)
 
   useEffect(() => {
+    let mounted = true
     const load = async () => {
       const { data: { session } } = await supabase.auth.getSession()
       const user = session?.user
       if (!user) { router.push('/login'); return }
+      if (mounted) setChecked(true)
       const { data: p } = await supabase.from('profiles').select('id, first_name, last_name, picture_url, slug').eq('id', user.id).single()
-      setProfile(p)
-      setLoading(false)
+      if (mounted) setProfile(p)
     }
     load()
+    return () => { mounted = false }
   }, [router])
 
   useEffect(() => {
@@ -59,14 +60,11 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     </Link>
   )
 
-  if (loading || !profile) {
-    return <div style={{ minHeight: '100vh', background: '#f1f0ee' }} />
-  }
+  if (!checked) return null
 
   return (
     <div style={{ minHeight: '100vh', background: '#f1f0ee', fontFamily: 'system-ui, sans-serif' }}>
-      <EnableNotifications />
-      <VerifyEmailBanner />
+      <AppBanners />
       <style>{`
         .desktop-sidebar { display: flex; }
         .mobile-nav { display: none; }
@@ -105,9 +103,9 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       {/* Desktop sidebar */}
       <aside className="desktop-sidebar" style={{ position: 'fixed', top: 0, left: 0, width: '260px', height: '100vh', background: 'white', padding: '24px 16px', flexDirection: 'column', borderRight: '1px solid #e8e6e0', overflowY: 'auto', zIndex: 10 }}>
         <div style={{ textAlign: 'center', marginBottom: '32px' }}>
-          <div style={{ width: '70px', height: '70px', borderRadius: '50%', background: profile.picture_url ? 'url(' + profile.picture_url + ') center/cover' : '#e8e6e0', margin: '0 auto 12px', border: '1px solid #e0ddd5' }} />
-          <p style={{ margin: '0 0 12px', fontSize: '15px', fontWeight: 600, color: '#0c2520' }}>{profile.first_name} {profile.last_name}</p>
-          {profile.slug && (
+          <div style={{ width: '70px', height: '70px', borderRadius: '50%', background: profile?.picture_url ? 'url(' + profile.picture_url + ') center/cover' : '#e8e6e0', margin: '0 auto 12px', border: '1px solid #e0ddd5' }} />
+          <p style={{ margin: '0 0 12px', fontSize: '15px', fontWeight: 600, color: '#0c2520' }}>{profile?.first_name || ''} {profile?.last_name || ''}</p>
+          {profile?.slug && (
             <button
               onClick={() => window.open('/' + profile.slug + '?from=app', '_blank')}
               style={{ background: 'white', border: '1px solid #e0ddd5', padding: '6px 16px', borderRadius: '6px', fontSize: '12px', cursor: 'pointer', color: '#0c2520', fontFamily: 'inherit', fontWeight: 500 }}
