@@ -140,6 +140,8 @@ export default function EditProfile() {
   const [saving, setSaving] = useState(false)
   const [toast, setToast] = useState<string | null>(null)
   const [cropFile, setCropFile] = useState<File | null>(null)
+  const [uploadingReel, setUploadingReel] = useState<string | null>(null)
+  const [failedReel, setFailedReel] = useState<string | null>(null)
   const swipeStart = useRef<number | null>(null)
 
   const [allSkills, setAllSkills] = useState<Skill[]>([])
@@ -207,6 +209,7 @@ export default function EditProfile() {
     if (section === 'brands') setEBrands(brands.length ? brands.map(b => ({ ...b })) : [{ brand_name: '', logo_url: null }])
     if (section === 'testimonials') setETest(testimonials.length ? testimonials.map(t => ({ ...t })) : [{ quote: '', author_name: '', author_title: '' }])
     if (section === 'faqs') setEFaqs(faqs.length ? faqs.map(f => ({ ...f })) : [{ question: '', answer: '' }])
+    if (section === 'reels') { setFailedReel(null); setUploadingReel(null) }
     setEditing(section)
   }
 
@@ -284,6 +287,19 @@ const handleCropSave = async (blob: Blob) => {
     const path = profile.id + '/credit-' + Date.now() + '.' + (file.name.split('.').pop() || 'jpg')
     const { error } = await supabase.storage.from('headshots').upload(path, file, { contentType: file.type })
     if (!error) { const { data: { publicUrl } } = supabase.storage.from('headshots').getPublicUrl(path); setECredits(prev => prev.map((c, j) => j === i ? { ...c, thumbnail_url: publicUrl } : c)) }
+  }
+  const uploadReel = async (file: File, key: string) => {
+    if (!profile) return
+    setFailedReel(null)
+    if (file.size > 200 * 1024 * 1024) { setFailedReel(key); showToast('Video too large — max 200MB'); return }
+    setUploadingReel(key)
+    const path = profile.id + '/reel-' + Date.now() + '.' + (file.name.split('.').pop() || 'mp4')
+    const { error } = await supabase.storage.from('reels').upload(path, file, { contentType: file.type })
+    if (error) { setUploadingReel(null); setFailedReel(key); showToast('Upload failed: ' + error.message); return }
+    const { data: { publicUrl } } = supabase.storage.from('reels').getPublicUrl(path)
+    setD(key, publicUrl)
+    setUploadingReel(null)
+    showToast('Video uploaded')
   }
   const uploadGallery = async (file: File) => {
     if (!profile) return
@@ -446,7 +462,7 @@ const handleCropSave = async (blob: Blob) => {
                 </div>
               )) : <Empty text="Add your stage and screen credits" onClick={() => openEdit('credits')} />}
             </div>
-          ) : (reels.length > 0 ? <ReelsViewer reels={reels} /> : <div style={{ padding: '0 32px' }}><Empty text="Add your showreels (video URLs)" onClick={() => openEdit('reels')} /></div>)}
+          ) : (reels.length > 0 ? <ReelsViewer reels={reels} /> : <div style={{ padding: '0 32px' }}><Empty text="Add your showreels" onClick={() => openEdit('reels')} /></div>)}
         </div>
 
         {/* TESTIMONIALS */}
@@ -581,7 +597,32 @@ const handleCropSave = async (blob: Blob) => {
 
       {editing === 'reels' && (
         <Sheet title="Edit showreels" onClose={() => setEditing(null)}>
-          {['vid_1', 'vid_2', 'vid_3', 'vid_4'].map((k, i) => <Field key={k} label={REEL_LABELS[i]}><input className="fld" style={inputStyle} value={draft[k] || ''} onChange={e => setD(k, e.target.value)} placeholder="Video URL (mp4 / hosted)" /></Field>)}
+          {['vid_1', 'vid_2', 'vid_3', 'vid_4'].map((k, i) => {
+            const val = draft[k]
+            const up = uploadingReel === k
+            const failed = failedReel === k
+            return (
+              <Field key={k} label={REEL_LABELS[i]}>
+                {val ? (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    <video src={val + '#t=0.5'} preload="metadata" playsInline muted style={{ width: '92px', height: '56px', objectFit: 'cover', borderRadius: '8px', background: '#061410', flexShrink: 0 }} />
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <p style={{ fontSize: '12px', color: '#4ade80', fontWeight: 600, margin: '0 0 6px' }}>Uploaded</p>
+                      <div style={{ display: 'flex', gap: '12px' }}>
+                        <label style={{ fontSize: '12px', color: '#0c2520', textDecoration: 'underline', cursor: 'pointer' }}>Replace<input type="file" accept="video/*" style={{ display: 'none' }} onChange={e => { const f = e.target.files?.[0]; if (f) uploadReel(f, k); e.currentTarget.value = '' }} /></label>
+                        <button onClick={() => setD(k, '')} style={{ background: 'none', border: 'none', fontSize: '12px', color: '#c0392b', cursor: 'pointer', fontFamily: 'inherit', padding: 0, textDecoration: 'underline' }}>Remove</button>
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <label style={{ display: 'block', padding: '18px', borderRadius: '12px', border: failed ? '1.5px solid #c0392b' : '2px dashed #d4d2cc', background: failed ? '#fbeae8' : 'transparent', textAlign: 'center', cursor: up ? 'default' : 'pointer', fontSize: '13px', color: failed ? '#c0392b' : '#0c2520', fontWeight: 500 }}>
+                    {up ? 'Uploading…' : failed ? '⚠ Upload failed — tap to retry' : '+ Upload video from device'}
+                    <input type="file" accept="video/*" disabled={up} style={{ display: 'none' }} onChange={e => { const f = e.target.files?.[0]; if (f) uploadReel(f, k); e.currentTarget.value = '' }} />
+                  </label>
+                )}
+              </Field>
+            )
+          })}
           <SaveBtn onClick={() => saveProfileFields('reels')} />
         </Sheet>
       )}
