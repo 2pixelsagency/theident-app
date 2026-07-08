@@ -42,57 +42,6 @@ type SortOption = 'newest' | 'oldest' | 'az' | 'za'
 type MatchFilter = 'all' | 'good_strong' | 'strong'
 type ActionToast = { type: 'removed' | 'saved'; job: ScoredJob; index: number }
 
-function CountLoader({ onDone }: { onDone: () => void }) {
-  const [step, setStep] = useState(0)
-  const [fading, setFading] = useState(false)
-  const counts = ['5', '6', '7', '8']
-
-  useEffect(() => {
-    if (step < counts.length) {
-      const t = setTimeout(() => setStep(s => s + 1), 320)
-      return () => clearTimeout(t)
-    } else {
-      const pause = setTimeout(() => setFading(true), 400)
-      return () => clearTimeout(pause)
-    }
-  }, [step])
-
-  useEffect(() => {
-    if (!fading) return
-    const t = setTimeout(onDone, 700)
-    return () => clearTimeout(t)
-  }, [fading, onDone])
-
-  return (
-    <div style={{
-      position: 'fixed', inset: 0, background: '#061410',
-      display: 'flex', alignItems: 'center', justifyContent: 'center',
-      zIndex: 999, opacity: fading ? 0 : 1,
-      transition: fading ? 'opacity 0.7s ease' : 'none',
-      pointerEvents: fading ? 'none' : 'auto',
-    }}>
-      <style>{`
-        @keyframes countPop {
-          0% { opacity: 0; transform: scale(0.7); }
-          40% { opacity: 1; transform: scale(1.08); }
-          100% { opacity: 0.15; transform: scale(1); }
-        }
-      `}</style>
-      <div style={{ display: 'flex', gap: '20px', alignItems: 'center' }}>
-        {counts.map((n, i) => (
-          <span key={n} style={{
-            fontFamily: "'ITC Symbol',Georgia,serif", fontSize: '52px', fontWeight: 500,
-            color: i === step - 1 ? '#4ade80' : '#f1f0ee',
-            opacity: i < step ? (i === step - 1 ? 1 : 0.12) : 0,
-            animation: i < step ? 'countPop 0.32s ease-out forwards' : 'none',
-            transition: 'color 0.1s ease', letterSpacing: '0.02em',
-          }}>{n}</span>
-        ))}
-      </div>
-    </div>
-  )
-}
-
 function SwipeableJobCard({ job, productionTypeName, sentBy, formatRelativeDate, onRemove, onSave, onOpen }: {
   job: ScoredJob
   productionTypeName: string | null
@@ -104,42 +53,52 @@ function SwipeableJobCard({ job, productionTypeName, sentBy, formatRelativeDate,
 }) {
   const [tx, setTx] = useState(0)
   const [transitioning, setTransitioning] = useState(false)
+  const [revealed, setRevealed] = useState(false)
   const startX = useRef(0)
   const startY = useRef(0)
+  const startTx = useRef(0)
   const dir = useRef<'h' | 'v' | null>(null)
-  const THRESHOLD = 90
+  const skipClick = useRef(false)
+  const THRESHOLD = 60
+  const REVEAL = 92
 
   const title = job.is_side_hustle ? job.job_title : job.project_role
   const subtitle = job.is_side_hustle ? job.company : job.project_in
   const isStrong = job.matchTier === 'strong'
   const isGood = job.matchTier === 'good'
 
-  const handleStart = (x: number, y: number) => { startX.current = x; startY.current = y; dir.current = null; setTransitioning(false) }
+  const handleStart = (x: number, y: number) => { startX.current = x; startY.current = y; startTx.current = revealed ? -REVEAL : 0; dir.current = null; setTransitioning(false) }
   const handleMove = (x: number, y: number) => {
     const dx = x - startX.current; const dy = y - startY.current
     if (dir.current === null && (Math.abs(dx) > 8 || Math.abs(dy) > 8)) dir.current = Math.abs(dx) > Math.abs(dy) ? 'h' : 'v'
-    if (dir.current === 'h') setTx(dx)
+    if (dir.current === 'h') { let next = startTx.current + dx; if (next > 120) next = 120; if (next < -140) next = -140; setTx(next) }
   }
   const handleEnd = () => {
     if (dir.current === 'h') {
-      if (tx < -THRESHOLD) { setTransitioning(true); setTx(-500); setTimeout(() => onRemove(job.id), 200); return }
-      if (tx > THRESHOLD) { setTransitioning(true); setTx(500); setTimeout(() => onSave(job.id), 200); return }
+      skipClick.current = true
+      // Swipe right = save now (reversible via Undo)
+      if (tx > THRESHOLD) { setTransitioning(true); setTx(420); setTimeout(() => onSave(job.id), 200); return }
+      // Swipe left = reveal the Delete button; tap it to confirm
+      if (tx < -THRESHOLD) { setRevealed(true); setTransitioning(true); setTx(-REVEAL); return }
     }
-    setTransitioning(true); setTx(0)
+    setTransitioning(true); setRevealed(false); setTx(0)
   }
 
-  const progress = Math.min(Math.abs(tx) / THRESHOLD, 1)
+  const confirmRemove = () => { setTransitioning(true); setTx(-460); setTimeout(() => onRemove(job.id), 200) }
+  const closeReveal = () => { setRevealed(false); setTransitioning(true); setTx(0) }
 
   return (
-    <div style={{ position: 'relative', borderRadius: '14px' }}>
-      {tx !== 0 && (
-        <div style={{ position: 'absolute', inset: 0, borderRadius: '14px', background: tx < 0 ? '#c0392b' : '#0c2520', display: 'flex', alignItems: 'center', justifyContent: tx < 0 ? 'flex-end' : 'flex-start', padding: '0 22px', opacity: progress }}>
-          <span style={{ display: 'flex', alignItems: 'center', gap: '8px', color: tx < 0 ? '#fff' : '#92d7af', fontSize: '13px', fontWeight: 600 }}>
-            {tx < 0 ? (
-              <><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>Remove</>
-            ) : (
-              <><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>Saved</>
-            )}
+    <div style={{ position: 'relative', borderRadius: '14px', overflow: 'hidden' }}>
+      {/* Delete revealed on left-swipe — tap to confirm */}
+      <button onClick={(e) => { e.stopPropagation(); confirmRemove() }} aria-label="Delete job" style={{ position: 'absolute', top: 0, right: 0, bottom: 0, width: REVEAL + 'px', background: '#c0392b', border: 'none', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', fontSize: '13px', fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+        Delete
+      </button>
+      {/* Save hint while dragging right */}
+      {tx > 0 && (
+        <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, background: '#0c2520', display: 'flex', alignItems: 'center', paddingLeft: '22px' }}>
+          <span style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#92d7af', fontSize: '13px', fontWeight: 600 }}>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>Save
           </span>
         </div>
       )}
@@ -147,8 +106,8 @@ function SwipeableJobCard({ job, productionTypeName, sentBy, formatRelativeDate,
         onTouchStart={e => handleStart(e.touches[0].clientX, e.touches[0].clientY)}
         onTouchMove={e => handleMove(e.touches[0].clientX, e.touches[0].clientY)}
         onTouchEnd={handleEnd}
-        onClick={() => { if (Math.abs(tx) < 8) onOpen(job.id) }}
-        style={{ background: 'white', borderRadius: '14px', padding: '16px', border: '1px solid #e8e4de', position: 'relative', transform: 'translateX(' + tx + 'px)', transition: transitioning ? 'transform 0.2s ease' : 'none', cursor: 'pointer', touchAction: 'pan-y' }}
+        onClick={() => { if (skipClick.current) { skipClick.current = false; return } if (revealed) { closeReveal(); return } if (Math.abs(tx) < 8) onOpen(job.id) }}
+        style={{ background: 'white', borderRadius: '14px', padding: '16px', border: '1px solid #e8e4de', position: 'relative', zIndex: 1, transform: 'translateX(' + tx + 'px)', transition: transitioning ? 'transform 0.2s ease' : 'none', cursor: 'pointer', touchAction: 'pan-y' }}
       >
         <div style={{ position: 'absolute', top: '12px', right: '12px', display: 'flex', gap: '6px', zIndex: 2 }}>
           <button onClick={e => { e.stopPropagation(); onSave(job.id) }} style={{ width: '30px', height: '30px', borderRadius: '50%', background: '#f1f0ee', border: '1px solid #e0ddd5', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', WebkitTapHighlightColor: 'transparent', padding: 0 }} aria-label="Save">
@@ -185,10 +144,6 @@ function SwipeableJobCard({ job, productionTypeName, sentBy, formatRelativeDate,
 
 export default function Dashboard() {
   const router = useRouter()
-  const [showLoader, setShowLoader] = useState(() => {
-    if (typeof window === 'undefined') return false
-    return !sessionStorage.getItem('ident_loader_seen')
-  })
   const [productionTypes, setProductionTypes] = useState<Lookup[]>([])
   const [jobs, setJobs] = useState<ScoredJob[]>([])
   const [spotlightJobs, setSpotlightJobs] = useState<Job[]>([])
@@ -358,14 +313,6 @@ export default function Dashboard() {
     try { await supabase.from('removed_jobs').delete().eq('profile_id', profile.id).eq('job_id', jobId) } catch {}
     setRemovedIds(prev => { const s = new Set(prev); s.delete(jobId); return s })
     setJobs(prev => prev.filter(j => j.id !== jobId))
-  }
-
-  if (showLoader) {
-    return (
-      <div style={{ minHeight: '100vh', background: '#f1f0ee' }}>
-        <CountLoader onDone={() => { sessionStorage.setItem('ident_loader_seen', '1'); setShowLoader(false) }} />
-      </div>
-    )
   }
 
   return (
