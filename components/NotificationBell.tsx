@@ -104,6 +104,9 @@ export default function NotificationBell() {
                   {n.title && <p style={{ fontSize: '12px', color: '#92a89c', margin: '0 0 2px', fontWeight: 600 }}>{n.title}</p>}
                   <p style={{ fontSize: '13px', color: '#0c2520', margin: 0, fontWeight: 500 }}>{n.body}</p>
                 </div>
+                <button onClick={(e) => { e.stopPropagation(); deleteItem(n.id) }} aria-label="Delete notification" style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '4px', margin: '-2px -4px 0 2px', flexShrink: 0, display: 'flex', alignItems: 'center', WebkitTapHighlightColor: 'transparent' }}>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#c4c0b8" strokeWidth="2" strokeLinecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                </button>
               </div>
             </div>
           ))}
