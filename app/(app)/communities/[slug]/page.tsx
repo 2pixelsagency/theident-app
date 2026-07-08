@@ -16,7 +16,6 @@ export default function CommunityDetail() {
   const params = useParams()
   const slug = params.slug as string
   const coverRef = useRef<HTMLInputElement>(null)
-  const iconRef = useRef<HTMLInputElement>(null)
 
   const [community, setCommunity] = useState<Community | null>(null)
   const [members, setMembers] = useState<Member[]>([])
@@ -67,7 +66,6 @@ export default function CommunityDetail() {
         const { data: postsData } = await supabase.from('community_posts').select('*, profiles(first_name, last_name, picture_url)').eq('community_id', comm.id).order('is_pinned', { ascending: false }).order('created_at', { ascending: false })
         if (postsData && postsData.length) {
           const postIds = postsData.map(p => p.id)
-          // Batch: all votes + all replies for every post in two queries (was N+1 before)
           const [{ data: allVotes }, { data: allReplies }] = await Promise.all([
             supabase.from('community_post_likes').select('post_id, profile_id, vote_type').in('post_id', postIds),
             supabase.from('community_post_replies').select('*, profiles(first_name, last_name, picture_url)').in('post_id', postIds).order('created_at'),
@@ -98,11 +96,11 @@ export default function CommunityDetail() {
   const handleJoin = async () => { if (!userId || !community) return; const status = community.is_private ? 'pending' : 'approved'; await supabase.from('community_members').insert({ community_id: community.id, profile_id: userId, role: 'member', status }); setMembership({ role: 'member', status }); showToast(community.is_private ? 'Request sent' : 'Joined') }
   const handleLeave = async () => { if (!userId || !community) return; await supabase.from('community_members').delete().eq('community_id', community.id).eq('profile_id', userId); setMembership(null); showToast('Left community') }
 
-  const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>, type: 'cover' | 'icon') => {
+  const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]; if (!file || !community) return; setUploading(true)
-    const path = 'communities/' + community.id + '/' + type + '-' + Date.now() + '.jpg'
+    const path = 'communities/' + community.id + '/cover-' + Date.now() + '.jpg'
     const { error } = await supabase.storage.from('headshots').upload(path, file)
-    if (!error) { const { data: { publicUrl } } = supabase.storage.from('headshots').getPublicUrl(path); const update = type === 'cover' ? { cover_url: publicUrl } : { icon_url: publicUrl }; await supabase.from('communities').update(update).eq('id', community.id); setCommunity({ ...community, ...update }); showToast(type === 'cover' ? 'Cover updated' : 'Profile picture updated') }
+    if (!error) { const { data: { publicUrl } } = supabase.storage.from('headshots').getPublicUrl(path); await supabase.from('communities').update({ cover_url: publicUrl }).eq('id', community.id); setCommunity({ ...community, cover_url: publicUrl }); showToast('Banner updated') }
     setUploading(false); e.target.value = ''
   }
 
@@ -144,62 +142,35 @@ export default function CommunityDetail() {
       <style>{`@keyframes toastIn { from { opacity:0;transform:translateX(-50%) translateY(8px); } to { opacity:1;transform:translateX(-50%) translateY(0); } } .toast-anim { animation: toastIn 0.25s ease-out; }`}</style>
       {toast && <div className="toast-anim" style={{ position: 'fixed', bottom: '100px', left: '50%', transform: 'translateX(-50%)', background: '#0c2520', color: '#f1f0ee', padding: '12px 24px', borderRadius: '30px', fontSize: '13px', fontWeight: 500, zIndex: 700, whiteSpace: 'nowrap' }}>{toast}</div>}
 
-      {/* Cover */}
-      <div style={{ position: 'relative', height: '180px', background: community.cover_url ? 'url(' + community.cover_url + ') center/cover' : 'linear-gradient(135deg, #0c2520, #1a4a3a)', backgroundSize: 'cover' }}>
-        <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(transparent 50%, rgba(0,0,0,0.3))' }} />
+      {/* Banner with name overlaid */}
+      <div style={{ position: 'relative', height: '200px', background: community.cover_url ? 'url(' + community.cover_url + ') center/cover' : 'linear-gradient(135deg, #0c2520, #1a4a3a)', backgroundSize: 'cover' }}>
+        <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(transparent 30%, rgba(0,0,0,0.72))' }} />
         <button onClick={() => router.push('/communities')} style={{ position: 'absolute', top: '16px', left: '16px', zIndex: 2, background: 'rgba(255,255,255,0.15)', backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)', border: '1px solid rgba(255,255,255,0.15)', borderRadius: '50%', width: '36px', height: '36px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round"><path d="M19 12H5"/><path d="M12 19l-7-7 7-7"/></svg>
         </button>
         {isOwner && (
-          <button onClick={() => coverRef.current?.click()} style={{ position: 'absolute', bottom: '12px', right: '12px', zIndex: 2, background: 'rgba(0,0,0,0.4)', backdropFilter: 'blur(8px)', border: '1px solid rgba(255,255,255,0.15)', borderRadius: '20px', padding: '6px 14px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px', fontSize: '11px', color: 'white', fontWeight: 500, fontFamily: 'inherit' }}>
+          <button onClick={() => coverRef.current?.click()} style={{ position: 'absolute', top: '16px', right: '16px', zIndex: 2, background: 'rgba(0,0,0,0.4)', backdropFilter: 'blur(8px)', border: '1px solid rgba(255,255,255,0.15)', borderRadius: '20px', padding: '6px 14px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px', fontSize: '11px', color: 'white', fontWeight: 500, fontFamily: 'inherit' }}>
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
-            Edit cover
+            {uploading ? 'Uploading…' : 'Edit banner'}
           </button>
         )}
-        <input ref={coverRef} type="file" accept="image/*" onChange={e => handleUpload(e, 'cover')} style={{ display: 'none' }} />
-      </div>
+        <input ref={coverRef} type="file" accept="image/*" onChange={handleUpload} style={{ display: 'none' }} />
 
-      <div style={{ padding: '0 16px' }}>
-        {/* Profile pic */}
-        <div style={{ marginTop: '-32px', position: 'relative', zIndex: 2, marginBottom: '12px' }}>
-          <div style={{ display: 'flex', alignItems: 'end', gap: '14px' }}>
-            <div style={{ position: 'relative', flexShrink: 0 }}>
-              <div style={{ width: '68px', height: '68px', borderRadius: '50%', border: '4px solid #f1f0ee', background: community.icon_url ? 'url(' + community.icon_url + ') center/cover' : '#0c2520', backgroundSize: 'cover', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 2px 8px rgba(0,0,0,0.15)' }}>
-                {!community.icon_url && <span style={{ fontSize: '28px', fontWeight: 500, color: '#f1f0ee' }}>{community.name[0]}</span>}
-              </div>
-              {isOwner && (
-                <button onClick={() => iconRef.current?.click()} style={{ position: 'absolute', bottom: '0', right: '0', width: '24px', height: '24px', borderRadius: '50%', background: '#0c2520', border: '2px solid #f1f0ee', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
-                  <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="#f1f0ee" strokeWidth="2.5" strokeLinecap="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
-                </button>
-              )}
-              <input ref={iconRef} type="file" accept="image/*" onChange={e => handleUpload(e, 'icon')} style={{ display: 'none' }} />
-            </div>
+        {/* Name + meta overlaid on banner */}
+        <div style={{ position: 'absolute', left: '20px', right: '20px', bottom: '16px', zIndex: 2 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px' }}>
+            <h1 style={{ fontFamily: "'ITC Symbol',Georgia,serif", letterSpacing: '-0.03em', fontSize: '26px', fontWeight: 500, color: '#fff', margin: 0, lineHeight: 1.1 }}>{community.name}</h1>
+            {community.is_private && <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0, opacity: 0.9 }}><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>}
           </div>
-
-          {/* Name + badges — below the pic */}
-          <div style={{ marginTop: '10px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
-              <p style={{ fontFamily: "'ITC Symbol',Georgia,serif", letterSpacing: '-0.03em', fontSize: '24px', fontWeight: 500, color: '#0c2520', margin: 0 }}>{community.name}</p>
-              {community.is_private && <div style={{ background: '#0c2520', borderRadius: '50%', width: '20px', height: '20px', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#4ade80" strokeWidth="2.5" strokeLinecap="round"><polyline points="20 6 9 17 4 12"/></svg></div>}
-            </div>
-            <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-              <span style={{ fontSize: '13px', color: '#888' }}>{approvedMembers.length} member{approvedMembers.length !== 1 ? 's' : ''}</span>
-              <span style={{ fontSize: '11px', color: '#888', background: '#e8e4de', padding: '2px 8px', borderRadius: '4px' }}>{community.category}</span>
-              {community.is_private && <span style={{ fontSize: '9px', fontWeight: 600, color: '#f59e0b', background: '#fef3c7', padding: '2px 8px', borderRadius: '4px' }}>RESTRICTED</span>}
-            </div>
+          <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+            <span style={{ fontSize: '12px', color: 'rgba(255,255,255,0.85)' }}>{approvedMembers.length} member{approvedMembers.length !== 1 ? 's' : ''}</span>
+            <span style={{ fontSize: '10px', color: '#fff', background: 'rgba(255,255,255,0.22)', padding: '2px 8px', borderRadius: '4px' }}>{community.category}</span>
+            {community.is_private && <span style={{ fontSize: '9px', fontWeight: 600, color: '#fde68a', background: 'rgba(0,0,0,0.4)', padding: '2px 6px', borderRadius: '4px' }}>RESTRICTED</span>}
           </div>
         </div>
+      </div>
 
-        {/* Avatars */}
-        {approvedMembers.length > 0 && (
-          <div style={{ display: 'flex', alignItems: 'center', marginBottom: '16px' }}>
-            <div style={{ display: 'flex' }}>
-              {approvedMembers.slice(0, 10).map((m, i) => <div key={m.id} style={{ width: '30px', height: '30px', borderRadius: '50%', border: '2px solid #f1f0ee', background: m.profiles?.picture_url ? 'url(' + m.profiles.picture_url + ') center/cover' : '#e8e4de', backgroundSize: 'cover', marginLeft: i > 0 ? '-8px' : '0', zIndex: 10 - i, position: 'relative' }} />)}
-              {approvedMembers.length > 10 && <div style={{ width: '30px', height: '30px', borderRadius: '50%', border: '2px solid #f1f0ee', background: '#0c2520', marginLeft: '-8px', zIndex: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}><span style={{ fontSize: '8px', fontWeight: 600, color: '#f1f0ee' }}>+{approvedMembers.length - 10}</span></div>}
-            </div>
-          </div>
-        )}
-
+      <div style={{ padding: '16px 16px 0' }}>
         {/* Join */}
         {!membership && <button onClick={handleJoin} style={{ width: '100%', padding: '14px', background: '#0c2520', color: '#f1f0ee', border: 'none', borderRadius: '30px', fontSize: '14px', fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit', marginBottom: '16px' }}>{community.is_private ? 'Request to join' : 'Join community'}</button>}
         {membership?.status === 'pending' && <div style={{ width: '100%', padding: '14px', background: '#fef3c7', borderRadius: '30px', textAlign: 'center', fontSize: '14px', fontWeight: 500, color: '#92400e', marginBottom: '16px', boxSizing: 'border-box' }}>Request pending</div>}
