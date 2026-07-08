@@ -275,7 +275,7 @@ export default function Greenroom() {
     { label: 'Calendar', sub: 'Auditions and bookings', href: '/calendar', icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg> },
     { label: 'My applications', sub: appDates.length + ' submitted', href: '/applications', icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg> },
     { label: 'Saved jobs', sub: 'Roles you bookmarked', href: '/saved', icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg> },
-    { label: 'Expenses', sub: 'Receipts and spending', href: '/expenses', icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg> },
+    { label: 'Expenses', sub: 'Receipts and spending', href: '/expenses', icon: <span style={{ fontSize: '19px', fontWeight: 500, lineHeight: 1, fontFamily: 'system-ui, sans-serif' }}>£</span> },
     { label: 'Connections', sub: connections.length + ' collaborators', href: '/connections', icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/></svg> },
     { label: 'Customise your Ident', sub: 'Reorder, photo, showreels', href: '/profile/customise', icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg> },
     { label: 'Billing', sub: 'Plan and payments', href: '/billing', icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg> },
@@ -537,10 +537,7 @@ export default function Greenroom() {
                     <div style={{ position: 'relative', height: '70px', background: c.cover_url ? 'url(' + c.cover_url + ') center/cover' : '#e8e4de', backgroundSize: 'cover' }}>
                       {!c.joined && <span style={{ position: 'absolute', top: '6px', right: '6px', background: 'rgba(12,37,32,0.85)', color: '#92d7af', fontSize: '9px', fontWeight: 500, padding: '2px 7px', borderRadius: '4px', letterSpacing: '0.03em' }}>SUGGESTED</span>}
                     </div>
-                    <div style={{ padding: '8px 12px 12px' }}>
-                      <div style={{ width: '34px', height: '34px', borderRadius: '50%', border: '2px solid white', background: c.icon_url ? 'url(' + c.icon_url + ') center/cover' : '#e8e4de', backgroundSize: 'cover', marginTop: '-24px', marginBottom: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                        {!c.icon_url && <span style={{ fontSize: '14px', fontWeight: 500, color: '#888' }}>{c.name[0]}</span>}
-                      </div>
+                    <div style={{ padding: '10px 12px 12px' }}>
                       <p style={{ fontSize: '13px', fontWeight: 500, color: '#0c2520', margin: '0 0 2px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{c.name}</p>
                       <p style={{ fontSize: '11px', color: '#999', margin: 0 }}>{c.member_count + ' members'}</p>
                     </div>
