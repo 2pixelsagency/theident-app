@@ -1,12 +1,10 @@
--- Apply together with the deploy of this PR (the new code signs URLs and
--- uploads receipts to the `receipts` bucket).
+-- Applied live 2026-10-03 (ahead of the deploy). The new code signs URLs and
+-- uploads receipts to the `receipts` bucket.
 
 -- applications: CVs, attachments and NDA signatures. Path = <applicant_id>/<job_id>/<file>
 update storage.buckets set public = false where id = 'applications';
 
-drop policy if exists "Auth users can upload application files" on storage.objects;
-create policy "applicants upload to own folder" on storage.objects
-  for insert to authenticated
+alter policy "Auth users can upload application files" on storage.objects
   with check (bucket_id = 'applications' and (storage.foldername(name))[1] = (select auth.uid())::text);
 
 create policy "applicant or job poster can read application files" on storage.objects

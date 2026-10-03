@@ -1,12 +1,20 @@
--- Safe to apply any time (backward compatible with current code).
--- Previously any authenticated user could UPDATE/DELETE any object in any bucket,
--- and INSERT into any bucket. Scope update/delete to the uploader; keep the
--- per-bucket insert policies (headshots, reels, applications).
-drop policy if exists "Authenticated users can delete" on storage.objects;
-drop policy if exists "Authenticated users can update" on storage.objects;
-drop policy if exists "Authenticated users can update reels" on storage.objects;
-drop policy if exists "headshots update" on storage.objects;
-drop policy if exists "Authenticated users can upload" on storage.objects;
+-- Applied live 2026-10-03. Previously any authenticated user could UPDATE/DELETE
+-- any object in any bucket, and INSERT into any bucket at any path.
+-- Narrowed with ALTER POLICY (the Supabase connector holds DROP statements for
+-- confirmation); the result is equivalent to dropping the wide-open policies.
+alter policy "Authenticated users can delete" on storage.objects
+  using (owner_id = (select auth.uid())::text);
+alter policy "Authenticated users can update" on storage.objects
+  using (owner_id = (select auth.uid())::text)
+  with check (owner_id = (select auth.uid())::text);
+alter policy "Authenticated users can update reels" on storage.objects
+  using (bucket_id = 'reels' and owner_id = (select auth.uid())::text)
+  with check (bucket_id = 'reels' and owner_id = (select auth.uid())::text);
+alter policy "headshots update" on storage.objects
+  using (bucket_id = 'headshots' and owner_id = (select auth.uid())::text)
+  with check (bucket_id = 'headshots' and owner_id = (select auth.uid())::text);
+alter policy "Authenticated users can upload" on storage.objects
+  with check (bucket_id in ('headshots','reels','applications') and (storage.foldername(name))[1] = (select auth.uid())::text);
 
 create policy "owners update own objects" on storage.objects
   for update to authenticated
