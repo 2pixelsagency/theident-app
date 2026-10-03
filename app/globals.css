@@ -6,6 +6,35 @@
   --color-background: var(--bg);
   --color-foreground: var(--ink);
   --font-sans: var(--font-poppins);
+  --font-display: 'ITC Symbol', var(--font-poppins), system-ui, sans-serif;
+
+  /* tokens.css exposed as Tailwind colours: bg-surface, text-muted, border-line, bg-green-tint… */
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-ink: var(--ink);
+  --color-muted: var(--muted);
+  --color-faint: var(--faint);
+  --color-line: var(--line);
+  --color-green: var(--green);
+  --color-green-ink: var(--green-ink);
+  --color-green-tint: var(--green-tint);
+  --color-blue: var(--blue);
+  --color-blue-tint: var(--blue-tint);
+  --color-purple: var(--purple);
+  --color-purple-ink: var(--purple-ink);
+  --color-purple-tint: var(--purple-tint);
+  --color-pink: var(--pink);
+  --color-pink-tint: var(--pink-tint);
+  --color-amber: var(--amber);
+  --color-amber-tint: var(--amber-tint);
+  --color-pencil: var(--pencil);
+  --color-pencil-tint: var(--pencil-tint);
+  --color-red: var(--red);
+  --color-red-tint: var(--red-tint);
+  --color-field: var(--field);
+  --color-chip: var(--chip);
+  --color-dark: var(--dark);
+  --color-dark-2: var(--dark-2);
 }
 *, *::before, *::after {
   box-sizing: border-box;
@@ -16,4 +45,13 @@ html, body {
   background: var(--bg);
   color: var(--ink);
   -webkit-font-smoothing: antialiased;
+}
+
+/* The two allowed gradients + card shadow, as utilities */
+@utility bg-accent { background-image: var(--grad-accent); }
+@utility bg-hero { background-image: var(--grad-hero); }
+@utility shadow-card { box-shadow: var(--shadow); }
+@utility scrollbar-none {
+  scrollbar-width: none;
+  &::-webkit-scrollbar { display: none; }
 }
