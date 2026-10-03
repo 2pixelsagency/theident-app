@@ -85,6 +85,18 @@ export function BackHeader({ title, right, back, onBack }: { title: string; righ
   )
 }
 
+export function PageHeader({ title, right, sub }: { title: string; right?: React.ReactNode; sub?: string }) {
+  return (
+    <header className="sticky top-0 z-30 bg-bg/95 px-4 pb-3 pt-[max(18px,env(safe-area-inset-top))] backdrop-blur">
+      <div className="flex items-center gap-2">
+        <h1 className="flex-1 truncate text-[20px]">{title}</h1>
+        {right}
+      </div>
+      {sub && <p className="mt-1 text-sm text-muted">{sub}</p>}
+    </header>
+  )
+}
+
 export function SectionTitle({ title, action, href, className }: { title: string; action?: string; href?: string; className?: string }) {
   return (
     <div className={cx('mb-3 mt-6 flex items-center justify-between', className)}>
@@ -352,6 +364,31 @@ export function Toaster() {
   return (
     <div role="status" className="fixed inset-x-0 bottom-28 z-[200] flex justify-center px-4">
       <div className="rounded-full bg-dark px-5 py-3 text-sm text-white shadow-card">{msg}</div>
+    </div>
+  )
+}
+
+/* ---------- Bottom sheet ---------- */
+
+export function Sheet({ open, onClose, title, children }: { open: boolean; onClose: () => void; title: string; children: React.ReactNode }) {
+  useEffect(() => {
+    if (!open) return
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose() }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [open, onClose])
+  if (!open) return null
+  return (
+    <div className="fixed inset-0 z-[150]" role="dialog" aria-modal="true" aria-label={title}>
+      <button type="button" aria-label="Close" onClick={onClose} className="absolute inset-0 bg-dark/40" />
+      <div className="absolute inset-x-0 bottom-0 mx-auto max-h-[90dvh] max-w-[480px] overflow-y-auto rounded-t-[24px] bg-bg px-4 pb-[max(20px,env(safe-area-inset-bottom))] pt-3">
+        <div className="mx-auto mb-3 h-1 w-10 rounded-full bg-line" />
+        <div className="mb-4 flex items-center justify-between">
+          <h2 className="text-[20px]">{title}</h2>
+          <button type="button" onClick={onClose} aria-label="Close" className="inline-flex size-9 items-center justify-center rounded-full hover:bg-chip"><Icon name="x" /></button>
+        </div>
+        {children}
+      </div>
     </div>
   )
 }
