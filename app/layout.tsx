@@ -1,13 +1,11 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Poppins } from "next/font/google";
 import "./globals.css";
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+const poppins = Poppins({
+  weight: ["300", "400", "500"],
   subsets: ["latin"],
-});
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
+  display: "swap",
+  variable: "--font-poppins",
 });
 export const metadata: Metadata = {
   title: "The Ident",
@@ -25,10 +23,10 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" style={{ background: '#f1f0ee', margin: 0, padding: 0 }}>
+    <html lang="en" style={{ margin: 0, padding: 0 }}>
     <head>
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1, user-scalable=no" />
-  <meta name="theme-color" content="#f1f0ee" />
+  <meta name="theme-color" content="#f6f0e2" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="default" />
   <meta name="apple-mobile-web-app-title" content="The Ident" />
@@ -36,8 +34,8 @@ export default function RootLayout({
   <link rel="manifest" href="/manifest.json" />
 </head>
       <body
-        style={{ margin: 0, padding: 0, background: '#f1f0ee' }}
-        className={`${geistSans.variable} ${geistMono.variable}`}
+        style={{ margin: 0, padding: 0 }}
+        className={poppins.variable}
       >
         {children}
         <script dangerouslySetInnerHTML={{ __html: `
