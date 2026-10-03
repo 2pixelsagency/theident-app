@@ -19,6 +19,7 @@ export type MyProfile = {
   is_graduate: boolean
   graduate_school: string | null
   graduate_year: number | null
+  is_verified: boolean
 }
 
 export type Me = {
@@ -34,7 +35,7 @@ export type Me = {
 
 const MeContext = createContext<Me | null>(null)
 
-const PROFILE_COLS = 'id, first_name, last_name, picture_url, slug, location, what_i_do, account_role, company_name, availability_status, is_graduate, graduate_school, graduate_year'
+const PROFILE_COLS = 'id, first_name, last_name, picture_url, slug, location, what_i_do, account_role, company_name, availability_status, is_graduate, graduate_school, graduate_year, is_verified'
 
 export function MeProvider({ children }: { children: React.ReactNode }) {
   const router = useRouter()
