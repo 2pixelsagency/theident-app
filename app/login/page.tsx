@@ -1,197 +1,174 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
-import { supabase } from '@/lib/supabase'
+import { useEffect, useState } from 'react'
+import Link from 'next/link'
 import { useRouter } from 'next/navigation'
+import Icon from '@/components/rc/Icon'
+import { Button, ClientOnly, Field, Toaster } from '@/components/rc/ui'
+import { supabase } from '@/lib/supabase'
 
-const slides = [
-  { bg: '#92d7af', text: 'Make your portfolio match your talent.', textColor: '#0c2520', btnBg: '#0c2520', btnText: '#f1f0ee', outlineBorder: '#0c2520', dotInactive: 'rgba(0,0,0,0.15)', img: '/slide-1.png' },
-  { bg: '#061410', text: 'Collaborate with talent, producers, graduates.', textColor: '#f1f0ee', btnBg: '#f1f0ee', btnText: '#0c2520', outlineBorder: 'rgba(255,255,255,0.3)', dotInactive: 'rgba(255,255,255,0.2)', img: '/slide-2.png' },
-  { bg: '#5B7CFA', text: 'Manage side hustles without missing opportunities.', textColor: '#ffffff', btnBg: '#ffffff', btnText: '#0c2520', outlineBorder: 'rgba(255,255,255,0.4)', dotInactive: 'rgba(255,255,255,0.3)', img: '/slide-3.png' },
-]
+type Mode = 'signin' | 'forgot' | 'reset'
 
-export default function Login() {
+// Branded log in. Also handles "forgot password" and the reset link (/login?reset=1).
+function LoginInner() {
   const router = useRouter()
-  const [active, setActive] = useState(0)
+  const [mode, setMode] = useState<Mode>(() => (new URLSearchParams(window.location.search).get('reset') ? 'reset' : 'signin'))
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
-  const [showPassword, setShowPassword] = useState(false)
-  const [mode, setMode] = useState<'slider' | 'signin' | 'signup'>('slider')
-  const [error, setError] = useState('')
-  const [loading, setLoading] = useState(false)
-  const timerRef = useRef<NodeJS.Timeout | null>(null)
+  const [showPw, setShowPw] = useState(false)
+  const [busy, setBusy] = useState<'email' | 'apple' | 'google' | null>(null)
+  const [error, setError] = useState<string | null>(null)
+  const [sentTo, setSentTo] = useState<string | null>(null)
 
-  const s = slides[active]
-
-  const resetTimer = () => {
-    if (timerRef.current) clearInterval(timerRef.current)
-    timerRef.current = setInterval(() => setActive(i => (i + 1) % slides.length), 5000)
-  }
-
-  // Auto-redirect if already logged in
+  // Already logged in → straight into the app (but not while setting a new password)
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session?.user) router.push('/home')
-    })
-  }, [])
+    if (mode === 'reset') return
+    supabase.auth.getSession().then(({ data: { session } }) => { if (session) router.replace('/home') })
+  }, [mode, router])
 
-  useEffect(() => {
-    if (mode !== 'slider') {
-      if (timerRef.current) clearInterval(timerRef.current)
+  const signIn = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setError(null)
+    setBusy('email')
+    const { error: err } = await supabase.auth.signInWithPassword({ email: email.trim(), password })
+    if (err) {
+      setError(err.message === 'Invalid login credentials' ? 'That email and password don’t match. Try again or reset your password.' : err.message)
+      setBusy(null)
       return
     }
-    resetTimer()
-    return () => { if (timerRef.current) clearInterval(timerRef.current) }
-  }, [mode])
-
-  // Force background colors on EVERY render
-  useEffect(() => {
-    const color = mode === 'slider' ? s.bg : '#f1f0ee'
-    document.documentElement.style.backgroundColor = color
-    document.body.style.backgroundColor = color
-    const meta = document.querySelector('meta[name="theme-color"]')
-    if (meta) meta.setAttribute('content', color)
-    if (!meta) {
-      const m = document.createElement('meta')
-      m.name = 'theme-color'
-      m.content = color
-      document.head.appendChild(m)
-    }
-  })
-
-  const goToSlide = (index: number) => { setActive(index); resetTimer() }
-  const handleSwipe = (dir: 'left' | 'right') => {
-    if (dir === 'left') setActive(i => (i + 1) % slides.length)
-    else setActive(i => (i - 1 + slides.length) % slides.length)
-    resetTimer()
+    router.replace('/home')
   }
 
-  useEffect(() => {
-    slides.forEach(slide => {
-      const img = new Image()
-      img.src = slide.img
-    })
-  }, [])
-
-  const handleAuth = async () => {
-    setError(''); setLoading(true)
-    if (mode === 'signin') {
-      const { error: e } = await supabase.auth.signInWithPassword({ email, password })
-      if (e) { setError(e.message); setLoading(false); return }
-      router.push('/home')
-    } else {
-      const { data: signUpData, error: e } = await supabase.auth.signUp({ email, password })
-      if (e) { setError(e.message); setLoading(false); return }
-      const token = signUpData.session?.access_token
-      if (token) fetch('/api/send-email', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token }, body: JSON.stringify({ type: 'welcome' }) })
-      router.push('/onboarding/step-1')
-    }
-    setLoading(false)
+  const oauth = async (provider: 'apple' | 'google') => {
+    setBusy(provider)
+    setError(null)
+    const { error: err } = await supabase.auth.signInWithOAuth({ provider, options: { redirectTo: window.location.origin + '/start/finish' } })
+    if (err) { setError('Couldn’t start ' + (provider === 'apple' ? 'Apple' : 'Google') + ' sign-in. Please try again.'); setBusy(null) }
   }
 
-  const handleGoogleSignIn = async () => {
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: 'google',
-      options: { redirectTo: window.location.origin + '/home' }
-    })
-    if (error) setError(error.message)
+  const sendReset = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setError(null)
+    setBusy('email')
+    const { error: err } = await supabase.auth.resetPasswordForEmail(email.trim(), { redirectTo: window.location.origin + '/login?reset=1' })
+    setBusy(null)
+    if (err) { setError(err.message); return }
+    setSentTo(email.trim())
   }
 
-  if (mode !== 'slider') {
+  const setNewPassword = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setError(null)
+    if (password.length < 8) { setError('Use at least 8 characters for your password.'); return }
+    setBusy('email')
+    const { error: err } = await supabase.auth.updateUser({ password })
+    if (err) { setError(err.message.includes('session') ? 'This reset link has expired. Ask for a new one.' : err.message); setBusy(null); return }
+    router.replace('/home')
+  }
+
+  const back = () => {
+    if (mode === 'forgot') { setMode('signin'); setError(null); setSentTo(null); return }
+    router.push('/welcome')
+  }
+
+  const pwField = (label: string, autoComplete: string, placeholder: string) => (
+    <div className="relative">
+      <Field label={label} type={showPw ? 'text' : 'password'} autoComplete={autoComplete} required value={password} onChange={e => setPassword(e.target.value)} placeholder={placeholder} />
+      <button type="button" onClick={() => setShowPw(v => !v)} className="absolute bottom-3 right-3 text-xs font-medium text-muted">{showPw ? 'Hide' : 'Show'}</button>
+    </div>
+  )
+
+  if (sentTo) {
     return (
-      <div style={{ position:'fixed',inset:0,background:'#f1f0ee',fontFamily:'system-ui, sans-serif',display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',padding:'24px',boxSizing:'border-box' }}>
-        <div style={{ width:'100%',maxWidth:'380px' }}>
-          <div style={{ textAlign:'center',marginBottom:'48px' }}>
-            <p style={{ fontFamily:"'ITC Symbol',Georgia,serif",letterSpacing:'-0.03em',fontSize:'30px',fontWeight:700,color:'#0c2520',margin:'0 0 8px',lineHeight:1.2 }}>
-              {mode === 'signin' ? 'Welcome back.' : 'Join The Ident.'}
-            </p>
-            <p style={{ fontSize:'15px',color:'#888',margin:0,lineHeight:1.5 }}>
-              {mode === 'signin' ? 'Sign in to pick up where you left off.' : 'Create your profile and start getting booked.'}
-            </p>
-          </div>
-
-          {/* Google Sign In */}
-          <button onClick={handleGoogleSignIn} style={{ width:'100%',padding:'14px',background:'white',color:'#0c2520',border:'1px solid #e0ddd5',borderRadius:'14px',fontSize:'15px',fontWeight:500,cursor:'pointer',fontFamily:'inherit',marginBottom:'16px',display:'flex',alignItems:'center',justifyContent:'center',gap:'10px' }}>
-            <svg width="18" height="18" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>
-            Continue with Google
-          </button>
-
-          <div style={{ display:'flex',alignItems:'center',gap:'12px',marginBottom:'16px' }}>
-            <div style={{ flex:1,height:'1px',background:'#e0ddd5' }} />
-            <span style={{ fontSize:'12px',color:'#aaa' }}>or</span>
-            <div style={{ flex:1,height:'1px',background:'#e0ddd5' }} />
-          </div>
-
-          {error && <div style={{ background:'#fde8e8',color:'#c0392b',padding:'12px 16px',borderRadius:'12px',fontSize:'13px',marginBottom:'16px',textAlign:'center' }}>{error}</div>}
-          <div style={{ marginBottom:'12px' }}>
-            <input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="Email address" style={{ width:'100%',padding:'15px 16px',border:'1px solid #e0ddd5',borderRadius:'14px',fontSize:'15px',fontFamily:'inherit',boxSizing:'border-box',background:'white',color:'#0c2520' }} />
-          </div>
-          <div style={{ marginBottom:'24px',position:'relative' }}>
-            <input type={showPassword ? 'text' : 'password'} value={password} onChange={e => setPassword(e.target.value)} placeholder="Password" onKeyDown={e => { if (e.key === 'Enter') handleAuth() }} style={{ width:'100%',padding:'15px 48px 15px 16px',border:'1px solid #e0ddd5',borderRadius:'14px',fontSize:'15px',fontFamily:'inherit',boxSizing:'border-box',background:'white',color:'#0c2520' }} />
-            <button type="button" onClick={() => setShowPassword(v => !v)} aria-label={showPassword ? 'Hide password' : 'Show password'} style={{ position:'absolute',right:'8px',top:'50%',transform:'translateY(-50%)',background:'none',border:'none',cursor:'pointer',padding:'8px',display:'flex',alignItems:'center' }}>
-              {showPassword ? (
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#888" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
-              ) : (
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#888" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
-              )}
-            </button>
-          </div>
-          <button onClick={handleAuth} disabled={loading || !email || !password} style={{ width:'100%',padding:'16px',background:'#0c2520',color:'#f1f0ee',border:'none',borderRadius:'30px',fontSize:'15px',fontWeight:600,cursor:'pointer',fontFamily:'inherit',opacity:loading ? 0.6 : 1,marginBottom:'16px' }}>
-            {loading ? 'Please wait...' : (mode === 'signin' ? 'Sign in' : 'Create account')}
-          </button>
-          <p style={{ textAlign:'center',fontSize:'14px',color:'#888',margin:0 }}>
-            {mode === 'signin' ? "Don't have an account? " : 'Already have an account? '}
-            <button onClick={() => { setMode(mode === 'signin' ? 'signup' : 'signin'); setError('') }} style={{ background:'none',border:'none',color:'#0c2520',fontWeight:600,cursor:'pointer',fontFamily:'inherit',fontSize:'14px',textDecoration:'underline' }}>
-              {mode === 'signin' ? 'Sign up' : 'Sign in'}
-            </button>
-          </p>
-          <button onClick={() => setMode('slider')} style={{ display:'flex',alignItems:'center',justifyContent:'center',gap:'6px',margin:'32px auto 0',background:'none',border:'none',fontSize:'13px',color:'#aaa',cursor:'pointer',fontFamily:'inherit' }}>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#aaa" strokeWidth="2" strokeLinecap="round"><path d="M19 12H5"/><path d="M12 19l-7-7 7-7"/></svg>
-            Back
-          </button>
-        </div>
+      <div className="flex flex-1 flex-col items-center justify-center text-center">
+        <span className="flex size-16 items-center justify-center rounded-full bg-green-tint text-green-ink"><Icon name="mail" className="size-7" /></span>
+        <h1 className="mt-5 text-[24px]">Check your inbox</h1>
+        <p className="mt-2 max-w-80 text-[15px] text-muted">We’ve sent a link to <span className="text-ink">{sentTo}</span>. Open it to choose a new password.</p>
+        <button type="button" onClick={() => { setSentTo(null); setMode('signin') }} className="mt-6 text-sm font-medium text-green-ink">Back to log in</button>
       </div>
     )
   }
 
   return (
-    <div style={{ position:'fixed',inset:'-50px 0 0 0',paddingTop:'50px',background:s.bg,fontFamily:'system-ui, sans-serif',display:'flex',flexDirection:'column',overflow:'hidden',boxSizing:'border-box' }}>
-      <style>{`
-        @keyframes phoneFloat { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
-        @keyframes fadeSlide { from { opacity:0;transform:translateY(10px); } to { opacity:1;transform:translateY(0); } }
-        .phone-float { animation: phoneFloat 4s ease-in-out infinite; }
-        .slide-text { animation: fadeSlide 0.5s ease-out; }
-      `}</style>
-
-      <div style={{ paddingTop:'max(env(safe-area-inset-top), 16px)',padding:'max(env(safe-area-inset-top), 16px) 32px 0' }}>
-        <p key={active} className="slide-text" style={{ fontFamily:"'ITC Symbol',Georgia,serif",letterSpacing:'-0.03em',fontSize:'22px',fontWeight:700,color:s.textColor,textAlign:'center',lineHeight:1.35,margin:'16px 0 0',maxWidth:'420px',marginLeft:'auto',marginRight:'auto' }}>{s.text}</p>
-      </div>
-
-      <div style={{ flex:1,display:'flex',alignItems:'center',justifyContent:'center',padding:'8px 0',overflow:'hidden' }}
-        onTouchStart={e => { (e.currentTarget as any)._startX = e.touches[0].clientX }}
-        onTouchEnd={e => {
-          const start = (e.currentTarget as any)._startX
-          const end = e.changedTouches[0].clientX
-          const diff = start - end
-          if (diff > 50) handleSwipe('left')
-          if (diff < -50) handleSwipe('right')
-        }}>
-        <img key={active} className="phone-float slide-text" src={s.img} alt="" style={{ height:'55vh',maxHeight:'100%',width:'auto',display:'block',objectFit:'contain' }} />
-      </div>
-
-      <div style={{ padding:'0 32px 0',paddingBottom:'max(env(safe-area-inset-bottom), 16px)',maxWidth:'420px',margin:'0 auto',width:'100%',boxSizing:'border-box' }}>
-        <div style={{ display:'flex',justifyContent:'center',gap:'6px',marginBottom:'18px' }}>
-          {slides.map((_, i) => (
-            <button key={i} onClick={() => goToSlide(i)} style={{ width:i === active ? '20px' : '6px',height:'6px',borderRadius:'3px',background:i === active ? s.textColor : s.dotInactive,border:'none',cursor:'pointer',transition:'all 0.3s ease',padding:0 }} />
-          ))}
+    <>
+      {mode !== 'reset' && (
+        <div className="py-2">
+          <button type="button" aria-label="Back" onClick={back} className="-ml-1.5 inline-flex h-10 w-8 items-center justify-start text-ink active:opacity-50">
+            <Icon name="chevron-left" className="size-6" />
+          </button>
         </div>
-        <button onClick={() => setMode('signin')} style={{ width:'100%',padding:'15px',background:s.btnBg,color:s.btnText,border:'none',borderRadius:'30px',fontSize:'15px',fontWeight:600,cursor:'pointer',fontFamily:'inherit',marginBottom:'10px' }}>
-          I'm a performer
-        </button>
-        <button onClick={() => setMode('signin')} style={{ width:'100%',padding:'15px',background:'transparent',color:s.textColor,border:'1.5px solid ' + s.outlineBorder,borderRadius:'30px',fontSize:'15px',fontWeight:600,cursor:'pointer',fontFamily:'inherit' }}>
-          I'm a casting director
-        </button>
+      )}
+
+      <div className="mt-4 flex items-center gap-2.5">
+        <span className="flex size-9 items-center justify-center rounded-lg bg-green"><Icon name="check" className="size-5 text-white" strokeWidth={2} /></span>
+        <span className="font-display text-[22px] leading-none tracking-[-0.02em]">RoleCall</span>
       </div>
+
+      {mode === 'signin' && (
+        <>
+          <h1 className="mt-6 text-[26px]">Welcome back</h1>
+          <p className="mt-1.5 text-[15px] text-muted">Log in to pick up where you left off.</p>
+
+          <div className="mt-6 flex gap-3">
+            <Button variant="outline" className="flex-1" icon="apple" onClick={() => oauth('apple')} disabled={busy !== null}>{busy === 'apple' ? 'Opening…' : 'Apple'}</Button>
+            <Button variant="outline" className="flex-1" icon="google" onClick={() => oauth('google')} disabled={busy !== null}>{busy === 'google' ? 'Opening…' : 'Google'}</Button>
+          </div>
+
+          <div className="my-5 flex items-center gap-3 text-xs text-faint">
+            <span className="h-px flex-1 bg-line" />or with email<span className="h-px flex-1 bg-line" />
+          </div>
+
+          <form onSubmit={signIn} className="space-y-4">
+            <Field label="Email" type="email" autoComplete="email" required value={email} onChange={e => setEmail(e.target.value)} placeholder="you@example.com" />
+            {pwField('Password', 'current-password', 'Your password')}
+            <div className="-mt-1 text-right">
+              <button type="button" onClick={() => { setMode('forgot'); setError(null) }} className="text-sm font-medium text-green-ink">Forgot password?</button>
+            </div>
+            {error && <p role="alert" className="text-sm text-red">{error}</p>}
+            <Button type="submit" size="lg" full trailingIcon="arrow-right" disabled={busy !== null || !email || !password}>{busy === 'email' ? 'Logging in…' : 'Log in'}</Button>
+          </form>
+
+          <p className="mt-6 text-center text-[15px] text-muted">New to RoleCall? <Link href="/start" className="font-medium text-green-ink">Create an account</Link></p>
+        </>
+      )}
+
+      {mode === 'forgot' && (
+        <>
+          <h1 className="mt-6 text-[26px]">Reset your password</h1>
+          <p className="mt-1.5 text-[15px] text-muted">Enter your email and we’ll send you a link to choose a new one.</p>
+          <form onSubmit={sendReset} className="mt-6 space-y-4">
+            <Field label="Email" type="email" autoComplete="email" required value={email} onChange={e => setEmail(e.target.value)} placeholder="you@example.com" />
+            {error && <p role="alert" className="text-sm text-red">{error}</p>}
+            <Button type="submit" size="lg" full disabled={busy !== null || !email}>{busy ? 'Sending…' : 'Send reset link'}</Button>
+          </form>
+        </>
+      )}
+
+      {mode === 'reset' && (
+        <>
+          <h1 className="mt-6 text-[26px]">Choose a new password</h1>
+          <p className="mt-1.5 text-[15px] text-muted">Use at least 8 characters.</p>
+          <form onSubmit={setNewPassword} className="mt-6 space-y-4">
+            {pwField('New password', 'new-password', 'At least 8 characters')}
+            {error && <p role="alert" className="text-sm text-red">{error}</p>}
+            <Button type="submit" size="lg" full disabled={busy !== null || !password}>{busy ? 'Saving…' : 'Save and continue'}</Button>
+          </form>
+          <button type="button" onClick={() => { setMode('forgot'); setError(null); setPassword('') }} className="mt-5 text-center text-sm font-medium text-green-ink">Link expired? Send a new one</button>
+        </>
+      )}
+
+      <p className="mt-auto pt-8 text-center text-xs text-faint">By continuing you agree to our Terms &amp; Privacy Policy.</p>
+    </>
+  )
+}
+
+export default function LoginPage() {
+  return (
+    <div className="min-h-dvh bg-bg">
+      <div className="mx-auto flex min-h-dvh w-full max-w-[430px] flex-col px-6 pb-[max(20px,env(safe-area-inset-bottom))] pt-[max(16px,env(safe-area-inset-top))]">
+        <ClientOnly><LoginInner /></ClientOnly>
+      </div>
+      <Toaster />
     </div>
   )
 }
