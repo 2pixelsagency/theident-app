@@ -39,6 +39,7 @@ export default function MyProfilePage() {
     <>
       <div className="relative h-32 bg-hero bg-cover bg-center" style={p.banner_url ? { backgroundImage: `url(${p.banner_url})` } : undefined}>
         <div className="flex justify-end gap-2 px-4 pt-[max(14px,env(safe-area-inset-top))]">
+          <IconButton icon="chevron-left" label="Back" onClick={() => (window.history.length > 1 ? history.back() : (location.href = '/home'))} className="mr-auto bg-surface/90" />
           <IconButton icon="share" label="Share profile" onClick={share} className="bg-surface/90" />
           <IconButton icon="pen" label="Edit profile" href="/me/edit" className="bg-surface/90" />
         </div>

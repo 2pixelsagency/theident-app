@@ -2,7 +2,7 @@
 
 import { Suspense } from 'react'
 import { usePathname } from 'next/navigation'
-import { BottomNav, isTabRoot } from '@/components/rc/nav'
+import { BottomNav, SideNav, isTabRoot } from '@/components/rc/nav'
 import { PageLoading, Toaster, cx } from '@/components/rc/ui'
 import { MeProvider, useMe } from '@/lib/rc/me'
 
@@ -12,7 +12,11 @@ function Shell({ children }: { children: React.ReactNode }) {
   const showNav = isTabRoot(pathname, role)
   return (
     <>
-      <div className={cx('mx-auto min-h-dvh w-full max-w-[480px]', showNav && 'pb-24')}><Suspense fallback={<PageLoading />}>{children}</Suspense></div>
+      <SideNav />
+      {/* Phone: single column. Desktop: content column beside the left rail. */}
+      <div className="lg:pl-64">
+        <div className={cx('mx-auto min-h-dvh w-full max-w-[480px] md:max-w-[640px] lg:max-w-[720px] lg:pb-12', showNav && 'pb-32')}><Suspense fallback={<PageLoading />}>{children}</Suspense></div>
+      </div>
       {showNav && <BottomNav />}
       <Toaster />
     </>

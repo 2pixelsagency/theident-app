@@ -3,7 +3,7 @@
 import Link from 'next/link'
 import { useParams } from 'next/navigation'
 import Icon from '@/components/rc/Icon'
-import { Button, Card } from '@/components/rc/ui'
+import { BackHeader, Button, Card } from '@/components/rc/ui'
 import { supabase } from '@/lib/supabase'
 import { useAsync } from '@/lib/rc/useAsync'
 import { jobTitle } from '@/lib/rc/pipeline'
@@ -16,7 +16,9 @@ export default function AppliedPage() {
   }, [jobId])
 
   return (
-    <div className="flex min-h-dvh flex-col px-6 pb-[max(20px,env(safe-area-inset-bottom))]">
+    <>
+    <BackHeader title="" back="/find" />
+    <div className="flex min-h-[calc(100dvh-72px)] flex-col px-6 pb-[max(20px,env(safe-area-inset-bottom))]">
       <div className="flex flex-1 flex-col items-center justify-center pt-16 text-center">
         <span className="flex size-24 items-center justify-center rounded-full bg-green text-white shadow-[0_16px_40px_-12px_var(--green)]">
           <Icon name="check" className="size-11" strokeWidth={2.4} />
@@ -44,5 +46,6 @@ export default function AppliedPage() {
         <Button variant="outline" size="lg" full href="/find">Keep browsing roles</Button>
       </div>
     </div>
+    </>
   )
 }
