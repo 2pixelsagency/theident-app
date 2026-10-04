@@ -1,0 +1,67 @@
+/* RoleCall — design tokens (single source of truth for the look)
+   Poppins is loaded via next/font in app/layout.tsx (exposed as --font-poppins).
+   Put the brand font at /public/fonts/ITC-Symbol-Std-Bold.otf */
+
+@font-face {
+  font-family: 'ITC Symbol';
+  src: url('/fonts/ITC-Symbol-Std-Bold.otf') format('opentype');
+  font-weight: 400 700;
+  font-display: swap;
+}
+
+:root {
+  /* surfaces & text */
+  --bg: #f6f0e2;
+  --surface: #ffffff;
+  --ink: #1a1a1a;
+  --muted: #6e6a62;
+  --faint: #a7a197;
+  --line: #e7e0d0;
+
+  /* brand */
+  --green: #148072;      /* primary action / "open to work" */
+  --green-ink: #0f6b60;  /* green text on tint */
+  --blue: #1fa5ca;
+  --purple: #b878cc;
+  --pink: #f3c6d7;
+
+  /* the ONLY two gradients allowed */
+  --grad-accent: linear-gradient(120deg, var(--purple), var(--pink));
+  --grad-hero: linear-gradient(130deg, #1a1a1a, #3c2150);
+
+  --radius: 16px;
+  --shadow: 0 6px 20px rgba(26, 26, 26, 0.04);
+}
+
+body {
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--font-poppins), 'Poppins', system-ui, sans-serif;
+  font-weight: 400;
+}
+
+/* Headings use the brand display font, never heavy */
+h1, h2, h3 {
+  font-family: 'ITC Symbol', var(--font-poppins), 'Poppins', system-ui, sans-serif;
+  font-weight: 400;
+  letter-spacing: -0.02em;
+  line-height: 1.12;
+}
+/* page titles ~20px; heroes larger but scaled with them */
+
+.card {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+}
+
+/* Text/icons sitting on --grad-accent MUST be dark ink, not white */
+.on-accent { color: var(--ink); }
+
+/* Upload targets use a dashed outline, not a filled block */
+.upload {
+  border: 1.5px dashed #c9c4ba;
+  background: #faf8f1;
+  border-radius: 12px;
+}

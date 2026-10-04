@@ -18,6 +18,7 @@ export default function ApplyForm({ jobId, profileId, requiresNda, ndaText, onCl
   const [uploading, setUploading] = useState(false)
   const [ndaSigned, setNdaSigned] = useState(false)
   const [submitting, setSubmitting] = useState(false)
+  const [error, setError] = useState<string | null>(null)
   const fileRef = useRef<HTMLInputElement>(null)
 
   const sigRef = useRef<HTMLCanvasElement>(null)
@@ -71,17 +72,17 @@ export default function ApplyForm({ jobId, profileId, requiresNda, ndaText, onCl
     const fileList = e.target.files
     if (!fileList) return
     setUploading(true)
+    setError(null)
     for (let i = 0; i < fileList.length; i++) {
       const file = fileList[i]
-      if (file.size > 100 * 1024 * 1024) { alert('File too large. Max 100MB.'); continue }
+      if (file.size > 100 * 1024 * 1024) { setError(file.name + ' is too large. Max 100MB.'); continue }
       const ext = file.name.split('.').pop()
       const path = profileId + '/' + jobId + '/' + Date.now() + '-' + i + '.' + ext
-      const { error } = await supabase.storage.from('applications').upload(path, file)
-      if (!error) {
-        const { data: { publicUrl } } = supabase.storage.from('applications').getPublicUrl(path)
-        const fileType = file.type.startsWith('video') ? 'video' : file.type.startsWith('image') ? 'image' : 'document'
-        setFiles(prev => [...prev, { url: publicUrl, type: fileType, name: file.name }])
-      }
+      // The applications bucket is private: store the path, sign it when the poster views it
+      const { error: upErr } = await supabase.storage.from('applications').upload(path, file)
+      if (upErr) { setError('Couldn’t upload ' + file.name + '. Please try again.'); continue }
+      const fileType = file.type.startsWith('video') ? 'video' : file.type.startsWith('image') ? 'image' : 'document'
+      setFiles(prev => [...prev, { url: path, type: fileType, name: file.name }])
     }
     setUploading(false)
     e.target.value = ''
@@ -90,43 +91,51 @@ export default function ApplyForm({ jobId, profileId, requiresNda, ndaText, onCl
   const handleSubmit = async () => {
     if (requiresNda && (!ndaSigned || !hasSigned)) return
     setSubmitting(true)
+    setError(null)
 
-    let signatureUrl = null
+    let signaturePath: string | null = null
     if (requiresNda && hasSigned && sigRef.current) {
       const blob = await new Promise<Blob | null>(resolve => sigRef.current?.toBlob(resolve, 'image/png'))
-      if (blob) {
-        const sigPath = profileId + '/' + jobId + '/nda-signature-' + Date.now() + '.png'
-        const { error: sigErr } = await supabase.storage.from('applications').upload(sigPath, blob, { contentType: 'image/png' })
-        if (!sigErr) {
-          const { data: { publicUrl } } = supabase.storage.from('applications').getPublicUrl(sigPath)
-          signatureUrl = publicUrl
-        }
-      }
+      const sigPath = profileId + '/' + jobId + '/nda-signature-' + Date.now() + '.png'
+      const { error: sigErr } = blob
+        ? await supabase.storage.from('applications').upload(sigPath, blob, { contentType: 'image/png' })
+        : { error: new Error('no signature') }
+      if (sigErr) { setError('Couldn’t save your signature. Please try again.'); setSubmitting(false); return }
+      signaturePath = sigPath
     }
 
-    const { data: app, error } = await supabase.from('applications').insert({
+    const { data: app, error: appErr } = await supabase.from('applications').insert({
       job_id: jobId, profile_id: profileId, cover_note: note || null,
       nda_signed: ndaSigned, nda_signed_at: ndaSigned ? new Date().toISOString() : null,
-      signature_url: signatureUrl,
+      signature_url: signaturePath,
       status: 'submitted'
     }).select().single()
 
-    if (app && files.length > 0) {
-      await supabase.from('application_files').insert(files.map(f => ({
-        application_id: app.id, file_url: f.url, file_type: f.type, file_name: f.name
-      })))
+    if (appErr || !app) {
+      // 23505 = unique violation: already applied to this job
+      setError(appErr?.code === '23505' ? 'You’ve already applied for this role.' : 'Couldn’t submit your application. Please try again.')
+      setSubmitting(false)
+      return
     }
 
-    if (!error) {
-      await supabase.from('calendar_events').insert({
-        profile_id: profileId, title: 'Application submitted',
-        event_type: 'audition', start_date: new Date().toISOString().split('T')[0],
-        all_day: true, status: 'confirmed', color: '#4ade80',
-        description: 'Applied for job'
-      })
-      onApplied()
+    // The job poster is notified (in-app + push) by the on_application_insert DB trigger.
+    if (files.length > 0) {
+      const { error: filesErr } = await supabase.from('application_files').insert(files.map(f => ({
+        application_id: app.id, file_url: f.url, file_type: f.type, file_name: f.name
+      })))
+      if (filesErr) console.error('application_files insert failed', filesErr)
     }
+
+    const { error: calErr } = await supabase.from('calendar_events').insert({
+      profile_id: profileId, title: 'Application submitted',
+      event_type: 'audition', start_date: new Date().toISOString().split('T')[0],
+      all_day: true, status: 'confirmed', color: '#4ade80',
+      description: 'Applied for job'
+    })
+    if (calErr) console.error('calendar_events insert failed', calErr)
+
     setSubmitting(false)
+    onApplied()
   }
 
   const removeFile = (index: number) => setFiles(prev => prev.filter((_, i) => i !== index))
@@ -226,6 +235,8 @@ export default function ApplyForm({ jobId, profileId, requiresNda, ndaText, onCl
               )}
             </div>
           )}
+
+          {error && <p role="alert" style={{ fontSize: '13px', color: '#c0392b', margin: '0 0 12px' }}>{error}</p>}
 
           <button onClick={handleSubmit} disabled={submitting || (requiresNda && (!ndaSigned || !hasSigned))} style={{ width: '100%', padding: '16px', background: '#0c2520', color: '#f1f0ee', border: 'none', borderRadius: '30px', fontSize: '15px', fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit', opacity: submitting || (requiresNda && (!ndaSigned || !hasSigned)) ? 0.5 : 1 }}>
             {submitting ? 'Submitting...' : 'Submit application'}

@@ -80,9 +80,10 @@ export default function Login() {
       if (e) { setError(e.message); setLoading(false); return }
       router.push('/dashboard')
     } else {
-      const { error: e } = await supabase.auth.signUp({ email, password })
+      const { data: signUpData, error: e } = await supabase.auth.signUp({ email, password })
       if (e) { setError(e.message); setLoading(false); return }
-      fetch('/api/send-email', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ type: 'welcome', email: email, name: '' }) })
+      const token = signUpData.session?.access_token
+      if (token) fetch('/api/send-email', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token }, body: JSON.stringify({ type: 'welcome' }) })
       router.push('/onboarding/step-1')
     }
     setLoading(false)

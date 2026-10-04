@@ -3,11 +3,18 @@
 import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
+import { signStorageUrls } from '@/lib/storage'
 
 type Expense = { id: string; amount: number; description: string | null; category: string; receipt_url: string | null; expense_date: string; created_at: string }
 
 const CATEGORIES = ['Classes','Travel','Costumes','Headshots','Equipment','Subscriptions','Food','Accommodation','Marketing','Other']
 const CAT_COLORS: Record<string, string> = { Classes: '#4ade80', Travel: '#5B7CFA', Costumes: '#f59e0b', Headshots: '#ec4899', Equipment: '#8b5cf6', Subscriptions: '#06b6d4', Food: '#f97316', Accommodation: '#14b8a6', Marketing: '#e11d48', Other: '#888' }
+
+// Swap stored receipt paths for signed URLs. Legacy rows hold a public URL from another bucket; keep those as-is.
+async function withSignedReceipts(rows: Expense[]): Promise<Expense[]> {
+  const signed = await signStorageUrls('receipts', rows.map(r => r.receipt_url))
+  return rows.map(r => ({ ...r, receipt_url: r.receipt_url ? signed.get(r.receipt_url) || (/^https?:\/\//.test(r.receipt_url) ? r.receipt_url : null) : null }))
+}
 
 export default function ExpensesPage() {
   const router = useRouter()
@@ -38,7 +45,7 @@ export default function ExpensesPage() {
       if (!user) { router.push('/login'); return }
       setUserId(user.id)
       const { data } = await supabase.from('expenses').select('*').eq('profile_id', user.id).order('expense_date', { ascending: false })
-      setExpenses(data || [])
+      setExpenses(await withSignedReceipts(data || []))
       setLoading(false)
     }
     load()
@@ -96,17 +103,16 @@ export default function ExpensesPage() {
   const handleSave = async () => {
     if (!userId || !amount) return
     setSaving(true)
-    var receiptUrl: string | null = null
+    var receiptPath: string | null = null
     if (receiptFile) {
-      var path = 'expenses/' + userId + '/' + Date.now() + '-receipt.jpg'
-      var { error } = await supabase.storage.from('headshots').upload(path, receiptFile, { upsert: true })
-      if (!error) {
-        var { data: urlData } = supabase.storage.from('headshots').getPublicUrl(path)
-        receiptUrl = urlData.publicUrl
-      }
+      // Receipts are private: store the path in the receipts bucket, sign it for display
+      var path = userId + '/' + Date.now() + '-receipt.jpg'
+      var { error } = await supabase.storage.from('receipts').upload(path, receiptFile, { upsert: true })
+      if (error) { showToast('Couldn’t upload receipt'); setSaving(false); return }
+      receiptPath = path
     }
-    var { data } = await supabase.from('expenses').insert({ profile_id: userId, amount: parseFloat(amount), description: description || null, category: category, receipt_url: receiptUrl, expense_date: expenseDate }).select().single()
-    if (data) { setExpenses([data, ...expenses]); showToast('Expense added') }
+    var { data } = await supabase.from('expenses').insert({ profile_id: userId, amount: parseFloat(amount), description: description || null, category: category, receipt_url: receiptPath, expense_date: expenseDate }).select().single()
+    if (data) { var [signed] = await withSignedReceipts([data]); setExpenses([signed, ...expenses]); showToast('Expense added') }
     setAmount(''); setDescription(''); setCategory('Classes'); setReceiptFile(null); setReceiptPreview(null); setShowForm(false); setSaving(false)
   }
 

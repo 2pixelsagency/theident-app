@@ -5,6 +5,7 @@ import { useRouter, useParams } from 'next/navigation'
 import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
 import AppHeader from '@/components/AppHeader'
+import { signStorageUrls } from '@/lib/storage'
 
 type Applicant = {
   id: string
@@ -48,7 +49,14 @@ export default function JobApplicants() {
         const { data: allFiles } = await supabase.from('application_files').select('id, application_id, file_url, file_type, file_name').in('application_id', appIds)
         const filesByApp = new Map<string, any[]>()
         ;(allFiles || []).forEach((f: any) => { const a = filesByApp.get(f.application_id) || []; a.push(f); filesByApp.set(f.application_id, a) })
-        setApplicants(apps.map(a => ({ ...a, files: filesByApp.get(a.id) || [] })))
+        // CVs and NDA signatures live in the private applications bucket: swap stored paths for signed URLs
+        const signed = await signStorageUrls('applications', [...(allFiles || []).map(f => f.file_url), ...apps.map(a => a.signature_url)])
+        const sign = (v: string | null) => (v && signed.get(v)) || null
+        setApplicants(apps.map(a => ({
+          ...a,
+          signature_url: sign(a.signature_url),
+          files: (filesByApp.get(a.id) || []).map(f => ({ ...f, file_url: sign(f.file_url) })).filter(f => f.file_url),
+        })))
       } else {
         setApplicants([])
       }
