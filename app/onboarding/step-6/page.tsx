@@ -71,7 +71,7 @@ export default function OnboardingStep6() {
     await supabase.from('profiles').update({
       bio, vid_1: vid1, vid_2: vid2, vid_3: vid3, vid_4: vid4, available: currentlyIn,
     }).eq('id', user.id)
-    router.push('/dashboard')
+    router.push('/home')
   }
 
   const VideoSlot = ({ label, slot, value }: { label: string; slot: 'vid1' | 'vid2' | 'vid3' | 'vid4'; value: string }) => {
