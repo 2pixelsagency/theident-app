@@ -3,7 +3,7 @@
 import { useMemo, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Icon from '@/components/rc/Icon'
-import { Avatar, Button, Card, Chip, Field, PageLoading, Sheet, TextArea, Toggle, cx, toast } from '@/components/rc/ui'
+import { BackHeader, Avatar, Button, Card, Chip, Field, PageLoading, Sheet, TextArea, Toggle, cx, toast } from '@/components/rc/ui'
 import { supabase } from '@/lib/supabase'
 import { useMe } from '@/lib/rc/me'
 import { useAsync } from '@/lib/rc/useAsync'
@@ -110,11 +110,7 @@ function Editor({ data, uid, caster, onRefresh, mutate }: { data: Data; uid: str
 
   return (
     <>
-      <header className="sticky top-0 z-30 flex items-center justify-between border-b border-line bg-bg/95 px-4 pb-3 pt-[max(14px,env(safe-area-inset-top))] backdrop-blur">
-        <button type="button" onClick={() => router.push('/me')} className="text-[15px] text-muted">Cancel</button>
-        <h1 className="text-[17px]">Customise profile</h1>
-        <button type="button" onClick={save} disabled={saving} className="text-[15px] font-medium text-green-ink">{saving ? 'Saving…' : 'Save'}</button>
-      </header>
+      <BackHeader title="Customise profile" back="/me" right={<button type="button" onClick={save} disabled={saving} className="text-[15px] font-medium text-green-ink">{saving ? 'Saving…' : 'Save'}</button>} />
 
       <div className="space-y-5 px-4 pb-12 pt-4">
         {/* Banner + avatar */}

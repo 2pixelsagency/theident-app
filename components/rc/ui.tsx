@@ -66,7 +66,8 @@ export function DarkCard({ className, children }: { className?: string; children
 
 /* ---------- Headers ---------- */
 
-export function BackHeader({ title, right, back, onBack }: { title: string; right?: React.ReactNode; back?: string; onBack?: () => void }) {
+// Back arrow + title, flush-left and on one line. No tap "box" behind the arrow.
+function BackArrow({ back, onBack }: { back?: string; onBack?: () => void }) {
   const router = useRouter()
   const goBack = () => {
     if (onBack) return onBack()
@@ -75,21 +76,33 @@ export function BackHeader({ title, right, back, onBack }: { title: string; righ
     else router.push('/home')
   }
   return (
-    <header className="sticky top-0 z-30 flex items-center gap-2 bg-bg/95 px-4 pb-3 pt-[max(14px,env(safe-area-inset-top))] backdrop-blur">
-      <button type="button" onClick={goBack} aria-label="Back" className="-ml-1 inline-flex size-9 items-center justify-center rounded-full hover:bg-chip">
-        <Icon name="chevron-left" className="size-6" />
-      </button>
-      <h1 className="flex-1 truncate text-[20px]">{title}</h1>
-      {right}
+    <button type="button" onClick={goBack} aria-label="Back" className="-my-2 -ml-1.5 inline-flex h-10 w-8 shrink-0 items-center justify-start text-ink transition active:opacity-50">
+      <Icon name="chevron-left" className="size-6" />
+    </button>
+  )
+}
+
+const headerCls = 'sticky top-0 z-30 bg-bg/95 px-4 pb-3 pt-[max(14px,env(safe-area-inset-top))] backdrop-blur lg:pt-6'
+
+export function BackHeader({ title, right, back, onBack }: { title: string; right?: React.ReactNode; back?: string; onBack?: () => void }) {
+  return (
+    <header className={headerCls}>
+      <div className="flex items-center gap-1.5">
+        <BackArrow back={back} onBack={onBack} />
+        <h1 className="flex-1 truncate text-[20px] leading-tight">{title}</h1>
+        {right}
+      </div>
     </header>
   )
 }
 
-export function PageHeader({ title, right, sub }: { title: string; right?: React.ReactNode; sub?: string }) {
+// Tab-root header. Keeps the same back arrow so every screen has one (falls back to Home).
+export function PageHeader({ title, right, sub, back = '/home' }: { title: string; right?: React.ReactNode; sub?: string; back?: string }) {
   return (
-    <header className="sticky top-0 z-30 bg-bg/95 px-4 pb-3 pt-[max(18px,env(safe-area-inset-top))] backdrop-blur">
-      <div className="flex items-center gap-2">
-        <h1 className="flex-1 truncate text-[20px]">{title}</h1>
+    <header className={headerCls}>
+      <div className="flex items-center gap-1.5">
+        <BackArrow back={back} />
+        <h1 className="flex-1 truncate text-[20px] leading-tight">{title}</h1>
         {right}
       </div>
       {sub && <p className="mt-1 text-sm text-muted">{sub}</p>}
@@ -362,7 +375,7 @@ export function Toaster() {
   }, [])
   if (!msg) return null
   return (
-    <div role="status" className="fixed inset-x-0 bottom-28 z-[200] flex justify-center px-4">
+    <div role="status" className="fixed inset-x-0 bottom-32 z-[200] lg:bottom-8 lg:left-64 flex justify-center px-4">
       <div className="rounded-full bg-dark px-5 py-3 text-sm text-white shadow-card">{msg}</div>
     </div>
   )
@@ -381,7 +394,7 @@ export function Sheet({ open, onClose, title, children }: { open: boolean; onClo
   return (
     <div className="fixed inset-0 z-[150]" role="dialog" aria-modal="true" aria-label={title}>
       <button type="button" aria-label="Close" onClick={onClose} className="absolute inset-0 bg-dark/40" />
-      <div className="absolute inset-x-0 bottom-0 mx-auto max-h-[90dvh] max-w-[480px] overflow-y-auto rounded-t-[24px] bg-bg px-4 pb-[max(20px,env(safe-area-inset-bottom))] pt-3">
+      <div className="absolute inset-x-0 bottom-0 mx-auto max-h-[90dvh] max-w-[480px] overflow-y-auto rounded-t-[24px] lg:bottom-auto lg:top-1/2 lg:-translate-y-1/2 lg:rounded-[24px] lg:pb-6 bg-bg px-4 pb-[max(20px,env(safe-area-inset-bottom))] pt-3">
         <div className="mx-auto mb-3 h-1 w-10 rounded-full bg-line" />
         <div className="mb-4 flex items-center justify-between">
           <h2 className="text-[20px]">{title}</h2>

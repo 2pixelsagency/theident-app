@@ -145,7 +145,7 @@ export default function JobDetailPage() {
         )}
       </div>
 
-      <div className="fixed inset-x-0 bottom-0 z-30 mx-auto flex max-w-[480px] gap-3 border-t border-line bg-surface px-4 pb-[max(16px,env(safe-area-inset-bottom))] pt-3">
+      <div className="fixed inset-x-0 bottom-0 z-30 mx-auto flex max-w-[480px] md:max-w-[640px] lg:left-64 lg:max-w-[720px] gap-3 border-t border-line bg-surface px-4 pb-[max(16px,env(safe-area-inset-bottom))] pt-3">
         <button type="button" onClick={toggleSave} aria-label={saved ? 'Remove from saved' : 'Save job'} className={cx('inline-flex size-14 shrink-0 items-center justify-center rounded-[14px] border border-line', saved && 'text-green')}>
           <Icon name="bookmark" className={cx('size-5', saved && 'fill-current')} />
         </button>

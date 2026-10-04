@@ -113,7 +113,7 @@ export default function EventDetailPage() {
       </div>
 
       {!host && !cancelled && (
-        <div className="fixed inset-x-0 bottom-0 z-30 mx-auto flex max-w-[480px] gap-3 border-t border-line bg-surface px-4 pb-[max(16px,env(safe-area-inset-bottom))] pt-3">
+        <div className="fixed inset-x-0 bottom-0 z-30 mx-auto flex max-w-[480px] md:max-w-[640px] lg:left-64 lg:max-w-[720px] gap-3 border-t border-line bg-surface px-4 pb-[max(16px,env(safe-area-inset-bottom))] pt-3">
           {rsvp === 'going' ? (
             <>
               <Button variant="outline" size="lg" className="flex-1" onClick={() => setRsvp(null)} disabled={busy}>Can’t make it</Button>

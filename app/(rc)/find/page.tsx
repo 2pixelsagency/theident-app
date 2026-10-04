@@ -113,7 +113,7 @@ export default function FindPage() {
       </div>
 
       <button type="button" onClick={() => setShowFilters(true)}
-        className="fixed bottom-24 left-1/2 z-30 flex h-12 -translate-x-1/2 items-center gap-2 rounded-full bg-dark px-6 text-[15px] font-medium text-white shadow-[0_10px_30px_-10px_rgba(0,0,0,.5)]">
+        className="fixed bottom-32 left-1/2 z-30 lg:bottom-8 lg:left-[calc(50%+8rem)] flex h-12 -translate-x-1/2 items-center gap-2 rounded-full bg-dark px-6 text-[15px] font-medium text-white shadow-[0_10px_30px_-10px_rgba(0,0,0,.5)]">
         <Icon name="filter" className="size-[18px]" /> Filters
         {activeFilters > 0 && <span className="flex size-6 items-center justify-center rounded-full bg-green text-xs">{activeFilters}</span>}
       </button>
