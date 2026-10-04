@@ -32,7 +32,7 @@ export function isTabRoot(pathname: string, role: Role) {
   return NAV[role].some(n => n.href === pathname)
 }
 
-// Instagram-style floating pill. Active tab sits in a raised "lens" with its label;
+// Instagram-style frosted-glass floating pill. Active tab gets a soft circle;
 // scrolling down shrinks the pill, scrolling up brings it back.
 export function BottomNav() {
   const pathname = usePathname()
@@ -53,22 +53,21 @@ export function BottomNav() {
 
   return (
     <nav aria-label="Main" className="pointer-events-none fixed inset-x-0 bottom-0 z-40 flex justify-center px-5 pb-[max(20px,calc(env(safe-area-inset-bottom)+10px))] lg:hidden">
-      <ul className={cx('pointer-events-auto flex w-full items-center justify-between rounded-full bg-dark/95 px-2 shadow-[0_12px_32px_-8px_rgb(0_0_0/0.45)] ring-1 ring-white/10 backdrop-blur-md transition-all duration-300 ease-out',
-        compact ? 'h-[52px] max-w-[300px]' : 'h-[68px] max-w-[420px]')}>
+      <ul className={cx('pointer-events-auto flex w-full items-center justify-between rounded-full border border-white/60 bg-surface/55 px-2 shadow-[0_10px_30px_-10px_rgb(0_0_0/0.3)] backdrop-blur-xl backdrop-saturate-150 transition-all duration-300 ease-out',
+        compact ? 'h-[54px] max-w-[300px]' : 'h-[64px] max-w-[400px]')}>
         {NAV[role].map(item => {
           const active = pathname === item.href || pathname.startsWith(item.href + '/')
           const isProfile = item.href === '/me'
           return (
-            <li key={item.href} className={cx('flex justify-center transition-all duration-300', active && !compact ? 'flex-[1.6]' : 'flex-1')}>
+            <li key={item.href} className="flex flex-1 justify-center">
               <Link href={item.href} aria-label={item.label} aria-current={active ? 'page' : undefined}
-                className={cx('relative flex flex-col items-center justify-center gap-0.5 text-white transition-all duration-300',
-                  active ? 'rounded-[20px] bg-white/12 ring-1 ring-white/25' : 'text-white/70',
-                  active && !compact ? 'h-[56px] w-[84px]' : compact ? 'size-10' : 'size-12')}>
+                className={cx('relative flex items-center justify-center rounded-full text-ink transition-all duration-300',
+                  active ? 'bg-ink/[0.07] ring-1 ring-white/70' : 'text-ink/75',
+                  compact ? 'size-10' : 'size-12')}>
                 {isProfile
-                  ? <span className={cx('rounded-full', active && 'ring-2 ring-white')}><Avatar src={profile?.picture_url} name={name} size={compact ? 24 : 28} /></span>
-                  : <Icon name={item.icon} className={compact ? 'size-[22px]' : 'size-6'} strokeWidth={active ? 1.9 : 1.6} />}
-                {active && !compact && <span className="text-[11px] font-medium leading-none">{item.label}</span>}
-                {item.href === '/chats' && unreadMessages > 0 && <span className="absolute right-2 top-2 size-2 rounded-full bg-green ring-2 ring-dark" />}
+                  ? <Avatar src={profile?.picture_url} name={name} size={compact ? 26 : 30} />
+                  : <Icon name={item.icon} className={compact ? 'size-[22px]' : 'size-6'} strokeWidth={active ? 2 : 1.6} />}
+                {item.href === '/chats' && unreadMessages > 0 && <span className="absolute bottom-2 right-2 size-2 rounded-full bg-red ring-2 ring-surface" />}
               </Link>
             </li>
           )
