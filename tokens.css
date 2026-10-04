@@ -25,6 +25,27 @@
   --purple: #b878cc;
   --pink: #f3c6d7;
 
+  /* status colours used by the prototype's chips (self-tape, pencilled, expenses) */
+  --amber: #b7791f;      /* self-tape / warning text */
+  --pencil: #3559b5;     /* pencilled text */
+  --red: #b3392f;        /* destructive / money out */
+  --purple-ink: #6d3a80; /* purple text on tint */
+
+  /* tints for chips, icon tiles and soft banners (solid colours, not gradients) */
+  --green-tint: color-mix(in srgb, var(--green) 13%, white);
+  --amber-tint: color-mix(in srgb, #f2c46b 30%, white);
+  --pencil-tint: color-mix(in srgb, var(--pencil) 12%, white);
+  --purple-tint: color-mix(in srgb, var(--purple) 18%, white);
+  --pink-tint: color-mix(in srgb, var(--pink) 45%, white);
+  --red-tint: color-mix(in srgb, var(--red) 10%, white);
+  --blue-tint: color-mix(in srgb, var(--blue) 14%, white);
+
+  /* inputs, chips and neutral fills */
+  --field: #faf8f1;
+  --chip: #efe9dc;
+  --dark: #1a1a1a;       /* dark cards (booked, hero blocks) */
+  --dark-2: #2a2a2a;     /* raised surface on dark cards */
+
   /* the ONLY two gradients allowed */
   --grad-accent: linear-gradient(120deg, var(--purple), var(--pink));
   --grad-hero: linear-gradient(130deg, #1a1a1a, #3c2150);
