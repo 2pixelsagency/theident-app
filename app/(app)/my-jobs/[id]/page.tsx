@@ -51,7 +51,8 @@ export default function JobApplicants() {
         ;(allFiles || []).forEach((f: any) => { const a = filesByApp.get(f.application_id) || []; a.push(f); filesByApp.set(f.application_id, a) })
         // CVs and NDA signatures live in the private applications bucket: swap stored paths for signed URLs
         const signed = await signStorageUrls('applications', [...(allFiles || []).map(f => f.file_url), ...apps.map(a => a.signature_url)])
-        const sign = (v: string | null) => (v && signed.get(v)) || null
+        // Showreel links and profile headshots are already public URLs from other buckets: keep them
+        const sign = (v: string | null) => (v && (signed.get(v) || (/^https?:\/\//.test(v) && !v.includes('/object/public/applications/') ? v : null))) || null
         setApplicants(apps.map(a => ({
           ...a,
           signature_url: sign(a.signature_url),
