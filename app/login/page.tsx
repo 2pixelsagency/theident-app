@@ -31,7 +31,7 @@ export default function Login() {
   // Auto-redirect if already logged in
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session?.user) router.push('/dashboard')
+      if (session?.user) router.push('/home')
     })
   }, [])
 
@@ -78,7 +78,7 @@ export default function Login() {
     if (mode === 'signin') {
       const { error: e } = await supabase.auth.signInWithPassword({ email, password })
       if (e) { setError(e.message); setLoading(false); return }
-      router.push('/dashboard')
+      router.push('/home')
     } else {
       const { data: signUpData, error: e } = await supabase.auth.signUp({ email, password })
       if (e) { setError(e.message); setLoading(false); return }
@@ -92,7 +92,7 @@ export default function Login() {
   const handleGoogleSignIn = async () => {
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
-      options: { redirectTo: window.location.origin + '/dashboard' }
+      options: { redirectTo: window.location.origin + '/home' }
     })
     if (error) setError(error.message)
   }

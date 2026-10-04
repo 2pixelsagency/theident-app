@@ -8,7 +8,7 @@ export default function VerifyPage() {
 
   useEffect(() => {
     if (status === 'ok') {
-      const t = setTimeout(() => { window.location.href = '/dashboard' }, 1800)
+      const t = setTimeout(() => { window.location.href = '/home' }, 1800)
       return () => clearTimeout(t)
     }
   }, [status])
@@ -54,7 +54,7 @@ export default function VerifyPage() {
             </div>
             <h1 style={{ fontFamily: "'ITC Symbol',Georgia,serif", letterSpacing: '-0.03em', fontSize: '26px', fontWeight: 500, color: '#0c2520', margin: '0 0 8px' }}>Email verified</h1>
             <p style={{ fontSize: '14px', color: '#888', margin: '0 0 24px' }}>You&apos;re all set — taking you into the app…</p>
-            <a href="/dashboard" style={{ textDecoration: 'none' }}><span style={{ background: '#0c2520', color: '#f1f0ee', padding: '12px 28px', borderRadius: '28px', fontSize: '15px', fontWeight: 500 }}>Open The Ident</span></a>
+            <a href="/home" style={{ textDecoration: 'none' }}><span style={{ background: '#0c2520', color: '#f1f0ee', padding: '12px 28px', borderRadius: '28px', fontSize: '15px', fontWeight: 500 }}>Open The Ident</span></a>
           </>
         )}
 
@@ -65,7 +65,7 @@ export default function VerifyPage() {
             </div>
             <h1 style={{ fontFamily: "'ITC Symbol',Georgia,serif", letterSpacing: '-0.03em', fontSize: '24px', fontWeight: 500, color: '#0c2520', margin: '0 0 8px' }}>Couldn&apos;t verify</h1>
             <p style={{ fontSize: '14px', color: '#888', margin: '0 0 24px', lineHeight: 1.5 }}>{msg}</p>
-            <a href="/dashboard" style={{ textDecoration: 'none' }}><span style={{ background: '#0c2520', color: '#f1f0ee', padding: '12px 28px', borderRadius: '28px', fontSize: '15px', fontWeight: 500 }}>Open The Ident</span></a>
+            <a href="/home" style={{ textDecoration: 'none' }}><span style={{ background: '#0c2520', color: '#f1f0ee', padding: '12px 28px', borderRadius: '28px', fontSize: '15px', fontWeight: 500 }}>Open The Ident</span></a>
           </>
         )}
       </div>
