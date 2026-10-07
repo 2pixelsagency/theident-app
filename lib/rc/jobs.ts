@@ -24,6 +24,8 @@ export type Job = PayJob & {
   commitment_level: string | null
   schedule: string | null
   job_category: string | null
+  experience: string | null
+  experience_level: string | null
   created_at: string
   created_by: string | null
   requires_nda: boolean | null
@@ -37,7 +39,7 @@ export type Job = PayJob & {
   job_skills?: { skills: { id: number; name: string } | null }[]
 }
 
-export const JOB_SELECT = 'id, is_side_hustle, project_role, project_in, job_title, company, production_company, casting_team, location, salary, is_paid, pay_amount, pay_unit, contract_dates, start_date, end_date, application_deadline, age_range, gender_requirement, appearance_notes, description, short_summary, commitment_level, schedule, job_category, created_at, created_by, requires_nda, nda_text, submit_materials, application_method, application_email, submission_link, is_published, production_type_id, production_types(name), job_skills(skills(id, name))'
+export const JOB_SELECT = 'id, is_side_hustle, project_role, project_in, job_title, company, production_company, casting_team, location, salary, is_paid, pay_amount, pay_unit, contract_dates, start_date, end_date, application_deadline, age_range, gender_requirement, appearance_notes, description, short_summary, commitment_level, schedule, job_category, experience, experience_level, created_at, created_by, requires_nda, nda_text, submit_materials, application_method, application_email, submission_link, is_published, production_type_id, production_types(name), job_skills(skills(id, name))'
 
 export type Poster = { id: string; first_name: string | null; last_name: string | null; company_name: string | null; picture_url: string | null; is_verified: boolean }
 
