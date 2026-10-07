@@ -69,6 +69,12 @@ export default function PayPage() {
           <Icon name="chevron-right" className="size-5" />
         </Link>
 
+        <Link href="/pay/invoices" className="mt-3 flex items-center gap-3 rounded-[var(--radius)] border border-line bg-surface p-4 shadow-card">
+          <span className="flex size-11 items-center justify-center rounded-xl bg-green-tint text-green-ink"><Icon name="receipt" /></span>
+          <span className="flex-1"><span className="block text-[15px] font-medium">Invoices</span><span className="block text-[13px] text-muted">Create, download or email an invoice</span></span>
+          <Icon name="chevron-right" className="size-5 text-faint" />
+        </Link>
+
         <Button className="mt-4" size="lg" full icon="plus" onClick={() => setLogging(true)}>Log a payment or expense</Button>
 
         <div className="mb-3 mt-6 flex items-center justify-between">
