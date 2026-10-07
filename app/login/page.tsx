@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation'
 import Icon from '@/components/rc/Icon'
 import { Button, ClientOnly, Field, Toaster } from '@/components/rc/ui'
 import { supabase } from '@/lib/supabase'
+import { safeNext } from '@/lib/rc/onboarding'
 
 type Mode = 'signin' | 'forgot' | 'reset'
 
@@ -19,12 +20,14 @@ function LoginInner() {
   const [busy, setBusy] = useState<'email' | 'apple' | 'google' | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [sentTo, setSentTo] = useState<string | null>(null)
+  // Perform / Cast on the entry screen pass where to land after logging in
+  const [next] = useState(() => safeNext(new URLSearchParams(window.location.search).get('next')))
 
   // Already logged in → straight into the app (but not while setting a new password)
   useEffect(() => {
     if (mode === 'reset') return
-    supabase.auth.getSession().then(({ data: { session } }) => { if (session) router.replace('/home') })
-  }, [mode, router])
+    supabase.auth.getSession().then(({ data: { session } }) => { if (session) router.replace(next) })
+  }, [mode, router, next])
 
   const signIn = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -36,12 +39,14 @@ function LoginInner() {
       setBusy(null)
       return
     }
-    router.replace('/home')
+    router.replace(next)
   }
 
   const oauth = async (provider: 'apple' | 'google') => {
     setBusy(provider)
     setError(null)
+    // Keep the return URL unchanged (it must match Supabase's allow-list); carry `next` in session storage instead
+    try { sessionStorage.setItem('rc-next', next) } catch { /* private mode: lands on /home */ }
     const { error: err } = await supabase.auth.signInWithOAuth({ provider, options: { redirectTo: window.location.origin + '/start/finish' } })
     if (err) { setError('Couldn’t start ' + (provider === 'apple' ? 'Apple' : 'Google') + ' sign-in. Please try again.'); setBusy(null) }
   }

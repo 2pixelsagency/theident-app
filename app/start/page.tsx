@@ -13,7 +13,11 @@ const CHOICES: { role: Role; icon: string; title: string; sub: string; tile: str
 
 export default function RoleSelect() {
   const router = useRouter()
-  const [role, setRole] = useState<Role>(() => readDraft()?.role ?? 'performer')
+  // Perform / Cast on the entry screen arrives as ?role=; otherwise keep the draft's choice
+  const [role, setRole] = useState<Role>(() => {
+    const q = new URLSearchParams(window.location.search).get('role')
+    return q === 'caster' || q === 'performer' ? q : readDraft()?.role ?? 'performer'
+  })
 
   const next = () => {
     const d = readDraft() ?? emptyDraft(role)

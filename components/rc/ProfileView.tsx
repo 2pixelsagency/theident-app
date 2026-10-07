@@ -54,6 +54,7 @@ export default function ProfileView({ data, owner, onBack, onShare, topRight, ac
   const p = data.profile!
   const { reels, skills, credits, brands, testimonials, gallery, hair, eyes, connections } = data
   const name = fullName(p) || 'RoleCall member'
+  const heroSrc = p.banner_url || p.picture_url
   const caster = p.account_role === 'caster'
   const craft = caster ? p.company_name : craftTag(p)
   const grad = graduateLabel(p)
@@ -71,9 +72,10 @@ export default function ProfileView({ data, owner, onBack, onShare, topRight, ac
   return (
     <>
       <section className="relative h-[86dvh] min-h-[560px] max-h-[920px] overflow-hidden bg-dark text-white lg:h-[78vh] lg:rounded-b-[28px]">
-        {p.picture_url
+        {/* Cover photo if they've set one (Customise profile → Cover), otherwise the headshot */}
+        {heroSrc
           // eslint-disable-next-line @next/next/no-img-element
-          ? <img src={p.picture_url} alt={name} className="absolute inset-0 size-full object-cover" />
+          ? <img src={heroSrc} alt={name} className="absolute inset-0 size-full object-cover" />
           : <div className="absolute inset-0 flex items-center justify-center bg-hero"><Avatar name={name} size={140} /></div>}
         {/* scrims keep the floated controls and the name legible on any photo */}
         <div className="absolute inset-x-0 top-0 h-32 bg-gradient-to-b from-dark/50 to-transparent" />

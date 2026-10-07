@@ -119,3 +119,8 @@ export async function applyDraft(uid: string): Promise<{ ok: boolean; error?: st
   clearDraft()
   return { ok: true }
 }
+
+// Where to go after logging in (?next=). Same-site paths only, so it can't be used as an open redirect.
+export function safeNext(raw: string | null | undefined, fallback = '/home') {
+  return raw && raw.startsWith('/') && !raw.startsWith('//') && !raw.startsWith('/\\') ? raw : fallback
+}

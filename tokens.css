@@ -43,6 +43,11 @@
   /* inputs, chips and neutral fills */
   --field: #faf8f1;
   --chip: #efe9dc;
+  /* Entry screens + immersive profile (RoleCall hand-off): bright primary CTA with a neutral, never-coloured shadow */
+  --cta: #14b072;
+  --cta-shadow: 0 6px 16px rgba(14, 12, 10, 0.30);
+  --scrim: rgba(14, 12, 10, 0.92); /* dark photo scrim — the only gradient allowed besides --grad-* */
+
   --dark: #1a1a1a;       /* dark cards (booked, hero blocks) */
   --dark-2: #2a2a2a;     /* raised surface on dark cards */
 
