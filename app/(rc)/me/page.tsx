@@ -33,6 +33,7 @@ export default function MyProfilePage() {
 
   return (
     <ProfileView
+      signedIn
       data={data}
       owner
       onBack={() => (window.history.length > 1 ? router.back() : router.push('/home'))}

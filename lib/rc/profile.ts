@@ -6,6 +6,7 @@ export type FullProfile = {
   minimum_age: number | null; maximum_age: number | null; availability_status: string | null; show_talent: boolean | null
   hair_colour_id: number | null; eye_colour_id: number | null; is_graduate: boolean; graduate_school: string | null; graduate_year: number | null
   agent_name: string | null; agent_email: string | null; agent_phone: string | null; is_verified: boolean; account_role: string; company_name: string | null
+  cv_path: string | null
   email_alerts_enabled: boolean | null; notification_prefs: { matches?: boolean; applications?: boolean; messages?: boolean; marketing?: boolean } | null
 }
 
@@ -16,7 +17,7 @@ export type Testimonial = { id: string; quote: string; author_name: string | nul
 export type Lookup = { id: number; name: string }
 
 // Columns safe to show to other people (no date of birth, alert settings etc.)
-export const PUBLIC_PROFILE_COLS = 'id, first_name, last_name, slug, picture_url, banner_url, location, what_i_do, bio, summary, height, minimum_age, maximum_age, availability_status, show_talent, hair_colour_id, eye_colour_id, is_graduate, graduate_school, graduate_year, agent_name, agent_email, agent_phone, is_verified, account_role, company_name'
+export const PUBLIC_PROFILE_COLS = 'id, first_name, last_name, slug, picture_url, banner_url, location, what_i_do, bio, summary, height, minimum_age, maximum_age, availability_status, show_talent, hair_colour_id, eye_colour_id, is_graduate, graduate_school, graduate_year, agent_name, agent_email, agent_phone, is_verified, account_role, company_name, cv_path'
 
 export type FullProfileData = Awaited<ReturnType<typeof loadFullProfile>>
 

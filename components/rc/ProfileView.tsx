@@ -1,9 +1,10 @@
 'use client'
 
+import { useState } from 'react'
 import Link from 'next/link'
 import Icon from './Icon'
 import { VerifiedTick } from './JobCard'
-import { Avatar, Card, cx } from './ui'
+import { Avatar, Button, Card, cx, toast } from './ui'
 import { fullName } from '@/lib/rc/format'
 import { craftTag, graduateLabel, playingAge } from '@/lib/rc/talent'
 import type { Credit, FullProfileData } from '@/lib/rc/profile'
@@ -21,12 +22,35 @@ type Props = {
   topRight?: React.ReactNode // extra round buttons beside Share
   actions?: React.ReactNode // buttons at the foot of the headshot
   statusLine?: React.ReactNode
-  below?: React.ReactNode // e.g. Download CV, under the headshot
+  below?: React.ReactNode // extra actions under the headshot
+  signedIn?: boolean // uploaded CV files are for signed-in members only
+}
+
+function CvButtons({ data, signedIn }: { data: FullProfileData; signedIn?: boolean }) {
+  const [busy, setBusy] = useState<'pdf' | 'file' | null>(null)
+  const path = data.profile?.cv_path
+  const generate = async () => {
+    setBusy('pdf')
+    try { const { downloadCv } = await import('@/lib/rc/cv'); await downloadCv(data) } catch { toast('Couldn’t create the CV — try again') }
+    setBusy(null)
+  }
+  const openFile = async () => {
+    setBusy('file')
+    const { openUploadedCv } = await import('@/lib/rc/cv')
+    if (!(await openUploadedCv(path!))) toast('Couldn’t open the CV file')
+    setBusy(null)
+  }
+  return (
+    <div className="mt-5 flex gap-3">
+      <Button variant="dark" className="flex-1" icon="download" onClick={generate} disabled={busy !== null}>{busy === 'pdf' ? 'Creating…' : 'Download CV'}</Button>
+      {path && signedIn && <Button variant="outline" className="flex-1" icon="file" onClick={openFile} disabled={busy !== null}>{busy === 'file' ? 'Opening…' : 'Uploaded CV'}</Button>}
+    </div>
+  )
 }
 
 // One immersive profile for everyone: the owner (/me), casters and members (/talent/[id]) and the public link (/[slug]).
 // The headshot bleeds to the very top of the screen, behind the status bar / notch; controls float over it.
-export default function ProfileView({ data, owner, onBack, onShare, topRight, actions, statusLine, below }: Props) {
+export default function ProfileView({ data, owner, onBack, onShare, topRight, actions, statusLine, below, signedIn }: Props) {
   const p = data.profile!
   const { reels, skills, credits, brands, testimonials, gallery, hair, eyes, connections } = data
   const name = fullName(p) || 'RoleCall member'
@@ -80,6 +104,7 @@ export default function ProfileView({ data, owner, onBack, onShare, topRight, ac
       </section>
 
       <div className="px-4 pb-10">
+        {!caster && <CvButtons data={data} signedIn={signedIn} />}
         {below}
 
         {(reels.length > 0 || owner) && !caster && (

@@ -211,6 +211,8 @@ function Editor({ data, uid, caster, onRefresh, mutate }: { data: Data; uid: str
               </div>
             </section>
 
+            <CvUpload uid={uid} path={p.cv_path} onChange={cv_path => mutate(x => x && { ...x, profile: { ...x.profile!, cv_path } })} />
+
             <section>
               <div className="mb-3 flex items-center justify-between"><h2 className="text-[18px]">Credits</h2><button type="button" onClick={() => setCredit({})} className="text-sm font-medium text-green-ink">+ Add credit</button></div>
               {data.credits.length === 0 ? <p className="text-sm text-muted">No credits yet.</p> : (
@@ -339,5 +341,57 @@ function CreditSheet({ credit, uid, types, onClose, onSaved, onDelete }: { credi
         {c.id && <button type="button" onClick={() => onDelete(c)} className="w-full text-center text-sm text-red">Delete credit</button>}
       </div>
     </Sheet>
+  )
+}
+
+// Optional CV file (PDF/Word) that signed-in casting teams can download from the profile
+function CvUpload({ uid, path, onChange }: { uid: string; path: string | null; onChange: (path: string | null) => void }) {
+  const ref = useRef<HTMLInputElement>(null)
+  const [busy, setBusy] = useState(false)
+  const name = path?.split('/').pop()?.replace(/^cv-[a-z0-9]+-/, '')
+
+  const upload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const f = e.target.files?.[0]
+    e.target.value = ''
+    if (!f) return
+    if (f.size > 10 * 1024 * 1024) { toast('CVs can be up to 10MB'); return }
+    setBusy(true)
+    const next = uid + '/cv-' + stamp() + '-' + f.name.replace(/[^\w.\-]+/g, '_')
+    const { error } = await supabase.storage.from('cvs').upload(next, f, { contentType: f.type })
+    if (error) { setBusy(false); toast(error.message.includes('mime') ? 'Upload a PDF or Word file' : 'Upload failed'); return }
+    const { error: err } = await supabase.from('profiles').update({ cv_path: next }).eq('id', uid)
+    if (err) { setBusy(false); toast('Couldn’t save your CV'); return }
+    if (path) supabase.storage.from('cvs').remove([path]).then(() => {}, () => {})
+    onChange(next)
+    setBusy(false)
+    toast('CV uploaded')
+  }
+
+  const remove = async () => {
+    if (!path) return
+    setBusy(true)
+    await supabase.from('profiles').update({ cv_path: null }).eq('id', uid)
+    await supabase.storage.from('cvs').remove([path])
+    onChange(null)
+    setBusy(false)
+    toast('CV removed')
+  }
+
+  return (
+    <section>
+      <h2 className="mb-1 text-[18px]">CV file</h2>
+      <p className="mb-3 text-[13px] text-muted">Optional. Casting teams can download it from your profile. We also create a branded CV from your profile automatically.</p>
+      {path ? (
+        <Card className="flex items-center gap-3 p-3">
+          <span className="flex size-10 items-center justify-center rounded-xl bg-green-tint text-green-ink"><Icon name="file" className="size-5" /></span>
+          <span className="min-w-0 flex-1 truncate text-[15px] font-medium">{name || 'CV'}</span>
+          <button type="button" onClick={() => ref.current?.click()} disabled={busy} className="text-sm font-medium text-green-ink">Replace</button>
+          <button type="button" onClick={remove} disabled={busy} className="text-sm font-medium text-red">Remove</button>
+        </Card>
+      ) : (
+        <button type="button" onClick={() => ref.current?.click()} disabled={busy} className="upload flex h-12 w-full items-center justify-center gap-2 text-sm font-medium"><Icon name="upload" className="size-4" />{busy ? 'Uploading…' : 'Upload CV · PDF or Word, up to 10MB'}</button>
+      )}
+      <input ref={ref} type="file" accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document" className="hidden" onChange={upload} />
+    </section>
   )
 }

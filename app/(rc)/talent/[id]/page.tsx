@@ -84,6 +84,7 @@ export default function TalentProfilePage() {
   return (
     <>
       <ProfileView
+        signedIn
         data={full}
         owner={isMe}
         onBack={() => (window.history.length > 1 ? router.back() : router.push('/talent'))}
