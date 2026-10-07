@@ -33,6 +33,7 @@
   --color-red-tint: var(--red-tint);
   --color-field: var(--field);
   --color-chip: var(--chip);
+  --color-cta: var(--cta);
   --color-dark: var(--dark);
   --color-dark-2: var(--dark-2);
 }
@@ -51,6 +52,9 @@ html, body {
 @utility bg-accent { background-image: var(--grad-accent); }
 @utility bg-hero { background-image: var(--grad-hero); }
 @utility shadow-card { box-shadow: var(--shadow); }
+@utility shadow-cta { box-shadow: var(--cta-shadow); }
+/* Dark bottom-up scrim over full-bleed photos so overlaid text stays legible */
+@utility bg-scrim { background-image: linear-gradient(to top, var(--scrim) 0%, color-mix(in srgb, var(--scrim) 70%, transparent) 38%, transparent 72%); }
 @utility scrollbar-none {
   scrollbar-width: none;
   &::-webkit-scrollbar { display: none; }

@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/rc/ui'
 import { supabase } from '@/lib/supabase'
-import { applyDraft, readDraft } from '@/lib/rc/onboarding'
+import { applyDraft, readDraft, safeNext } from '@/lib/rc/onboarding'
 
 // Landing page after Apple/Google sign-in or the email confirmation link.
 export default function FinishSignup() {
@@ -19,7 +19,9 @@ export default function FinishSignup() {
       const hadDraft = !!readDraft()
       const res = await applyDraft(uid)
       if (!res.ok) { setError(res.error || 'Something went wrong'); return }
-      router.replace(hadDraft ? '/start/plan' : '/home')
+      let next: string | null = null
+      try { next = sessionStorage.getItem('rc-next'); sessionStorage.removeItem('rc-next') } catch { /* storage blocked */ }
+      router.replace(hadDraft ? '/start/plan' : safeNext(next))
     }
     // The session arrives from the URL; wait for it rather than redirecting too early
     const { data: sub } = supabase.auth.onAuthStateChange((_e, session) => { if (session) finish(session.user.id) })

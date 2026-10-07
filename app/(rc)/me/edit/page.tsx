@@ -3,8 +3,9 @@
 import { useMemo, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Icon from '@/components/rc/Icon'
-import { BackHeader, Avatar, Button, Card, Chip, Field, PageLoading, Sheet, TextArea, Toggle, cx, toast } from '@/components/rc/ui'
+import { Avatar, Button, Card, Chip, Field, PageLoading, Sheet, TextArea, Toggle, cx, toast } from '@/components/rc/ui'
 import { supabase } from '@/lib/supabase'
+import { heroRound } from '@/components/rc/ProfileView'
 import { useMe } from '@/lib/rc/me'
 import { useAsync } from '@/lib/rc/useAsync'
 import { fullName } from '@/lib/rc/format'
@@ -51,6 +52,8 @@ function Editor({ data, uid, caster, onRefresh, mutate }: { data: Data; uid: str
   const avatarRef = useRef<HTMLInputElement>(null)
   const bannerRef = useRef<HTMLInputElement>(null)
 
+  const [name, setName] = useState([p.first_name, p.last_name].filter(Boolean).join(' '))
+  const hero = p.banner_url || p.picture_url
   const set = <K extends keyof Draft>(k: K, v: Draft[K]) => setD(prev => ({ ...prev, [k]: v }))
   const skillName = useMemo(() => new Map(data.allSkills.map(s => [s.id, s.name])), [data.allSkills])
   const skillResults = skillQuery.trim() ? data.allSkills.filter(s => s.name.toLowerCase().includes(skillQuery.toLowerCase()) && !skillIds.includes(s.id)).slice(0, 8) : []
@@ -73,8 +76,10 @@ function Editor({ data, uid, caster, onRefresh, mutate }: { data: Data; uid: str
   const save = async () => {
     setSaving(true)
     const year = parseInt(d.gradYear, 10)
+    // One Name field: first word is the first name, the rest the last name
+    const [first, ...rest] = name.trim().split(/\s+/)
     const { error } = await supabase.from('profiles').update({
-      first_name: d.first_name?.trim() || null, last_name: d.last_name?.trim() || null, what_i_do: d.what_i_do?.trim() || null, location: d.location?.trim() || null,
+      first_name: first || null, last_name: rest.join(' ') || null, what_i_do: d.what_i_do?.trim() || null, location: d.location?.trim() || null,
       bio: d.bio?.trim() || null, height: d.height?.trim() || null, minimum_age: parseInt(d.minAge, 10) || null, maximum_age: parseInt(d.maxAge, 10) || null,
       hair_colour_id: d.hair, eye_colour_id: d.eyes, show_talent: d.isPublic, availability_status: d.openToWork ? 'available' : null,
       is_graduate: d.isGraduate, graduate_school: d.isGraduate ? d.graduate_school?.trim() || null : null, graduate_year: d.isGraduate && year ? year : null,
@@ -110,30 +115,50 @@ function Editor({ data, uid, caster, onRefresh, mutate }: { data: Data; uid: str
 
   return (
     <>
-      <BackHeader title="Customise profile" back="/me" right={<button type="button" onClick={save} disabled={saving} className="text-[15px] font-medium text-green-ink">{saving ? 'Saving…' : 'Save'}</button>} />
+      {/* Immersive hero, same as the public profile: cover (or headshot) bleeds to the top, controls float over it */}
+      <section className="relative h-[44dvh] min-h-[330px] max-h-[460px] overflow-hidden bg-dark text-white lg:rounded-b-[28px]">
+        {hero
+          // eslint-disable-next-line @next/next/no-img-element
+          ? <img src={hero} alt="" className="absolute inset-0 size-full object-cover" />
+          : <div className="absolute inset-0 bg-hero" />}
+        <div className="absolute inset-x-0 top-0 h-28 bg-gradient-to-b from-dark/50 to-transparent" />
+        <div className="absolute inset-0 bg-scrim" />
 
-      <div className="space-y-5 px-4 pb-12 pt-4">
-        {/* Banner + avatar */}
-        <div className="relative">
-          <button type="button" onClick={() => bannerRef.current?.click()} aria-label="Change banner" className="block h-28 w-full overflow-hidden rounded-[var(--radius)] bg-hero bg-cover bg-center" style={p.banner_url ? { backgroundImage: `url(${p.banner_url})` } : undefined}>
-            <span className="absolute right-3 top-3 flex size-9 items-center justify-center rounded-full bg-surface/90 text-ink"><Icon name={busyImage === 'banner' ? 'clock' : 'camera'} className="size-5" /></span>
+        <div className="absolute inset-x-0 top-0 flex items-center justify-between px-4 pt-[max(14px,env(safe-area-inset-top))]">
+          <button type="button" aria-label="Cancel" onClick={() => router.push('/me')} className={heroRound}><Icon name="x" className="size-5" /></button>
+          <button type="button" onClick={save} disabled={saving} className="inline-flex h-10 items-center gap-1.5 rounded-full bg-cta px-4 text-[15px] font-medium text-white shadow-cta transition active:scale-95 disabled:opacity-70">
+            <Icon name="check" className="size-4" strokeWidth={2.2} />{saving ? 'Saving…' : 'Save'}
           </button>
-          <button type="button" onClick={() => avatarRef.current?.click()} aria-label="Change photo" className="absolute -bottom-8 left-4 rounded-full ring-4 ring-bg">
-            <Avatar src={p.picture_url} name={fullName(p)} size={76} />
-            <span className="absolute inset-0 flex items-center justify-center rounded-full bg-dark/30 text-white"><Icon name={busyImage === 'avatar' ? 'clock' : 'camera'} className="size-6" /></span>
-          </button>
-          <input ref={bannerRef} type="file" accept="image/*" className="hidden" onChange={e => uploadImage('banner', e)} />
-          <input ref={avatarRef} type="file" accept="image/*" className="hidden" onChange={e => uploadImage('avatar', e)} />
         </div>
 
-        <div className="flex gap-3 pt-8">
-          <Field className="flex-1" label="First name" value={d.first_name || ''} onChange={e => set('first_name', e.target.value)} />
-          <Field className="flex-1" label="Last name" value={d.last_name || ''} onChange={e => set('last_name', e.target.value)} />
+        <div className="absolute inset-x-0 bottom-0 px-5 pb-5">
+          <p className="mb-3 text-[11px] font-medium uppercase tracking-[0.12em] text-white/80">Customise profile</p>
+          <div className="flex items-center gap-3">
+            <button type="button" onClick={() => avatarRef.current?.click()} aria-label="Replace headshot" className="relative shrink-0 rounded-full ring-2 ring-white">
+              <Avatar src={p.picture_url} name={fullName(p)} size={60} />
+              <span className="absolute -bottom-0.5 -right-0.5 flex size-6 items-center justify-center rounded-full bg-cta text-white ring-2 ring-dark">
+                <Icon name={busyImage === 'avatar' ? 'clock' : 'camera'} className="size-3.5" />
+              </span>
+            </button>
+            <button type="button" onClick={() => avatarRef.current?.click()} className="min-w-0 flex-1 text-left">
+              <span className="block text-[16px] font-medium">Your headshot</span>
+              <span className="block text-[13px] leading-snug text-white/75">Tap to replace your main casting photo</span>
+            </button>
+            <button type="button" onClick={() => bannerRef.current?.click()} className="inline-flex h-9 shrink-0 items-center gap-1.5 rounded-full border border-white/25 bg-white/15 px-3 text-[13px] font-medium backdrop-blur-md">
+              <Icon name={busyImage === 'banner' ? 'clock' : 'image'} className="size-4" /> Cover
+            </button>
+          </div>
         </div>
+        <input ref={bannerRef} type="file" accept="image/*" className="hidden" onChange={e => uploadImage('banner', e)} />
+        <input ref={avatarRef} type="file" accept="image/*" className="hidden" onChange={e => uploadImage('avatar', e)} />
+      </section>
+
+      <div className="space-y-5 px-4 pb-12 pt-5">
+        <Field label="Name" autoComplete="name" value={name} onChange={e => setName(e.target.value)} placeholder="First and last name" />
         {caster
           ? <Field label="Company" value={d.company_name || ''} onChange={e => set('company_name', e.target.value)} />
-          : <Field label="Headline" value={d.what_i_do || ''} onChange={e => set('what_i_do', e.target.value)} placeholder="Actor, Dancer" />}
-        <Field label="Location" icon="pin" value={d.location || ''} onChange={e => set('location', e.target.value)} placeholder="London, UK" />
+          : <Field label="Headline" value={d.what_i_do || ''} onChange={e => set('what_i_do', e.target.value)} placeholder="Actor & Dancer · London" />}
+        <Field label="Location" value={d.location || ''} onChange={e => set('location', e.target.value)} placeholder="London, UK" />
 
         <Card className="divide-y divide-line">
           <Row title="Public profile" sub="Anyone can view & share your page" checked={d.isPublic} onChange={v => set('isPublic', v)} />
@@ -149,13 +174,13 @@ function Editor({ data, uid, caster, onRefresh, mutate }: { data: Data; uid: str
               <Card className="divide-y divide-line">
                 <div className="flex items-center gap-3 px-4 py-2.5">
                   <span className="flex-1 text-[15px] text-muted">Playing age</span>
-                  <input aria-label="Playing age from" inputMode="numeric" value={d.minAge} onChange={e => set('minAge', e.target.value.replace(/\D/g, ''))} placeholder="20" className="w-12 rounded-lg bg-field px-2 py-1.5 text-right text-[15px] font-medium outline-none" />
+                  <input aria-label="Playing age from" inputMode="numeric" value={d.minAge} onChange={e => set('minAge', e.target.value.replace(/\D/g, ''))} placeholder="20" className="w-12 rounded-lg bg-transparent px-2 py-1.5 text-right text-[15px] font-medium outline-none focus:bg-field" />
                   <span className="text-muted">–</span>
-                  <input aria-label="Playing age to" inputMode="numeric" value={d.maxAge} onChange={e => set('maxAge', e.target.value.replace(/\D/g, ''))} placeholder="28" className="w-12 rounded-lg bg-field px-2 py-1.5 text-right text-[15px] font-medium outline-none" />
+                  <input aria-label="Playing age to" inputMode="numeric" value={d.maxAge} onChange={e => set('maxAge', e.target.value.replace(/\D/g, ''))} placeholder="28" className="w-12 rounded-lg bg-transparent px-2 py-1.5 text-right text-[15px] font-medium outline-none focus:bg-field" />
                 </div>
                 <div className="flex items-center gap-3 px-4 py-2.5">
                   <span className="flex-1 text-[15px] text-muted">Height</span>
-                  <input aria-label="Height" value={d.height || ''} onChange={e => set('height', e.target.value)} placeholder={'5\'11"'} className="w-24 rounded-lg bg-field px-2 py-1.5 text-right text-[15px] font-medium outline-none" />
+                  <input aria-label="Height" value={d.height || ''} onChange={e => set('height', e.target.value)} placeholder={'5\'11"'} className="w-24 rounded-lg bg-transparent px-2 py-1.5 text-right text-[15px] font-medium outline-none focus:bg-field" />
                 </div>
                 <SelectRow label="Hair" value={d.hair} options={data.hair} onChange={v => set('hair', v)} />
                 <SelectRow label="Eyes" value={d.eyes} options={data.eyes} onChange={v => set('eyes', v)} />
@@ -198,7 +223,7 @@ function Editor({ data, uid, caster, onRefresh, mutate }: { data: Data; uid: str
             </section>
 
             <section id="media">
-              <h2 className="mb-3 text-[18px]">Showreel &amp; clips</h2>
+              <h2 className="mb-3 text-[18px]">Showreel &amp; photos</h2>
               <div className="grid grid-cols-2 gap-3">
                 {data.reels.map(r => (
                   <div key={r.id} className="relative aspect-[16/10] overflow-hidden rounded-[var(--radius)] bg-dark bg-cover bg-center" style={p.picture_url ? { backgroundImage: `url(${p.picture_url})` } : undefined}>
@@ -264,7 +289,7 @@ function SelectRow({ label, value, options, onChange }: { label: string; value: 
   return (
     <label className="flex items-center gap-3 px-4 py-2.5">
       <span className="flex-1 text-[15px] text-muted">{label}</span>
-      <select value={value ?? ''} onChange={e => onChange(e.target.value ? Number(e.target.value) : null)} className="rounded-lg bg-field px-2 py-1.5 text-right text-[15px] font-medium outline-none">
+      <select value={value ?? ''} onChange={e => onChange(e.target.value ? Number(e.target.value) : null)} className="rounded-lg bg-transparent px-2 py-1.5 text-right text-[15px] font-medium outline-none focus:bg-field">
         <option value="">—</option>
         {options.map(o => <option key={o.id} value={o.id}>{o.name}</option>)}
       </select>
