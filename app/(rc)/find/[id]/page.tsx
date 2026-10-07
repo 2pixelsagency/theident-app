@@ -30,11 +30,11 @@ export default function JobDetailPage() {
     const j = job as unknown as Job
     const [posters, { data: saved }, { data: app }, { count: posted }] = await Promise.all([
       loadPosters([j.created_by]),
-      supabase.from('saved_jobs').select('job_id').eq('profile_id', me.id).eq('job_id', jobId).maybeSingle(),
+      supabase.from('saved_jobs').select('job_id, list').eq('profile_id', me.id).eq('job_id', jobId).maybeSingle(),
       supabase.from('applications').select('id, status, outcome').eq('job_id', jobId).eq('profile_id', me.id).maybeSingle(),
       j.created_by ? supabase.from('jobs').select('id', { count: 'exact', head: true }).eq('created_by', j.created_by).eq('is_published', true) : Promise.resolve({ count: 0 }),
     ])
-    return { job: j, poster: posters.get(j.created_by || ''), saved: !!saved, app: app as { id: string; status: string; outcome: string | null } | null, posted: posted || 0 }
+    return { job: j, poster: posters.get(j.created_by || ''), saved: saved?.list === 'saved', app: app as { id: string; status: string; outcome: string | null } | null, posted: posted || 0 }
   }, [jobId, me.id])
 
   if (loading) return <PageLoading />
@@ -59,7 +59,7 @@ export default function JobDetailPage() {
     mutate(d => d && { ...d, saved: !saved })
     const { error } = saved
       ? await supabase.from('saved_jobs').delete().eq('profile_id', me.id).eq('job_id', j.id)
-      : await supabase.from('saved_jobs').insert({ profile_id: me.id, job_id: j.id })
+      : await supabase.from('saved_jobs').upsert({ profile_id: me.id, job_id: j.id, list: 'saved' }, { onConflict: 'profile_id,job_id' })
     if (error) { mutate(d => d && { ...d, saved }); toast('Couldn’t update saved jobs') }
   }
 
