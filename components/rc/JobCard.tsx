@@ -22,7 +22,9 @@ export function FairPayBadge({ job, compact }: { job: PayJob; compact?: boolean 
   return null
 }
 
-export default function JobCard({ job, poster, saved, onToggleSave }: { job: Job; poster?: Poster; saved?: boolean; onToggleSave?: () => void }) {
+// `bare` renders a <div> so the card can sit inside a SwipeRow's <li>
+export default function JobCard({ job, poster, saved, onToggleSave, bare }: { job: Job; poster?: Poster; saved?: boolean; onToggleSave?: () => void; bare?: boolean }) {
+  const El = bare ? 'div' : 'li'
   const pay = payLabel(job)
   const side = job.is_side_hustle
   const sub = side
@@ -34,7 +36,7 @@ export default function JobCard({ job, poster, saved, onToggleSave }: { job: Job
   const closes = closesLabel(job)
 
   return (
-    <li className="relative rounded-[var(--radius)] border border-line bg-surface p-4 shadow-card">
+    <El className="relative rounded-[var(--radius)] border border-line bg-surface p-4 shadow-card">
       <Link href={'/find/' + job.id} className="block pr-8">
         <span className="flex items-center gap-1.5">
           <span className="text-[17px] font-medium leading-snug">{jobTitle(job)}</span>
@@ -54,6 +56,6 @@ export default function JobCard({ job, poster, saved, onToggleSave }: { job: Job
           <Icon name="bookmark" className={cx('size-5', saved && 'fill-current')} />
         </button>
       )}
-    </li>
+    </El>
   )
 }
