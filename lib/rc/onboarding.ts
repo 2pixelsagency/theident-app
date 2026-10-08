@@ -124,3 +124,26 @@ export async function applyDraft(uid: string): Promise<{ ok: boolean; error?: st
 export function safeNext(raw: string | null | undefined, fallback = '/home') {
   return raw && raw.startsWith('/') && !raw.startsWith('//') && !raw.startsWith('/\\') ? raw : fallback
 }
+
+// Each side has its own home: performers → talent dashboard, casters → postings
+export function dashboardFor(role: Role | null | undefined) {
+  return role === 'caster' ? '/postings' : '/home'
+}
+
+export function isRole(v: unknown): v is Role {
+  return v === 'performer' || v === 'caster'
+}
+
+// Sign up from the entry screen: the Perform/Cast toggle already chose the side, so go straight
+// into the questions. Keeps an in-progress draft if it's for the same side.
+export function startSignup(role: Role) {
+  const d = readDraft()
+  writeDraft(d && d.role === role ? d : { ...(d ?? emptyDraft(role)), role })
+  return '/start/profile'
+}
+
+// Logging in on the Perform or Cast side switches the account to that side (same as Settings → Using RoleCall as)
+export async function switchSide(uid: string, role: Role) {
+  const { data } = await supabase.from('profiles').select('account_role').eq('id', uid).maybeSingle()
+  if (data && data.account_role !== role) await supabase.from('profiles').update({ account_role: role }).eq('id', uid)
+}

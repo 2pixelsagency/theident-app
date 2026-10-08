@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import Icon from '@/components/rc/Icon'
 import { Button, cx, toast } from '@/components/rc/ui'
+import { dashboardFor, isRole } from '@/lib/rc/onboarding'
 
 // Optional payment step. Stripe isn't connected yet, so Pro is a waitlist for now.
 const PLANS = [
@@ -12,6 +13,8 @@ const PLANS = [
 
 export default function ChoosePlan() {
   const [plan, setPlan] = useState<'free' | 'pro'>('free')
+  // Finish on the dashboard for the side they signed up on
+  const [home] = useState(() => { const r = new URLSearchParams(window.location.search).get('role'); return dashboardFor(isRole(r) ? r : null) })
 
   return (
     <>
@@ -47,8 +50,8 @@ export default function ChoosePlan() {
       <div className="mt-auto space-y-3 pt-10">
         {plan === 'pro'
           ? <Button size="lg" full onClick={() => toast('Pro is coming soon — we’ll let you know when it’s ready')}>Join the Pro waitlist</Button>
-          : <Button size="lg" full trailingIcon="arrow-right" href="/home">Continue free</Button>}
-        {plan === 'pro' && <Button variant="outline" size="lg" full href="/home">Maybe later</Button>}
+          : <Button size="lg" full trailingIcon="arrow-right" href={home}>Continue free</Button>}
+        {plan === 'pro' && <Button variant="outline" size="lg" full href={home}>Maybe later</Button>}
       </div>
     </>
   )

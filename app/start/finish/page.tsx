@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/rc/ui'
 import { supabase } from '@/lib/supabase'
-import { applyDraft, readDraft, safeNext } from '@/lib/rc/onboarding'
+import { applyDraft, dashboardFor, isRole, readDraft, switchSide } from '@/lib/rc/onboarding'
 
 // Landing page after Apple/Google sign-in or the email confirmation link.
 export default function FinishSignup() {
@@ -16,12 +16,16 @@ export default function FinishSignup() {
     const finish = async (uid: string) => {
       if (done) return
       done = true
-      const hadDraft = !!readDraft()
+      const draft = readDraft()
       const res = await applyDraft(uid)
       if (!res.ok) { setError(res.error || 'Something went wrong'); return }
-      let next: string | null = null
-      try { next = sessionStorage.getItem('rc-next'); sessionStorage.removeItem('rc-next') } catch { /* storage blocked */ }
-      router.replace(hadDraft ? '/start/plan' : safeNext(next))
+      // New sign-up: the plan step for the side they chose
+      if (draft) { router.replace('/start/plan?role=' + draft.role); return }
+      // Returning user via Google/Apple from the entry screen: use the side they picked there
+      let side: string | null = null
+      try { side = sessionStorage.getItem('rc-side'); sessionStorage.removeItem('rc-side'); sessionStorage.removeItem('rc-next') } catch { /* storage blocked */ }
+      if (isRole(side)) await switchSide(uid, side)
+      router.replace(isRole(side) ? dashboardFor(side) : '/home')
     }
     // The session arrives from the URL; wait for it rather than redirecting too early
     const { data: sub } = supabase.auth.onAuthStateChange((_e, session) => { if (session) finish(session.user.id) })
