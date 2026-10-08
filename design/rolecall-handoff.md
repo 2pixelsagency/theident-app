@@ -11,7 +11,9 @@ Source of truth for the entry screen and Customise profile (the Claude Design pr
 
 ## Assets
 - `public/welcome-hero.webp` — studio / voiceover photo, Perform side.
-- `public/welcome-cast.webp` — casting side; placeholder until a casting-room / audition shot is supplied.
+- `public/casting-hero.png` — casting side; placeholder portrait until a casting-room / audition shot is supplied.
+- Prototype stand-ins also in `public/`: `profile-headshot.png`, `testimonial-1.png`, `testimonial-2.png`, `talent-1.png` … `talent-4.png`. In the app those screens show members' real photos from Supabase, so these aren't wired in.
+- Heroes are rendered with `next/image`, so the large uploads are served resized as WebP/AVIF.
   Missing images fall back to the brand hero background.
 
 ## 1) Entry flow — the Perform / Cast toggle chooses the side
@@ -35,7 +37,7 @@ Notes
 
 | | Perform | Cast |
 |---|---|---|
-| Hero | `welcome-hero.webp`, `object-position: 54% center` | `welcome-cast.webp`, `object-position: center 22%` |
+| Hero | `welcome-hero.webp`, `object-position: 54% center` | `casting-hero.png`, `object-position: center 22%` |
 | Banner | Get discovered faster — try RoleCall Pro | Casting a production? — try RoleCall Pro |
 | h1 | Your whole career, in one place. | Find your cast, in one place. |
 | Sub | Find roles and side hustles, apply with your reel, and track every booking — all in one app. | Post roles, review self-tapes, and book talent — audition to offer, all in one app. |

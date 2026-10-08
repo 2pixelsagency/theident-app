@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import Image from 'next/image'
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Icon from '@/components/rc/Icon'
@@ -26,8 +27,8 @@ const SIDES: Record<Side, { role: Role; label: string; hero: string; position: s
   cast: {
     role: 'caster',
     label: 'Cast',
-    // Placeholder until a casting-room / audition shot is supplied
-    hero: '/welcome-cast.webp',
+    // Placeholder portrait until a casting-room / audition shot is supplied
+    hero: '/casting-hero.png',
     position: 'center 22%',
     banner: 'Casting a production?',
     title: ['Find your cast,', 'in one place.'],
@@ -88,10 +89,9 @@ export default function EntryScreen() {
         <div key={k} aria-hidden="true" className={cx('absolute inset-0 -z-20 transition-opacity', EASE, side === k ? 'opacity-100' : 'opacity-0')}>
           {broken[k]
             ? <div className="size-full bg-hero" />
-            // eslint-disable-next-line @next/next/no-img-element
-            : <img src={SIDES[k].hero} alt="" className="size-full object-cover" style={{ objectPosition: SIDES[k].position }}
-                ref={el => { if (el?.complete && el.naturalWidth === 0) setBroken(b => (b[k] ? b : { ...b, [k]: true })) }} // failed before hydration
-                onError={() => setBroken(b => ({ ...b, [k]: true }))} />}
+            // next/image serves a resized WebP/AVIF instead of the full-size upload
+            : <Image src={SIDES[k].hero} alt="" fill priority={k === 'perform'} sizes="(min-width: 640px) 640px, 100vw"
+                className="object-cover" style={{ objectPosition: SIDES[k].position }} onError={() => setBroken(b => ({ ...b, [k]: true }))} />}
         </div>
       ))}
       <div aria-hidden="true" className="absolute inset-0 -z-10 bg-scrim" />
