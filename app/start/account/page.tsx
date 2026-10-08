@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation'
 import Icon from '@/components/rc/Icon'
 import { Button, Field, Steps } from '@/components/rc/ui'
 import { supabase } from '@/lib/supabase'
-import { applyDraft, readDraft } from '@/lib/rc/onboarding'
+import { SIGNUP_QUESTIONS, applyDraft, readDraft } from '@/lib/rc/onboarding'
 
 export default function CreateAccount() {
   const router = useRouter()
@@ -74,10 +74,11 @@ export default function CreateAccount() {
   return (
     <>
       <div className="flex items-center gap-3 py-2">
-        <button type="button" aria-label="Back" onClick={() => router.push('/start/profile')} className="-ml-1 inline-flex size-9 items-center justify-center rounded-full hover:bg-chip">
+        <button type="button" aria-label="Back" onClick={() => router.push('/start/profile?q=' + (SIGNUP_QUESTIONS - 1))} className="-ml-1 inline-flex size-9 items-center justify-center rounded-full hover:bg-chip">
           <Icon name="chevron-left" className="size-6" />
         </button>
-        <Steps step={2} total={2} />
+        <Steps step={SIGNUP_QUESTIONS + 1} total={SIGNUP_QUESTIONS + 1} />
+        <span className="w-12 text-right text-[13px] tabular-nums text-muted">{SIGNUP_QUESTIONS + 1} of {SIGNUP_QUESTIONS + 1}</span>
       </div>
 
       <h1 className="mt-4 text-[26px]">{name ? 'Nearly there, ' + name : 'Create your account'}</h1>

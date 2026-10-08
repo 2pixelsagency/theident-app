@@ -36,11 +36,14 @@ const SIDES: Record<Side, { role: Role; label: string; hero: string; position: s
   },
 }
 const ORDER: Side[] = ['perform', 'cast']
-const EASE = 'duration-[400ms] ease-out'
+// Pill slides over 400ms; hero photo, banner and copy cross-fade over ~280ms (both ease-out, no overshoot)
+const SLIDE = 'duration-[400ms] ease-out'
+const FADE = 'duration-[280ms] ease-out will-change-[opacity]'
 
 export default function EntryScreen() {
   const router = useRouter()
   const [side, setSide] = useState<Side>(useSearchParams().get('side') === 'cast' ? 'cast' : 'perform')
+  const [firstSide] = useState(side)
   const [broken, setBroken] = useState<Partial<Record<Side, boolean>>>({})
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -49,9 +52,14 @@ export default function EntryScreen() {
   const [error, setError] = useState<string | null>(null)
   const s = SIDES[side]
 
-  // Already signed in: skip the entry screen
+  // Already signed in: skip the entry screen — unless this is a password-recovery link that fell back to the
+  // site URL (e.g. the reset page isn't in Supabase's Redirect URLs yet): send it to the reset page instead.
   useEffect(() => {
+    const recovery = /type=recovery/.test(window.location.hash) || new URLSearchParams(window.location.search).get('type') === 'recovery'
+    if (recovery) { router.replace('/reset-password' + window.location.search + window.location.hash); return }
+    const { data: sub } = supabase.auth.onAuthStateChange(event => { if (event === 'PASSWORD_RECOVERY') router.replace('/reset-password') })
     supabase.auth.getSession().then(({ data: { session } }) => { if (session) router.replace('/home') })
+    return () => sub.subscription.unsubscribe()
   }, [router])
 
   const signUp = (role: Role) => router.push(startSignup(role))
@@ -86,11 +94,15 @@ export default function EntryScreen() {
     <main className="relative isolate flex min-h-dvh flex-col overflow-hidden bg-dark text-white">
       {/* Full-bleed heroes, stacked and cross-faded; they run behind the notch */}
       {ORDER.map(k => (
-        <div key={k} aria-hidden="true" className={cx('absolute inset-0 -z-20 transition-opacity', EASE, side === k ? 'opacity-100' : 'opacity-0')}>
+        <div key={k} aria-hidden="true" className={cx('absolute inset-0 -z-20 transition-opacity', FADE, side === k ? 'opacity-100' : 'opacity-0')}>
           {broken[k]
             ? <div className="size-full bg-hero" />
             // next/image serves a resized WebP/AVIF instead of the full-size upload
-            : <Image src={SIDES[k].hero} alt="" fill priority={k === 'perform'} sizes="(min-width: 640px) 640px, 100vw"
+            : <Image src={SIDES[k].hero} alt="" fill
+                // Both heroes load up front so switching never shows a blank frame: the side shown first is preloaded
+                // in <head>, the other downloads straight away at low priority instead of waiting until it's shown
+                {...(k === firstSide ? { preload: true } : { loading: 'eager' as const, fetchPriority: 'low' as const })}
+                sizes="(min-width: 640px) 640px, 100vw"
                 className="object-cover" style={{ objectPosition: SIDES[k].position }} onError={() => setBroken(b => ({ ...b, [k]: true }))} />}
         </div>
       ))}
@@ -100,7 +112,7 @@ export default function EntryScreen() {
         {/* Audience-specific banner */}
         <div className="grid text-[13px]">
           {ORDER.map(k => (
-            <p key={k} aria-hidden={side !== k} className={cx('flex items-center gap-2 transition-opacity [grid-area:1/1]', EASE, side === k ? 'opacity-100' : 'pointer-events-none opacity-0')}>
+            <p key={k} aria-hidden={side !== k} className={cx('flex items-center gap-2 transition-opacity [grid-area:1/1]', FADE, side === k ? 'opacity-100' : 'pointer-events-none opacity-0')}>
               <Icon name="sparkle" className="size-4 shrink-0 text-pink" />
               <span className="text-white/90">{SIDES[k].banner} — <button type="button" onClick={() => signUp(SIDES[k].role)} tabIndex={side === k ? 0 : -1} className="font-medium text-white underline underline-offset-2">try RoleCall Pro</button></span>
             </p>
@@ -111,10 +123,10 @@ export default function EntryScreen() {
 
         {/* Perform / Cast segmented toggle: the white pill slides, labels cross-fade */}
         <div role="group" aria-label="I want to" className="relative grid w-fit grid-cols-2 rounded-full border border-white/25 bg-white/15 p-1 backdrop-blur-md">
-          <span aria-hidden="true" className={cx('absolute bottom-1 left-1 top-1 w-[calc(50%-4px)] rounded-full bg-white transition-transform', EASE, side === 'cast' && 'translate-x-full')} />
+          <span aria-hidden="true" className={cx('absolute bottom-1 left-1 top-1 w-[calc(50%-4px)] rounded-full bg-white transition-transform', SLIDE, side === 'cast' && 'translate-x-full')} />
           {ORDER.map(k => (
             <button key={k} type="button" aria-pressed={side === k} onClick={() => setSide(k)}
-              className={cx('relative z-10 h-11 w-[124px] rounded-full text-[15px] font-medium transition-colors', EASE, side === k ? 'text-ink' : 'text-white')}>
+              className={cx('relative z-10 h-11 w-[124px] rounded-full text-[15px] font-medium transition-colors', SLIDE, side === k ? 'text-ink' : 'text-white')}>
               {SIDES[k].label}
             </button>
           ))}
@@ -123,7 +135,7 @@ export default function EntryScreen() {
         {/* Headline + sub, cross-faded in one grid cell so the layout doesn't jump */}
         <div className="mt-5 grid">
           {ORDER.map(k => (
-            <div key={k} aria-hidden={side !== k} className={cx('transition-opacity [grid-area:1/1]', EASE, side === k ? 'opacity-100' : 'opacity-0')}>
+            <div key={k} aria-hidden={side !== k} className={cx('transition-opacity [grid-area:1/1]', FADE, side === k ? 'opacity-100' : 'opacity-0')}>
               <h1 className="text-[32px] leading-[1.05] text-white">{SIDES[k].title[0]}<br />{SIDES[k].title[1]}</h1>
               <p className="mt-3 text-[15px] font-light leading-[1.5] text-white/85">{SIDES[k].sub}</p>
             </div>
@@ -144,7 +156,7 @@ export default function EntryScreen() {
         </form>
 
         <div className="mt-3 flex items-center justify-between">
-          <Link href={'/login?forgot=1&side=' + side} className="text-[13px] font-medium text-white/80">Forgot password?</Link>
+          <Link href={'/forgot-password?side=' + side} className="text-[13px] font-medium text-white/80">Forgot password?</Link>
           <div className="flex items-center gap-2">
             <span className="text-[13px] text-white/60">or</span>
             <button type="button" aria-label="Continue with Apple" onClick={() => oauth('apple')} disabled={busy !== null} className={round}><Icon name="apple" className="size-5" /></button>

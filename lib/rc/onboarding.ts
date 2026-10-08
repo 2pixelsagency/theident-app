@@ -125,6 +125,9 @@ export function safeNext(raw: string | null | undefined, fallback = '/home') {
   return raw && raw.startsWith('/') && !raw.startsWith('//') && !raw.startsWith('/\\') ? raw : fallback
 }
 
+// Sign up = this many one-at-a-time questions (/start/profile), then the account step
+export const SIGNUP_QUESTIONS = 4
+
 // Each side has its own home: performers → talent dashboard, casters → postings
 export function dashboardFor(role: Role | null | undefined) {
   return role === 'caster' ? '/postings' : '/home'
