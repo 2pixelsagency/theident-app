@@ -11,7 +11,9 @@ Source of truth for the entry screen and Customise profile (the Claude Design pr
 
 ## Assets
 - `public/welcome-hero.webp` — studio / voiceover photo, Perform side.
-- `public/welcome-cast.webp` — casting side; placeholder until a casting-room / audition shot is supplied.
+- `public/casting-hero.png` — casting side; placeholder portrait until a casting-room / audition shot is supplied.
+- Prototype stand-ins also in `public/`: `profile-headshot.png`, `testimonial-1.png`, `testimonial-2.png`, `talent-1.png` … `talent-4.png`. In the app those screens show members' real photos from Supabase, so these aren't wired in.
+- Heroes are rendered with `next/image`, so the large uploads are served resized as WebP/AVIF.
   Missing images fall back to the brand hero background.
 
 ## 1) Entry flow — the Perform / Cast toggle chooses the side
@@ -31,11 +33,13 @@ Notes
 - Logging in on a side switches the account to that side (same as Settings → Using RoleCall as), so the dashboard always matches the toggle. Google / Apple carry the side through `sessionStorage` (`rc-side`).
 - `/welcome?side=cast` opens on the casting side (used by Back from sign-up and "Already have an account?").
 - `/start?role=performer|caster` jumps into the questions for that side; `/start` with no side goes back to `/welcome`.
-- `/login` only hosts Forgot password (`?forgot=1`) and the reset link (`?reset=1`); any other visit goes to `/welcome`.
+- Sign up is one question per screen, starting at question 1, then the account step: performer = name & photo → what you do → base & skills → reel / open to work → account; caster = name & photo → company → what you cast → base → account. Progress shows "1 of 5"…"5 of 5".
+- Forgot password: `/forgot-password` (email → `supabase.auth.resetPasswordForEmail(email, { redirectTo: origin + '/reset-password' })`) and `/reset-password` (handles the recovery link — `#access_token…&type=recovery`, `?code=` or `?token_hash=` — then `supabase.auth.updateUser({ password })`). Public anon client only. **Supabase → Authentication → URL Configuration → Redirect URLs must include `<site>/reset-password`**; a recovery link that falls back to the site URL is caught on `/welcome` and sent to the reset page.
+- `/login` is a redirect only (old links): `?reset=1` → `/reset-password`, `?forgot=1` → `/forgot-password`, anything else → `/welcome`.
 
 | | Perform | Cast |
 |---|---|---|
-| Hero | `welcome-hero.webp`, `object-position: 54% center` | `welcome-cast.webp`, `object-position: center 22%` |
+| Hero | `welcome-hero.webp`, `object-position: 54% center` | `casting-hero.png`, `object-position: center 22%` |
 | Banner | Get discovered faster — try RoleCall Pro | Casting a production? — try RoleCall Pro |
 | h1 | Your whole career, in one place. | Find your cast, in one place. |
 | Sub | Find roles and side hustles, apply with your reel, and track every booking — all in one app. | Post roles, review self-tapes, and book talent — audition to offer, all in one app. |
@@ -48,5 +52,5 @@ Matches the immersive public profile.
 - Below, on cream: Name, Headline, Location; Public-profile + Open-to-work toggles; About; Playing details; Skills chips; Showreel & photos (dashed add tile); Credits.
 
 ## 3) Perform / Cast toggle animation
-Segmented control with a white pill behind the two labels. On switch the pill slides to the selected side and the labels cross-fade (active = ink on white, inactive = white on the translucent track), ~0.4s ease-out, no bounce. Hero image, copy and CTA targets cross-fade at the same time.
+Segmented control with a white pill behind the two labels. On switch the pill slides to the selected side and the labels cross-fade (active = ink on white, inactive = white on the translucent track), 400ms ease-out, no bounce. The hero photo, banner, headline and subtext cross-fade over ~280ms at the same time. Both heroes load up front (the first-shown one preloaded, the other eager at low priority) so a switch never shows a blank frame.
 Implemented with a CSS transform transition (same result as a Framer Motion `layoutId`, without adding a dependency).
