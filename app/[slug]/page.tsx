@@ -54,8 +54,8 @@ function PublicProfile() {
         onBack={() => (window.history.length > 1 ? router.back() : router.push('/welcome'))}
         onShare={share}
         actions={<>
-          <Link href="/login" className={heroPrimary}><Icon name="chat" className="size-[18px]" /> Message {p.first_name || ''}</Link>
-          <Link href="/start" className={heroSecondary}>Join RoleCall</Link>
+          <Link href="/welcome" className={heroPrimary}><Icon name="chat" className="size-[18px]" /> Message {p.first_name || ''}</Link>
+          <Link href="/start?role=performer" className={heroSecondary}>Join RoleCall</Link>
         </>}
         statusLine="On RoleCall — the career app for performers"
       />

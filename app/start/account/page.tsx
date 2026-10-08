@@ -17,9 +17,10 @@ export default function CreateAccount() {
   const [error, setError] = useState<string | null>(null)
   const [sentTo, setSentTo] = useState<string | null>(null)
   const [name] = useState(() => readDraft()?.firstName ?? '')
+  const [side] = useState(() => (readDraft()?.role === 'caster' ? 'cast' : 'perform'))
 
   useEffect(() => {
-    if (!readDraft()) router.replace('/start')
+    if (!readDraft()) router.replace('/welcome')
   }, [router])
 
   const signUp = async (e: React.FormEvent) => {
@@ -45,10 +46,11 @@ export default function CreateAccount() {
       return
     }
 
+    const role = d?.role ?? 'performer'
     const res = await applyDraft(data.session.user.id)
     fetch('/api/send-verification', { method: 'POST', headers: { Authorization: 'Bearer ' + data.session.access_token } }).catch(() => {})
     if (!res.ok) { setError('Your account was created but we couldn’t save your profile: ' + res.error); setBusy(null); return }
-    router.push('/start/plan')
+    router.push('/start/plan?role=' + role)
   }
 
   const oauth = async (provider: 'apple' | 'google') => {
@@ -75,7 +77,7 @@ export default function CreateAccount() {
         <button type="button" aria-label="Back" onClick={() => router.push('/start/profile')} className="-ml-1 inline-flex size-9 items-center justify-center rounded-full hover:bg-chip">
           <Icon name="chevron-left" className="size-6" />
         </button>
-        <Steps step={3} total={3} />
+        <Steps step={2} total={2} />
       </div>
 
       <h1 className="mt-4 text-[26px]">{name ? 'Nearly there, ' + name : 'Create your account'}</h1>
@@ -100,7 +102,7 @@ export default function CreateAccount() {
         <Button type="submit" size="lg" full trailingIcon="arrow-right" disabled={busy !== null}>{busy === 'email' ? 'Creating account…' : 'Create account'}</Button>
       </form>
 
-      <p className="mt-6 text-center text-[15px] text-muted">Already have an account? <Link href="/login" className="font-medium text-green-ink">Log in</Link></p>
+      <p className="mt-6 text-center text-[15px] text-muted">Already have an account? <Link href={'/welcome?side=' + side} className="font-medium text-green-ink">Log in</Link></p>
       <p className="mt-auto pt-8 text-center text-xs text-faint">By continuing you agree to our Terms &amp; Privacy Policy.</p>
     </>
   )

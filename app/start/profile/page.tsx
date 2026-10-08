@@ -23,7 +23,7 @@ export default function CreateProfile() {
   const [showReel, setShowReel] = useState(() => !!d.reelUrl)
 
   useEffect(() => {
-    if (!readDraft()) { router.replace('/start'); return }
+    if (!readDraft()) { router.replace('/welcome'); return }
     supabase.from('skills').select('id, name').order('name').then(({ data }) => setSkills(data || []))
   }, [router])
 
@@ -74,10 +74,10 @@ export default function CreateProfile() {
   return (
     <>
       <div className="flex items-center gap-3 py-2">
-        <button type="button" aria-label="Back" onClick={() => router.push('/start')} className="-ml-1 inline-flex size-9 items-center justify-center rounded-full hover:bg-chip">
+        <button type="button" aria-label="Back" onClick={() => router.push('/welcome?side=' + (isCaster ? 'cast' : 'perform'))} className="-ml-1 inline-flex size-9 items-center justify-center rounded-full hover:bg-chip">
           <Icon name="chevron-left" className="size-6" />
         </button>
-        <Steps step={2} total={3} />
+        <Steps step={1} total={2} />
         <button type="button" onClick={() => router.push('/start/account')} className="text-sm font-medium text-muted">Skip</button>
       </div>
 

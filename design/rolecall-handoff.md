@@ -14,21 +14,31 @@ Source of truth for the entry screen and Customise profile (the Claude Design pr
 - `public/welcome-cast.webp` — casting side; placeholder until a casting-room / audition shot is supplied.
   Missing images fall back to the brand hero background.
 
-## 1) Entry screen — one screen, two sides (Perform / Cast)
-One screen (`/welcome`) with a segmented Perform / Cast toggle that swaps hero, copy and button targets in place.
-- Full-bleed hero, bleeds behind the notch, `object-fit: cover`, dark bottom-up scrim.
-- Top banner (small): audience-specific text + "try RoleCall Pro".
-- Segmented toggle, `h1` headline + one line of subtext.
-- Primary CTA "Get started" → onboarding / role select. Secondary "Already have an account? Log in" (pink link).
+## 1) Entry flow — the Perform / Cast toggle chooses the side
+The toggle is the user choosing their side. Whatever they pick carries through to **both** log in and sign up — the role is never asked again.
+
+- **Log in = the photo screen** (`/welcome`). Full-bleed hero behind the notch, dark scrim, audience banner, the animated Perform / Cast toggle (swaps hero + copy in place), headline + sub, then the login fields over the photo: Email, Password, **Continue**, Forgot password, Apple / Google. "New to RoleCall? **Sign up**" (pink).
+- **Sign up = straight into the questions.** No photo/marketing screen and no "which describes you best" chooser — Sign up drops into the onboarding questions for the side picked (`/start/profile`, step 1 of 2 → account, step 2 of 2 → plan).
+
+| Path | Goes to |
+|---|---|
+| Perform · Log in | talent login (photo) → talent dashboard `/home` |
+| Perform · Sign up | performer questions (create profile) → account → plan → `/home` |
+| Cast · Log in | casting login (photo) → casting dashboard `/postings` |
+| Cast · Sign up | casting questions → account → plan → `/postings` |
+
+Notes
+- Logging in on a side switches the account to that side (same as Settings → Using RoleCall as), so the dashboard always matches the toggle. Google / Apple carry the side through `sessionStorage` (`rc-side`).
+- `/welcome?side=cast` opens on the casting side (used by Back from sign-up and "Already have an account?").
+- `/start?role=performer|caster` jumps into the questions for that side; `/start` with no side goes back to `/welcome`.
+- `/login` only hosts Forgot password (`?forgot=1`) and the reset link (`?reset=1`); any other visit goes to `/welcome`.
 
 | | Perform | Cast |
 |---|---|---|
-| Hero | `welcome-hero.webp`, `object-position: 54% center` | casting image, `object-position: center 22%` |
+| Hero | `welcome-hero.webp`, `object-position: 54% center` | `welcome-cast.webp`, `object-position: center 22%` |
 | Banner | Get discovered faster — try RoleCall Pro | Casting a production? — try RoleCall Pro |
 | h1 | Your whole career, in one place. | Find your cast, in one place. |
 | Sub | Find roles and side hustles, apply with your reel, and track every booking — all in one app. | Post roles, review self-tapes, and book talent — audition to offer, all in one app. |
-| Get started | `/start?role=performer` | `/start?role=caster` |
-| Log in | `/login?next=/home` | `/login?next=/postings` |
 
 ## 2) Customise profile (edit profile)
 Matches the immersive public profile.
