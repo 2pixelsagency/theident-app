@@ -2,7 +2,8 @@
 
 import { useRef, useState } from 'react'
 import Icon from './Icon'
-import { Button, Card, Field, Sheet, TextArea, toast } from './ui'
+import { Button, Card, Field, Sheet, TextArea, cx, toast } from './ui'
+import { compressImage, fileExt } from '@/lib/rc/media'
 import { supabase } from '@/lib/supabase'
 import type { Brand, Testimonial } from '@/lib/rc/profile'
 
@@ -104,18 +105,34 @@ export function TestimonialsEditor({ uid, testimonials, onChange }: { uid: strin
   )
 }
 
-export function GalleryEditor({ uid, photos, onChange }: { uid: string; photos: Photo[]; onChange: (p: Photo[]) => void }) {
+// Reordering for reels / gallery: move one item, then write every sort_order (lists are short)
+export function moveItem<T extends { id: string }>(list: T[], id: string, to: number) {
+  const from = list.findIndex(x => x.id === id)
+  if (from < 0) return list
+  const next = [...list]
+  const [item] = next.splice(from, 1)
+  next.splice(Math.max(0, Math.min(to, next.length)), 0, item)
+  return next
+}
+export async function saveOrder(table: 'reels' | 'gallery_images', list: { id: string }[]) {
+  const results = await Promise.all(list.map((x, i) => supabase.from(table).update({ sort_order: i }).eq('id', x.id)))
+  return results.every(r => !r.error)
+}
+
+export function GalleryEditor({ uid, photos, onChange, onCover }: { uid: string; photos: Photo[]; onChange: (p: Photo[]) => void; onCover?: (url: string) => void }) {
   const ref = useRef<HTMLInputElement>(null)
   const [busy, setBusy] = useState(false)
+  const [menu, setMenu] = useState<Photo | null>(null)
   const upload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || [])
     e.target.value = ''
     if (!files.length) return
     setBusy(true)
     let next = photos
-    for (const f of files.slice(0, 12)) {
-      if (f.size > 15 * 1024 * 1024) { toast(f.name + ' is over 15MB'); continue }
-      const path = uid + '/gallery-' + stamp() + '.' + (f.name.split('.').pop() || 'jpg')
+    for (const raw of files.slice(0, 12)) {
+      const f = await compressImage(raw)
+      if (f.size > 15 * 1024 * 1024) { toast(raw.name + ' is over 15MB'); continue }
+      const path = uid + '/gallery-' + stamp() + '.' + fileExt(f)
       const { error } = await supabase.storage.from('headshots').upload(path, f, { contentType: f.type })
       if (error) { toast('Upload failed'); continue }
       const url = supabase.storage.from('headshots').getPublicUrl(path).data.publicUrl
@@ -126,24 +143,51 @@ export function GalleryEditor({ uid, photos, onChange }: { uid: string; photos: 
   }
   const remove = async (ph: Photo) => {
     if (!confirm('Remove this photo?')) return
+    setMenu(null)
     onChange(photos.filter(x => x.id !== ph.id))
     const { error } = await supabase.from('gallery_images').delete().eq('id', ph.id)
     if (error) { onChange(photos); toast('Couldn’t remove it') }
   }
+  const move = async (ph: Photo, to: number) => {
+    setMenu(null)
+    const next = moveItem(photos, ph.id, to)
+    onChange(next)
+    if (!(await saveOrder('gallery_images', next))) toast('Couldn’t save the new order')
+  }
+  const setCover = async (ph: Photo) => {
+    setMenu(null)
+    const { error } = await supabase.from('profiles').update({ banner_url: ph.url }).eq('id', uid)
+    if (error) { toast('Couldn’t set the cover'); return }
+    onCover?.(ph.url)
+    toast('Profile cover updated')
+  }
+  const i = menu ? photos.findIndex(x => x.id === menu.id) : -1
+  const row = 'flex w-full items-center gap-3 px-4 py-3.5 text-left text-[15px] font-medium'
   return (
     <section id="gallery" className="scroll-mt-4">
       <h2 className="mb-3 text-[18px]">Gallery</h2>
       <div className="grid grid-cols-3 gap-2">
         {photos.map(ph => (
-          <div key={ph.id} className="relative aspect-square overflow-hidden rounded-xl bg-chip">
+          <button key={ph.id} type="button" onClick={() => setMenu(ph)} aria-label="Photo options" className="relative aspect-square overflow-hidden rounded-xl bg-chip">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src={ph.url} alt="" className="size-full object-cover" />
-            <button type="button" aria-label="Remove photo" onClick={() => remove(ph)} className="absolute right-1.5 top-1.5 flex size-7 items-center justify-center rounded-full bg-surface/90"><Icon name="x" className="size-3.5" /></button>
-          </div>
+            <span className="absolute right-1.5 top-1.5 flex size-7 items-center justify-center rounded-full bg-surface/90 text-ink"><Icon name="more" className="size-3.5" /></span>
+          </button>
         ))}
         <button type="button" onClick={() => ref.current?.click()} disabled={busy} className="upload flex aspect-square flex-col items-center justify-center gap-1 text-xs text-muted"><Icon name={busy ? 'clock' : 'plus'} className="size-6" />{busy ? 'Uploading…' : 'Add photos'}</button>
       </div>
       <input ref={ref} type="file" accept="image/*" multiple className="hidden" onChange={upload} />
+      <Sheet open={!!menu} onClose={() => setMenu(null)} title="Photo">
+        {menu && (
+          <Card className="divide-y divide-line overflow-hidden">
+            {onCover && <button type="button" className={row} onClick={() => setCover(menu)}><Icon name="image" className="size-5 text-muted" /> Use as profile cover</button>}
+            {i > 0 && <button type="button" className={row} onClick={() => move(menu, 0)}><Icon name="star" className="size-5 text-muted" /> Move to first</button>}
+            {i > 0 && <button type="button" className={row} onClick={() => move(menu, i - 1)}><Icon name="chevron-left" className="size-5 text-muted" /> Move earlier</button>}
+            {i < photos.length - 1 && <button type="button" className={row} onClick={() => move(menu, i + 1)}><Icon name="chevron-right" className="size-5 text-muted" /> Move later</button>}
+            <button type="button" className={cx(row, 'text-red')} onClick={() => remove(menu)}><Icon name="x" className="size-5" /> Remove</button>
+          </Card>
+        )}
+      </Sheet>
     </section>
   )
 }

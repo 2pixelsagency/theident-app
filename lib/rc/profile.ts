@@ -10,7 +10,7 @@ export type FullProfile = {
   email_alerts_enabled: boolean | null; notification_prefs: { matches?: boolean; applications?: boolean; messages?: boolean; marketing?: boolean } | null
 }
 
-export type Reel = { id: string; label: string | null; url: string; sort_order: number | null }
+export type Reel = { id: string; label: string | null; url: string; sort_order: number | null; poster_url?: string | null; duration_s?: number | null }
 export type Credit = { id: string; title: string | null; role: string | null; year: number | null; production_company: string | null; director: string | null; production_type_id: number | null; production_types?: { name: string } | null }
 export type Brand = { id: string; brand_name: string; logo_url: string | null }
 export type Testimonial = { id: string; quote: string; author_name: string | null; author_title: string | null }
@@ -29,7 +29,7 @@ export async function loadFullProfile(id: string, self = true) {
   const [p, contact, reels, skills, credits, brands, testimonials, gallery, hair, eyes, conns] = await Promise.all([
     supabase.from('profiles').select(self ? OWNER_PROFILE_COLS : PUBLIC_PROFILE_COLS).eq('id', id).maybeSingle(),
     supabase.rpc('profile_contact', { pid: id }).maybeSingle(),
-    supabase.from('reels').select('id, label, url, sort_order').eq('profile_id', id).order('sort_order'),
+    supabase.from('reels').select('id, label, url, sort_order, poster_url, duration_s').eq('profile_id', id).order('sort_order'),
     supabase.from('profile_skills').select('skills(id, name)').eq('profile_id', id),
     supabase.from('credits').select('id, title, role, year, production_company, director, production_type_id, production_types(name)').eq('profile_id', id).order('year', { ascending: false }),
     supabase.from('profile_brands').select('id, brand_name, logo_url').eq('profile_id', id).order('sort_order'),

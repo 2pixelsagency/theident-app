@@ -115,8 +115,8 @@ export default function ProfileView({ data, owner, onBack, onShare, topRight, ac
             {reels.length > 0 && (
               <div className="scrollbar-none -mx-4 flex gap-3 overflow-x-auto px-4">
                 {reels.map(r => (
-                  <a key={r.id} href={r.url} target="_blank" rel="noopener noreferrer" className="relative block aspect-[16/10] w-[46%] shrink-0 overflow-hidden rounded-[var(--radius)] bg-dark bg-cover bg-center lg:w-[31%]" style={p.picture_url ? { backgroundImage: `url(${p.picture_url})` } : undefined}>
-                    <span className="absolute inset-0 bg-dark/40" />
+                  <a key={r.id} href={r.url} target="_blank" rel="noopener noreferrer" className="relative block aspect-[16/10] w-[46%] shrink-0 overflow-hidden rounded-[var(--radius)] bg-dark bg-cover bg-center lg:w-[31%]" style={r.poster_url || p.picture_url ? { backgroundImage: `url(${r.poster_url || p.picture_url})` } : undefined}>
+                    <span className={cx('absolute inset-0', r.poster_url ? 'bg-gradient-to-t from-dark/70 to-transparent' : 'bg-dark/40')} />
                     <span className="absolute left-1/2 top-1/2 flex size-11 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full bg-surface/90 text-ink"><Icon name="play" className="size-4 fill-current" /></span>
                     <span className="absolute bottom-2 left-3 right-3 truncate text-xs font-medium text-white">{r.label || 'Showreel'}</span>
                   </a>
