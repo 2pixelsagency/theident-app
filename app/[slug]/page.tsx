@@ -37,7 +37,7 @@ function PublicProfile() {
     return (
       <div className="px-6 pt-24">
         <Empty icon="user" title={data.state === 'hidden' ? 'This profile is private' : 'Profile not found'} sub={data.state === 'hidden' ? 'The owner has hidden it from public view.' : 'Check the link and try again.'} />
-        <Link href="/welcome" className="mx-auto mt-6 block w-fit text-sm font-medium text-green-ink">Go to RoleCall ›</Link>
+        <Link href="/welcome" className="mx-auto mt-6 block w-fit text-sm font-medium text-green-ink">Go to The Ident ›</Link>
       </div>
     )
   }
@@ -55,11 +55,11 @@ function PublicProfile() {
         onShare={share}
         actions={<>
           <Link href="/welcome" className={heroPrimary}><Icon name="chat" className="size-[18px]" /> Message {p.first_name || ''}</Link>
-          <Link href="/start?role=performer" className={heroSecondary}>Join RoleCall</Link>
+          <Link href="/start?role=performer" className={heroSecondary}>Join The Ident</Link>
         </>}
-        statusLine="On RoleCall — the career app for performers"
+        statusLine="On The Ident — the career app for performers"
       />
-      <p className="pb-10 text-center text-xs text-faint">Made with <Link href="/welcome" className="font-medium text-green-ink">RoleCall</Link></p>
+      <p className="pb-10 text-center text-xs text-faint">Made with <Link href="/welcome" className="font-medium text-green-ink">The Ident</Link></p>
     </>
   )
 }

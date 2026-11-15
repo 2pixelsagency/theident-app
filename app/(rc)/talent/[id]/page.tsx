@@ -79,7 +79,7 @@ export default function TalentProfilePage() {
 
 
   const status = (app ? jobTitle(app.jobs) + ' · ' + stageNote(app) + (casterStage(app) === 'shortlist' && app.shortlisted ? ' · Shortlisted' : '') + ' · ' : '')
-    + (shortlists > 0 ? 'On ' + shortlists + ' casting shortlist' + (shortlists === 1 ? '' : 's') + ' this week' : 'New on RoleCall')
+    + (shortlists > 0 ? 'On ' + shortlists + ' casting shortlist' + (shortlists === 1 ? '' : 's') + ' this week' : 'New on The Ident')
 
   return (
     <>

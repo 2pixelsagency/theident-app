@@ -9,7 +9,7 @@ import type { Credit, FullProfileData } from './profile'
 export async function buildCv(data: FullProfileData) {
   const p = data.profile!
   const w = await PdfWriter.create()
-  const name = fullName(p) || 'RoleCall member'
+  const name = fullName(p) || 'The Ident member'
   const link = p.slug ? window.location.host + '/' + p.slug : window.location.host
 
   // ---- Header: headshot left, name + facts right, green rule under ----
@@ -109,7 +109,7 @@ export async function buildCv(data: FullProfileData) {
     w.text(data.brands.map(b => b.brand_name).join('  ·  '), { size: 10, gap: 1.5 })
   }
 
-  w.footer(name + '  ·  ' + link + '  ·  CV created with RoleCall')
+  w.footer(name + '  ·  ' + link + '  ·  CV created with The Ident')
   return w.bytes()
 }
 

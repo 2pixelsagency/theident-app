@@ -3,7 +3,7 @@ import { Suspense } from 'react'
 import EntryScreen from './EntryScreen'
 
 export const metadata: Metadata = {
-  title: 'Welcome · RoleCall',
+  title: 'Welcome · The Ident',
 }
 
 // Log-in screen with the Perform / Cast toggle (?side=cast opens on the casting side)

@@ -4,8 +4,8 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import Icon from '@/components/rc/Icon'
 import { Avatar, Card, ListRow, Pill } from '@/components/rc/ui'
-import { supabase } from '@/lib/supabase'
 import { useMe } from '@/lib/rc/me'
+import { signOutAndReset } from '@/lib/rc/onboarding'
 import { fullName } from '@/lib/rc/format'
 import { craftTag } from '@/lib/rc/talent'
 
@@ -15,10 +15,7 @@ export default function MenuPage() {
   const { profile, role, unreadNotifications } = useMe()
   const caster = role === 'caster'
 
-  const logout = async () => {
-    await supabase.auth.signOut()
-    router.replace('/welcome')
-  }
+  const logout = signOutAndReset
 
   return (
     <div className="px-4 pb-10 pt-[max(16px,env(safe-area-inset-top))]">

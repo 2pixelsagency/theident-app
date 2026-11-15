@@ -119,7 +119,7 @@ export default function HostEventPage() {
             {paid && <Field className="flex-1" label="Price (£)" inputMode="decimal" value={price} onChange={e => setPrice(e.target.value.replace(/[^\d.]/g, ''))} placeholder="45" />}
             <Field className="flex-1" label="Spots" inputMode="numeric" value={spots} onChange={e => setSpots(e.target.value.replace(/\D/g, ''))} placeholder="Unlimited" />
           </div>
-          {paid && <p className="text-xs text-muted">Card payments through RoleCall are coming soon; until then attendees RSVP and pay you directly.</p>}
+          {paid && <p className="text-xs text-muted">Card payments through The Ident are coming soon; until then attendees RSVP and pay you directly.</p>}
         </section>
 
         <section className={card}>

@@ -1,77 +1,77 @@
-/* RoleCall — design tokens (single source of truth for the look)
-   Poppins is loaded via next/font in app/layout.tsx (exposed as --font-poppins).
-   Put the brand font at /public/fonts/ITC-Symbol-Std-Bold.otf */
-
-@font-face {
-  font-family: 'ITC Symbol';
-  src: url('/fonts/ITC-Symbol-Std-Bold.otf') format('opentype');
-  font-weight: 400 700;
-  font-display: swap;
-}
+/* The Ident — design tokens (single source of truth for the look), carried over from the website.
+   Fonts are loaded via next/font in app/layout.tsx: Bricolage Grotesque (display, --font-bricolage)
+   and Inter (body/UI, --font-inter). Class names (bg-green, bg-dark, text-muted…) are kept so every
+   screen picks the brand up from here. */
 
 :root {
   /* surfaces & text */
-  --bg: #f6f0e2;
-  --surface: #ffffff;
-  --ink: #1a1a1a;
-  --muted: #6e6a62;
-  --faint: #a7a197;
-  --line: #e7e0d0;
+  --bg: #f6f4ee;         /* Paper */
+  --surface: #ffffff;    /* clean white cards on Paper */
+  --ink: #15211c;        /* Ink */
+  --muted: #5c6862;
+  --faint: #98a19c;
+  --line: #e4e1d7;
 
   /* brand */
-  --green: #148072;      /* primary action / "open to work" */
-  --green-ink: #0f6b60;  /* green text on tint */
-  --blue: #1fa5ca;
-  --purple: #b878cc;
-  --pink: #f3c6d7;
+  --forest: #123127;     /* primary buttons / dark panels */
+  --lime: #cbf24c;       /* the single punchy accent — text on it is always Ink */
+  --blossom: #f9d9e6;    /* pastels for soft fills and blobs */
+  --butter: #f4e79a;
+  --mint: #cdebd6;
 
-  /* status colours used by the prototype's chips (self-tape, pencilled, expenses) */
-  --amber: #b7791f;      /* self-tape / warning text */
+  --green: var(--forest);       /* primary action / "open to work" (on dark panels it flips to Lime, see globals.css) */
+  --green-ink: #1d4a3a;         /* forest text on a mint tint */
+  --blue: #2f7fa3;
+  --purple: #8d6bb8;
+  --pink: var(--blossom);
+
+  /* status colours used by chips (self-tape, pencilled, expenses) */
+  --amber: #9a6a12;      /* self-tape / warning text */
   --pencil: #3559b5;     /* pencilled text */
   --red: #b3392f;        /* destructive / money out */
-  --purple-ink: #6d3a80; /* purple text on tint */
+  --purple-ink: #5b3f86; /* purple text on tint */
 
   /* tints for chips, icon tiles and soft banners (solid colours, not gradients) */
-  --green-tint: color-mix(in srgb, var(--green) 13%, white);
-  --amber-tint: color-mix(in srgb, #f2c46b 30%, white);
+  --green-tint: var(--mint);
+  --amber-tint: color-mix(in srgb, var(--butter) 60%, white);
   --pencil-tint: color-mix(in srgb, var(--pencil) 12%, white);
-  --purple-tint: color-mix(in srgb, var(--purple) 18%, white);
-  --pink-tint: color-mix(in srgb, var(--pink) 45%, white);
+  --purple-tint: color-mix(in srgb, var(--purple) 16%, white);
+  --pink-tint: color-mix(in srgb, var(--blossom) 70%, white);
   --red-tint: color-mix(in srgb, var(--red) 10%, white);
   --blue-tint: color-mix(in srgb, var(--blue) 14%, white);
 
   /* inputs, chips and neutral fills */
-  --field: #faf8f1;
-  --chip: #efe9dc;
-  /* Entry screens + immersive profile (RoleCall hand-off): bright primary CTA with a neutral, never-coloured shadow */
-  --cta: #14b072;
+  --field: #fbfaf6;
+  --chip: #ece9df;
+  /* Main button over photos (entry screen, immersive profile): Lime with Ink text, neutral shadow — never a coloured glow */
+  --cta: var(--lime);
   --cta-shadow: 0 6px 16px rgba(14, 12, 10, 0.30);
-  --scrim: rgba(14, 12, 10, 0.92); /* dark photo scrim — the only gradient allowed besides --grad-* */
+  --scrim: rgba(10, 22, 17, 0.92); /* dark photo scrim — the only gradient allowed besides --grad-* */
 
-  --dark: #1a1a1a;       /* dark cards (booked, hero blocks) */
-  --dark-2: #2a2a2a;     /* raised surface on dark cards */
+  --dark: var(--forest); /* dark cards (booked, hero blocks) */
+  --dark-2: #1d4436;     /* raised surface on dark cards */
 
-  /* the ONLY two gradients allowed */
-  --grad-accent: linear-gradient(120deg, var(--purple), var(--pink));
-  --grad-hero: linear-gradient(130deg, #1a1a1a, #3c2150);
+  /* "gradients": the brand is flat, so accent is solid Lime and hero is a near-flat Forest */
+  --grad-accent: linear-gradient(var(--lime), var(--lime));
+  --grad-hero: linear-gradient(150deg, #173d30, var(--forest) 60%);
 
-  --radius: 16px;
-  --shadow: 0 6px 20px rgba(26, 26, 26, 0.04);
+  --radius: 20px;        /* generous, soft */
+  --shadow: 0 6px 20px rgba(21, 33, 28, 0.05);
 }
 
 body {
   background: var(--bg);
   color: var(--ink);
-  font-family: var(--font-poppins), 'Poppins', system-ui, sans-serif;
+  font-family: var(--font-inter), 'Inter', system-ui, sans-serif;
   font-weight: 400;
 }
 
-/* Headings use the brand display font, never heavy */
+/* Headings: Bricolage Grotesque, bold and tight */
 h1, h2, h3 {
-  font-family: 'ITC Symbol', var(--font-poppins), 'Poppins', system-ui, sans-serif;
-  font-weight: 400;
-  letter-spacing: -0.02em;
-  line-height: 1.12;
+  font-family: var(--font-bricolage), 'Bricolage Grotesque', system-ui, sans-serif;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  line-height: 1.08;
 }
 /* page titles ~20px; heroes larger but scaled with them */
 
@@ -87,7 +87,7 @@ h1, h2, h3 {
 
 /* Upload targets use a dashed outline, not a filled block */
 .upload {
-  border: 1.5px dashed #c9c4ba;
-  background: #faf8f1;
+  border: 1.5px dashed color-mix(in srgb, var(--ink) 25%, transparent);
+  background: var(--field);
   border-radius: 12px;
 }

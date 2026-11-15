@@ -4,8 +4,8 @@
   "description": "Casting and opportunities for performing arts professionals",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#f1f0ee",
-  "theme_color": "#f1f0ee",
+  "background_color": "#f6f4ee",
+  "theme_color": "#f6f4ee",
   "orientation": "portrait",
   "icons": [
     {

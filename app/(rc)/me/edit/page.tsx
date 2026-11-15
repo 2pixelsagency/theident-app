@@ -126,7 +126,7 @@ function Editor({ data, uid, caster, onRefresh, mutate }: { data: Data; uid: str
 
         <div className="absolute inset-x-0 top-0 flex items-center justify-between px-4 pt-[max(14px,env(safe-area-inset-top))]">
           <button type="button" aria-label="Cancel" onClick={() => router.push('/me')} className={heroRound}><Icon name="x" className="size-5" /></button>
-          <button type="button" onClick={save} disabled={saving} className="inline-flex h-10 items-center gap-1.5 rounded-full bg-cta px-4 text-[15px] font-medium text-white shadow-cta transition active:scale-95 disabled:opacity-70">
+          <button type="button" onClick={save} disabled={saving} className="inline-flex h-10 items-center gap-1.5 rounded-full bg-cta px-4 text-[15px] font-semibold text-ink shadow-cta transition active:scale-95 disabled:opacity-70">
             <Icon name="check" className="size-4" strokeWidth={2.2} />{saving ? 'Saving…' : 'Save'}
           </button>
         </div>
@@ -136,7 +136,7 @@ function Editor({ data, uid, caster, onRefresh, mutate }: { data: Data; uid: str
           <div className="flex items-center gap-3">
             <button type="button" onClick={() => avatarRef.current?.click()} aria-label="Replace headshot" className="relative shrink-0 rounded-full ring-2 ring-white">
               <Avatar src={p.picture_url} name={fullName(p)} size={60} />
-              <span className="absolute -bottom-0.5 -right-0.5 flex size-6 items-center justify-center rounded-full bg-cta text-white ring-2 ring-dark">
+              <span className="absolute -bottom-0.5 -right-0.5 flex size-6 items-center justify-center rounded-full bg-cta text-ink ring-2 ring-dark">
                 <Icon name={busyImage === 'avatar' ? 'clock' : 'camera'} className="size-3.5" />
               </span>
             </button>

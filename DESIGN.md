@@ -1,17 +1,21 @@
-# RoleCall — Design System
+# The Ident — Design System
 
-The look is defined in code by `tokens.css` (colours, fonts, the two allowed gradients, card/upload helpers). Import it once globally and build from the tokens — don't hard-code hex values in components. Add a pointer to this file in `CLAUDE.md` so every session follows it.
+The look is carried over from the website and defined in code by `tokens.css` (colours, fonts, card/upload helpers). Import it once globally and build from the tokens — don't hard-code hex values in components. Add a pointer to this file in `CLAUDE.md` so every session follows it.
 
 ## Foundations
-- **Fonts:** ITC Symbol for headings (`/public/fonts/ITC-Symbol-Std-Bold.otf`), Poppins 300–500 for body. Headings: weight 400, `letter-spacing -0.02em`, `line-height 1.12`. Page titles ~20px; heroes scale down proportionally.
-- **Palette:** bg `#f6f0e2` · ink `#1a1a1a` · muted `#6e6a62` · line `#e7e0d0` · green `#148072` · blue `#1fa5ca` · purple `#b878cc` · pink `#f3c6d7`.
+- **Fonts:** **Bricolage Grotesque** for display/headings (bold, tight: weight 700, `letter-spacing -0.03em`), **Inter** for body/UI (300–600). Both loaded with `next/font` in `app/layout.tsx`.
+- **Palette:** Paper `#F6F4EE` (background) · Ink `#15211C` (text) · **Forest `#123127`** (primary buttons, dark panels) · **Lime `#CBF24C`** (the single punchy accent) · pastels Blossom `#F9D9E6`, Butter `#F4E79A`, Mint `#CDEBD6` for soft fills.
+- **Shape:** soft organic blobs behind clean white cards, generous radius (`--radius` 20px). No squiggles.
+- Class names stay stable (`bg-green` = Forest action colour, `bg-dark` = Forest panel, `bg-green-tint` = Mint…); new utilities `bg-forest`, `bg-lime`, `bg-blossom`, `bg-butter`, `bg-mint`.
 
-## Hard rules (the owner is specific about these)
-- **Minimal bold.** Prefer weight 400–500. Don't bold whole labels for emphasis.
-- **No gradients except two:** the purple→pink accent (`--grad-accent`) and the dark hero (`--grad-hero`). Everything else is a solid colour.
-- **Dark text on the pink accent gradient** — never white; white washes out on the pale end.
+## Hard rules
+- **Text on Lime is always Ink**, never white. Lime is the accent, not a body-text colour on Paper (too little contrast).
+- **On dark panels** (Forest, photo heroes) the green accent automatically becomes Lime (`globals.css`), so icons and rings stay visible.
+- **Primary button:** Forest + white text with a neutral shadow — never a coloured glow. Over photos the main button is Lime + Ink.
+- **Flat:** no decorative gradients; only the dark photo scrim and a near-flat Forest hero.
 - **Uploads** use a dashed outline (`.upload`), not a filled block.
-- **Icons:** one consistent set of thin, rounded, modern outline icons. No emojis anywhere.
+- **Icons:** one consistent set of thin, rounded outline icons. No emojis in the UI.
+- **Focus:** every interactive element shows a visible focus ring (Lime on dark, Forest on light).
 - Back-chevron headers: center the chevron with the title (flex, `align-items:center`), not on the text baseline.
 
 ## Screen direction
@@ -19,7 +23,7 @@ The look is defined in code by `tokens.css` (colours, fonts, the two allowed gra
 - **Stateful profile action** by casting relationship: *Invite to audition* (not engaged) → *Recall* (auditioned) → *Make offer / Book* (chosen). Drive it from the application record.
 - **Role-aware bottom nav:** performer = Home · Find · Castings · Chats · Profile; caster = Home · Talent · Postings · Chats · Profile. Chosen at onboarding. ("Find" = the job board; don't label the personal pipeline "Roles" — use Castings/Diary.)
 - **Dashboard top bar:** "Hi, [name]" greeting with thin outline icons (inbox-with-dot, bell, chat, search).
-- **Onboarding (performer):** role select → straight into a fast, LinkedIn-style profile create → account (Supabase auth) → optional payment. Keep momentum so users don't drop off.
+- **Auth & onboarding:** the Perform / Cast toggle on the photo log-in screen picks the side once. Sign up = create account → one-question-at-a-time onboarding from question 1 → plan → that side's dashboard. Email verification is a soft gate (browse yes; apply/post after verifying).
 
 ## Originality
 All sample content is fictional (e.g. "Coastlines"). Adapt inspiration, never clone another product's branding or copy.

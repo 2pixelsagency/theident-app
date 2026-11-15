@@ -39,7 +39,7 @@ export async function POST(req: NextRequest) {
   if (pdf.length > MAX_PDF_BYTES || pdf.subarray(0, 5).toString() !== '%PDF-') return NextResponse.json({ error: 'The invoice PDF couldn’t be attached' }, { status: 400 })
 
   const { data: me } = await db.from('profiles').select('first_name, last_name').eq('id', user.id).maybeSingle()
-  const sender = [me?.first_name, me?.last_name].filter(Boolean).join(' ') || 'A RoleCall member'
+  const sender = [me?.first_name, me?.last_name].filter(Boolean).join(' ') || 'A member of The Ident'
   const message = (body.message || '').slice(0, 1000).trim()
   const due = inv.due_date ? new Date(inv.due_date + 'T00:00:00').toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' }) : null
 
@@ -49,14 +49,14 @@ export async function POST(req: NextRequest) {
     (message ? '<p style="font-size:15px;line-height:1.6;margin:0 0 16px;white-space:pre-line;">' + esc(message) + '</p>' : '') +
     '<p style="font-size:15px;line-height:1.6;margin:0 0 16px;">Please find invoice <strong>' + esc(inv.number) + '</strong> for <strong>' + gbp(Number(inv.total)) + '</strong> attached' + (due ? ', due ' + esc(due) : '') + '.</p>' +
     '<p style="font-size:15px;line-height:1.6;margin:0;">Thanks,<br>' + esc(sender) + '</p>' +
-    '<p style="font-size:12px;color:#6e6a62;margin:28px 0 0;">Sent with RoleCall. Reply to this email to contact ' + esc(sender) + ' directly.</p>' +
+    '<p style="font-size:12px;color:#6e6a62;margin:28px 0 0;">Sent with The Ident. Reply to this email to contact ' + esc(sender) + ' directly.</p>' +
     '</div>'
 
   const res = await fetch('https://api.resend.com/emails', {
     method: 'POST',
     headers: { Authorization: 'Bearer ' + process.env.RESEND_API_KEY, 'Content-Type': 'application/json' },
     body: JSON.stringify({
-      from: 'RoleCall Invoices <notifications@theident.me>',
+      from: 'The Ident Invoices <notifications@theident.me>',
       to,
       reply_to: user.email,
       subject: 'Invoice ' + inv.number + ' from ' + sender,

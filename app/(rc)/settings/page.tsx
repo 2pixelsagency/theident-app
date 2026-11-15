@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { BackHeader, Card, ListRow, PageLoading, Segmented, Toggle, toast } from '@/components/rc/ui'
 import { supabase } from '@/lib/supabase'
 import { useMe } from '@/lib/rc/me'
+import { signOutAndReset } from '@/lib/rc/onboarding'
 import { useAsync } from '@/lib/rc/useAsync'
 import { fullName } from '@/lib/rc/format'
 import { SUPPORT_EMAIL } from '@/lib/rc/profile'
@@ -41,16 +42,7 @@ export default function SettingsPage() {
     router.push('/home')
   }
 
-  const resetPassword = async () => {
-    if (!me.email) return
-    const { error } = await supabase.auth.resetPasswordForEmail(me.email, { redirectTo: window.location.origin + '/reset-password' })
-    toast(error ? 'Couldn’t send the email' : 'Password reset link sent to ' + me.email)
-  }
-
-  const logout = async () => {
-    await supabase.auth.signOut()
-    router.replace('/welcome')
-  }
+  const logout = signOutAndReset
 
   const section = (title: string) => <p className="mb-2 mt-6 text-xs font-medium uppercase tracking-[0.08em] text-muted">{title}</p>
   const toggleRow = (title: string, sub: string | null, checked: boolean, onChange: (v: boolean) => void) => (
@@ -65,7 +57,7 @@ export default function SettingsPage() {
     <>
       <BackHeader title="Settings" />
       <div className="px-4 pb-12">
-        {section('Using RoleCall as')}
+        {section('Using The Ident as')}
         <Segmented value={me.role} onChange={v => !switching && switchRole(v)} options={[{ value: 'performer', label: 'Performer' }, { value: 'caster', label: 'Casting / hiring' }]} />
         <p className="mt-2 text-xs text-muted">Switches your home screen and bottom nav. Your profile and history stay the same.</p>
 
@@ -73,7 +65,7 @@ export default function SettingsPage() {
         <Card className="divide-y divide-line overflow-hidden">
           <ListRow icon="user" title="Name" sub={fullName(data)} href="/me/edit" />
           <ListRow icon="mail" title="Email" sub={me.email || '—'} chevron={false} />
-          <ListRow icon="lock" title="Password & security" sub="Send a reset link" onClick={resetPassword} />
+          <ListRow icon="lock" title="Password" sub="Change your password" href="/settings/password" />
         </Card>
 
         {section('Profile & visibility')}
@@ -114,7 +106,7 @@ export default function SettingsPage() {
           <ListRow title="Help & support" href="/help" />
           <ListRow title="Log out" danger onClick={logout} chevron={false} />
         </Card>
-        <p className="mt-6 text-center text-xs text-faint">RoleCall · beta</p>
+        <p className="mt-6 text-center text-xs text-faint">The Ident · beta</p>
       </div>
     </>
   )

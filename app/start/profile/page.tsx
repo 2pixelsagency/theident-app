@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import Icon from '@/components/rc/Icon'
 import { Button, Chip, Field, Steps, Toggle, toast } from '@/components/rc/ui'
 import { supabase } from '@/lib/supabase'
-import { SIGNUP_QUESTIONS, emptyDraft, readDraft, shrinkImage, writeDraft, type OnboardingDraft } from '@/lib/rc/onboarding'
+import { SIGNUP_QUESTIONS, applyDraft, emptyDraft, readDraft, shrinkImage, writeDraft, type OnboardingDraft } from '@/lib/rc/onboarding'
 
 const CRAFTS = ['Actor', 'Dancer', 'Singer', 'Musical theatre', 'Presenter', 'Model', 'Voiceover']
 const CASTER_FOCUS = ['Theatre', 'Musical theatre', 'TV & film', 'Commercial', 'Dance', 'Voiceover', 'Events']
@@ -25,6 +25,8 @@ export default function CreateProfile() {
 
   useEffect(() => {
     if (!readDraft()) { router.replace('/welcome'); return }
+    // The account comes first; the answers are saved to it when the last question is done
+    supabase.auth.getSession().then(({ data: { session } }) => { if (!session) router.replace('/start/account') })
     supabase.from('skills').select('id, name').order('name').then(({ data }) => setSkills(data || []))
   }, [router])
 
@@ -63,10 +65,11 @@ export default function CreateProfile() {
     try { update({ photo: await shrinkImage(file) }) } catch { toast('Couldn’t read that photo') }
   }
 
-  // One question per screen, starting at the first. ?q= lets Back from the account step return to the last one.
-  const [q, setQ] = useState(() => Math.max(0, parseInt(new URLSearchParams(window.location.search).get('q') || '0', 10) || 0))
-  const total = SIGNUP_QUESTIONS + 1 // + the account step
-  const last = total - 2
+  // One question per screen, always starting at the first (index 0 → "1 of 4")
+  const [q, setQ] = useState(0)
+  const total = SIGNUP_QUESTIONS
+  const last = total - 1
+  const [saving, setSaving] = useState(false)
   const step = Math.min(q, last)
 
   const valid = isCaster
@@ -77,9 +80,20 @@ export default function CreateProfile() {
   const next = () => {
     if (!valid) { toast(step === 0 ? 'Add your name' : isCaster ? 'Add your company or production' : 'Pick at least one'); return }
     if (step < last) go(step + 1)
-    else router.push('/start/account')
+    else finish()
   }
-  const back = () => (step > 0 ? go(step - 1) : router.push('/welcome?side=' + (isCaster ? 'cast' : 'perform')))
+  const back = () => go(step - 1)
+
+  // Last question → save everything to the account, then the plan step for this side
+  const finish = async () => {
+    setSaving(true)
+    const { data: { session } } = await supabase.auth.getSession()
+    if (!session) { router.replace('/start/account'); return }
+    const role = d.role
+    const res = await applyDraft(session.user.id)
+    if (!res.ok) { setSaving(false); toast('Couldn’t save your profile — check your connection and try again'); return }
+    router.push('/start/plan?role=' + role)
+  }
   const optional = step >= 2 // later questions can be filled in from Edit profile
 
   const soon = () => toast('Autofill is coming soon — add the basics below for now')
@@ -216,9 +230,10 @@ export default function CreateProfile() {
   return (
     <>
       <div className="flex items-center gap-3 py-2">
-        <button type="button" aria-label="Back" onClick={back} className="-ml-1.5 inline-flex h-10 w-8 items-center justify-start text-ink active:opacity-50">
-          <Icon name="chevron-left" className="size-6" />
-        </button>
+        {/* No Back on question 1: the account already exists */}
+        {step > 0
+          ? <button type="button" aria-label="Back" onClick={back} className="-ml-1.5 inline-flex h-10 w-8 items-center justify-start rounded-md text-ink active:opacity-50 focus-visible:outline-2 focus-visible:outline-lime"><Icon name="chevron-left" className="size-6" /></button>
+          : <span className="w-6" />}
         <Steps step={step + 1} total={total} />
         <span className="w-12 text-right text-[13px] tabular-nums text-muted">{step + 1} of {total}</span>
       </div>
@@ -228,8 +243,8 @@ export default function CreateProfile() {
       </div>
 
       <div className="mt-auto space-y-3 pt-10">
-        <Button size="lg" full trailingIcon="arrow-right" onClick={next} disabled={!valid}>Continue</Button>
-        {optional && <button type="button" onClick={next} className="w-full text-center text-sm font-medium text-muted">Skip for now</button>}
+        <Button size="lg" full trailingIcon="arrow-right" onClick={next} disabled={!valid || saving}>{saving ? 'Saving your profile…' : step === last ? 'Finish' : 'Continue'}</Button>
+        {optional && !saving && <button type="button" onClick={next} className="w-full text-center text-sm font-medium text-muted">Skip for now</button>}
       </div>
     </>
   )

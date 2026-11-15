@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import { brandedEmail, sendEmail } from '@/lib/email'
 
 export const runtime = 'nodejs'
 
@@ -23,6 +24,20 @@ export async function POST(req: NextRequest) {
     process.env.SUPABASE_SERVICE_ROLE_KEY!
   )
 
+  // Google / Apple have already verified the address: mark it verified, no email needed
+  const provider = (user.app_metadata?.provider as string | undefined) || 'email'
+  if (provider !== 'email' && user.user_metadata?.email_verified === true) {
+    await admin.from('profiles').update({ email_verified: true }).eq('id', user.id)
+    return NextResponse.json({ ok: true, verified_by: provider })
+  }
+
+  // Resend is user-triggered: at most 3 links per 10 minutes, and none once verified
+  const { data: prof } = await admin.from('profiles').select('email_verified').eq('id', user.id).maybeSingle()
+  if (prof?.email_verified) return NextResponse.json({ ok: true, already: true })
+  const since = new Date(Date.now() - 10 * 60_000).toISOString()
+  const { count } = await admin.from('email_verifications').select('token', { count: 'exact', head: true }).eq('profile_id', user.id).gte('created_at', since)
+  if ((count || 0) >= 3) return NextResponse.json({ error: 'rate_limited' }, { status: 429 })
+
   // Create a fresh single-use token (expires in 24h via the table default)
   const { data: row, error: insErr } = await admin
     .from('email_verifications')
@@ -35,31 +50,13 @@ export async function POST(req: NextRequest) {
 
   const link = 'https://app.theident.me/verify?token=' + row.token
 
-  const res = await fetch('https://api.resend.com/emails', {
-    method: 'POST',
-    headers: {
-      Authorization: 'Bearer ' + process.env.RESEND_API_KEY,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      from: process.env.EMAIL_FROM || 'The Ident <noreply@theident.me>',
-      to: user.email,
-      subject: 'Verify your email · The Ident',
-      html:
-        '<div style="font-family: Georgia, serif; max-width:480px; margin:0 auto; color:#0c2520; padding:24px;">' +
-        '<h1 style="font-size:22px; margin:0 0 12px;">Verify your email</h1>' +
-        '<p style="font-size:15px; line-height:1.6; color:#444; margin:0 0 16px;">Confirm your email address to secure your account on The Ident.</p>' +
-        '<a href="' + link + '" style="display:inline-block; background:#0c2520; color:#f1f0ee; text-decoration:none; padding:12px 24px; border-radius:24px; font-size:15px;">Verify email</a>' +
-        '<p style="font-size:12px; color:#888; margin:20px 0 0;">Or paste this link into your browser:<br>' + link + '</p>' +
-        '<p style="font-size:12px; color:#aaa; margin:8px 0 0;">This link expires in 24 hours.</p>' +
-        '</div>',
-    }),
-  })
-
-  if (!res.ok) {
-    const detail = await res.text().catch(() => '')
-    return NextResponse.json({ error: 'email failed', detail }, { status: 500 })
-  }
+  const ok = await sendEmail(user.email, 'Verify your email · The Ident', brandedEmail({
+    title: 'Verify your email',
+    body: ['Confirm this is your email address to start applying for roles and posting jobs on The Ident. You can keep browsing in the meantime.'],
+    button: { label: 'Verify email', href: link },
+    footer: 'Or paste this link into your browser: ' + link + ' — it expires in 24 hours. Didn’t sign up? You can ignore this email.',
+  }))
+  if (!ok) return NextResponse.json({ error: 'email failed' }, { status: 500 })
 
   return NextResponse.json({ ok: true })
 }

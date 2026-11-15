@@ -27,7 +27,7 @@ export default function HelpPage() {
       <div className="px-4 pb-10">
         <SearchField value={q} onChange={setQ} placeholder="Search help…" />
         <div className="mt-4 grid grid-cols-2 gap-3">
-          <a href={mail('Help with RoleCall')} className="rounded-[var(--radius)] bg-dark p-4 text-white"><Icon name="chat" className="size-6 text-green" /><p className="mt-5 text-[15px] font-medium">Message us</p><p className="text-[13px] text-white/60">We reply within a day</p></a>
+          <a href={mail('Help with The Ident')} className="rounded-[var(--radius)] bg-dark p-4 text-white"><Icon name="chat" className="size-6 text-green" /><p className="mt-5 text-[15px] font-medium">Message us</p><p className="text-[13px] text-white/60">We reply within a day</p></a>
           <a href={mail('Support')} className="rounded-[var(--radius)] border border-line bg-surface p-4 shadow-card"><Icon name="mail" className="size-6" /><p className="mt-5 text-[15px] font-medium">Email support</p><p className="truncate text-[13px] text-muted">{SUPPORT_EMAIL}</p></a>
           <a href={mail('Report a problem')} className="rounded-[var(--radius)] border border-line bg-surface p-4 shadow-card"><Icon name="alert" className="size-6 text-red" /><p className="mt-5 text-[15px] font-medium">Report a problem</p><p className="text-[13px] text-muted">Scam, bug or safety</p></a>
           <button type="button" onClick={() => setSafety(true)} className="rounded-[var(--radius)] border border-line bg-surface p-4 text-left shadow-card"><Icon name="shield" className="size-6 text-green-ink" /><p className="mt-5 text-[15px] font-medium">Safety centre</p><p className="text-[13px] text-muted">Stay safe on gigs</p></button>
@@ -47,12 +47,12 @@ export default function HelpPage() {
         </Card>
 
         <p className="mt-4 flex items-center gap-2 rounded-xl bg-green-tint px-4 py-3 text-sm font-medium text-green-ink"><span className="size-2 rounded-full bg-green" /> All systems running normally</p>
-        <p className="mt-4 text-center text-xs text-faint">RoleCall · Terms · Privacy · Community guidelines</p>
+        <p className="mt-4 text-center text-xs text-faint">The Ident · Terms · Privacy · Community guidelines</p>
       </div>
 
       <Sheet open={safety} onClose={() => setSafety(false)} title="Safety centre">
         <ul className="space-y-3 text-sm leading-relaxed">
-          {['Never pay to apply or audition.', 'Meet new contacts in public places and tell someone where you’re going.', 'Check for the green verified tick on roles from companies.', 'Keep conversations in RoleCall until you’re confident a job is real.', 'Report anything that feels wrong — we act on every report.'].map(t => (
+          {['Never pay to apply or audition.', 'Meet new contacts in public places and tell someone where you’re going.', 'Check for the green verified tick on roles from companies.', 'Keep conversations in The Ident until you’re confident a job is real.', 'Report anything that feels wrong — we act on every report.'].map(t => (
             <li key={t} className="flex gap-2"><Icon name="check" className="mt-0.5 size-4 shrink-0 text-green" />{t}</li>
           ))}
         </ul>

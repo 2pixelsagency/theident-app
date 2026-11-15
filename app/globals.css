@@ -5,8 +5,8 @@
 @theme inline {
   --color-background: var(--bg);
   --color-foreground: var(--ink);
-  --font-sans: var(--font-poppins);
-  --font-display: 'ITC Symbol', var(--font-poppins), system-ui, sans-serif;
+  --font-sans: var(--font-inter);
+  --font-display: var(--font-bricolage), system-ui, sans-serif;
 
   /* tokens.css exposed as Tailwind colours: bg-surface, text-muted, border-line, bg-green-tint… */
   --color-bg: var(--bg);
@@ -34,6 +34,11 @@
   --color-field: var(--field);
   --color-chip: var(--chip);
   --color-cta: var(--cta);
+  --color-forest: var(--forest);
+  --color-lime: var(--lime);
+  --color-blossom: var(--blossom);
+  --color-butter: var(--butter);
+  --color-mint: var(--mint);
   --color-dark: var(--dark);
   --color-dark-2: var(--dark-2);
 }
@@ -63,3 +68,9 @@ html, body {
 /* Onboarding: each question eases in */
 @keyframes rc-step-in { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
 @media (prefers-reduced-motion: reduce) { * { animation-duration: 1ms !important; transition-duration: 1ms !important; } }
+
+/* On dark panels (Forest cards, photo heroes) the green accent becomes Lime so it stays visible */
+:where(.bg-dark, .bg-hero, .bg-forest) :is(.text-green) { color: var(--lime); }
+:where(.bg-dark, .bg-hero, .bg-forest) :is(.bg-green):not(.bg-green-tint) { background-color: var(--lime); color: var(--ink); }
+:where(.bg-dark, .bg-hero, .bg-forest) :is(.ring-green) { --tw-ring-color: var(--lime); }
+.bg-dark.ring-green, .bg-dark .ring-green { --tw-ring-color: var(--lime); }
