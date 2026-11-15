@@ -7,6 +7,7 @@ import { supabase } from '@/lib/supabase'
 import { useMe } from '@/lib/rc/me'
 import { useAsync } from '@/lib/rc/useAsync'
 import { fullName, initials, shortAgo } from '@/lib/rc/format'
+import { JoinCodeSheet } from '@/components/rc/CastInvite'
 
 type Filter = 'all' | 'casting' | 'cast'
 type Thread = { key: string; href: string; name: string; avatar: string | null; preview: string; at: string | null; unread: number; kind: 'casting' | 'direct' | 'cast'; verified: boolean }
@@ -15,6 +16,7 @@ export default function ChatsPage() {
   const { id: me, role } = useMe()
   const [filter, setFilter] = useState<Filter>('all')
   const [q, setQ] = useState('')
+  const [joining, setJoining] = useState(false)
 
   const { data: threads, loading } = useAsync(async () => {
     const [{ data: convos }, { data: memberships }] = await Promise.all([
@@ -55,12 +57,12 @@ export default function ChatsPage() {
 
   return (
     <>
-      <PageHeader title="Chats" right={<IconButton icon="pen" label="New cast chat" href="/chats/new" className="text-green-ink" />} />
+      <PageHeader title="Chats" right={<div className="flex items-center gap-1"><IconButton icon="hash" label="Join with a code" onClick={() => setJoining(true)} /><IconButton icon="pen" label="New cast chat" href="/chats/new" className="text-green-ink" /></div>} />
       <div className="px-4 pb-8">
         <SearchField value={q} onChange={setQ} placeholder="Search messages…" />
         <div className="mt-3"><TabChips value={filter} onChange={setFilter} options={[{ value: 'all', label: 'All' }, { value: 'casting', label: 'Casting' }, { value: 'cast', label: 'Cast & crew' }]} /></div>
         {loading ? <PageLoading /> : shown.length === 0 ? (
-          <Empty icon="chat" title={filter === 'cast' ? 'No cast chats yet' : 'No messages yet'} sub={filter === 'cast' ? 'Start a chat for your company, swings or department.' : 'Message someone from their profile — you’ll need to be connected first.'} />
+          <Empty icon="chat" title={filter === 'cast' ? 'No cast chats yet' : 'No messages yet'} sub={filter === 'cast' ? 'Start a chat for your company or crew, or join one with a code from set.' : 'Message someone from their profile — you’ll need to be connected first.'} />
         ) : (
           <ul className="mt-3 space-y-2">
             {shown.map(t => (
@@ -86,6 +88,7 @@ export default function ChatsPage() {
           </ul>
         )}
       </div>
+      <JoinCodeSheet open={joining} onClose={() => setJoining(false)} />
     </>
   )
 }

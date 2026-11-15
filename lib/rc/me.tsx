@@ -44,7 +44,16 @@ export function MeProvider({ children }: { children: React.ReactNode }) {
 
   const load = useCallback(async () => {
     const { data: { session } } = await supabase.auth.getSession()
-    if (!session) { router.replace('/welcome'); return }
+    // An invite link opened while signed out: remember it, log in, then come back to it
+    const joinPath = window.location.pathname.match(/^\/join\/([A-Za-z0-9]{6})$/)
+    if (!session) {
+      if (joinPath) try { localStorage.setItem('ident.pendingJoin', joinPath[1]) } catch { /* private mode */ }
+      router.replace('/welcome'); return
+    }
+    try {
+      const pending = localStorage.getItem('ident.pendingJoin')
+      if (pending) { localStorage.removeItem('ident.pendingJoin'); if (!joinPath) router.replace('/join/' + pending) }
+    } catch { /* private mode */ }
     const uid = session.user.id
     const [{ data: profile }, { count: notifs }, { data: convos }] = await Promise.all([
       supabase.from('profiles').select(PROFILE_COLS).eq('id', uid).maybeSingle(),
