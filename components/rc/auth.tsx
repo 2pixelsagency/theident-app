@@ -7,20 +7,15 @@ import { Button, ClientOnly, Field, Toaster, cx } from './ui'
 
 // Shared pieces for the auth screens (forgot / set new / change password, verify email, callback).
 
-// Brand backdrop: soft organic pastel blobs behind the content (decorative only)
-export function Blobs() {
-  return (
-    <div aria-hidden="true" className="pointer-events-none fixed inset-0 -z-10 overflow-hidden">
-      <span className="absolute -right-24 -top-20 size-72 rounded-[62%_38%_55%_45%/48%_60%_40%_52%] bg-mint opacity-70" />
-      <span className="absolute -left-28 top-[55%] size-64 rounded-[45%_55%_38%_62%/55%_42%_58%_45%] bg-blossom opacity-60" />
-    </div>
-  )
+// Brand backdrop: a soft Lime-to-white gradient with fine grain (decorative only)
+export function Backdrop() {
+  return <div aria-hidden="true" className="pointer-events-none fixed inset-0 -z-10 bg-glow" />
 }
 
 export function AuthShell({ children }: { children: React.ReactNode }) {
   return (
     <div className="relative isolate min-h-dvh bg-bg">
-      <Blobs />
+      <Backdrop />
       {/* min-h-dvh + bottom safe-area keeps forms usable with the on-screen keyboard open */}
       <div className="mx-auto flex min-h-dvh w-full max-w-[430px] flex-col px-6 pb-[max(20px,env(safe-area-inset-bottom))] pt-[max(16px,env(safe-area-inset-top))]">
         <ClientOnly>{children}</ClientOnly>

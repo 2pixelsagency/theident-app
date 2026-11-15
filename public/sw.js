@@ -4,7 +4,7 @@ self.addEventListener('push', function (event) {
   let data = {}
   try {
     data = event.data ? event.data.json() : {}
-  } catch (e) {
+  } catch {
     data = { title: 'The Ident', body: event.data ? event.data.text() : '' }
   }
 

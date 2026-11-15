@@ -4,7 +4,7 @@ import { createClient } from '@supabase/supabase-js'
 export const runtime = 'nodejs'
 
 export async function POST(req: NextRequest) {
-  let body: any
+  let body: { token?: string } | null
   try { body = await req.json() } catch { return NextResponse.json({ error: 'bad json' }, { status: 400 }) }
   const token = body?.token
   if (!token) return NextResponse.json({ error: 'no token' }, { status: 400 })

@@ -27,7 +27,8 @@ export async function POST(req: NextRequest) {
   )
 
   // 3. The new notification row Supabase sends us
-  let body: any
+  type NotificationRow = { profile_id?: string; title?: string; body?: string; type?: string; data?: { url?: string } | null }
+  let body: { record?: NotificationRow } | null
   try { body = await req.json() } catch { return NextResponse.json({ error: 'bad json' }, { status: 400 }) }
 
   const record = body?.record
@@ -56,14 +57,15 @@ export async function POST(req: NextRequest) {
 
   // 6. Send to each device; remove any that are dead
   let sent = 0
-  await Promise.all((subs as any[]).map(async (s) => {
+  await Promise.all((subs as { id: string; endpoint: string; p256dh: string; auth: string }[]).map(async (s) => {
     try {
       await webpush.sendNotification(
         { endpoint: s.endpoint, keys: { p256dh: s.p256dh, auth: s.auth } },
         payload
       )
       sent++
-    } catch (err: any) {
+    } catch (e) {
+      const err = e as { statusCode?: number; body?: unknown }
       if (err?.statusCode === 404 || err?.statusCode === 410) {
         await admin.from('push_subscriptions').delete().eq('id', s.id)
       } else {
