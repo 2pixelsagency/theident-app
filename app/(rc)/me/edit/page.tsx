@@ -1,19 +1,22 @@
 'use client'
 
-import { useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Icon from '@/components/rc/Icon'
 import { Avatar, Button, Card, Chip, Field, PageLoading, Sheet, TextArea, Toggle, cx, toast } from '@/components/rc/ui'
 import { supabase } from '@/lib/supabase'
 import { heroRound } from '@/components/rc/ProfileView'
 import { useMe } from '@/lib/rc/me'
+import CompletenessCard from '@/components/rc/Completeness'
+import { BrandsEditor, GalleryEditor, TestimonialsEditor } from '@/components/rc/ProfileExtras'
+import { completeness } from '@/lib/rc/completeness'
 import { useAsync } from '@/lib/rc/useAsync'
 import { fullName } from '@/lib/rc/format'
 import { loadFullProfile, type Credit, type FullProfile, type Reel } from '@/lib/rc/profile'
 
 const stamp = () => Date.now().toString(36)
 type Draft = Pick<FullProfile, 'first_name' | 'last_name' | 'what_i_do' | 'location' | 'bio' | 'height' | 'agent_name' | 'agent_email' | 'agent_phone' | 'company_name' | 'graduate_school'> & {
-  minAge: string; maxAge: string; hair: number | null; eyes: number | null; isPublic: boolean; openToWork: boolean; isGraduate: boolean; gradYear: string
+  minAge: string; maxAge: string; hair: number | null; eyes: number | null; isPublic: boolean; openToWork: boolean; isGraduate: boolean; gradYear: string; showContact: boolean
 }
 
 export default function EditProfilePage() {
@@ -40,14 +43,13 @@ function Editor({ data, uid, caster, onRefresh, mutate }: { data: Data; uid: str
     first_name: p.first_name, last_name: p.last_name, what_i_do: p.what_i_do, location: p.location, bio: p.bio || p.summary, height: p.height,
     agent_name: p.agent_name, agent_email: p.agent_email, agent_phone: p.agent_phone, company_name: p.company_name, graduate_school: p.graduate_school,
     minAge: p.minimum_age ? String(p.minimum_age) : '', maxAge: p.maximum_age ? String(p.maximum_age) : '', hair: p.hair_colour_id, eyes: p.eye_colour_id,
-    isPublic: p.show_talent !== false, openToWork: p.availability_status === 'available', isGraduate: p.is_graduate, gradYear: p.graduate_year ? String(p.graduate_year) : '',
+    isPublic: p.show_talent !== false, openToWork: p.availability_status === 'available', isGraduate: p.is_graduate, gradYear: p.graduate_year ? String(p.graduate_year) : '', showContact: p.show_agent_contact,
   })
   const [skillIds, setSkillIds] = useState<number[]>(data.skills.map(s => s.id))
   const [skillQuery, setSkillQuery] = useState('')
   const [addingSkill, setAddingSkill] = useState(false)
   const [reelSheet, setReelSheet] = useState(false)
   const [credit, setCredit] = useState<Partial<Credit> | null>(null)
-  const [saving, setSaving] = useState(false)
   const [busyImage, setBusyImage] = useState<'avatar' | 'banner' | null>(null)
   const avatarRef = useRef<HTMLInputElement>(null)
   const bannerRef = useRef<HTMLInputElement>(null)
@@ -73,29 +75,83 @@ function Editor({ data, uid, caster, onRefresh, mutate }: { data: Data; uid: str
     onRefresh()
   }
 
-  const save = async () => {
-    setSaving(true)
+  // ---- Autosave: every change is written a moment after you stop typing (optimistic, debounced) ----
+  const row = useMemo(() => {
     const year = parseInt(d.gradYear, 10)
-    // One Name field: first word is the first name, the rest the last name
-    const [first, ...rest] = name.trim().split(/\s+/)
-    const { error } = await supabase.from('profiles').update({
-      first_name: first || null, last_name: rest.join(' ') || null, what_i_do: d.what_i_do?.trim() || null, location: d.location?.trim() || null,
+    const [first, ...rest] = name.trim().split(/\s+/) // one Name field: first word = first name
+    return {
+      ...(first ? { first_name: first, last_name: rest.join(' ') || null } : {}), // never blank out a name mid-edit
+      what_i_do: d.what_i_do?.trim() || null, location: d.location?.trim() || null,
       bio: d.bio?.trim() || null, height: d.height?.trim() || null, minimum_age: parseInt(d.minAge, 10) || null, maximum_age: parseInt(d.maxAge, 10) || null,
       hair_colour_id: d.hair, eye_colour_id: d.eyes, show_talent: d.isPublic, availability_status: d.openToWork ? 'available' : null,
       is_graduate: d.isGraduate, graduate_school: d.isGraduate ? d.graduate_school?.trim() || null : null, graduate_year: d.isGraduate && year ? year : null,
       agent_name: d.agent_name?.trim() || null, agent_email: d.agent_email?.trim() || null, agent_phone: d.agent_phone?.trim() || null,
-      company_name: d.company_name?.trim() || null,
-    }).eq('id', uid)
-    if (error) { setSaving(false); toast('Couldn’t save: ' + error.message); return }
-    const before = new Set(data.skills.map(s => s.id))
-    const added = skillIds.filter(s => !before.has(s))
-    const removed = [...before].filter(s => !skillIds.includes(s))
-    if (added.length) await supabase.from('profile_skills').insert(added.map(skill_id => ({ profile_id: uid, skill_id })))
-    if (removed.length) await supabase.from('profile_skills').delete().eq('profile_id', uid).in('skill_id', removed)
-    await onRefresh()
-    setSaving(false)
-    toast('Profile saved')
+      show_agent_contact: d.showContact, company_name: d.company_name?.trim() || null,
+    }
+  }, [d, name])
+  const live = completeness({
+    role: caster ? 'caster' : 'performer', picture_url: p.picture_url, first_name: name.trim() || null, what_i_do: d.what_i_do, location: d.location,
+    bio: d.bio, summary: null, minimum_age: parseInt(d.minAge, 10) || null, maximum_age: parseInt(d.maxAge, 10) || null, height: d.height,
+    hair_colour_id: d.hair, eye_colour_id: d.eyes, company_name: d.company_name, skills: skillIds.length, reels: data.reels.length, credits: data.credits.length,
+  })
+  const [status, setStatus] = useState<'saved' | 'saving' | 'error'>('saved')
+  const lastSaved = useRef(JSON.stringify(row))
+  const latest = useRef(row)
+  useEffect(() => { latest.current = row }, [row])
+  const inFlight = useRef<Promise<boolean> | null>(null)
+
+  const flush = useCallback(async (): Promise<boolean> => {
+    if (inFlight.current) await inFlight.current
+    const json = JSON.stringify(latest.current)
+    if (json === lastSaved.current) return true
+    setStatus('saving')
+    inFlight.current = (async () => {
+      const { error } = await supabase.from('profiles').update(latest.current).eq('id', uid)
+      if (error) { setStatus('error'); return false }
+      lastSaved.current = json
+      setStatus(JSON.stringify(latest.current) === json ? 'saved' : 'saving')
+      return true
+    })()
+    const ok = await inFlight.current
+    inFlight.current = null
+    return ok
+  }, [uid])
+
+  useEffect(() => {
+    if (JSON.stringify(row) === lastSaved.current) return
+    const t = setTimeout(() => { flush() }, 800)
+    return () => clearTimeout(t)
+  }, [row, flush])
+
+  // Completeness nudges link to /me/edit#section — scroll there once the editor has rendered
+  useEffect(() => {
+    const id = window.location.hash.slice(1)
+    if (!id) return
+    const t = setTimeout(() => document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 120)
+    return () => clearTimeout(t)
+  }, [])
+
+  // Leaving the screen saves anything still pending
+  useEffect(() => () => {
+    if (JSON.stringify(latest.current) !== lastSaved.current) supabase.from('profiles').update(latest.current).eq('id', uid).then(() => {}, () => {})
+  }, [uid])
+
+  const done = async () => {
+    if (!(await flush())) { toast('Couldn’t save — check your connection'); return }
+    await onRefresh() // update the name/photo shown around the app once, not on every keystroke
     router.push('/me')
+  }
+
+  // Skills save immediately (add / remove), reverting if the write fails
+  const addSkill = async (sid: number) => {
+    setSkillIds(l => [...l, sid])
+    const { error } = await supabase.from('profile_skills').insert({ profile_id: uid, skill_id: sid })
+    if (error) { setSkillIds(l => l.filter(x => x !== sid)); toast('Couldn’t add that skill') }
+  }
+  const removeSkill = async (sid: number) => {
+    setSkillIds(l => l.filter(x => x !== sid))
+    const { error } = await supabase.from('profile_skills').delete().eq('profile_id', uid).eq('skill_id', sid)
+    if (error) { setSkillIds(l => [...l, sid]); toast('Couldn’t remove that skill') }
   }
 
   const removeReel = async (r: Reel) => {
@@ -116,7 +172,7 @@ function Editor({ data, uid, caster, onRefresh, mutate }: { data: Data; uid: str
   return (
     <>
       {/* Immersive hero, same as the public profile: cover (or headshot) bleeds to the top, controls float over it */}
-      <section className="relative h-[44dvh] min-h-[330px] max-h-[460px] overflow-hidden bg-dark text-white lg:rounded-b-[28px]">
+      <section id="photo" className="relative h-[44dvh] min-h-[330px] max-h-[460px] overflow-hidden bg-dark text-white lg:rounded-b-[28px]">
         {hero
           // eslint-disable-next-line @next/next/no-img-element
           ? <img src={hero} alt="" className="absolute inset-0 size-full object-cover" />
@@ -125,14 +181,19 @@ function Editor({ data, uid, caster, onRefresh, mutate }: { data: Data; uid: str
         <div className="absolute inset-0 bg-scrim" />
 
         <div className="absolute inset-x-0 top-0 flex items-center justify-between px-4 pt-[max(14px,env(safe-area-inset-top))]">
-          <button type="button" aria-label="Cancel" onClick={() => router.push('/me')} className={heroRound}><Icon name="x" className="size-5" /></button>
-          <button type="button" onClick={save} disabled={saving} className="inline-flex h-10 items-center gap-1.5 rounded-full bg-cta px-4 text-[15px] font-semibold text-ink shadow-cta transition active:scale-95 disabled:opacity-70">
-            <Icon name="check" className="size-4" strokeWidth={2.2} />{saving ? 'Saving…' : 'Save'}
+          <button type="button" aria-label="Back to my profile" onClick={done} className={heroRound}><Icon name="chevron-left" className="size-5" /></button>
+          <button type="button" onClick={done} disabled={status === 'saving'} className="inline-flex h-10 items-center gap-1.5 rounded-full bg-cta px-4 text-[15px] font-semibold text-ink shadow-cta transition active:scale-95 disabled:opacity-70">
+            <Icon name="check" className="size-4" strokeWidth={2.2} />Done
           </button>
         </div>
 
         <div className="absolute inset-x-0 bottom-0 px-5 pb-5">
-          <p className="mb-3 text-[11px] font-medium uppercase tracking-[0.12em] text-white/80">Customise profile</p>
+          <p className="mb-3 flex items-center gap-2 text-[11px] font-medium uppercase tracking-[0.12em] text-white/80">
+            Customise profile
+            <span aria-live="polite" className={cx('normal-case tracking-normal', status === 'error' ? 'text-blossom' : 'text-white/70')}>
+              · {status === 'saving' ? 'Saving…' : status === 'error' ? <button type="button" onClick={() => flush()} className="underline">Not saved — retry</button> : 'All changes saved'}
+            </span>
+          </p>
           <div className="flex items-center gap-3">
             <button type="button" onClick={() => avatarRef.current?.click()} aria-label="Replace headshot" className="relative shrink-0 rounded-full ring-2 ring-white">
               <Avatar src={p.picture_url} name={fullName(p)} size={60} />
@@ -154,22 +215,25 @@ function Editor({ data, uid, caster, onRefresh, mutate }: { data: Data; uid: str
       </section>
 
       <div className="space-y-5 px-4 pb-12 pt-5">
+        {live && <CompletenessCard result={live} compact />}
+        <div id="basics" className="scroll-mt-4 space-y-5">
         <Field label="Name" autoComplete="name" value={name} onChange={e => setName(e.target.value)} placeholder="First and last name" />
         {caster
           ? <Field label="Company" value={d.company_name || ''} onChange={e => set('company_name', e.target.value)} />
           : <Field label="Headline" value={d.what_i_do || ''} onChange={e => set('what_i_do', e.target.value)} placeholder="Actor & Dancer · London" />}
         <Field label="Location" value={d.location || ''} onChange={e => set('location', e.target.value)} placeholder="London, UK" />
+        </div>
 
         <Card className="divide-y divide-line">
           <Row title="Public profile" sub="Anyone can view & share your page" checked={d.isPublic} onChange={v => set('isPublic', v)} />
           {!caster && <Row title="Open to work" sub="Show the green badge to casters" checked={d.openToWork} onChange={v => set('openToWork', v)} />}
         </Card>
 
-        <TextArea label="About" value={d.bio || ''} onChange={e => set('bio', e.target.value)} placeholder="Training, what you’re known for, what you’re looking for next…" />
+        <TextArea id="about" className="scroll-mt-4" label="About" value={d.bio || ''} onChange={e => set('bio', e.target.value)} placeholder="Training, what you’re known for, what you’re looking for next…" />
 
         {!caster && (
           <>
-            <section>
+            <section id="playing" className="scroll-mt-4">
               <h2 className="mb-3 text-[18px]">Playing details</h2>
               <Card className="divide-y divide-line">
                 <div className="flex items-center gap-3 px-4 py-2.5">
@@ -204,11 +268,11 @@ function Editor({ data, uid, caster, onRefresh, mutate }: { data: Data; uid: str
               </Card>
             </section>
 
-            <section>
+            <section id="skills" className="scroll-mt-4">
               <h2 className="mb-3 text-[18px]">Skills</h2>
               <div className="flex flex-wrap gap-2">
                 {skillIds.map(sid => (
-                  <button key={sid} type="button" onClick={() => setSkillIds(l => l.filter(x => x !== sid))} className="inline-flex h-9 items-center gap-1.5 rounded-full bg-green-tint px-3 text-[13px] text-green-ink">
+                  <button key={sid} type="button" aria-label={'Remove ' + skillName.get(sid)} onClick={() => removeSkill(sid)} className="inline-flex h-9 items-center gap-1.5 rounded-full bg-green-tint px-3 text-[13px] text-green-ink">
                     {skillName.get(sid)} <Icon name="x" className="size-3.5" />
                   </button>
                 ))}
@@ -217,12 +281,12 @@ function Editor({ data, uid, caster, onRefresh, mutate }: { data: Data; uid: str
               {addingSkill && (
                 <div className="mt-3">
                   <Field icon="search" value={skillQuery} onChange={e => setSkillQuery(e.target.value)} placeholder="Search skills, accents, instruments…" autoFocus />
-                  {skillResults.length > 0 && <div className="mt-2 flex flex-wrap gap-2">{skillResults.map(s => <Chip key={s.id} onClick={() => { setSkillIds(l => [...l, s.id]); setSkillQuery('') }}>+ {s.name}</Chip>)}</div>}
+                  {skillResults.length > 0 && <div className="mt-2 flex flex-wrap gap-2">{skillResults.map(s => <Chip key={s.id} onClick={() => { addSkill(s.id); setSkillQuery('') }}>+ {s.name}</Chip>)}</div>}
                 </div>
               )}
             </section>
 
-            <section id="media">
+            <section id="media" className="scroll-mt-4">
               <h2 className="mb-3 text-[18px]">Showreel &amp; photos</h2>
               <div className="grid grid-cols-2 gap-3">
                 {data.reels.map(r => (
@@ -236,9 +300,11 @@ function Editor({ data, uid, caster, onRefresh, mutate }: { data: Data; uid: str
               </div>
             </section>
 
+            <GalleryEditor uid={uid} photos={data.gallery} onChange={gallery => mutate(x => x && { ...x, gallery })} />
+
             <CvUpload uid={uid} path={p.cv_path} onChange={cv_path => mutate(x => x && { ...x, profile: { ...x.profile!, cv_path } })} />
 
-            <section>
+            <section id="credits" className="scroll-mt-4">
               <div className="mb-3 flex items-center justify-between"><h2 className="text-[18px]">Credits</h2><button type="button" onClick={() => setCredit({})} className="text-sm font-medium text-green-ink">+ Add credit</button></div>
               {data.credits.length === 0 ? <p className="text-sm text-muted">No credits yet.</p> : (
                 <Card className="divide-y divide-line overflow-hidden">
@@ -252,7 +318,10 @@ function Editor({ data, uid, caster, onRefresh, mutate }: { data: Data; uid: str
               )}
             </section>
 
-            <section>
+            <BrandsEditor uid={uid} brands={data.brands} onChange={brands => mutate(x => x && { ...x, brands })} />
+            <TestimonialsEditor uid={uid} testimonials={data.testimonials} onChange={testimonials => mutate(x => x && { ...x, testimonials })} />
+
+            <section id="representation" className="scroll-mt-4">
               <h2 className="mb-3 text-[18px]">Representation</h2>
               <div className="space-y-3">
                 <Field label="Agent" value={d.agent_name || ''} onChange={e => set('agent_name', e.target.value)} placeholder="Agency name" />
@@ -260,13 +329,16 @@ function Editor({ data, uid, caster, onRefresh, mutate }: { data: Data; uid: str
                   <Field className="flex-1" label="Agent email" type="email" value={d.agent_email || ''} onChange={e => set('agent_email', e.target.value)} />
                   <Field className="flex-1" label="Agent phone" type="tel" value={d.agent_phone || ''} onChange={e => set('agent_phone', e.target.value)} />
                 </div>
+                <Card className="divide-y divide-line">
+                  <Row title="Show agent contact publicly" sub={d.showContact ? 'Anyone viewing your profile sees the email and phone' : 'Private — only the agency name shows. Casting can still message you.'} checked={d.showContact} onChange={v => set('showContact', v)} />
+                </Card>
               </div>
             </section>
           </>
         )}
 
-        <p className={cx(label, 'pt-2 text-center')}>Changes go live when you tap Save.</p>
-        <Button full size="lg" onClick={save} disabled={saving}>{saving ? 'Saving…' : 'Save profile'}</Button>
+        <p className={cx(label, 'pt-2 text-center')} aria-live="polite">{status === 'saving' ? 'Saving…' : status === 'error' ? 'Some changes aren’t saved yet — check your connection.' : 'Changes save automatically.'}</p>
+        <Button full size="lg" onClick={done} disabled={status === 'saving'}>Done</Button>
       </div>
 
       <ReelSheet open={reelSheet} onClose={() => setReelSheet(false)} uid={uid} count={data.reels.length} onAdded={r => mutate(x => x && { ...x, reels: [...x.reels, r] })} />

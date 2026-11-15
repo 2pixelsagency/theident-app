@@ -1,24 +1,31 @@
 'use client'
 
+import { useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import Icon from '@/components/rc/Icon'
+import CompletenessCard from '@/components/rc/Completeness'
 import ProfileView, { heroPrimary, heroSecondary } from '@/components/rc/ProfileView'
 import { PageLoading, toast } from '@/components/rc/ui'
 import { useMe } from '@/lib/rc/me'
 import { useAsync } from '@/lib/rc/useAsync'
 import { fullName } from '@/lib/rc/format'
 import { loadFullProfile } from '@/lib/rc/profile'
+import { completenessOf } from '@/lib/rc/completeness'
 
-// The owner's view of their profile: the same immersive layout everyone else sees, with Edit/Share
+// The owner's view of their profile: the same immersive layout everyone else sees, with Edit/Share,
+// a completeness nudge, and "Preview as casting" to see exactly what a casting director sees.
 export default function MyProfilePage() {
   const router = useRouter()
   const { id } = useMe()
+  const [preview, setPreview] = useState(false)
   const { data, loading } = useAsync(() => loadFullProfile(id), [id])
 
   if (loading || !data?.profile) return <PageLoading />
   const p = data.profile
+  const caster = p.account_role === 'caster'
   const publicUrl = p.slug ? window.location.origin + '/' + p.slug : null
+  const result = completenessOf(data)
 
   const share = async () => {
     if (!publicUrl) { toast('Add your name to get a public link'); return }
@@ -29,6 +36,32 @@ export default function MyProfilePage() {
     if (!publicUrl) return
     await navigator.clipboard?.writeText(publicUrl).catch(() => {})
     toast('Link copied — send it to a director or choreographer')
+  }
+
+  if (preview) {
+    // Exactly what casting sees: their actions, and private contact hidden unless you chose to show it
+    const asCasting = { ...data, profile: { ...p, ...(p.show_agent_contact ? {} : { agent_email: null, agent_phone: null }) } }
+    const inert = () => toast('This is a preview — casting directors use these buttons')
+    return (
+      <>
+        <ProfileView
+          signedIn
+          data={asCasting}
+          onBack={() => setPreview(false)}
+          onShare={inert}
+          actions={<>
+            <button type="button" onClick={inert} className={heroPrimary}><Icon name="send" className="size-[18px]" /> Invite to audition</button>
+            <button type="button" onClick={inert} className={heroSecondary}><Icon name="chat" className="size-[18px]" /> Message</button>
+          </>}
+          statusLine={p.show_talent === false ? 'Hidden — casting can’t find you in search right now' : 'Preview — this is what a casting director sees'}
+        />
+        <div className="pointer-events-none fixed inset-x-0 bottom-0 z-50 flex justify-center px-4 pb-[calc(env(safe-area-inset-bottom)+108px)] lg:left-64 lg:pb-8">
+          <button type="button" onClick={() => setPreview(false)} className="pointer-events-auto inline-flex h-12 items-center gap-2 rounded-full bg-lime px-5 text-[15px] font-semibold text-ink shadow-cta focus-visible:outline-2 focus-visible:outline-forest">
+            <Icon name="eye" className="size-[18px]" /> Previewing as casting · Exit
+          </button>
+        </div>
+      </>
+    )
   }
 
   return (
@@ -43,10 +76,18 @@ export default function MyProfilePage() {
         <Link href="/me/edit" className={heroPrimary}><Icon name="pen" className="size-[18px]" /> Edit profile</Link>
         <button type="button" onClick={share} className={heroSecondary}><Icon name="share" className="size-[18px]" /> Share</button>
       </>}
-      statusLine={<>This is how casting directors and the public see you · {data.connections} connection{data.connections === 1 ? '' : 's'}</>}
-      below={p.account_role !== 'caster' && (
-        <button type="button" onClick={requestTestimonial} className="upload mt-5 flex h-11 w-full items-center justify-center gap-2 text-sm font-medium"><Icon name="send" className="size-4" /> Request a testimonial</button>
-      )}
+      statusLine={<>{data.connections} connection{data.connections === 1 ? '' : 's'}</>}
+      below={<>
+        {result && <CompletenessCard result={result} className="mt-5" />}
+        {!caster && (
+          <button type="button" onClick={() => { setPreview(true); window.scrollTo(0, 0) }} className="mt-4 flex h-11 w-full items-center justify-center gap-2 rounded-[14px] border border-line bg-surface text-sm font-semibold shadow-card">
+            <Icon name="eye" className="size-4" /> Preview as casting
+          </button>
+        )}
+        {!caster && (
+          <button type="button" onClick={requestTestimonial} className="upload mt-3 flex h-11 w-full items-center justify-center gap-2 text-sm font-medium"><Icon name="send" className="size-4" /> Request a testimonial</button>
+        )}
+      </>}
     />
   )
 }

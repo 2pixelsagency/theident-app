@@ -1,5 +1,6 @@
 // Small PDF writer shared by the CV and invoices (runs in the browser).
 // Brand colours are read from the tokens.css variables at runtime, so nothing is hard-coded here.
+// Headings use Bricolage Grotesque (public/fonts), body text the built-in Helvetica.
 import { PDFDocument, StandardFonts, rgb, type PDFFont, type PDFImage, type PDFPage, type RGB } from 'pdf-lib'
 import fontkit from '@pdf-lib/fontkit'
 
@@ -37,8 +38,8 @@ export class PdfWriter {
     w.regular = await w.doc.embedFont(StandardFonts.Helvetica)
     w.bold = await w.doc.embedFont(StandardFonts.HelveticaBold)
     try {
-      const res = await fetch('/fonts/ITC-Symbol-Std-Bold.otf')
-      w.display = res.ok ? await w.doc.embedFont(await res.arrayBuffer(), { subset: false }) : w.bold
+      const res = await fetch('/fonts/BricolageGrotesque-Bold.woff') // brand display font (OFL), embedded as TrueType
+      w.display = res.ok ? await w.doc.embedFont(await res.arrayBuffer(), { subset: true }) : w.bold
     } catch { w.display = w.bold }
     w.c = { ink: cssColor('--ink'), muted: cssColor('--muted'), line: cssColor('--line'), green: cssColor('--green'), dark: cssColor('--dark'), tint: cssColor('--bg'), white: rgb(1, 1, 1) }
     w.addPage()

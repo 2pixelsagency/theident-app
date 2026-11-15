@@ -6,7 +6,7 @@ export type FullProfile = {
   minimum_age: number | null; maximum_age: number | null; availability_status: string | null; show_talent: boolean | null
   hair_colour_id: number | null; eye_colour_id: number | null; is_graduate: boolean; graduate_school: string | null; graduate_year: number | null
   agent_name: string | null; agent_email: string | null; agent_phone: string | null; is_verified: boolean; account_role: string; company_name: string | null
-  cv_path: string | null
+  cv_path: string | null; show_agent_contact: boolean
   email_alerts_enabled: boolean | null; notification_prefs: { matches?: boolean; applications?: boolean; messages?: boolean; marketing?: boolean } | null
 }
 
@@ -16,15 +16,19 @@ export type Brand = { id: string; brand_name: string; logo_url: string | null }
 export type Testimonial = { id: string; quote: string; author_name: string | null; author_title: string | null }
 export type Lookup = { id: number; name: string }
 
-// Columns safe to show to other people (no date of birth, alert settings etc.)
-export const PUBLIC_PROFILE_COLS = 'id, first_name, last_name, slug, picture_url, banner_url, location, what_i_do, bio, summary, height, minimum_age, maximum_age, availability_status, show_talent, hair_colour_id, eye_colour_id, is_graduate, graduate_school, graduate_year, agent_name, agent_email, agent_phone, is_verified, account_role, company_name, cv_path'
+// Columns safe to show to other people. Agent email/phone are private: they come from
+// profile_contact(), which only returns them to the owner or when the owner chose to show them.
+export const PUBLIC_PROFILE_COLS = 'id, first_name, last_name, slug, picture_url, banner_url, location, what_i_do, bio, summary, height, minimum_age, maximum_age, availability_status, show_talent, hair_colour_id, eye_colour_id, is_graduate, graduate_school, graduate_year, agent_name, is_verified, account_role, company_name, cv_path, show_agent_contact'
+// The owner also reads their own settings (never select('*') — profiles is granted per column)
+const OWNER_PROFILE_COLS = PUBLIC_PROFILE_COLS + ', email_alerts_enabled, notification_prefs'
 
 export type FullProfileData = Awaited<ReturnType<typeof loadFullProfile>>
 
-// self=true loads every column (only ever for the signed-in owner)
+// self=true also loads the owner's own settings
 export async function loadFullProfile(id: string, self = true) {
-  const [p, reels, skills, credits, brands, testimonials, gallery, hair, eyes, conns] = await Promise.all([
-    supabase.from('profiles').select(self ? '*' : PUBLIC_PROFILE_COLS).eq('id', id).maybeSingle(),
+  const [p, contact, reels, skills, credits, brands, testimonials, gallery, hair, eyes, conns] = await Promise.all([
+    supabase.from('profiles').select(self ? OWNER_PROFILE_COLS : PUBLIC_PROFILE_COLS).eq('id', id).maybeSingle(),
+    supabase.rpc('profile_contact', { pid: id }).maybeSingle(),
     supabase.from('reels').select('id, label, url, sort_order').eq('profile_id', id).order('sort_order'),
     supabase.from('profile_skills').select('skills(id, name)').eq('profile_id', id),
     supabase.from('credits').select('id, title, role, year, production_company, director, production_type_id, production_types(name)').eq('profile_id', id).order('year', { ascending: false }),
@@ -36,7 +40,7 @@ export async function loadFullProfile(id: string, self = true) {
     supabase.from('connections').select('id', { count: 'exact', head: true }).eq('status', 'accepted').or(`requester_id.eq.${id},receiver_id.eq.${id}`),
   ])
   return {
-    profile: p.data as unknown as FullProfile | null,
+    profile: p.data ? { ...(p.data as unknown as FullProfile), ...((contact.data as { agent_email: string | null; agent_phone: string | null } | null) ?? { agent_email: null, agent_phone: null }) } : null,
     reels: (reels.data || []) as Reel[],
     skills: (skills.data || []).map(s => (s as unknown as { skills: { id: number; name: string } | null }).skills).filter((s): s is { id: number; name: string } => !!s),
     credits: (credits.data || []) as unknown as Credit[],
