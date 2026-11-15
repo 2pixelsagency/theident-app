@@ -19,6 +19,7 @@ export default function NewCastChatPage() {
   const { id: me, role } = useMe()
   const [name, setName] = useState('')
   const [production, setProduction] = useState<Production | null>(null)
+  const [show, setShow] = useState('')
   const [picking, setPicking] = useState(false)
   const [picked, setPicked] = useState<string[]>([])
   const [q, setQ] = useState('')
@@ -60,7 +61,7 @@ export default function NewCastChatPage() {
     setSaving(true)
     let chatId = existingChat
     if (!chatId) {
-      const { data: chat, error } = await supabase.from('cast_chats').insert({ name: name.trim(), created_by: me, production_job_id: production?.id ?? null, production_name: production?.title ?? null }).select('id').single()
+      const { data: chat, error } = await supabase.from('cast_chats').insert({ name: name.trim(), created_by: me, production_job_id: production?.id ?? null, production_name: production?.title ?? (show.trim() || null) }).select('id').single()
       if (error || !chat) { setSaving(false); toast('Couldn’t create the chat'); return }
       chatId = chat.id
       await supabase.from('cast_chat_members').insert({ chat_id: chatId, profile_id: me, role: 'admin' })
@@ -69,7 +70,8 @@ export default function NewCastChatPage() {
       const { error } = await supabase.from('cast_chat_members').insert(picked.map(profile_id => ({ chat_id: chatId!, profile_id })))
       if (error) { setSaving(false); toast('Some invites didn’t go through'); return }
     }
-    router.replace('/chats/cast/' + chatId)
+    // New chat: open straight onto the invite so it can go on the call sheet or the group text
+    router.replace('/chats/cast/' + chatId + (existingChat ? '' : '?invite=1'))
   }
 
   return (
@@ -82,9 +84,17 @@ export default function NewCastChatPage() {
               <span className="flex size-14 shrink-0 items-center justify-center rounded-xl bg-green text-white"><Icon name="users" className="size-6" /></span>
               <Field className="flex-1" value={name} onChange={e => setName(e.target.value)} placeholder="e.g. Coastlines — company" aria-label="Chat name" hint="Name your chat — cast, department or whole company." />
             </div>
-            <Card className="mt-4">
-              <ListRow icon="briefcase" title="Link a production" sub={production?.title || (data?.productions.length ? 'Optional' : 'No productions yet')} onClick={() => data?.productions.length && setPicking(true)} />
-            </Card>
+            {production ? (
+              <Card className="mt-4">
+                <ListRow icon="briefcase" title={production.title} sub="Linked production · tap to change" onClick={() => setPicking(true)} />
+              </Card>
+            ) : (
+              <div className="mt-4 space-y-2">
+                <Field value={show} onChange={e => setShow(e.target.value)} icon="ticket" placeholder="Show, film or set (optional)" aria-label="Show or production" hint="Any show — it doesn’t need to be cast through The Ident." />
+                {!!data?.productions.length && <button type="button" onClick={() => setPicking(true)} className="text-sm font-semibold text-green-ink">Or link one of your productions</button>}
+              </div>
+            )}
+            <p className="mt-4 flex items-center gap-2 rounded-xl bg-field px-3 py-2.5 text-[13px] text-muted"><Icon name="link" className="size-4 shrink-0" /> You’ll get an invite link and code to share — people don’t need to be connected to you.</p>
           </>
         )}
 
@@ -104,7 +114,7 @@ export default function NewCastChatPage() {
 
         <div className="mt-5"><SearchField value={q} onChange={setQ} placeholder="Search cast & connections…" /></div>
         {loading ? <PageLoading /> : shown.length === 0 ? (
-          <Empty icon="users" title="No one to add yet" sub="Connect with people from their profiles, then add them to cast chats." />
+          <Empty icon="users" title="No connections to add yet" sub={existingChat ? 'Share the chat’s invite link instead — anyone with it can join.' : 'That’s fine — create the chat and share the invite link or code.'} />
         ) : (
           <Card className="mt-3 divide-y divide-line overflow-hidden">
             {shown.map(p => {

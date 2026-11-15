@@ -8,6 +8,7 @@ import { Avatar, BackHeader, Button, Card, Empty, PageLoading, Segmented, Sheet,
 import { supabase } from '@/lib/supabase'
 import { useMe } from '@/lib/rc/me'
 import { useAsync } from '@/lib/rc/useAsync'
+import { ProductionChatCard } from '@/components/rc/CastInvite'
 import { fullName, toISODate } from '@/lib/rc/format'
 import { CASTER_APP_SELECT, casterStage, setStage, stageNote, type CasterApp, type CasterStage } from '@/lib/rc/casting'
 import { craftTag } from '@/lib/rc/talent'
@@ -86,6 +87,7 @@ export default function CastingReviewPage() {
     <>
       <BackHeader title={(job.project_in || title) + ' — review'} right={<><span className="text-sm text-muted">{apps.length} in</span><button type="button" onClick={() => setManage(true)} aria-label="Manage posting" className="inline-flex size-9 items-center justify-center rounded-full hover:bg-chip"><Icon name="more" /></button></>} />
       <div className="px-4 pb-24">
+        <div className="mb-3"><ProductionChatCard jobId={job.id} canCreate title={job.project_in || title} /></div>
         {/* Stage stepper */}
         <Card className="flex items-center px-2 py-3">
           {STAGES.map((s, i) => (

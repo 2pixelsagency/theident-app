@@ -1,10 +1,11 @@
 'use client'
 
 import { Fragment, useEffect, useState } from 'react'
-import { useParams, useRouter } from 'next/navigation'
+import { useParams, useRouter, useSearchParams } from 'next/navigation'
 import Icon from '@/components/rc/Icon'
 import { Bubble, Composer, DayDivider, dayLabel, useStickToBottom } from '@/components/rc/chat'
 import { Button, Empty, PageLoading, Sheet, cx, toast } from '@/components/rc/ui'
+import { InviteSheet } from '@/components/rc/CastInvite'
 import { supabase } from '@/lib/supabase'
 import { useMe } from '@/lib/rc/me'
 import { useAsync } from '@/lib/rc/useAsync'
@@ -21,10 +22,11 @@ export default function CastChatPage() {
   const { id: me } = useMe()
   const [channel, setChannel] = useState('company')
   const [selected, setSelected] = useState<Msg | null>(null)
+  const [sheet, setSheet] = useState<'invite' | 'members' | null>(useSearchParams().get('invite') ? 'invite' : null)
 
   const { data, loading, mutate } = useAsync(async () => {
     const [{ data: chat }, { data: members }, { data: msgs }] = await Promise.all([
-      supabase.from('cast_chats').select('id, name, production_name, channels, created_by').eq('id', chatId).maybeSingle(),
+      supabase.from('cast_chats').select('id, name, production_name, channels, created_by, invite_code, invite_enabled').eq('id', chatId).maybeSingle(),
       supabase.from('cast_chat_members').select('profile_id, role, title, profiles(first_name, last_name)').eq('chat_id', chatId),
       supabase.from('cast_chat_messages').select('id, sender_id, channel, body, is_pinned, created_at').eq('chat_id', chatId).order('created_at').limit(800),
     ])
@@ -68,10 +70,26 @@ export default function CastChatPage() {
     mutate(d => d && { ...d, messages: d.messages.map(x => x.id === m.id ? { ...x, is_pinned: !m.is_pinned } : x) })
   }
 
+  const admins = members.filter(m => m.role === 'admin').length
   const leave = async () => {
-    if (!confirm('Leave ' + chat.name + '?')) return
-    await supabase.from('cast_chat_members').delete().eq('chat_id', chatId).eq('profile_id', me)
+    if (isAdmin && admins === 1 && members.length > 1) { toast('Make someone else an admin before you leave'); return }
+    if (!confirm('Leave ' + chat.name + '? You can rejoin with an invite.')) return
+    const { error } = await supabase.from('cast_chat_members').delete().eq('chat_id', chatId).eq('profile_id', me)
+    if (error) { toast('Couldn’t leave just now'); return }
     router.replace('/chats')
+  }
+
+  const remove = async (m: Member) => {
+    if (!confirm('Remove ' + fullName(m.profiles) + ' from ' + chat.name + '?')) return
+    const { error } = await supabase.from('cast_chat_members').delete().eq('chat_id', chatId).eq('profile_id', m.profile_id)
+    if (error) { toast('Couldn’t remove them'); return }
+    mutate(d => d && { ...d, members: d.members.filter(x => x.profile_id !== m.profile_id) })
+  }
+
+  const makeAdmin = async (m: Member) => {
+    const { error } = await supabase.from('cast_chat_members').update({ role: 'admin' }).eq('chat_id', chatId).eq('profile_id', m.profile_id)
+    if (error) { toast('Couldn’t update their role'); return }
+    mutate(d => d && { ...d, members: d.members.map(x => x.profile_id === m.profile_id ? { ...x, role: 'admin' } : x) })
   }
 
   return (
@@ -80,13 +98,12 @@ export default function CastChatPage() {
         <div className="flex items-center gap-3">
           <button type="button" aria-label="Back" onClick={() => router.push('/chats')} className="inline-flex size-9 items-center justify-center rounded-full hover:bg-chip"><Icon name="chevron-left" className="size-6" /></button>
           <span className="flex size-11 items-center justify-center rounded-xl bg-green text-[17px] font-medium text-white">{initials(chat.name).slice(0, 1)}</span>
-          <span className="min-w-0 flex-1">
+          <button type="button" onClick={() => setSheet('members')} className="min-w-0 flex-1 text-left">
             <span className="block truncate text-[16px] font-medium">{chat.name}</span>
-            <span className="block text-xs text-green-ink">{members.length} member{members.length === 1 ? '' : 's'}{chat.production_name ? ' · ' + chat.production_name : ''}</span>
-          </span>
-          {isAdmin
-            ? <button type="button" aria-label="Add people" onClick={() => router.push('/chats/new?chat=' + chatId)} className="inline-flex size-10 items-center justify-center rounded-full text-green-ink hover:bg-chip"><Icon name="user-plus" /></button>
-            : <button type="button" aria-label="Leave chat" onClick={leave} className="inline-flex size-10 items-center justify-center rounded-full text-muted hover:bg-chip"><Icon name="logout" className="size-5" /></button>}
+            <span className="block text-xs text-green-ink">{members.length} {members.length === 1 ? 'person' : 'people'}{chat.production_name ? ' · ' + chat.production_name : ''}</span>
+          </button>
+          <button type="button" aria-label="Invite people" onClick={() => setSheet('invite')} className="inline-flex size-10 items-center justify-center rounded-full text-green-ink hover:bg-chip"><Icon name="user-plus" /></button>
+          <button type="button" aria-label="Members" onClick={() => setSheet('members')} className="inline-flex size-10 items-center justify-center rounded-full text-muted hover:bg-chip"><Icon name="users" className="size-5" /></button>
         </div>
         <div className="scrollbar-none mt-3 flex gap-2 overflow-x-auto">
           {chat.channels.map((c: string) => (
@@ -130,6 +147,35 @@ export default function CastChatPage() {
       </div>
 
       <Composer placeholder={'Message #' + channel + '…'} onSend={send} />
+
+      <InviteSheet open={sheet === 'invite'} onClose={() => setSheet(null)} chatId={chatId} name={chat.name} code={chat.invite_code} enabled={chat.invite_enabled} isAdmin={isAdmin}
+        onChange={next => mutate(d => (d?.chat ? { ...d, chat: { ...d.chat, ...next } } : d))} />
+
+      <Sheet open={sheet === 'members'} onClose={() => setSheet(null)} title={members.length + (members.length === 1 ? ' person' : ' people')}>
+        <div className="space-y-4">
+          <div className="grid grid-cols-2 gap-2">
+            <Button variant="outline" icon="link" onClick={() => setSheet('invite')}>Invite link</Button>
+            {isAdmin ? <Button variant="outline" icon="user-plus" onClick={() => router.push('/chats/new?chat=' + chatId)}>Add connections</Button>
+              : <Button variant="outline" icon="logout" onClick={leave}>Leave chat</Button>}
+          </div>
+          <ul className="divide-y divide-line">
+            {members.map(m => (
+              <li key={m.profile_id} className="flex items-center gap-3 py-2.5">
+                <span className={cx('flex size-9 shrink-0 items-center justify-center rounded-lg text-xs font-medium', colourFor(m.profile_id))}>{initials(fullName(m.profiles))}</span>
+                <span className="min-w-0 flex-1">
+                  <span className="block truncate text-[15px] font-medium">{fullName(m.profiles)}{m.profile_id === me ? ' (you)' : ''}</span>
+                  <span className="block text-xs text-muted">{[m.role === 'admin' ? 'Admin' : null, m.title].filter(Boolean).join(' · ') || 'Member'}</span>
+                </span>
+                {isAdmin && m.profile_id !== me && (<>
+                  {m.role !== 'admin' && <button type="button" onClick={() => makeAdmin(m)} className="text-xs font-semibold text-green-ink">Make admin</button>}
+                  <button type="button" onClick={() => remove(m)} className="ml-2 text-xs font-semibold text-red">Remove</button>
+                </>)}
+              </li>
+            ))}
+          </ul>
+          {isAdmin && <Button full variant="ghost" icon="logout" onClick={leave}>Leave chat</Button>}
+        </div>
+      </Sheet>
 
       <Sheet open={!!selected} onClose={() => setSelected(null)} title="Message">
         {selected && (
