@@ -13,6 +13,9 @@ import { completeness } from '@/lib/rc/completeness'
 import { useAsync } from '@/lib/rc/useAsync'
 import { fullName } from '@/lib/rc/format'
 import { loadFullProfile, type Credit, type FullProfile, type Reel } from '@/lib/rc/profile'
+import { compressImage, fileExt } from '@/lib/rc/media'
+import VideoEditor, { type SavedVideo } from '@/components/rc/VideoEditor'
+import { moveItem, saveOrder } from '@/components/rc/ProfileExtras'
 
 const stamp = () => Date.now().toString(36)
 type Draft = Pick<FullProfile, 'first_name' | 'last_name' | 'what_i_do' | 'location' | 'bio' | 'height' | 'agent_name' | 'agent_email' | 'agent_phone' | 'company_name' | 'graduate_school'> & {
@@ -49,6 +52,8 @@ function Editor({ data, uid, caster, onRefresh, mutate }: { data: Data; uid: str
   const [skillQuery, setSkillQuery] = useState('')
   const [addingSkill, setAddingSkill] = useState(false)
   const [reelSheet, setReelSheet] = useState(false)
+  const [reelMenu, setReelMenu] = useState<Reel | null>(null)
+  const [coverFor, setCoverFor] = useState<Reel | null>(null)
   const [credit, setCredit] = useState<Partial<Credit> | null>(null)
   const [busyImage, setBusyImage] = useState<'avatar' | 'banner' | null>(null)
   const avatarRef = useRef<HTMLInputElement>(null)
@@ -61,11 +66,12 @@ function Editor({ data, uid, caster, onRefresh, mutate }: { data: Data; uid: str
   const skillResults = skillQuery.trim() ? data.allSkills.filter(s => s.name.toLowerCase().includes(skillQuery.toLowerCase()) && !skillIds.includes(s.id)).slice(0, 8) : []
 
   const uploadImage = async (kind: 'avatar' | 'banner', e: React.ChangeEvent<HTMLInputElement>) => {
-    const f = e.target.files?.[0]
+    const raw = e.target.files?.[0]
     e.target.value = ''
-    if (!f) return
+    if (!raw) return
     setBusyImage(kind)
-    const path = uid + '/' + kind + '-' + stamp() + '.' + (f.name.split('.').pop() || 'jpg')
+    const f = await compressImage(raw, { maxDim: kind === 'banner' ? 2400 : 1600 })
+    const path = uid + '/' + kind + '-' + stamp() + '.' + fileExt(f)
     const { error } = await supabase.storage.from('headshots').upload(path, f, { contentType: f.type })
     if (error) { setBusyImage(null); toast('Upload failed'); return }
     const url = supabase.storage.from('headshots').getPublicUrl(path).data.publicUrl
@@ -156,8 +162,21 @@ function Editor({ data, uid, caster, onRefresh, mutate }: { data: Data; uid: str
 
   const removeReel = async (r: Reel) => {
     if (!confirm('Remove “' + (r.label || 'this clip') + '”?')) return
+    setReelMenu(null)
     await supabase.from('reels').delete().eq('id', r.id)
     mutate(x => x && { ...x, reels: x.reels.filter(y => y.id !== r.id) })
+  }
+  const moveReel = async (r: Reel, to: number) => {
+    setReelMenu(null)
+    const next = moveItem(data?.reels || [], r.id, to)
+    mutate(x => x && { ...x, reels: next })
+    if (!(await saveOrder('reels', next))) toast('Couldn’t save the new order')
+  }
+  const saveCover = async (r: Reel, v: SavedVideo) => {
+    setCoverFor(null)
+    const { error } = await supabase.from('reels').update({ poster_url: v.poster_url, duration_s: v.duration_s }).eq('id', r.id)
+    if (error) { toast('Couldn’t save the cover'); return }
+    mutate(x => x && { ...x, reels: x.reels.map(y => y.id === r.id ? { ...y, poster_url: v.poster_url } : y) })
   }
 
   const removeCredit = async (c: Partial<Credit>) => {
@@ -289,18 +308,20 @@ function Editor({ data, uid, caster, onRefresh, mutate }: { data: Data; uid: str
             <section id="media" className="scroll-mt-4">
               <h2 className="mb-3 text-[18px]">Showreel &amp; photos</h2>
               <div className="grid grid-cols-2 gap-3">
-                {data.reels.map(r => (
-                  <div key={r.id} className="relative aspect-[16/10] overflow-hidden rounded-[var(--radius)] bg-dark bg-cover bg-center" style={p.picture_url ? { backgroundImage: `url(${p.picture_url})` } : undefined}>
-                    <span className="absolute inset-0 bg-dark/40" />
+                {data.reels.map((r, i) => (
+                  <button key={r.id} type="button" onClick={() => setReelMenu(r)} aria-label={'Edit ' + (r.label || 'clip')} className="relative aspect-[16/10] overflow-hidden rounded-[var(--radius)] bg-dark bg-cover bg-center text-left" style={r.poster_url || p.picture_url ? { backgroundImage: `url(${r.poster_url || p.picture_url})` } : undefined}>
+                    <span className="absolute inset-0 bg-gradient-to-t from-dark/70 to-dark/10" />
+                    {i === 0 && data.reels.length > 1 && <span className="absolute left-2 top-2 rounded-full bg-lime px-2 py-0.5 text-[11px] font-semibold text-ink">Main</span>}
                     <span className="absolute bottom-2 left-2.5 right-8 truncate text-xs font-medium text-white">{r.label || 'Showreel'}</span>
-                    <button type="button" aria-label="Remove clip" onClick={() => removeReel(r)} className="absolute right-2 top-2 flex size-7 items-center justify-center rounded-full bg-surface/90"><Icon name="x" className="size-3.5" /></button>
-                  </div>
+                    <span className="absolute right-2 top-2 flex size-7 items-center justify-center rounded-full bg-surface/90 text-ink"><Icon name="more" className="size-3.5" /></span>
+                  </button>
                 ))}
                 <button type="button" onClick={() => setReelSheet(true)} className="upload flex aspect-[16/10] flex-col items-center justify-center gap-1 text-sm text-muted"><Icon name="plus" className="size-6" />Add</button>
               </div>
             </section>
 
-            <GalleryEditor uid={uid} photos={data.gallery} onChange={gallery => mutate(x => x && { ...x, gallery })} />
+            <GalleryEditor uid={uid} photos={data.gallery} onChange={gallery => mutate(x => x && { ...x, gallery })}
+              onCover={url => { mutate(x => x && { ...x, profile: { ...x.profile!, banner_url: url } }); onRefresh() }} />
 
             <CvUpload uid={uid} path={p.cv_path} onChange={cv_path => mutate(x => x && { ...x, profile: { ...x.profile!, cv_path } })} />
 
@@ -341,6 +362,25 @@ function Editor({ data, uid, caster, onRefresh, mutate }: { data: Data; uid: str
         <Button full size="lg" onClick={done} disabled={status === 'saving'}>Done</Button>
       </div>
 
+      <Sheet open={!!reelMenu} onClose={() => setReelMenu(null)} title={reelMenu?.label || 'Clip'}>
+        {reelMenu && (() => {
+          const i = data.reels.findIndex(x => x.id === reelMenu.id)
+          const own = reelMenu.url.includes('/storage/v1/object/public/reels/')
+          return (
+            <Card className="divide-y divide-line overflow-hidden">
+              {i > 0 && <MenuRow icon="star" label="Make main reel" sub="Shown first on your profile" onClick={() => moveReel(reelMenu, 0)} />}
+              {i > 0 && <MenuRow icon="chevron-left" label="Move earlier" onClick={() => moveReel(reelMenu, i - 1)} />}
+              {i < data.reels.length - 1 && <MenuRow icon="chevron-right" label="Move later" onClick={() => moveReel(reelMenu, i + 1)} />}
+              {own && <MenuRow icon="image" label="Change cover frame" onClick={() => { setCoverFor(reelMenu); setReelMenu(null) }} />}
+              <MenuRow icon="play" label="Watch" onClick={() => window.open(reelMenu.url, '_blank', 'noopener')} />
+              <MenuRow icon="x" label="Remove" danger onClick={() => removeReel(reelMenu)} />
+            </Card>
+          )
+        })()}
+      </Sheet>
+      <Sheet open={!!coverFor} onClose={() => setCoverFor(null)} title="Cover frame">
+        {coverFor && <VideoEditor key={coverFor.id} uid={uid} source={coverFor.url} onCancel={() => setCoverFor(null)} onDone={v => saveCover(coverFor, v)} />}
+      </Sheet>
       <ReelSheet open={reelSheet} onClose={() => setReelSheet(false)} uid={uid} count={data.reels.length} onAdded={r => mutate(x => x && { ...x, reels: [...x.reels, r] })} />
       <CreditSheet key={credit?.id || (credit ? 'new' : 'closed')} credit={credit} uid={uid} types={data.types} onClose={() => setCredit(null)} onDelete={removeCredit}
         onSaved={c => mutate(x => x && { ...x, credits: x.credits.some(y => y.id === c.id) ? x.credits.map(y => y.id === c.id ? c : y) : [c, ...x.credits] })} />
@@ -369,43 +409,59 @@ function SelectRow({ label, value, options, onChange }: { label: string; value: 
   )
 }
 
+function MenuRow({ icon, label, sub, onClick, danger }: { icon: string; label: string; sub?: string; onClick: () => void; danger?: boolean }) {
+  return (
+    <button type="button" onClick={onClick} className={cx('flex w-full items-center gap-3 px-4 py-3.5 text-left', danger && 'text-red')}>
+      <Icon name={icon} className={cx('size-5', !danger && 'text-muted')} />
+      <span className="flex-1"><span className="block text-[15px] font-medium">{label}</span>{sub && <span className="block text-xs text-muted">{sub}</span>}</span>
+    </button>
+  )
+}
+
 function ReelSheet({ open, onClose, uid, count, onAdded }: { open: boolean; onClose: () => void; uid: string; count: number; onAdded: (r: Reel) => void }) {
   const [url, setUrl] = useState('')
   const [label, setLabel] = useState('')
   const [busy, setBusy] = useState(false)
+  const [file, setFile] = useState<File | null>(null)
   const fileRef = useRef<HTMLInputElement>(null)
 
-  const add = async (link: string, name: string) => {
-    const { data, error } = await supabase.from('reels').insert({ profile_id: uid, label: name || 'Showreel', url: link, sort_order: count }).select('id, label, url, sort_order').single()
+  const add = async (row: { url: string; poster_url?: string | null; duration_s?: number | null }, name: string) => {
+    const { data, error } = await supabase.from('reels').insert({ profile_id: uid, label: name || 'Showreel', sort_order: count, ...row }).select('id, label, url, sort_order, poster_url, duration_s').single()
     setBusy(false)
     if (error || !data) { toast('Couldn’t add that clip'); return }
     onAdded(data as Reel)
-    setUrl(''); setLabel('')
+    setUrl(''); setLabel(''); setFile(null)
     onClose()
   }
 
-  const upload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const pick = (e: React.ChangeEvent<HTMLInputElement>) => {
     const f = e.target.files?.[0]
     e.target.value = ''
     if (!f) return
-    if (f.size > 500 * 1024 * 1024) { toast('Max 500MB'); return }
-    setBusy(true)
-    const path = uid + '/reel-' + stamp() + '.' + (f.name.split('.').pop() || 'mp4')
-    const { error } = await supabase.storage.from('reels').upload(path, f, { contentType: f.type })
-    if (error) { setBusy(false); toast('Upload failed'); return }
-    add(supabase.storage.from('reels').getPublicUrl(path).data.publicUrl, label || f.name.replace(/\.[^.]+$/, ''))
+    if (f.size > 2 * 1024 * 1024 * 1024) { toast('That file is over 2GB — export a shorter clip'); return }
+    if (!label) setLabel(f.name.replace(/\.[^.]+$/, ''))
+    setFile(f)
   }
 
+  const close = () => { setFile(null); onClose() }
   return (
-    <Sheet open={open} onClose={onClose} title="Add a clip">
-      <div className="space-y-4">
-        <Field label="Title" value={label} onChange={e => setLabel(e.target.value)} placeholder="e.g. Showreel 2026, Dance reel" />
-        <Field label="Vimeo or YouTube link" type="url" value={url} onChange={e => setUrl(e.target.value)} placeholder="https://vimeo.com/…" />
-        <Button full onClick={() => { if (/^https?:\/\//.test(url)) { setBusy(true); add(url, label) } else toast('Paste a full link starting https://') }} disabled={busy || !url}>Add link</Button>
-        <div className="flex items-center gap-3 text-xs text-faint"><span className="h-px flex-1 bg-line" />or<span className="h-px flex-1 bg-line" /></div>
-        <button type="button" onClick={() => fileRef.current?.click()} disabled={busy} className="upload flex h-12 w-full items-center justify-center gap-2 text-sm font-medium"><Icon name="upload" className="size-4" />{busy ? 'Uploading…' : 'Upload a video · up to 500MB'}</button>
-        <input ref={fileRef} type="file" accept="video/*" className="hidden" onChange={upload} />
-      </div>
+    <Sheet open={open} onClose={close} title={file ? 'Trim & cover' : 'Add a clip'}>
+      {file ? (
+        <div className="space-y-4">
+          <Field label="Title" value={label} onChange={e => setLabel(e.target.value)} placeholder="e.g. Showreel 2026" />
+          <VideoEditor key={file.name + file.size} uid={uid} source={file} onCancel={() => setFile(null)} onDone={v => { setBusy(true); add({ url: v.url!, poster_url: v.poster_url, duration_s: v.duration_s }, label) }} />
+        </div>
+      ) : (
+        <div className="space-y-4">
+          <Field label="Title" value={label} onChange={e => setLabel(e.target.value)} placeholder="e.g. Showreel 2026, Dance reel" />
+          <Field label="Vimeo or YouTube link" type="url" value={url} onChange={e => setUrl(e.target.value)} placeholder="https://vimeo.com/…" />
+          <Button full onClick={() => { if (/^https?:\/\//.test(url)) { setBusy(true); add({ url }, label) } else toast('Paste a full link starting https://') }} disabled={busy || !url}>Add link</Button>
+          <div className="flex items-center gap-3 text-xs text-faint"><span className="h-px flex-1 bg-line" />or<span className="h-px flex-1 bg-line" /></div>
+          <button type="button" onClick={() => fileRef.current?.click()} disabled={busy} className="upload flex h-12 w-full items-center justify-center gap-2 text-sm font-medium"><Icon name="upload" className="size-4" />Upload a video</button>
+          <p className="-mt-2 text-center text-xs text-muted">You can trim it and pick a cover. Long clips are compressed for you.</p>
+          <input ref={fileRef} type="file" accept="video/*" className="hidden" onChange={pick} />
+        </div>
+      )}
     </Sheet>
   )
 }

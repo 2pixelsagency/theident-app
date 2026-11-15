@@ -13,6 +13,7 @@ import { JOB_SELECT, lengthLabel, loadPosters, type Job } from '@/lib/rc/jobs'
 import { payLabel } from '@/lib/rc/pay'
 import { jobTitle } from '@/lib/rc/pipeline'
 import { fmtDate, fullName } from '@/lib/rc/format'
+import { REEL_BUCKET_MAX, fileExt, loadVideo, recorderType, transcode } from '@/lib/rc/media'
 
 type Reel = { id: string; label: string | null; url: string }
 type Upload = { path: string; name: string } | null
@@ -67,7 +68,17 @@ export default function ApplyPage() {
     setUploading(kind)
     const ext = file.name.split('.').pop() || 'bin'
     if (kind === 'reel') {
-      const path = me.id + '/reel-' + stamp() + '.' + ext
+      // Over the 50MB reel limit → compress in the browser first (≤720p)
+      if (file.size > REEL_BUCKET_MAX * 0.9 && recorderType()) {
+        const src = URL.createObjectURL(file)
+        try {
+          const v = await loadVideo(src)
+          toast('Compressing your video — keep this screen open')
+          file = await transcode(src, 0, v.duration)
+        } catch { /* fall through to the size check */ } finally { URL.revokeObjectURL(src) }
+      }
+      if (file.size > REEL_BUCKET_MAX) { setUploading(null); toast('Videos need to be under 50MB — trim it in Customise profile first'); return }
+      const path = me.id + '/reel-' + stamp() + '.' + fileExt(file)
       const { error: upErr } = await supabase.storage.from('reels').upload(path, file, { contentType: file.type })
       if (upErr) { setUploading(null); toast('Upload failed — try again'); return }
       const url = supabase.storage.from('reels').getPublicUrl(path).data.publicUrl
