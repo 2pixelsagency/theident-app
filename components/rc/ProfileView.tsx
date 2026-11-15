@@ -53,7 +53,7 @@ function CvButtons({ data, signedIn }: { data: FullProfileData; signedIn?: boole
 export default function ProfileView({ data, owner, onBack, onShare, topRight, actions, statusLine, below, signedIn }: Props) {
   const p = data.profile!
   const { reels, skills, credits, brands, testimonials, gallery, hair, eyes, connections } = data
-  const name = fullName(p) || 'RoleCall member'
+  const name = fullName(p) || 'The Ident member'
   const heroSrc = p.banner_url || p.picture_url
   const caster = p.account_role === 'caster'
   const craft = caster ? p.company_name : craftTag(p)

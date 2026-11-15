@@ -13,10 +13,10 @@ export function cx(...parts: (string | false | null | undefined)[]) {
 
 type Variant = 'primary' | 'dark' | 'outline' | 'accent' | 'ghost' | 'light'
 const VARIANTS: Record<Variant, string> = {
-  primary: 'bg-green text-white shadow-[0_8px_20px_-8px_var(--green)] hover:opacity-90',
+  primary: 'bg-green text-white shadow-cta hover:opacity-90', // Forest, neutral shadow (no coloured glow)
   dark: 'bg-dark text-white hover:opacity-90',
   outline: 'border border-line bg-surface text-ink hover:bg-field',
-  accent: 'bg-accent text-ink hover:opacity-90', // dark text on the pink gradient, always
+  accent: 'bg-accent text-ink hover:opacity-90', // Ink text on Lime, always
   ghost: 'text-green-ink hover:bg-green-tint',
   light: 'bg-surface text-ink hover:opacity-90',
 }
@@ -34,7 +34,7 @@ type ButtonProps = {
 
 export function Button({ variant = 'primary', size = 'md', href, icon, trailingIcon, full, className, children, ...rest }: ButtonProps) {
   const cls = cx(
-    'inline-flex items-center justify-center gap-2 font-medium transition disabled:opacity-50 disabled:pointer-events-none',
+    'inline-flex items-center justify-center gap-2 font-semibold transition disabled:opacity-50 disabled:pointer-events-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-lime',
     size === 'lg' && 'h-14 rounded-[14px] text-base px-6',
     size === 'md' && 'h-12 rounded-[14px] text-[15px] px-5',
     size === 'sm' && 'h-9 rounded-full text-[13px] px-4',

@@ -52,7 +52,7 @@ export async function loadPosters(ids: (string | null)[]) {
 }
 
 export function posterName(job: Job, poster?: Poster) {
-  return job.production_company || job.company || poster?.company_name || [poster?.first_name, poster?.last_name].filter(Boolean).join(' ') || 'A RoleCall member'
+  return job.production_company || job.company || poster?.company_name || [poster?.first_name, poster?.last_name].filter(Boolean).join(' ') || 'A member of The Ident'
 }
 
 export function lengthLabel(j: Job) {

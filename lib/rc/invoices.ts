@@ -112,7 +112,7 @@ export async function buildInvoicePdf(inv: Invoice) {
     w.text(inv.notes, { size: 10, gap: 1.45 })
   }
 
-  w.footer(inv.number + '  ·  Created with RoleCall')
+  w.footer(inv.number + '  ·  Created with The Ident')
   return w.bytes()
 }
 

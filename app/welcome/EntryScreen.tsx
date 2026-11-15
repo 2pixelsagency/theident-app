@@ -8,6 +8,7 @@ import Icon from '@/components/rc/Icon'
 import { cx } from '@/components/rc/ui'
 import { supabase } from '@/lib/supabase'
 import { dashboardFor, startSignup, switchSide, type Role } from '@/lib/rc/onboarding'
+import { authRedirect } from '@/lib/rc/authRedirect'
 
 type Side = 'perform' | 'cast'
 
@@ -50,6 +51,7 @@ export default function EntryScreen() {
   const [showPw, setShowPw] = useState(false)
   const [busy, setBusy] = useState<'email' | 'apple' | 'google' | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [unconfirmed, setUnconfirmed] = useState(false)
   const s = SIDES[side]
 
   // Already signed in: skip the entry screen — unless this is a password-recovery link that fell back to the
@@ -67,15 +69,29 @@ export default function EntryScreen() {
   const logIn = async (e: React.FormEvent) => {
     e.preventDefault()
     setError(null)
+    setUnconfirmed(false)
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) { setError('Enter a valid email address.'); return }
     setBusy('email')
     const { data, error: err } = await supabase.auth.signInWithPassword({ email: email.trim(), password })
     if (err || !data.user) {
-      setError(err?.message === 'Invalid login credentials' ? 'That email and password don’t match. Try again or reset your password.' : err?.message || 'Couldn’t log in')
       setBusy(null)
+      if (err?.status === 429) setError('Too many attempts — please wait a minute and try again.')
+      else if (/not confirmed/i.test(err?.message || '') || err?.code === 'email_not_confirmed') { setUnconfirmed(true); setError('Confirm your email first — check your inbox for the link.') }
+      else if (/invalid login credentials/i.test(err?.message || '') || err?.code === 'invalid_credentials') setError('That email and password don’t match. Try again or reset your password.')
+      else setError('We couldn’t log you in just now. Check your connection and try again.')
       return
     }
     await switchSide(data.user.id, s.role)
+    // Never finished onboarding → pick up at question 1 on this side
+    const { data: p } = await supabase.from('profiles').select('first_name').eq('id', data.user.id).maybeSingle()
+    if (!p?.first_name) { startSignup(s.role); router.replace('/start/profile'); return }
     router.replace(dashboardFor(s.role))
+  }
+
+  const resendConfirm = async () => {
+    const { error: err } = await supabase.auth.resend({ type: 'signup', email: email.trim(), options: { emailRedirectTo: authRedirect('/start/profile') } })
+    setUnconfirmed(false)
+    setError(err ? (err.status === 429 ? 'Please wait a minute before asking again.' : 'We couldn’t resend the email.') : 'Sent — check your inbox for the new link.')
   }
 
   const oauth = async (provider: 'apple' | 'google') => {
@@ -83,7 +99,7 @@ export default function EntryScreen() {
     setBusy(provider)
     // The return URL must stay as allow-listed in Supabase; carry the chosen side in session storage
     try { sessionStorage.setItem('rc-side', s.role) } catch { /* private mode: lands on /home */ }
-    const { error: err } = await supabase.auth.signInWithOAuth({ provider, options: { redirectTo: window.location.origin + '/start/finish' } })
+    const { error: err } = await supabase.auth.signInWithOAuth({ provider, options: { redirectTo: authRedirect('/start/finish') } })
     if (err) { setError('Couldn’t start ' + (provider === 'apple' ? 'Apple' : 'Google') + ' sign-in. Please try again.'); setBusy(null) }
   }
 
@@ -114,7 +130,7 @@ export default function EntryScreen() {
           {ORDER.map(k => (
             <p key={k} aria-hidden={side !== k} className={cx('flex items-center gap-2 transition-opacity [grid-area:1/1]', FADE, side === k ? 'opacity-100' : 'pointer-events-none opacity-0')}>
               <Icon name="sparkle" className="size-4 shrink-0 text-pink" />
-              <span className="text-white/90">{SIDES[k].banner} — <button type="button" onClick={() => signUp(SIDES[k].role)} tabIndex={side === k ? 0 : -1} className="font-medium text-white underline underline-offset-2">try RoleCall Pro</button></span>
+              <span className="text-white/90">{SIDES[k].banner} — <button type="button" onClick={() => signUp(SIDES[k].role)} tabIndex={side === k ? 0 : -1} className="font-medium text-white underline underline-offset-2">try The Ident Pro</button></span>
             </p>
           ))}
         </div>
@@ -144,19 +160,19 @@ export default function EntryScreen() {
 
         {/* Log in over the photo */}
         <form onSubmit={logIn} className="mt-6 space-y-3">
-          <input type="email" autoComplete="email" required aria-label="Email" placeholder="Email" value={email} onChange={e => setEmail(e.target.value)} className={glass} />
+          <input type="email" autoComplete="email" required aria-label="Email" placeholder="Email" value={email} onChange={e => { setEmail(e.target.value); setError(null) }} className={glass} />
           <div className="relative">
-            <input type={showPw ? 'text' : 'password'} autoComplete="current-password" required aria-label="Password" placeholder="Password" value={password} onChange={e => setPassword(e.target.value)} className={cx(glass, 'pr-16')} />
+            <input type={showPw ? 'text' : 'password'} autoComplete="current-password" required aria-label="Password" placeholder="Password" value={password} onChange={e => { setPassword(e.target.value); setError(null) }} className={cx(glass, 'pr-16')} />
             <button type="button" onClick={() => setShowPw(v => !v)} className="absolute right-4 top-1/2 -translate-y-1/2 text-[13px] font-medium text-white/75">{showPw ? 'Hide' : 'Show'}</button>
           </div>
-          {error && <p role="alert" className="text-sm text-pink">{error}</p>}
-          <button type="submit" disabled={busy !== null || !email || !password} className="flex h-14 w-full items-center justify-center gap-2 rounded-[14px] bg-cta text-[17px] font-medium text-white shadow-cta transition active:scale-[0.99] disabled:opacity-70">
+          {error && <p role="alert" className="rounded-xl bg-blossom/95 px-3.5 py-2.5 text-[14px] text-ink">{error}{unconfirmed && <> <button type="button" onClick={resendConfirm} className="font-semibold underline">Resend the link</button></>}</p>}
+          <button type="submit" disabled={busy !== null || !email || !password} className="flex h-14 w-full items-center justify-center gap-2 rounded-[14px] bg-cta text-[17px] font-semibold text-ink shadow-cta transition active:scale-[0.99] disabled:opacity-70">
             {busy === 'email' ? 'Logging in…' : <>Continue <Icon name="arrow-right" className="size-5" /></>}
           </button>
         </form>
 
         <div className="mt-3 flex items-center justify-between">
-          <Link href={'/forgot-password?side=' + side} className="text-[13px] font-medium text-white/80">Forgot password?</Link>
+          <Link href={'/forgot-password?side=' + side + (email ? '&email=' + encodeURIComponent(email.trim()) : '')} className="text-[13px] font-medium text-white/80">Forgot password?</Link>
           <div className="flex items-center gap-2">
             <span className="text-[13px] text-white/60">or</span>
             <button type="button" aria-label="Continue with Apple" onClick={() => oauth('apple')} disabled={busy !== null} className={round}><Icon name="apple" className="size-5" /></button>
@@ -165,7 +181,7 @@ export default function EntryScreen() {
         </div>
 
         <p className="mt-5 text-center text-[15px] text-white/90">
-          New to RoleCall?{' '}
+          New to The Ident?{' '}
           <button type="button" onClick={() => signUp(s.role)} className="font-medium text-pink">Sign up</button>
         </p>
       </div>

@@ -116,7 +116,7 @@ export function SideNav() {
   }
   return (
     <aside aria-label="Main" className="fixed inset-y-0 left-0 z-40 hidden w-64 flex-col border-r border-line bg-surface px-3 py-6 lg:flex">
-      <Link href="/home" className="mb-6 px-3 text-[22px] font-medium tracking-tight">RoleCall</Link>
+      <Link href="/home" className="mb-6 px-3 font-display text-[24px] font-bold tracking-[-0.03em] text-forest">The Ident</Link>
       <nav className="scrollbar-none flex-1 overflow-y-auto">
         <ul className="space-y-0.5">{NAV[role].filter(n => n.href !== '/me').map(n => link(n, n.href === '/chats' ? unreadMessages : undefined))}</ul>
         <p className="mb-1 mt-6 px-3 text-xs font-medium uppercase tracking-[0.08em] text-faint">More</p>
