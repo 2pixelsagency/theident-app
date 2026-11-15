@@ -51,9 +51,13 @@
   --dark: var(--forest); /* dark cards (booked, hero blocks) */
   --dark-2: #1d4436;     /* raised surface on dark cards */
 
-  /* "gradients": the brand is flat, so accent is solid Lime and hero is a near-flat Forest */
-  --grad-accent: linear-gradient(var(--lime), var(--lime));
-  --grad-hero: linear-gradient(150deg, #173d30, var(--forest) 60%);
+  /* Brand gradients, always paired with a fine grain (see bg-glow / bg-hero in globals.css) */
+  --grad-accent: linear-gradient(var(--lime), var(--lime)); /* solid Lime for badges/accent buttons */
+  --grad-glow: linear-gradient(180deg, color-mix(in srgb, var(--lime) 34%, white) 0%, color-mix(in srgb, var(--lime) 14%, white) 34%, #ffffff 72%); /* light screens: Lime haze → white */
+  --grad-hero: linear-gradient(180deg, #5f9a8e 0%, #2d5a55 34%, #14302c 58%, #0c1b1f 100%); /* dark panels: teal-green → deep Forest */
+  /* Grain: tiny inline SVG noise tiles — dark specks for light backgrounds, light specks for dark ones */
+  --noise-dark: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.08 0 0 0 0 0.13 0 0 0 0 0.11 0 0 0 0.11 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  --noise-light: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 0.10 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
 
   --radius: 20px;        /* generous, soft */
   --shadow: 0 6px 20px rgba(21, 33, 28, 0.05);
