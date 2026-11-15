@@ -55,7 +55,9 @@ html, body {
 
 /* The two allowed gradients + card shadow, as utilities */
 @utility bg-accent { background-image: var(--grad-accent); }
-@utility bg-hero { background-image: var(--grad-hero); }
+@utility bg-hero { background-image: var(--noise-light), var(--grad-hero); background-color: var(--forest); }
+/* Light-screen backdrop: Lime haze fading to white, with grain */
+@utility bg-glow { background-image: var(--noise-dark), var(--grad-glow); background-color: #ffffff; }
 @utility shadow-card { box-shadow: var(--shadow); }
 @utility shadow-cta { box-shadow: var(--cta-shadow); }
 /* Dark bottom-up scrim over full-bleed photos so overlaid text stays legible */
