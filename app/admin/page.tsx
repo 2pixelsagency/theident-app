@@ -426,6 +426,28 @@ function ThreadSheet({ thread, onClose }: { thread: Thread | null; onClose: () =
   )
 }
 
+function TestEmail() {
+  const [busy, setBusy] = useState<string | null>(null)
+  const send = async (variant: 'performer' | 'casting') => {
+    setBusy(variant)
+    const { data: { session } } = await supabase.auth.getSession()
+    const res = await fetch('/api/admin/test-email', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + (session?.access_token || '') }, body: JSON.stringify({ variant }) })
+    const out = await res.json().catch(() => ({}))
+    setBusy(null)
+    toast(res.ok ? 'Sent to ' + out.to + ' — check your inbox (and spam)' : 'Couldn’t send: ' + (out.error || res.status))
+  }
+  return (
+    <div className="mb-6 rounded-[var(--radius)] border border-line bg-surface p-4">
+      <p className="font-semibold">Test emails</p>
+      <p className="mt-0.5 text-sm text-muted">Send the welcome email to yourself to see what new members get.</p>
+      <div className="mt-3 flex flex-wrap gap-2">
+        <Button size="sm" onClick={() => send('performer')} disabled={!!busy}>{busy === 'performer' ? 'Sending…' : 'Send me the performer welcome'}</Button>
+        <Button size="sm" variant="outline" onClick={() => send('casting')} disabled={!!busy}>{busy === 'casting' ? 'Sending…' : 'Casting version'}</Button>
+      </div>
+    </div>
+  )
+}
+
 function Admins() {
   const [rows, setRows] = useState<{ email: string; added_at: string }[] | null>(null)
   const [email, setEmail] = useState('')
@@ -454,6 +476,7 @@ function Admins() {
           {rows.map(r => <li key={r.email} className="flex items-center gap-3 px-4 py-3"><span className="flex-1 font-medium">{r.email}</span><button type="button" onClick={() => remove(r.email)} className="text-sm font-semibold text-red">Remove</button></li>)}
         </ul>
       )}
+      <TestEmail />
       <form onSubmit={add} className="mt-4 flex gap-2">
         <input value={email} onChange={e => setEmail(e.target.value)} type="email" placeholder="name@example.com" aria-label="Admin email" className="h-11 flex-1 rounded-xl border border-line bg-surface px-4 outline-none focus:border-green" />
         <Button type="submit">Add admin</Button>
