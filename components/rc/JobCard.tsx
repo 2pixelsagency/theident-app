@@ -47,6 +47,7 @@ export default function JobCard({ job, poster, saved, onToggleSave, bare, href }
           {pay && <Tag tone={side ? 'purple' : 'neutral'}>{pay}</Tag>}
           {tags.slice(0, 2).map(t => <Tag key={t as string}>{t}</Tag>)}
           <FairPayBadge job={job} compact />
+          {job.is_demo && <span className="rounded-full bg-butter px-2 py-0.5 text-[11px] font-semibold text-ink">Demo</span>}
           {closes && !side && closes !== 'Closed' && <span className="self-center text-xs text-muted">{closes}</span>}
         </span>
       </Link>
