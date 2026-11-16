@@ -7,6 +7,7 @@ import { VerifiedTick } from './JobCard'
 import { Avatar, Button, Card, cx, toast } from './ui'
 import { fullName } from '@/lib/rc/format'
 import { ReportSheet, blockUser, type ReportTarget } from './Safety'
+import CastingProfile from './CastingProfile'
 import { craftTag, graduateLabel, playingAge } from '@/lib/rc/talent'
 import type { Credit, FullProfileData } from '@/lib/rc/profile'
 
@@ -15,7 +16,7 @@ export const heroRound = 'inline-flex size-10 items-center justify-center rounde
 export const heroPrimary = 'flex h-14 flex-[1.4] items-center justify-center gap-2 rounded-[14px] bg-bg text-[15px] font-medium text-ink transition active:scale-[0.98] disabled:opacity-60'
 export const heroSecondary = 'flex h-14 flex-1 items-center justify-center gap-2 rounded-[14px] border border-white/25 bg-white/10 text-[15px] font-medium text-white backdrop-blur-md transition active:scale-[0.98] disabled:opacity-60'
 
-type Props = {
+export type ProfileViewProps = {
   data: FullProfileData
   owner?: boolean
   onBack?: () => void
@@ -102,7 +103,7 @@ function Ghost({ children }: { children: React.ReactNode }) {
   return <p className="rounded-xl border border-dashed border-line px-4 py-3 text-[13px] text-muted">{children}</p>
 }
 
-function ProfileSafety({ id, name }: { id: string; name: string }) {
+export function ProfileSafety({ id, name }: { id: string; name: string }) {
   const [report, setReport] = useState<ReportTarget | null>(null)
   return (
     <div className="mt-10 flex items-center justify-center gap-4 text-[13px] text-muted">
@@ -128,7 +129,13 @@ function Head({ title, owner, edit, count }: { title: string; owner?: boolean; e
 
 // One immersive profile for everyone: the owner (/me), casters and members (/talent/[id]) and the public link (/[slug]).
 // The headshot bleeds to the very top of the screen, behind the status bar / notch; controls float over it.
-export default function ProfileView({ data, owner, onBack, onShare, topRight, actions, statusLine, below, signedIn }: Props) {
+export default function ProfileView(props: ProfileViewProps) {
+  // Casting accounts get their own company-style page
+  if (props.data.profile?.account_role === 'caster') return <CastingProfile {...props} />
+  return <PerformerProfile {...props} />
+}
+
+function PerformerProfile({ data, owner, onBack, onShare, topRight, actions, statusLine, below, signedIn }: ProfileViewProps) {
   const p = data.profile!
   const { reels, skills, credits, brands, testimonials, gallery, hair, eyes, connections } = data
   const name = fullName(p) || 'The Ident member'

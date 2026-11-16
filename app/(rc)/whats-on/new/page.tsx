@@ -135,7 +135,7 @@ export default function HostEventPage() {
               <span><span className="block text-[16px] font-medium">Feature this event</span><span className="block text-[13px] text-ink/75">Top of What’s on for 7 days + a push to matching talent</span></span>
             </div>
             <div className="flex items-center justify-between p-4">
-              <span><span className="block text-[18px] font-medium">£{FEATURE_PRICE}</span><span className="block text-xs text-muted">one-off · ~5× more views</span></span>
+              <span><span className="block text-[18px] title">£{FEATURE_PRICE}</span><span className="block text-xs text-muted">one-off · ~5× more views</span></span>
               <Toggle checked={feature} onChange={setFeature} label="Feature this event" />
             </div>
           </div>

@@ -115,7 +115,7 @@ function BlockCard({ block }: { block: Awaited<ReturnType<typeof loadActiveBlock
     return (
       <Link href="/blocks/new" className="mt-4 block rounded-[var(--radius)] border border-dashed border-line bg-surface/60 p-5">
         <p className="flex items-center gap-2 text-xs font-medium uppercase tracking-[0.08em] text-muted"><Icon name="star" className="size-4" /> Your goals</p>
-        <p className="mt-2 text-[18px] font-medium">Create a showreel, take dance classes, sign with an agent…</p>
+        <p className="mt-2 text-[18px] title">Create a showreel, take dance classes, sign with an agent…</p>
         <p className="mt-1 text-sm text-muted">Set a goal and a few things to do each week — we’ll keep score.</p>
       </Link>
     )
@@ -129,7 +129,7 @@ function BlockCard({ block }: { block: Awaited<ReturnType<typeof loadActiveBlock
           <p className="flex items-center gap-2 text-xs font-medium uppercase tracking-[0.08em] text-muted"><span className="size-2 rounded-full bg-green" /> Your goal</p>
           <span className="text-sm text-muted">{pct}%</span>
         </div>
-        <p className="mt-2 text-[20px] font-medium">{block.goal}</p>
+        <p className="mt-2 text-[20px] title">{block.goal}</p>
         <Progress value={pct} className="mt-4" />
         <p className="mt-3 text-[13px] text-muted">Week {week} of {block.weeks}</p>
       </Card>
@@ -150,7 +150,7 @@ function LiveCard({ app, shows, now }: { app: PipelineApp; shows: { title: strin
         <p className="flex items-center gap-2 text-xs font-medium uppercase tracking-[0.08em] text-muted"><span className="size-2 rounded-full bg-green" /> Currently on</p>
         <Pill tone="purple">Contract</Pill>
       </div>
-      <p className="mt-2 text-[20px] font-medium">{jobTitle(j)}</p>
+      <p className="mt-2 text-[20px] title">{jobTitle(j)}</p>
       <p className="text-sm text-muted">{[jobSub(j), j.location].filter(Boolean).join(' · ')}</p>
       {end && <><Progress value={pct} className="mt-4" /><p className="mt-2 text-[13px] text-muted">{weeksLeft != null && (weeksLeft <= 1 ? 'Final week' : weeksLeft + ' weeks left')}</p></>}
 

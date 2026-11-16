@@ -97,7 +97,7 @@ export default function TalentProfilePage() {
         actions={isMe
           ? <Link href="/me/edit" className={heroPrimary}><Icon name="pen" className="size-[18px]" /> Edit profile</Link>
           : <>
-              {isCaster && (
+              {isCaster && t.account_role !== 'caster' && (
                 <button type="button" onClick={() => !step.done && setSheet(true)} disabled={step.done} className={heroPrimary}>
                   <Icon name={step.icon} className="size-[18px]" /> {step.label}
                 </button>

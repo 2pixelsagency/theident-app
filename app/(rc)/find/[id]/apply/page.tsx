@@ -156,7 +156,7 @@ export default function ApplyPage() {
       <BackHeader title="Apply" right={<span className="flex items-center gap-1 rounded-full border border-line bg-surface px-3 py-1 text-xs text-muted"><Icon name="clock" className="size-3.5" /> ~2 min</span>} />
       <div className="px-4 pb-10">
         <div className="rounded-[var(--radius)] bg-dark p-5 text-white">
-          <p className="flex items-center gap-2 text-[18px] font-medium">{jobTitle(j)} {poster?.is_verified && <VerifiedTick />}</p>
+          <p className="flex items-center gap-2 text-[18px] title">{jobTitle(j)} {poster?.is_verified && <VerifiedTick />}</p>
           <p className="mt-0.5 text-sm text-white/60">{[j.production_types?.name, j.location].filter(Boolean).join(' · ')}</p>
           <div className="mt-3 flex flex-wrap gap-2">{[pay, length].filter(Boolean).map(t => <span key={t as string} className="rounded-md bg-dark-2 px-2.5 py-1 text-xs font-medium">{t}</span>)}</div>
         </div>
