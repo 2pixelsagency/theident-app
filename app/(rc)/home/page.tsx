@@ -5,6 +5,7 @@ import Icon from '@/components/rc/Icon'
 import { HomeHeader } from '@/components/rc/nav'
 import { VerifyBanner } from '@/components/rc/verify'
 import { HomeCompleteness } from '@/components/rc/Completeness'
+import TodoList from '@/components/rc/TodoList'
 import WeekStrip from '@/components/rc/WeekStrip'
 import { AvatarPile, Button, Card, Empty, PageLoading, Pill, Progress, SectionTitle, cx } from '@/components/rc/ui'
 import { supabase } from '@/lib/supabase'
@@ -65,6 +66,8 @@ function PerformerHome() {
             <BlockCard block={block} />
           </>
         )}
+
+        <TodoList compact />
 
         <SectionTitle title="Your roles" action="View all" href="/castings" />
         {active.length ? (
