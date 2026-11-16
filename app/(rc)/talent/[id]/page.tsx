@@ -6,7 +6,7 @@ import { useParams, useRouter, useSearchParams } from 'next/navigation'
 import Icon from '@/components/rc/Icon'
 import CastingActionSheet from '@/components/rc/CastingActionSheet'
 import ProfileView, { heroPrimary, heroRound, heroSecondary } from '@/components/rc/ProfileView'
-import { Empty, PageLoading, cx, toast } from '@/components/rc/ui'
+import { Empty, PageLoading, cx, toast, useGoBack } from '@/components/rc/ui'
 import { supabase } from '@/lib/supabase'
 import { useMe } from '@/lib/rc/me'
 import { useAsync } from '@/lib/rc/useAsync'
@@ -20,6 +20,7 @@ export default function TalentProfilePage() {
   const { id: talentId } = useParams<{ id: string }>()
   const appParam = useSearchParams().get('app')
   const router = useRouter()
+  const goBack = useGoBack('/talent')
   const me = useMe()
   const [sheet, setSheet] = useState(false)
   const [busy, setBusy] = useState(false)
@@ -87,7 +88,7 @@ export default function TalentProfilePage() {
         signedIn
         data={full}
         owner={isMe}
-        onBack={() => (window.history.length > 1 ? router.back() : router.push('/talent'))}
+        onBack={goBack}
         onShare={share}
         topRight={isCaster && !isMe && (
           <button type="button" aria-label={app?.shortlisted ? 'Remove from shortlist' : 'Add to shortlist'} aria-pressed={!!app?.shortlisted} onClick={toggleShortlist} className={cx(heroRound, app?.shortlisted && 'text-pink')}>

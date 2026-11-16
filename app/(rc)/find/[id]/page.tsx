@@ -2,7 +2,7 @@
 
 import { useParams, useRouter } from 'next/navigation'
 import Icon from '@/components/rc/Icon'
-import { Button, Empty, PageLoading, Pill, cx, toast } from '@/components/rc/ui'
+import { BackHeader, Button, Empty, PageLoading, Pill, cx, toast, useGoBack } from '@/components/rc/ui'
 import { supabase } from '@/lib/supabase'
 import { useMe } from '@/lib/rc/me'
 import { useAsync } from '@/lib/rc/useAsync'
@@ -14,6 +14,7 @@ import JobBody from '@/components/rc/JobBody'
 export default function JobDetailPage() {
   const { id: jobId } = useParams<{ id: string }>()
   const router = useRouter()
+  const goBack = useGoBack('/find')
   const me = useMe()
 
   const { data, loading, mutate } = useAsync(async () => {
@@ -30,7 +31,7 @@ export default function JobDetailPage() {
   }, [jobId, me.id])
 
   if (loading) return <PageLoading />
-  if (!data) return <div className="pt-16"><Empty icon="briefcase" title="This listing isn’t available" sub="It may have closed or been removed." action={<Button size="sm" variant="dark" href="/find">Back to Find</Button>} /></div>
+  if (!data) return <><BackHeader title="Job" back="/find" /><div className="pt-10"><Empty icon="briefcase" title="This listing isn’t available" sub="It may have closed or been removed." action={<Button size="sm" variant="dark" href="/find">Back to Find</Button>} /></div></>
 
   const { job: j, poster, saved, app, posted } = data
   const closes = closesLabel(j)
@@ -64,7 +65,7 @@ export default function JobDetailPage() {
     <>
       <div className="relative h-40 bg-hero">
         <div className="flex items-center justify-between px-4 pt-[max(16px,env(safe-area-inset-top))]">
-          <button type="button" aria-label="Back" onClick={() => (window.history.length > 1 ? router.back() : router.push('/find'))} className={roundBtn}><Icon name="chevron-left" /></button>
+          <button type="button" aria-label="Back" onClick={goBack} className={roundBtn}><Icon name="chevron-left" /></button>
           <div className="flex gap-2">
             <button type="button" aria-label={saved ? 'Remove from saved' : 'Save job'} aria-pressed={saved} onClick={toggleSave} className={cx(roundBtn, saved && 'text-green')}><Icon name="bookmark" className={cx('size-5', saved && 'fill-current')} /></button>
             <button type="button" aria-label="Share" onClick={share} className={roundBtn}><Icon name="share" className="size-5" /></button>

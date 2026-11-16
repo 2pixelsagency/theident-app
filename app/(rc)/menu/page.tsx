@@ -1,9 +1,8 @@
 'use client'
 
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
 import Icon from '@/components/rc/Icon'
-import { Avatar, Card, ListRow, Pill } from '@/components/rc/ui'
+import { Avatar, Card, ListRow, Pill, useGoBack } from '@/components/rc/ui'
 import { useMe } from '@/lib/rc/me'
 import { signOutAndReset } from '@/lib/rc/onboarding'
 import { fullName } from '@/lib/rc/format'
@@ -11,7 +10,7 @@ import { craftTag } from '@/lib/rc/talent'
 
 // App hub linking everything that isn't in the bottom nav
 export default function MenuPage() {
-  const router = useRouter()
+  const goBack = useGoBack('/home')
   const { profile, role, unreadNotifications } = useMe()
   const caster = role === 'caster'
 
@@ -21,7 +20,7 @@ export default function MenuPage() {
     <div className="px-4 pb-10 pt-[max(16px,env(safe-area-inset-top))]">
       <div className="flex items-center justify-between">
         <h1 className="text-[22px]">Menu</h1>
-        <button type="button" aria-label="Close menu" onClick={() => (window.history.length > 1 ? router.back() : router.push('/home'))} className="inline-flex size-10 items-center justify-center rounded-full hover:bg-chip"><Icon name="x" className="size-6" /></button>
+        <button type="button" aria-label="Close menu" onClick={goBack} className="inline-flex size-10 items-center justify-center rounded-full hover:bg-chip"><Icon name="x" className="size-6" /></button>
       </div>
 
       <Link href="/me" className="mt-4 flex items-center gap-3 rounded-[var(--radius)] bg-dark p-4 text-white">
