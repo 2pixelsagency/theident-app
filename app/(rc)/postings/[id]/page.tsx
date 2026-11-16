@@ -13,6 +13,7 @@ import { fullName, toISODate } from '@/lib/rc/format'
 import { CASTER_APP_SELECT, casterStage, setStage, stageNote, type CasterApp, type CasterStage } from '@/lib/rc/casting'
 import { craftTag } from '@/lib/rc/talent'
 import { jobTitle } from '@/lib/rc/pipeline'
+import QuickReview, { Stars, videosOf, type AppFile, type Note } from '@/components/rc/QuickReview'
 
 type Person = { first_name: string | null; last_name: string | null; picture_url: string | null; location: string | null; what_i_do: string | null; is_graduate: boolean; graduate_year: number | null }
 type Row = CasterApp & { profiles: Person | null }
@@ -30,13 +31,26 @@ export default function CastingReviewPage() {
   const [selected, setSelected] = useState<string[]>([])
   const [lastMove, setLastMove] = useState<Move | null>(null)
   const [manage, setManage] = useState(false)
+  const [q, setQ] = useState('')
+  const [onlyVideo, setOnlyVideo] = useState(false)
+  const [minStars, setMinStars] = useState(0)
+  const [sort, setSort] = useState<'newest' | 'rating'>('newest')
+  const [review, setReview] = useState<{ rows: Row[]; index: number } | null>(null)
 
   const { data, loading, mutate } = useAsync(async () => {
     const [{ data: job }, { data: apps }] = await Promise.all([
       supabase.from('jobs').select('id, project_in, project_role, job_title, is_side_hustle, production_company, application_deadline, created_by').eq('id', jobId).maybeSingle(),
       supabase.from('applications').select(CASTER_APP_SELECT + ', profiles(first_name, last_name, picture_url, location, what_i_do, is_graduate, graduate_year)').eq('job_id', jobId).order('created_at', { ascending: false }),
     ])
-    return { job, apps: (apps || []) as unknown as Row[] }
+    const list = (apps || []) as unknown as Row[]
+    const ids = list.map(a => a.id)
+    const [{ data: files }, { data: notes }] = ids.length ? await Promise.all([
+      supabase.from('application_files').select('application_id, file_url, file_type, file_name').in('application_id', ids),
+      supabase.from('applicant_notes').select('application_id, rating, note').in('application_id', ids),
+    ]) : [{ data: [] }, { data: [] }]
+    const byApp = new Map<string, AppFile[]>()
+    for (const f of (files || []) as AppFile[]) byApp.set(f.application_id, [...(byApp.get(f.application_id) || []), f])
+    return { job, apps: list, files: byApp, notes: new Map(((notes || []) as Note[]).map(n => [n.application_id, n])) }
   }, [jobId])
 
   const counts = useMemo(() => {
@@ -49,7 +63,16 @@ export default function CastingReviewPage() {
   if (!data?.job || data.job.created_by !== uid) return <><BackHeader title="Review" /><Empty icon="lock" title="Only the poster can review submissions" /></>
 
   const { job, apps } = data
-  const shown = apps.filter(a => casterStage(a) === stage)
+  const ratingOf = (id: string) => data.notes.get(id)?.rating || 0
+  const hasVideo = (id: string) => videosOf(data.files.get(id) || []).length > 0
+  const needle = q.trim().toLowerCase()
+  const shown = apps
+    .filter(a => casterStage(a) === stage)
+    .filter(a => !needle || [fullName(a.profiles), a.profiles?.location, a.profiles?.what_i_do].join(' ').toLowerCase().includes(needle))
+    .filter(a => !onlyVideo || hasVideo(a.id))
+    .filter(a => ratingOf(a.id) >= minStars)
+    .sort((a, b) => (sort === 'rating' ? ratingOf(b.id) - ratingOf(a.id) : 0) || b.created_at.localeCompare(a.created_at))
+  const filtering = !!needle || onlyVideo || minStars > 0
   const title = jobTitle(job)
 
   const apply = async (ids: string[], patch: Partial<CasterApp> & { next_step_note?: string | null }, label: string) => {
@@ -73,7 +96,18 @@ export default function CastingReviewPage() {
   const inAWeek = () => { const d = new Date(); d.setDate(d.getDate() + 7); d.setHours(18, 0, 0, 0); return d.toISOString() }
   const shortlist = (ids: string[]) => apply(ids, { shortlisted: true }, 'moved to Shortlist')
   const requestTape = (ids: string[]) => apply(ids, { status: 'audition', shortlisted: true, due_at: inAWeek() }, 'asked for a self-tape')
-  const moveToNo = (ids: string[]) => apply(ids, { outcome: 'declined' }, 'moved to No')
+  const moveToNo = (ids: string[]) => apply(ids, { outcome: 'declined' }, 'moved to No — they’ll get a kind “not this time” note')
+  const recall = (ids: string[]) => apply(ids, { status: 'callback', shortlisted: true }, 'invited to recall')
+  const reviewActions = (id: string) => {
+    const a = apps.find(x => x.id === id)
+    const st = a ? casterStage(a) : 'review'
+    const out: { label: string; icon: string; onClick: () => void; tone?: 'primary' | 'no' }[] = []
+    if (st === 'review') out.push({ label: 'Shortlist', icon: 'heart', tone: 'primary', onClick: () => shortlist([id]) })
+    if (st === 'review' || st === 'shortlist') out.push({ label: 'Self-tape', icon: 'video', onClick: () => requestTape([id]) })
+    if (st === 'shortlist') out.push({ label: 'Recall', icon: 'calendar', tone: 'primary', onClick: () => recall([id]) })
+    if (st !== 'no' && st !== 'booked') out.push({ label: 'No', icon: 'x', tone: 'no', onClick: () => moveToNo([id]) })
+    return out
+  }
   const nameOf = (ids: string[]) => ids.length === 1 ? fullName(apps.find(a => a.id === ids[0])?.profiles) : ids.length + ' people'
 
   const closeApplications = async () => {
@@ -107,6 +141,19 @@ export default function CastingReviewPage() {
           <Segmented className="w-40" value={view} onChange={setView} options={[{ value: 'grid', label: 'Grid' }, { value: 'deck', label: 'Deck' }]} />
         </div>
 
+        {/* Search, filters and sort */}
+        <div className="mt-3 space-y-2">
+          <input value={q} onChange={e => setQ(e.target.value)} placeholder="Search name, place, skills…" aria-label="Search applicants"
+            className="h-11 w-full rounded-xl border border-line bg-field px-4 text-[15px] outline-none focus:border-green focus:bg-surface" />
+          <div className="scrollbar-none -mx-4 flex gap-2 overflow-x-auto px-4">
+            <FilterChip on={onlyVideo} onClick={() => setOnlyVideo(v => !v)} icon="play" label="Has reel or tape" />
+            <FilterChip on={minStars === 3} onClick={() => setMinStars(v => (v === 3 ? 0 : 3))} icon="star" label="3★ +" />
+            <FilterChip on={minStars === 4} onClick={() => setMinStars(v => (v === 4 ? 0 : 4))} icon="star" label="4★ +" />
+            <FilterChip on={sort === 'rating'} onClick={() => setSort(v => (v === 'rating' ? 'newest' : 'rating'))} icon="trending" label="Top rated first" />
+            {filtering && <button type="button" onClick={() => { setQ(''); setOnlyVideo(false); setMinStars(0) }} className="shrink-0 px-2 text-sm font-medium text-green-ink">Clear</button>}
+          </div>
+        </div>
+
         {lastMove && (
           <div className="mt-3 flex items-center justify-between rounded-[var(--radius)] border border-line bg-surface px-4 py-3 text-sm shadow-card">
             <span><span className="font-medium">{nameOf(lastMove.ids)}</span> {lastMove.label}</span>
@@ -115,14 +162,20 @@ export default function CastingReviewPage() {
         )}
 
         {shown.length === 0 ? (
-          <Empty icon="users" title={stage === 'review' ? 'All caught up' : 'No one here yet'} sub={stage === 'review' ? 'New submissions land here.' : undefined} />
+          filtering
+          ? <Empty icon="filter" title="No one matches these filters" sub="Clear a filter to see everyone in this stage." />
+          : <Empty icon="users" title={stage === 'review' ? 'All caught up' : 'No one here yet'} sub={stage === 'review' ? 'New submissions land here.' : undefined} />
         ) : view === 'deck' ? (
           <Deck key={stage} rows={shown} onYes={id => (stage === 'review' ? shortlist([id]) : requestTape([id]))} onNo={id => moveToNo([id])} yesLabel={stage === 'review' ? 'Shortlist' : 'Self-tape'} />
         ) : (
           <>
             {stage !== 'no' && stage !== 'booked' && (
               <div className="scrollbar-none -mx-4 mt-3 flex gap-2 overflow-x-auto px-4">
+                {selected.length < shown.length
+                  ? <BulkChip icon="check-square" label="Select all" onClick={() => setSelected(shown.map(a => a.id))} disabled={false} />
+                  : <BulkChip icon="x" label="Clear" onClick={() => setSelected([])} disabled={false} />}
                 {stage === 'review' && <BulkChip icon="heart" label="Shortlist" onClick={() => shortlist(selected)} disabled={!selected.length} tone />}
+                {stage === 'shortlist' && <BulkChip icon="calendar" label="Invite to recall" onClick={() => recall(selected)} disabled={!selected.length} tone />}
                 <BulkChip icon="video" label="Request self-tape" onClick={() => requestTape(selected)} disabled={!selected.length} />
                 <BulkChip icon="x" label="Move to No" onClick={() => moveToNo(selected)} disabled={!selected.length} />
                 {selected.length > 0 && <span className="self-center whitespace-nowrap pl-1 text-sm font-medium">{selected.length} selected</span>}
@@ -134,7 +187,7 @@ export default function CastingReviewPage() {
                 const p = a.profiles
                 return (
                   <li key={a.id} className={cx('relative overflow-hidden rounded-[var(--radius)] border-2 bg-surface shadow-card', on ? 'border-green' : 'border-transparent')}>
-                    <Link href={'/talent/' + a.profile_id + '?app=' + a.id} className="block">
+                    <button type="button" onClick={() => setReview({ rows: shown, index: shown.indexOf(a) })} className="block w-full text-left">
                       <span className="block aspect-[4/3.4] bg-chip">
                         {p?.picture_url
                           // eslint-disable-next-line @next/next/no-img-element
@@ -144,8 +197,10 @@ export default function CastingReviewPage() {
                       <span className="block p-3">
                         <span className="block truncate text-sm font-medium">{fullName(p)}</span>
                         <span className="block truncate text-xs text-muted">{stage === 'review' ? [p?.location, p && craftTag(p)].filter(Boolean).join(' · ') : stageNote(a)}</span>
+                        {ratingOf(a.id) > 0 && <span className="mt-1 block"><Stars value={ratingOf(a.id)} size="size-3.5" /></span>}
                       </span>
-                    </Link>
+                    </button>
+                    {hasVideo(a.id) && <span className="pointer-events-none absolute bottom-[4.25rem] right-2 inline-flex items-center gap-1 rounded-full bg-dark/70 px-2 py-0.5 text-[11px] font-medium text-white backdrop-blur"><Icon name="play" className="size-3 fill-current" /> Reel</span>}
                     {stage !== 'booked' && stage !== 'no' && (
                       <button type="button" aria-label={on ? 'Deselect' : 'Select'} aria-pressed={on} onClick={() => setSelected(l => on ? l.filter(x => x !== a.id) : [...l, a.id])}
                         className={cx('absolute left-2 top-2 flex size-7 items-center justify-center rounded-lg border-2', on ? 'border-green bg-green text-white' : 'border-white/90 bg-white/60')}>
@@ -161,6 +216,10 @@ export default function CastingReviewPage() {
         )}
       </div>
 
+      <QuickReview rows={review?.rows || []} index={review?.index ?? null} files={data.files} notes={data.notes}
+        onIndex={i => setReview(r => r && { ...r, index: i })} onClose={() => setReview(null)}
+        onNote={n => mutate(d => d && { ...d, notes: new Map(d.notes).set(n.application_id, n) })} actions={reviewActions} />
+
       <Sheet open={manage} onClose={() => setManage(false)} title="Manage posting">
         <div className="space-y-3">
           <Button variant="outline" full href={'/find/' + job.id}>View public listing</Button>
@@ -168,6 +227,15 @@ export default function CastingReviewPage() {
         </div>
       </Sheet>
     </>
+  )
+}
+
+function FilterChip({ on, onClick, icon, label }: { on: boolean; onClick: () => void; icon: string; label: string }) {
+  return (
+    <button type="button" onClick={onClick} aria-pressed={on}
+      className={cx('inline-flex h-9 shrink-0 items-center gap-1.5 rounded-full border px-3 text-[13px] font-medium transition', on ? 'border-forest bg-forest text-white' : 'border-line bg-surface')}>
+      <Icon name={icon} className="size-3.5" /> {label}
+    </button>
   )
 }
 
