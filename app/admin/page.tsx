@@ -8,7 +8,7 @@ import { Button, Empty, PageLoading, Sheet, Toaster, cx, toast } from '@/compone
 import { supabase } from '@/lib/supabase'
 import { fullName } from '@/lib/rc/format'
 
-type Tab = 'overview' | 'safety' | 'members' | 'jobs' | 'chats' | 'admins'
+type Tab = 'overview' | 'safety' | 'members' | 'jobs' | 'digs' | 'chats' | 'admins'
 type Person = { id: string; first_name: string | null; last_name: string | null; company_name?: string | null; picture_url?: string | null }
 type Flag = { id: string; source: 'message' | 'cast_message'; message_id: string; thread_id: string; sender_id: string | null; body: string; categories: string[]; severity: 'low' | 'medium' | 'high'; minor_involved: boolean; status: string; created_at: string }
 type Report = { id: string; reporter_id: string; target_type: string; target_id: string; reported_profile_id: string | null; reason: string; details: string | null; snapshot: string | null; status: string; created_at: string }
@@ -62,7 +62,7 @@ export default function AdminPage() {
   if (ok === null) return <PageLoading />
   if (!ok) return <div className="pt-24"><Empty icon="lock" title="Admins only" sub="This area is for The Ident’s team." action={<Button size="sm" variant="dark" href="/home">Back to the app</Button>} /></div>
 
-  const TABS: [Tab, string, string][] = [['overview', 'Overview', 'grid'], ['safety', 'Safety', 'shield'], ['members', 'Members', 'users'], ['jobs', 'Jobs', 'briefcase'], ['chats', 'Chats', 'chat'], ['admins', 'Admins', 'lock']]
+  const TABS: [Tab, string, string][] = [['overview', 'Overview', 'grid'], ['safety', 'Safety', 'shield'], ['members', 'Members', 'users'], ['jobs', 'Jobs', 'briefcase'], ['digs', 'Digs', 'house'], ['chats', 'Chats', 'chat'], ['admins', 'Admins', 'lock']]
   return (
     <div className="min-h-dvh bg-bg text-ink">
       <header className="sticky top-0 z-30 border-b border-line bg-surface/95 backdrop-blur">
@@ -84,6 +84,7 @@ export default function AdminPage() {
         {tab === 'safety' && <Safety open={setThread} />}
         {tab === 'members' && <Members />}
         {tab === 'jobs' && <Jobs />}
+        {tab === 'digs' && <Digs />}
         {tab === 'chats' && <Chats open={setThread} />}
         {tab === 'admins' && <Admins />}
       </main>
@@ -290,6 +291,53 @@ function Jobs() {
               </span>
               <span className={cx('rounded-full px-2 py-0.5 text-[11px] font-semibold', j.is_published ? 'bg-mint' : 'bg-chip')}>{j.is_published ? 'Live' : 'Hidden'}</span>
               <button type="button" onClick={() => toggle(j)} className="text-sm font-semibold text-green-ink">{j.is_published ? 'Unpublish' : 'Publish'}</button>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  )
+}
+
+type AdminDig = { id: string; title: string; city: string; area: string | null; near_venue: string | null; price_per_week: number | null; description: string | null; images: string[]; image_url: string | null; owner_id: string | null; host_name: string | null; review_status: string; is_published: boolean; created_at: string; updated_at: string }
+function Digs() {
+  const [status, setStatus] = useState<'pending' | 'approved' | 'rejected'>('pending')
+  const [rows, setRows] = useState<{ digs: AdminDig[]; people: Map<string, Person> } | null>(null)
+  const load = useCallback(async () => {
+    const { data } = await supabase.from('digs').select('id, title, city, area, near_venue, price_per_week, description, images, image_url, owner_id, host_name, review_status, is_published, created_at, updated_at').eq('review_status', status).order('updated_at', { ascending: false }).limit(100)
+    const digs = (data || []) as AdminDig[]
+    setRows({ digs, people: await namesFor(digs.map(d => d.owner_id)) })
+  }, [status])
+  // eslint-disable-next-line react-hooks/set-state-in-effect -- async load
+  useEffect(() => { load() }, [load])
+  const decide = async (d: AdminDig, ok: boolean) => {
+    const note = ok ? null : prompt('What needs changing? (the host sees this)', 'Please add a clear photo of the room and the nearest theatre.')
+    if (!ok && note === null) return
+    const { error } = await supabase.from('digs').update({ review_status: ok ? 'approved' : 'rejected', is_published: ok, review_note: note }).eq('id', d.id)
+    toast(error ? 'Couldn’t update' : ok ? 'Live' : 'Sent back to the host'); load()
+  }
+  return (
+    <div>
+      <div className="mb-4 flex gap-2">
+        {(['pending', 'approved', 'rejected'] as const).map(s => <button key={s} type="button" onClick={() => setStatus(s)} aria-pressed={status === s} className={cx('h-9 rounded-full border px-4 text-sm font-medium capitalize', status === s ? 'border-forest bg-forest text-white' : 'border-line bg-surface')}>{s === 'pending' ? 'To check' : s}</button>)}
+      </div>
+      {!rows ? <PageLoading /> : rows.digs.length === 0 ? <Empty icon="house" title={status === 'pending' ? 'Nothing to check' : 'None'} sub="New and edited digs listings wait here until you approve them." /> : (
+        <ul className="grid gap-3 lg:grid-cols-2">
+          {rows.digs.map(d => (
+            <li key={d.id} className="overflow-hidden rounded-[var(--radius)] border border-line bg-surface shadow-card">
+              <div className="flex gap-1 overflow-x-auto bg-chip p-1">
+                {(d.images?.length ? d.images : d.image_url ? [d.image_url] : []).map(u => <a key={u} href={u} target="_blank" rel="noopener noreferrer" className="block h-24 w-32 shrink-0 rounded-lg bg-cover bg-center" style={{ backgroundImage: `url(${u})` }} />)}
+                {!d.images?.length && !d.image_url && <span className="p-3 text-xs text-muted">No photos</span>}
+              </div>
+              <div className="p-4">
+                <p className="font-semibold">{d.title} {d.price_per_week != null && <span className="font-normal text-muted">· £{Number(d.price_per_week)}/week</span>}</p>
+                <p className="text-[13px] text-muted">{[d.area, d.city].filter(Boolean).join(', ')}{d.near_venue ? ' · near ' + d.near_venue : ''} · by {d.owner_id ? <Link className="underline" href={'/talent/' + d.owner_id}>{nameOf(rows.people.get(d.owner_id))}</Link> : 'The Ident'} · {when(d.updated_at)}</p>
+                {d.description && <p className="mt-2 whitespace-pre-line text-sm">{d.description}</p>}
+                <div className="mt-3 flex gap-2">
+                  {status !== 'approved' && <Button size="sm" onClick={() => decide(d, true)}>Approve</Button>}
+                  {status !== 'rejected' && <Button size="sm" variant="outline" className="text-red" onClick={() => decide(d, false)}>{status === 'approved' ? 'Take down' : 'Needs changes'}</Button>}
+                </div>
+              </div>
             </li>
           ))}
         </ul>
