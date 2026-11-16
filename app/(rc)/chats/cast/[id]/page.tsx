@@ -6,6 +6,7 @@ import Icon from '@/components/rc/Icon'
 import { Bubble, Composer, DayDivider, dayLabel, useStickToBottom } from '@/components/rc/chat'
 import { Button, Empty, PageLoading, Sheet, cx, toast } from '@/components/rc/ui'
 import { InviteSheet } from '@/components/rc/CastInvite'
+import { ReportSheet, SafetyNote, type ReportTarget } from '@/components/rc/Safety'
 import { supabase } from '@/lib/supabase'
 import { useMe } from '@/lib/rc/me'
 import { useAsync } from '@/lib/rc/useAsync'
@@ -22,6 +23,7 @@ export default function CastChatPage() {
   const { id: me } = useMe()
   const [channel, setChannel] = useState('company')
   const [selected, setSelected] = useState<Msg | null>(null)
+  const [report, setReport] = useState<ReportTarget | null>(null)
   const [sheet, setSheet] = useState<'invite' | 'members' | null>(useSearchParams().get('invite') ? 'invite' : null)
 
   const { data, loading, mutate } = useAsync(async () => {
@@ -114,6 +116,7 @@ export default function CastChatPage() {
       </header>
 
       <div className="flex-1 space-y-3 px-4 py-2">
+        <SafetyNote cast />
         {pinned && (
           <div className="mt-2 rounded-[var(--radius)] border border-amber/30 bg-amber-tint p-4">
             <p className="flex items-center gap-1.5 text-xs font-medium text-amber"><Icon name="pin" className="size-3.5" /> Pinned · {fullName(memberById.get(pinned.sender_id)?.profiles)}</p>
@@ -132,7 +135,7 @@ export default function CastChatPage() {
               {mine ? (
                 <button type="button" className="block w-full text-left" onClick={() => isAdmin && setSelected(m)}><Bubble mine body={m.body} at={m.created_at} /></button>
               ) : (
-                <button type="button" onClick={() => isAdmin && setSelected(m)} className="flex w-full gap-2.5 text-left">
+                <button type="button" onClick={() => setSelected(m)} className="flex w-full gap-2.5 text-left">
                   <span className={cx('flex size-9 shrink-0 items-center justify-center rounded-lg text-xs font-medium', colourFor(m.sender_id))}>{initials(name)}</span>
                   <span className="min-w-0 flex-1">
                     <span className="mb-1 block text-xs text-muted">{[name.split(' ')[0] + (name.split(' ')[1] ? ' ' + name.split(' ')[1][0] : ''), who?.title, fmtTime(m.created_at)].filter(Boolean).join(' · ')}</span>
@@ -177,11 +180,13 @@ export default function CastChatPage() {
         </div>
       </Sheet>
 
+      <ReportSheet target={report} onClose={() => setReport(null)} />
       <Sheet open={!!selected} onClose={() => setSelected(null)} title="Message">
         {selected && (
           <div className="space-y-3">
             <p className="rounded-xl bg-field p-3 text-sm">{selected.body}</p>
-            <Button full variant="outline" icon="pin" onClick={() => togglePin(selected)}>{selected.is_pinned ? 'Unpin' : 'Pin to #' + selected.channel}</Button>
+            {isAdmin && <Button full variant="outline" icon="pin" onClick={() => togglePin(selected)}>{selected.is_pinned ? 'Unpin' : 'Pin to #' + selected.channel}</Button>}
+            {selected.sender_id !== me && <Button full variant="outline" icon="alert" onClick={() => { setReport({ type: 'cast_message', id: selected.id, profileId: selected.sender_id, snapshot: selected.body, label: 'message' }); setSelected(null) }}>Report this message</Button>}
           </div>
         )}
       </Sheet>

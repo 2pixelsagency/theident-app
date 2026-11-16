@@ -6,6 +6,7 @@ import Icon from './Icon'
 import { VerifiedTick } from './JobCard'
 import { Avatar, Button, Card, cx, toast } from './ui'
 import { fullName } from '@/lib/rc/format'
+import { ReportSheet, blockUser, type ReportTarget } from './Safety'
 import { craftTag, graduateLabel, playingAge } from '@/lib/rc/talent'
 import type { Credit, FullProfileData } from '@/lib/rc/profile'
 
@@ -99,6 +100,18 @@ function HeroMedia({ reel, cover, headshot, name }: { reel?: FullProfileData['re
 
 function Ghost({ children }: { children: React.ReactNode }) {
   return <p className="rounded-xl border border-dashed border-line px-4 py-3 text-[13px] text-muted">{children}</p>
+}
+
+function ProfileSafety({ id, name }: { id: string; name: string }) {
+  const [report, setReport] = useState<ReportTarget | null>(null)
+  return (
+    <div className="mt-10 flex items-center justify-center gap-4 text-[13px] text-muted">
+      <button type="button" onClick={() => setReport({ type: 'profile', id, profileId: id, label: name })} className="inline-flex items-center gap-1 hover:text-ink"><Icon name="alert" className="size-3.5" /> Report</button>
+      <span aria-hidden>·</span>
+      <button type="button" onClick={() => blockUser(id, name)} className="hover:text-ink">Block</button>
+      <ReportSheet target={report} onClose={() => setReport(null)} />
+    </div>
+  )
 }
 
 // Section title with an owner-only Edit/Add shortcut into Customise profile
@@ -297,6 +310,7 @@ export default function ProfileView({ data, owner, onBack, onShare, topRight, ac
           </>
         )}
 
+        {!owner && signedIn && <ProfileSafety id={p.id} name={name} />}
         {empty && !owner && <p className={cx('mt-8 text-center text-sm text-muted')}>{owner ? 'Add a reel, credits and skills so casting directors can see what you do.' : (p.first_name || 'They') + ' haven’t added more to their profile yet.'}</p>}
         {empty && owner && <Link href="/me/edit" className="mx-auto mt-3 block w-fit text-sm font-medium text-green-ink">Complete your profile ›</Link>}
       </div>
