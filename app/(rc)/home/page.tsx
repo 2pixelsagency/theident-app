@@ -6,6 +6,7 @@ import { HomeHeader } from '@/components/rc/nav'
 import { VerifyBanner } from '@/components/rc/verify'
 import { HomeCompleteness } from '@/components/rc/Completeness'
 import TodoList from '@/components/rc/TodoList'
+import PushPrompt from '@/components/rc/PushPrompt'
 import WeekStrip from '@/components/rc/WeekStrip'
 import { AvatarPile, Button, Card, Empty, PageLoading, Pill, Progress, SectionTitle, cx } from '@/components/rc/ui'
 import { supabase } from '@/lib/supabase'
@@ -56,6 +57,7 @@ function PerformerHome() {
       <HomeHeader subline={subline} />
       <VerifyBanner />
       <HomeCompleteness />
+      <PushPrompt />
       <div className="px-4">
         {live ? <LiveCard app={live} shows={todayShows} now={now} /> : (
           <>
@@ -218,6 +220,7 @@ function CasterHome() {
       <HomeHeader subline={sub} />
       <VerifyBanner />
       <HomeCompleteness />
+      <PushPrompt caster />
       <div className="px-4">
         <div className="mt-4 grid grid-cols-2 gap-3">
           <Button variant="dark" icon="plus" href="/postings/new">Post a job</Button>
