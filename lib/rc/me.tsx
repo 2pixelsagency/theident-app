@@ -3,6 +3,7 @@
 import { createContext, useCallback, useContext, useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
+import { toast } from '@/components/rc/ui'
 import type { Role } from './onboarding'
 
 export type MyProfile = {
@@ -86,6 +87,23 @@ export function MeProvider({ children }: { children: React.ReactNode }) {
     const { data: sub } = supabase.auth.onAuthStateChange(event => { if (event === 'SIGNED_OUT') router.replace('/welcome') })
     return () => sub.subscription.unsubscribe()
   }, [load, router])
+
+  // In-app: new notifications arrive live — bump the badge and show a tappable toast (not on the page it links to)
+  const uid = me?.id
+  useEffect(() => {
+    if (!uid) return
+    const ch = supabase.channel('notifs-' + uid)
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'notifications', filter: 'profile_id=eq.' + uid }, payload => {
+        const n = payload.new as { title?: string; body?: string; type?: string; data?: { url?: string } | null }
+        const url = n.data?.url
+        const isMsg = n.type === 'message'
+        setMe(m => m && (isMsg ? { ...m, unreadMessages: m.unreadMessages + 1 } : { ...m, unreadNotifications: m.unreadNotifications + 1 }))
+        if (url && window.location.pathname === url.split('?')[0]) return
+        toast([n.title, n.body].filter(Boolean).join(' — '), url ? { label: 'Open', onClick: () => router.push(url) } : undefined)
+      })
+      .subscribe()
+    return () => { supabase.removeChannel(ch) }
+  }, [uid, router])
 
   if (!me) return null
   return <MeContext.Provider value={{ ...me, refresh: load }}>{children}</MeContext.Provider>

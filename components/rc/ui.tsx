@@ -363,20 +363,24 @@ export function ClientOnly({ children, fallback = null }: { children: React.Reac
 
 /* ---------- Toast ---------- */
 
-let pushToast: ((msg: string) => void) | null = null
-export function toast(msg: string) { pushToast?.(msg) }
+type ToastAction = { label: string; onClick: () => void }
+let pushToast: ((msg: string, action?: ToastAction) => void) | null = null
+export function toast(msg: string, action?: ToastAction) { pushToast?.(msg, action) }
 
 export function Toaster() {
-  const [msg, setMsg] = useState<string | null>(null)
+  const [t, setT] = useState<{ msg: string; action?: ToastAction } | null>(null)
   useEffect(() => {
-    let t: ReturnType<typeof setTimeout>
-    pushToast = m => { setMsg(m); clearTimeout(t); t = setTimeout(() => setMsg(null), 2600) }
-    return () => { pushToast = null; clearTimeout(t) }
+    let timer: ReturnType<typeof setTimeout>
+    pushToast = (msg, action) => { setT({ msg, action }); clearTimeout(timer); timer = setTimeout(() => setT(null), action ? 5000 : 2600) }
+    return () => { pushToast = null; clearTimeout(timer) }
   }, [])
-  if (!msg) return null
+  if (!t) return null
   return (
     <div role="status" className="fixed inset-x-0 bottom-32 z-[200] lg:bottom-8 lg:left-64 flex justify-center px-4">
-      <div className="rounded-full bg-dark px-5 py-3 text-sm text-white shadow-card">{msg}</div>
+      <div className="flex max-w-[440px] items-center gap-3 rounded-full bg-dark py-3 pl-5 pr-3 text-sm text-white shadow-card">
+        <span className="line-clamp-2">{t.msg}</span>
+        {t.action && <button type="button" onClick={() => { t.action!.onClick(); setT(null) }} className="shrink-0 rounded-full bg-lime px-3 py-1 text-[13px] font-semibold text-ink">{t.action.label}</button>}
+      </div>
     </div>
   )
 }
