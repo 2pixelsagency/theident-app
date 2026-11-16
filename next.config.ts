@@ -8,7 +8,6 @@ const OLD_ROUTES: [string, string][] = [
   ["/signup", "/start"],
   ["/onboarding/:step*", "/start"],
   ["/browse", "/talent"],
-  ["/jobs/:id", "/find/:id"],
   ["/saved", "/find"],
   ["/applications", "/castings"],
   ["/my-jobs", "/postings"],
