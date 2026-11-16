@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { BackHeader, Card, ListRow, PageLoading, Segmented, Toggle, toast } from '@/components/rc/ui'
 import { supabase } from '@/lib/supabase'
@@ -9,20 +9,32 @@ import { signOutAndReset } from '@/lib/rc/onboarding'
 import { useAsync } from '@/lib/rc/useAsync'
 import { fullName } from '@/lib/rc/format'
 import { SUPPORT_EMAIL } from '@/lib/rc/profile'
+import { NOTIFICATION_TYPES, disablePush, enablePush, pushState, type PrefKey, type PushState } from '@/lib/rc/push'
 
-type Prefs = { matches: boolean; applications: boolean; messages: boolean; marketing: boolean }
+type Prefs = Record<PrefKey | 'marketing', boolean>
 
 export default function SettingsPage() {
   const router = useRouter()
   const me = useMe()
   const [switching, setSwitching] = useState(false)
+  const [push, setPush] = useState<PushState | 'busy' | null>(null)
+  useEffect(() => { let live = true; pushState().then(s => live && setPush(s)); return () => { live = false } }, [])
+  const togglePush = async (on: boolean) => {
+    setPush('busy')
+    try {
+      const s = on ? await enablePush() : await disablePush()
+      setPush(s)
+      toast(s === 'on' ? 'Notifications on for this device' : s === 'denied' ? 'Notifications are blocked in your browser settings' : 'Notifications off for this device')
+    } catch { setPush(await pushState()); toast('Couldn’t turn on notifications') }
+  }
   const { data, loading, mutate } = useAsync(async () => {
     const { data: p } = await supabase.from('profiles').select('first_name, last_name, show_talent, availability_status, email_alerts_enabled, notification_prefs, account_role').eq('id', me.id).maybeSingle()
     return p as { first_name: string | null; last_name: string | null; show_talent: boolean | null; availability_status: string | null; email_alerts_enabled: boolean | null; notification_prefs: Partial<Prefs> | null; account_role: string } | null
   }, [me.id])
 
   if (loading || !data) return <><BackHeader title="Settings" /><PageLoading /></>
-  const prefs: Prefs = { matches: true, applications: true, messages: true, marketing: false, ...(data.notification_prefs || {}) }
+  const legacy = data.notification_prefs || {}
+  const prefs: Prefs = { matches: true, applications: true, messages: true, cast_chats: legacy.messages ?? true, connections: true, marketing: false, ...legacy }
 
   const update = async (patch: Record<string, unknown>, ok = 'Saved') => {
     mutate(d => d && { ...d, ...patch } as typeof d)
@@ -76,10 +88,20 @@ export default function SettingsPage() {
 
         {section('Notifications')}
         <Card className="divide-y divide-line overflow-hidden">
-          {toggleRow('New roles matching me', null, prefs.matches, v => setPref('matches', v))}
-          {toggleRow('Application updates', null, prefs.applications, v => setPref('applications', v))}
-          {toggleRow('Messages & cast chats', null, prefs.messages, v => setPref('messages', v))}
-          {toggleRow('Marketing & tips', null, prefs.marketing, v => setPref('marketing', v))}
+          {push === 'ios-install' ? (
+            <p className="px-4 py-3.5 text-[13px] text-muted">On iPhone, tap <span className="font-medium text-ink">Share → Add to Home Screen</span>, open The Ident from there, then turn notifications on here.</p>
+          ) : push === 'unsupported' ? (
+            <p className="px-4 py-3.5 text-[13px] text-muted">This browser can’t show notifications. You’ll still see everything in your inbox.</p>
+          ) : push === 'denied' ? (
+            <p className="px-4 py-3.5 text-[13px] text-muted">Notifications are blocked for The Ident in your browser or phone settings. Allow them there, then come back.</p>
+          ) : toggleRow('Push notifications on this device', push === 'on' ? 'Alerts arrive even when the app is closed' : 'Get alerts for castings and messages', push === 'on', v => push !== 'busy' && push !== null && togglePush(v))}
+        </Card>
+        <p className="mb-2 mt-4 text-[13px] text-muted">Choose what alerts you. Everything still appears in your inbox.</p>
+        <Card className="divide-y divide-line overflow-hidden">
+          {NOTIFICATION_TYPES.filter(t => me.role === 'performer' || t.key !== 'matches').map(t => (
+            <div key={t.key}>{toggleRow(t.title, t.sub, prefs[t.key], v => setPref(t.key, v))}</div>
+          ))}
+          {toggleRow('Tips & news from The Ident', null, prefs.marketing, v => setPref('marketing', v))}
         </Card>
 
         {section('Payments')}
