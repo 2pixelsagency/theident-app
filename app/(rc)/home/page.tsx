@@ -7,7 +7,6 @@ import { VerifyBanner } from '@/components/rc/verify'
 import { HomeCompleteness } from '@/components/rc/Completeness'
 import TodoList from '@/components/rc/TodoList'
 import LatestJobs from '@/components/rc/LatestJobs'
-import PushPrompt from '@/components/rc/PushPrompt'
 import WeekStrip from '@/components/rc/WeekStrip'
 import { Button, Card, PageLoading, Pill, Progress, SectionTitle } from '@/components/rc/ui'
 import { supabase } from '@/lib/supabase'
@@ -50,14 +49,13 @@ function PerformerHome() {
   const { block, diary, live, todayShows, now } = data
   const subline = live && live.jobs?.start_date && live.jobs.end_date
     ? contractWeekLine(live.jobs.start_date, live.jobs.end_date, now)
-    : block ? `Week ${currentWeek(block)} of your Block` : undefined
+    : block ? `Week ${currentWeek(block)} of your goal` : undefined
 
   return (
     <>
       <HomeHeader subline={subline} />
       <VerifyBanner />
       <HomeCompleteness />
-      <PushPrompt />
       <div className="px-4">
         {live && <LiveCard app={live} shows={todayShows} now={now} />}
         <LatestJobs limit={3} postHref="/postings/new?type=side" />
@@ -183,7 +181,6 @@ function CasterHome() {
       <HomeHeader subline={sub} />
       <VerifyBanner />
       <HomeCompleteness />
-      <PushPrompt caster />
       <div className="px-4">
         <div className="mt-4 grid grid-cols-2 gap-3">
           <Link href="/postings" className="flex items-center gap-3 rounded-[var(--radius)] border border-line bg-surface p-4 shadow-card">

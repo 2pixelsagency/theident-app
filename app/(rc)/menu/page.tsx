@@ -33,7 +33,7 @@ export default function MenuPage() {
       </Link>
 
       <Card className="mt-4 divide-y divide-line overflow-hidden">
-        {!caster && <ListRow icon="grid" title="Your Blocks" href="/blocks" />}
+        {!caster && <ListRow icon="star" title="Goals" href="/blocks" />}
         {!caster && <ListRow icon="briefcase" title="Castings" href="/castings" />}
         <ListRow icon="calendar" title="Diary" href="/diary" />
         <ListRow icon="megaphone" title="Your postings" href="/postings" />

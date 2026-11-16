@@ -154,7 +154,6 @@ export default function FindPage() {
             <Icon name="chevron-down" className="pointer-events-none absolute right-0 size-3.5" />
           </label>
         </div>
-        {shown.length > 0 && <p className="-mt-1 mb-3 text-xs text-faint">Swipe right to save · left for later</p>}
 
         {loading ? <PageLoading /> : shown.length === 0 ? (
           <Empty icon={view === 'later' ? 'clock' : view === 'saved' ? 'bookmark' : 'search'}

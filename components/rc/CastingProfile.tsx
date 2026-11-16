@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import Icon from './Icon'
-import JobCard, { VerifiedTick } from './JobCard'
+import JobCard from './JobCard'
 import { Avatar } from './ui'
 import { supabase } from '@/lib/supabase'
 import { fullName } from '@/lib/rc/format'
@@ -71,7 +71,7 @@ export default function CastingProfile({ data, owner, onBack, onShare, topRight,
             </span>
             {p.is_verified && <span className="mb-1 inline-flex items-center gap-1 rounded-full bg-mint px-3 py-1 text-[12px] font-semibold text-ink"><Icon name="shield-check" className="size-3.5" /> Verified casting</span>}
           </div>
-          <h1 className="mt-4 flex items-center gap-2 text-[30px] leading-tight">{company}{p.is_verified && <VerifiedTick />}</h1>
+          <h1 className="mt-4 flex items-center gap-2 text-[30px] leading-tight">{company}</h1>
           <p className="mt-1 text-[15px] text-muted">{person}</p>
           <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-muted">
             {p.location && <span className="inline-flex items-center gap-1"><Icon name="pin" className="size-4" />{p.location}</span>}
