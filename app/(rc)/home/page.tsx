@@ -6,15 +6,16 @@ import { HomeHeader } from '@/components/rc/nav'
 import { VerifyBanner } from '@/components/rc/verify'
 import { HomeCompleteness } from '@/components/rc/Completeness'
 import TodoList from '@/components/rc/TodoList'
+import LatestJobs from '@/components/rc/LatestJobs'
 import PushPrompt from '@/components/rc/PushPrompt'
 import WeekStrip from '@/components/rc/WeekStrip'
-import { AvatarPile, Button, Card, Empty, PageLoading, Pill, Progress, SectionTitle, cx } from '@/components/rc/ui'
+import { Button, Card, Empty, PageLoading, Pill, Progress, SectionTitle } from '@/components/rc/ui'
 import { supabase } from '@/lib/supabase'
 import { useMe } from '@/lib/rc/me'
 import { useAsync } from '@/lib/rc/useAsync'
 import { blockProgress, currentWeek, loadActiveBlock } from '@/lib/rc/blocks'
 import { kindsByDay, loadDiary } from '@/lib/rc/diary'
-import { daysUntil, fmtTimeOfDay, fullName, parseDate, toISODate, weekDays } from '@/lib/rc/format'
+import { daysUntil, fmtTimeOfDay, parseDate, toISODate, weekDays } from '@/lib/rc/format'
 import { PIPELINE_SELECT, STAGE_META, jobSub, jobTitle, nextAction, stageOf, type PipelineApp } from '@/lib/rc/pipeline'
 
 export default function HomePage() {
@@ -59,14 +60,8 @@ function PerformerHome() {
       <HomeCompleteness />
       <PushPrompt />
       <div className="px-4">
-        {live ? <LiveCard app={live} shows={todayShows} now={now} /> : (
-          <>
-            <div className="mt-4 grid grid-cols-2 gap-3">
-              <Button variant="dark" icon="search" href="/find">Find jobs</Button>
-              <Button variant="outline" icon="plus" href="/postings/new?type=side">Post a job</Button>
-            </div>
-          </>
-        )}
+        {live && <LiveCard app={live} shows={todayShows} now={now} />}
+        <LatestJobs limit={5} />
         <BlockCard block={block} />
 
         <TodoList compact />
@@ -223,54 +218,14 @@ function CasterHome() {
       <PushPrompt caster />
       <div className="px-4">
         <div className="mt-4 grid grid-cols-2 gap-3">
-          <Button variant="dark" icon="plus" href="/postings/new">Post a job</Button>
-          <Button variant="outline" icon="users" href="/talent">Find talent</Button>
+          <Link href="/postings" className="flex items-center gap-3 rounded-[var(--radius)] border border-line bg-surface p-4 shadow-card">
+            <span className="text-[26px] font-semibold leading-none">{toReview.length}</span>
+            <span className="text-[13px] leading-tight text-muted">to review across {open.length} posting{open.length === 1 ? '' : 's'}</span>
+          </Link>
+          <Button variant="outline" icon="users" href="/talent" className="h-auto">Find talent</Button>
         </div>
-
-        <div className="mt-4 grid grid-cols-3 gap-3">
-          {[[open.length, 'Open postings'], [applicants.length, 'Submissions'], [toReview.length, 'To review']].map(([n, label]) => (
-            <Card key={label as string} className="p-4">
-              <p className="text-[24px] font-medium leading-none">{n}</p>
-              <p className="mt-1.5 text-xs text-muted">{label}</p>
-            </Card>
-          ))}
-        </div>
-
-        <SectionTitle title="Your postings" action="View all" href="/postings" />
-        {postings.length ? (
-          <Card className="divide-y divide-line overflow-hidden">
-            {postings.slice(0, 3).map(p => {
-              const subs = applicants.filter(a => a.job_id === p.id)
-              return (
-                <Link key={p.id} href={'/postings/' + p.id} className="flex items-center gap-3 px-4 py-3.5">
-                  <span className="min-w-0 flex-1">
-                    <span className="block truncate text-[15px] font-medium">{p.is_side_hustle ? p.job_title : [p.project_in, p.project_role].filter(Boolean).join(' — ')}</span>
-                    <span className="block text-[13px] text-muted">{subs.length} submission{subs.length === 1 ? '' : 's'}</span>
-                  </span>
-                  <AvatarPile people={subs.map(s => ({ id: s.id, name: fullName(s.profiles), src: s.profiles?.picture_url }))} size={28} />
-                  <Pill tone={p.is_published ? 'green' : 'amber'}>{p.is_published ? 'Open' : 'Pending'}</Pill>
-                </Link>
-              )
-            })}
-          </Card>
-        ) : (
-          <Card><Empty icon="megaphone" title="No postings yet" sub="Post a casting role or a side hustle and submissions will land here." action={<Button size="sm" variant="dark" href="/postings/new">Post a job</Button>} /></Card>
-        )}
-
-        <SectionTitle title="Latest submissions" />
-        {applicants.length ? (
-          <div className="grid grid-cols-2 gap-3 pb-6">
-            {applicants.slice(0, 4).map(a => (
-              <Link key={a.id} href={'/talent/' + a.profile_id + '?app=' + a.id} className="overflow-hidden rounded-[var(--radius)] border border-line bg-surface shadow-card">
-                <div className={cx('aspect-[4/3] bg-chip bg-cover bg-center')} style={a.profiles?.picture_url ? { backgroundImage: `url(${a.profiles.picture_url})` } : undefined} />
-                <div className="p-3">
-                  <p className="truncate text-sm font-medium">{fullName(a.profiles)}</p>
-                  <p className="truncate text-xs text-muted">{[a.profiles?.location, a.profiles?.what_i_do?.split(',')[0]].filter(Boolean).join(' · ')}</p>
-                </div>
-              </Link>
-            ))}
-          </div>
-        ) : <p className="pb-6 text-sm text-muted">Nothing new yet.</p>}
+        <LatestJobs limit={12} title="What’s happening" />
+        <div className="h-6" />
       </div>
     </>
   )
