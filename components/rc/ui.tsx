@@ -67,14 +67,23 @@ export function DarkCard({ className, children }: { className?: string; children
 /* ---------- Headers ---------- */
 
 // Back arrow + title, flush-left and on one line. No tap "box" behind the arrow.
-function BackArrow({ back, onBack }: { back?: string; onBack?: () => void }) {
+// In-app history: the (rc) layout counts screens visited this session. Back goes back when there's somewhere
+// in the app to go back to; otherwise it *replaces* with a fallback so it never builds a back-and-forth loop.
+const NAV_KEY = 'ident.navDepth'
+export function trackNav() { try { sessionStorage.setItem(NAV_KEY, String(Number(sessionStorage.getItem(NAV_KEY) || 0) + 1)) } catch { /* private mode */ } }
+export function useGoBack(fallback = '/home') {
   const router = useRouter()
-  const goBack = () => {
-    if (onBack) return onBack()
-    if (back) return router.push(back)
-    if (window.history.length > 1) router.back()
-    else router.push('/home')
+  return () => {
+    let depth = 0
+    try { depth = Number(sessionStorage.getItem(NAV_KEY) || 0) } catch { /* */ }
+    if (depth > 1) { try { sessionStorage.setItem(NAV_KEY, String(depth - 2)) } catch { /* */ } router.back() }
+    else router.replace(fallback)
   }
+}
+
+function BackArrow({ back, onBack }: { back?: string; onBack?: () => void }) {
+  const fallbackBack = useGoBack(back || '/home')
+  const goBack = () => (onBack ? onBack() : fallbackBack())
   return (
     <button type="button" onClick={goBack} aria-label="Back" className="-my-2 -ml-1.5 inline-flex h-10 w-8 shrink-0 items-center justify-start text-ink transition active:opacity-50">
       <Icon name="chevron-left" className="size-6" />

@@ -4,7 +4,7 @@ import { Fragment, useEffect, useState } from 'react'
 import { useParams, useRouter, useSearchParams } from 'next/navigation'
 import Icon from '@/components/rc/Icon'
 import { Bubble, Composer, DayDivider, dayLabel, useStickToBottom } from '@/components/rc/chat'
-import { Button, Empty, PageLoading, Sheet, cx, toast } from '@/components/rc/ui'
+import { Button, Empty, PageLoading, Sheet, cx, toast, useGoBack } from '@/components/rc/ui'
 import { InviteSheet } from '@/components/rc/CastInvite'
 import { ReportSheet, SafetyNote, type ReportTarget } from '@/components/rc/Safety'
 import { supabase } from '@/lib/supabase'
@@ -20,6 +20,7 @@ const TILE = ['bg-purple-tint text-purple-ink', 'bg-green-tint text-green-ink', 
 export default function CastChatPage() {
   const { id: chatId } = useParams<{ id: string }>()
   const router = useRouter()
+  const goBack = useGoBack('/chats')
   const { id: me } = useMe()
   const [channel, setChannel] = useState('company')
   const [selected, setSelected] = useState<Msg | null>(null)
@@ -98,7 +99,7 @@ export default function CastChatPage() {
     <div className="flex min-h-dvh flex-col">
       <header className="sticky top-0 z-30 border-b border-line bg-surface/95 px-3 pb-3 pt-[max(12px,env(safe-area-inset-top))] backdrop-blur">
         <div className="flex items-center gap-3">
-          <button type="button" aria-label="Back" onClick={() => router.push('/chats')} className="inline-flex size-9 items-center justify-center rounded-full hover:bg-chip"><Icon name="chevron-left" className="size-6" /></button>
+          <button type="button" aria-label="Back" onClick={goBack} className="inline-flex size-9 items-center justify-center rounded-full hover:bg-chip"><Icon name="chevron-left" className="size-6" /></button>
           <span className="flex size-11 items-center justify-center rounded-xl bg-green text-[17px] font-medium text-white">{initials(chat.name).slice(0, 1)}</span>
           <button type="button" onClick={() => setSheet('members')} className="min-w-0 flex-1 text-left">
             <span className="block truncate text-[16px] font-medium">{chat.name}</span>

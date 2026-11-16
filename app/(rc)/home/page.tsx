@@ -9,14 +9,14 @@ import TodoList from '@/components/rc/TodoList'
 import LatestJobs from '@/components/rc/LatestJobs'
 import PushPrompt from '@/components/rc/PushPrompt'
 import WeekStrip from '@/components/rc/WeekStrip'
-import { Button, Card, Empty, PageLoading, Pill, Progress, SectionTitle } from '@/components/rc/ui'
+import { Button, Card, PageLoading, Pill, Progress, SectionTitle } from '@/components/rc/ui'
 import { supabase } from '@/lib/supabase'
 import { useMe } from '@/lib/rc/me'
 import { useAsync } from '@/lib/rc/useAsync'
 import { blockProgress, currentWeek, loadActiveBlock } from '@/lib/rc/blocks'
 import { kindsByDay, loadDiary } from '@/lib/rc/diary'
 import { daysUntil, fmtTimeOfDay, parseDate, toISODate, weekDays } from '@/lib/rc/format'
-import { PIPELINE_SELECT, STAGE_META, jobSub, jobTitle, nextAction, stageOf, type PipelineApp } from '@/lib/rc/pipeline'
+import { PIPELINE_SELECT, jobSub, jobTitle, stageOf, type PipelineApp } from '@/lib/rc/pipeline'
 
 export default function HomePage() {
   const { role } = useMe()
@@ -47,8 +47,7 @@ function PerformerHome() {
 
   if (loading || !data) return <><HomeHeader /><PageLoading /></>
 
-  const { block, apps, diary, live, todayShows, now } = data
-  const active = apps.filter(a => a !== live && stageOf(a) !== 'closed').slice(0, live ? 1 : 2)
+  const { block, diary, live, todayShows, now } = data
   const subline = live && live.jobs?.start_date && live.jobs.end_date
     ? contractWeekLine(live.jobs.start_date, live.jobs.end_date, now)
     : block ? `Week ${currentWeek(block)} of your Block` : undefined
@@ -61,43 +60,12 @@ function PerformerHome() {
       <PushPrompt />
       <div className="px-4">
         {live && <LiveCard app={live} shows={todayShows} now={now} />}
-        <LatestJobs limit={5} />
-        <BlockCard block={block} />
-
+        <LatestJobs limit={3} postHref="/postings/new?type=side" />
         <TodoList compact />
-
-        <SectionTitle title="Your roles" action="View all" href="/castings" />
-        {active.length ? (
-          <Card className="divide-y divide-line overflow-hidden">
-            {active.map(a => {
-              const meta = STAGE_META[stageOf(a)]
-              return (
-                <Link key={a.id} href={'/castings?focus=' + a.id} className="flex items-center gap-3 px-4 py-3.5">
-                  <span className="min-w-0 flex-1">
-                    <span className="block truncate text-[15px] font-medium">{jobTitle(a.jobs)}</span>
-                    <span className="block truncate text-[13px] text-muted">{nextAction(a)}</span>
-                  </span>
-                  <Pill tone={meta.tone}>{meta.label}</Pill>
-                </Link>
-              )
-            })}
-          </Card>
-        ) : (
-          <Card><Empty icon="briefcase" title="No roles in play yet" sub="Apply to a role and it’ll show up here as it moves from self-tape to booked." action={<Button size="sm" variant="dark" href="/find">Browse roles</Button>} /></Card>
-        )}
-
+        <BlockCard block={block} />
         <SectionTitle title="This week" action="Diary" href="/diary" />
         <WeekStrip kinds={kindsByDay(diary)} />
-
-        {!live && (
-          <div className="mt-6 grid grid-cols-3 gap-3 pb-6">
-            {[['calendar', 'Diary', '/diary'], ['star', 'Goals', '/blocks'], ['ticket', 'What’s on', '/whats-on']].map(([icon, label, href]) => (
-              <Link key={href} href={href} className="flex flex-col items-center gap-2 rounded-[var(--radius)] border border-line bg-surface py-4 text-[13px] shadow-card">
-                <Icon name={icon} className="size-5 text-green-ink" />{label}
-              </Link>
-            ))}
-          </div>
-        )}
+        <div className="h-6" />
       </div>
     </>
   )

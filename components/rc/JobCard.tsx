@@ -40,7 +40,6 @@ export default function JobCard({ job, poster, saved, onToggleSave, bare, href }
       <Link href={href || '/find/' + job.id} className="block pr-8">
         <span className="flex items-center gap-1.5">
           <span className="text-[17px] font-medium leading-snug">{jobTitle(job)}</span>
-          {poster?.is_verified && <VerifiedTick />}
         </span>
         <span className="mt-0.5 block text-[13px] text-muted">{sub}</span>
         <span className="mt-3 flex flex-wrap gap-2">

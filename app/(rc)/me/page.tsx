@@ -2,11 +2,10 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
 import Icon from '@/components/rc/Icon'
 import CompletenessCard from '@/components/rc/Completeness'
 import ProfileView, { heroPrimary, heroSecondary } from '@/components/rc/ProfileView'
-import { PageLoading, toast } from '@/components/rc/ui'
+import { PageLoading, toast, useGoBack } from '@/components/rc/ui'
 import { useMe } from '@/lib/rc/me'
 import { useAsync } from '@/lib/rc/useAsync'
 import { fullName } from '@/lib/rc/format'
@@ -16,7 +15,7 @@ import { completenessOf } from '@/lib/rc/completeness'
 // The owner's view of their profile: the same immersive layout everyone else sees, with Edit/Share,
 // a completeness nudge, and "Preview as casting" to see exactly what a casting director sees.
 export default function MyProfilePage() {
-  const router = useRouter()
+  const goBack = useGoBack('/home')
   const { id } = useMe()
   const [preview, setPreview] = useState(false)
   const { data, loading } = useAsync(() => loadFullProfile(id), [id])
@@ -69,7 +68,7 @@ export default function MyProfilePage() {
       signedIn
       data={data}
       owner
-      onBack={() => (window.history.length > 1 ? router.back() : router.push('/home'))}
+      onBack={goBack}
       onShare={share}
       topRight={<Link href="/me/edit" aria-label="Edit profile" className="inline-flex size-10 items-center justify-center rounded-full bg-dark/45 text-white backdrop-blur-md"><Icon name="pen" className="size-5" /></Link>}
       actions={<>

@@ -2,6 +2,7 @@
 
 import { useEffect } from 'react'
 import Link from 'next/link'
+import Icon from '@/components/rc/Icon'
 import JobCard from '@/components/rc/JobCard'
 import { Empty } from '@/components/rc/ui'
 import { supabase } from '@/lib/supabase'
@@ -10,7 +11,7 @@ import { JOB_SELECT, loadPosters, type Job } from '@/lib/rc/jobs'
 import { toISODate } from '@/lib/rc/format'
 
 // "What's happening": every live role, newest first, updating as new ones are published
-export default function LatestJobs({ limit = 6, title = 'Latest jobs' }: { limit?: number; title?: string }) {
+export default function LatestJobs({ limit = 6, title = 'Latest jobs', postHref }: { limit?: number; title?: string; postHref?: string }) {
   const { data, loading, mutate } = useAsync(async () => {
     const today = toISODate(new Date())
     const [{ data: jobs }, { count }] = await Promise.all([
@@ -46,7 +47,10 @@ export default function LatestJobs({ limit = 6, title = 'Latest jobs' }: { limit
           {title}
           <span className="inline-flex items-center gap-1 rounded-full bg-lime/60 px-2 py-0.5 text-[11px] font-semibold text-ink"><span className="size-1.5 animate-pulse rounded-full bg-forest" /> Live</span>
         </h2>
-        <Link href="/find" className="text-sm font-semibold text-green-ink">{data ? 'All ' + data.total : 'See all'}</Link>
+        <span className="flex items-center gap-3">
+          {postHref && <Link href={postHref} className="inline-flex items-center gap-1 text-sm font-semibold text-green-ink"><Icon name="plus" className="size-3.5" />Post a job</Link>}
+          <Link href="/find" className="text-sm font-semibold text-green-ink">{data ? 'All ' + data.total : 'See all'}</Link>
+        </span>
       </div>
       {loading || !data ? <div className="h-40 animate-pulse rounded-[var(--radius)] bg-chip" /> : data.jobs.length === 0 ? (
         <Empty icon="briefcase" title="No live roles right now" sub="New roles appear here the moment they’re posted." />

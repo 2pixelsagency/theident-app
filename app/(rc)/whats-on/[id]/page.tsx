@@ -1,9 +1,9 @@
 'use client'
 
 import { useState } from 'react'
-import { useParams, useRouter } from 'next/navigation'
+import { useParams } from 'next/navigation'
 import Icon from '@/components/rc/Icon'
-import { Button, Card, Empty, PageLoading, Pill, toast } from '@/components/rc/ui'
+import { Button, Card, Empty, PageLoading, Pill, toast, useGoBack } from '@/components/rc/ui'
 import { supabase } from '@/lib/supabase'
 import { useMe } from '@/lib/rc/me'
 import { useAsync } from '@/lib/rc/useAsync'
@@ -12,7 +12,7 @@ import { EVENT_SELECT, priceLabel, timeLabel, typeMeta, whereLabel, type RCEvent
 
 export default function EventDetailPage() {
   const { id: eventId } = useParams<{ id: string }>()
-  const router = useRouter()
+  const goBack = useGoBack('/whats-on')
   const { id: me } = useMe()
   const [busy, setBusy] = useState(false)
 
@@ -66,7 +66,7 @@ export default function EventDetailPage() {
     <>
       <div className="relative h-52 bg-hero bg-cover bg-center" style={e.cover_image_url ? { backgroundImage: `url(${e.cover_image_url})` } : undefined}>
         <div className="flex items-center justify-between px-4 pt-[max(16px,env(safe-area-inset-top))]">
-          <button type="button" aria-label="Back" onClick={() => (window.history.length > 1 ? router.back() : router.push('/whats-on'))} className={round}><Icon name="chevron-left" /></button>
+          <button type="button" aria-label="Back" onClick={goBack} className={round}><Icon name="chevron-left" /></button>
           <button type="button" aria-label="Share" onClick={share} className={round}><Icon name="share" className="size-5" /></button>
         </div>
       </div>

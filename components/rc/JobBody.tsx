@@ -32,7 +32,7 @@ export default function JobBody({ j, poster, posted }: { j: Job; poster?: Poster
   return (
     <>
         {j.is_demo && <p className="mt-4 flex items-center gap-2 rounded-xl bg-butter px-4 py-3 text-[13px] font-medium text-ink"><Icon name="alert" className="size-4 shrink-0" /> Demo listing — used to show how The Ident works. It isn’t a real role.</p>}
-        <h1 className="mt-5 flex items-center gap-2 text-[24px]">{jobTitle(j)} {poster?.is_verified && <VerifiedTick className="size-5" />}</h1>
+        <h1 className="mt-5 flex items-center gap-2 text-[24px]">{jobTitle(j)}</h1>
         <p className="mt-1 text-sm text-muted">{posterName(j, poster)} · posted {ago(j.created_at)}</p>
 
         <div className="mt-4 flex flex-wrap gap-2">
