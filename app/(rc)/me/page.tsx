@@ -79,12 +79,10 @@ export default function MyProfilePage() {
       below={<>
         {result && <CompletenessCard result={result} className="mt-5" />}
         {!caster && (
-          <button type="button" onClick={() => { setPreview(true); window.scrollTo(0, 0) }} className="mt-4 flex h-11 w-full items-center justify-center gap-2 rounded-[14px] border border-line bg-surface text-sm font-semibold shadow-card">
-            <Icon name="eye" className="size-4" /> Preview as casting
-          </button>
-        )}
-        {!caster && (
-          <button type="button" onClick={requestTestimonial} className="upload mt-3 flex h-11 w-full items-center justify-center gap-2 text-sm font-medium"><Icon name="send" className="size-4" /> Request a testimonial</button>
+          <div className="mt-4 grid grid-cols-2 gap-2">
+            <button type="button" onClick={() => { setPreview(true); window.scrollTo(0, 0) }} className="flex h-11 items-center justify-center gap-2 rounded-[14px] border border-line bg-surface text-sm font-semibold"><Icon name="eye" className="size-4" /> Preview as casting</button>
+            <button type="button" onClick={requestTestimonial} className="flex h-11 items-center justify-center gap-2 rounded-[14px] border border-line bg-surface text-sm font-semibold"><Icon name="send" className="size-4" /> Ask for a testimonial</button>
+          </div>
         )}
       </>}
     />

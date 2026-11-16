@@ -128,9 +128,10 @@ export function safeNext(raw: string | null | undefined, fallback = '/home') {
 // Sign up = create the account (/start/account), then this many one-at-a-time questions (/start/profile)
 export const SIGNUP_QUESTIONS = 4
 
-// Each side has its own home: performers → talent dashboard, casters → postings
-export function dashboardFor(role: Role | null | undefined) {
-  return role === 'caster' ? '/postings' : '/home'
+// Both sides start on Home (casting Home is the live job board; postings have their own tab)
+// eslint-disable-next-line @typescript-eslint/no-unused-vars -- kept so callers can pass the role
+export function dashboardFor(_role?: Role | null) {
+  return '/home'
 }
 
 export function isRole(v: unknown): v is Role {
