@@ -3,26 +3,35 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Icon from '@/components/rc/Icon'
-import { BackHeader, Button, Card, Chip, Field, TextArea, Toggle, cx, toast } from '@/components/rc/ui'
+import { BackHeader, Button, Card, Field, TextArea, Toggle, cx, toast } from '@/components/rc/ui'
 import { supabase } from '@/lib/supabase'
 import { useMe } from '@/lib/rc/me'
 import { fmtDate } from '@/lib/rc/format'
 
-const GOALS = ['Land a lead role', 'Rebuild my reel', 'Sign with an agent', 'Book a tour', 'More on-camera work', 'Grow my network']
-const LENGTHS = [6, 12, 16]
-const DEFAULT_ACTIONS = [
-  { label: 'Apply to 5 roles', on: true },
-  { label: 'Record 1 self-tape', on: true },
-  { label: 'Take 2 classes', on: true },
-  { label: 'Reach out to 3 people', on: false },
+// Industry goals with suggested weekly actions; everything is editable and they can write their own
+const GOALS: { goal: string; icon: string; actions: string[] }[] = [
+  { goal: 'Create a showreel', icon: 'video', actions: ['Film 1 scene or self-tape', 'Collect footage from past jobs', 'Edit or send clips to an editor', 'Upload the finished reel to my profile'] },
+  { goal: 'Go to dance classes', icon: 'sparkle', actions: ['Take 2 dance classes', 'Stretch and condition 3 times', 'Learn 1 new routine', 'Film my progress'] },
+  { goal: 'Land a lead role', icon: 'star', actions: ['Apply to 5 roles', 'Record 1 self-tape', 'Prepare 1 new monologue'] },
+  { goal: 'Sign with an agent', icon: 'briefcase', actions: ['Research 5 agents', 'Send 3 agent submissions', 'Invite agents to see my work'] },
+  { goal: 'Get new headshots', icon: 'camera', actions: ['Shortlist 3 photographers', 'Book the shoot', 'Pick favourites and upload them'] },
+  { goal: 'Improve my singing', icon: 'mic', actions: ['Have 1 singing lesson', 'Practise 4 times', 'Learn 1 new song for my book'] },
+  { goal: 'Learn an accent', icon: 'globe', actions: ['Practise 20 minutes, 4 times', 'Record myself and compare', 'Read a scene in the accent'] },
+  { goal: 'Get fitter for the stage', icon: 'zap', actions: ['Train 3 times', 'Do 1 stamina session', 'Stretch daily'] },
+  { goal: 'Grow my network', icon: 'users', actions: ['Reach out to 3 people', 'Go to 1 industry event or show', 'Follow up with someone I met'] },
+  { goal: 'Write my own work', icon: 'pen', actions: ['Write 3 sessions', 'Share pages with someone', 'Read 1 new play'] },
 ]
+const LENGTHS = [6, 12, 16]
+const actionsFor = (g: string) => (GOALS.find(x => x.goal === g)?.actions || ['Apply to 5 roles', 'Record 1 self-tape', 'Take 2 classes']).map(label => ({ label, on: true }))
 
 export default function NewBlockPage() {
   const router = useRouter()
   const { id } = useMe()
-  const [goal, setGoal] = useState(GOALS[0])
+  const [goal, setGoal] = useState(GOALS[0].goal)
   const [weeks, setWeeks] = useState(12)
-  const [actions, setActions] = useState(DEFAULT_ACTIONS)
+  const [actions, setActions] = useState(() => actionsFor(GOALS[0].goal))
+  // Picking a suggested goal swaps in its weekly actions (their own added actions are kept)
+  const pickGoal = (g: string) => { setGoal(g); setActions(a => [...actionsFor(g), ...a.filter(x => (x as { own?: boolean }).own)]) }
   const [custom, setCustom] = useState('')
   const [why, setWhy] = useState('')
   const [checkin, setCheckin] = useState(true)
@@ -33,7 +42,7 @@ export default function NewBlockPage() {
   const addCustom = () => {
     const label = custom.trim()
     if (!label) return
-    setActions(a => [...a, { label, on: true }])
+    setActions(a => [...a, { label, on: true, own: true }])
     setCustom('')
   }
 
@@ -46,19 +55,26 @@ export default function NewBlockPage() {
     await supabase.from('blocks').update({ is_active: false }).eq('profile_id', id).eq('is_active', true)
     const { error } = await supabase.from('blocks').insert({ profile_id: id, goal: goal.trim(), weeks, actions: picked, why: why.trim() || null, weekly_checkin: checkin })
     setSaving(false)
-    if (error) { toast('Couldn’t start your Block — try again'); return }
+    if (error) { toast('Couldn’t save your goal — try again'); return }
     router.push('/blocks')
   }
 
   return (
     <>
-      <BackHeader title="New Block" />
+      <BackHeader title="New goal" />
       <div className="px-4 pb-8">
-        <p className="text-[15px] text-muted">Pick one goal and a few weekly actions. We’ll track the rest for the next few weeks.</p>
+        <p className="text-[15px] text-muted">Pick an industry goal or write your own, then the few things you’ll do each week. Tick them off as you go.</p>
 
         <Step n={1} label="Your goal" />
-        <Field value={goal} onChange={e => setGoal(e.target.value)} aria-label="Your goal" />
-        <div className="mt-3 flex flex-wrap gap-2">{GOALS.map(g => <Chip key={g} selected={goal === g} onClick={() => setGoal(g)}>{g}</Chip>)}</div>
+        <div className="grid grid-cols-2 gap-2">
+          {GOALS.map(g => (
+            <button key={g.goal} type="button" onClick={() => pickGoal(g.goal)} aria-pressed={goal === g.goal}
+              className={cx('flex items-center gap-2 rounded-xl border px-3 py-3 text-left text-[14px] font-medium transition', goal === g.goal ? 'border-forest bg-forest text-white' : 'border-line bg-surface')}>
+              <Icon name={g.icon} className={cx('size-4 shrink-0', goal === g.goal ? 'text-lime' : 'text-muted')} />{g.goal}
+            </button>
+          ))}
+        </div>
+        <Field className="mt-3" value={goal} onChange={e => setGoal(e.target.value)} aria-label="Your goal" placeholder="Or write your own goal…" />
 
         <Step n={2} label="How long?" />
         <div className="grid grid-cols-3 gap-2">
@@ -92,7 +108,7 @@ export default function NewBlockPage() {
           <Toggle checked={checkin} onChange={setCheckin} label="Weekly check-in" />
         </Card>
 
-        <Button className="mt-6" size="lg" full trailingIcon="arrow-right" onClick={start} disabled={saving}>{saving ? 'Starting…' : 'Start this Block'}</Button>
+        <Button className="mt-6" size="lg" full trailingIcon="arrow-right" onClick={start} disabled={saving}>{saving ? 'Starting…' : 'Start this goal'}</Button>
       </div>
     </>
   )

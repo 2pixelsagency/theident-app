@@ -19,16 +19,16 @@ export default function BlocksPage() {
   }, [id])
 
   const newBtn = <Button size="sm" variant="dark" icon="plus" href="/blocks/new">New</Button>
-  if (loading || !data) return <><BackHeader title="Your Block" /><PageLoading /></>
+  if (loading || !data) return <><BackHeader title="Your goal" /><PageLoading /></>
 
   const { block, checks, pastCount } = data
   if (!block) {
     return (
       <>
-        <BackHeader title="Your Block" right={newBtn} />
+        <BackHeader title="Your goal" right={newBtn} />
         <div className="px-4">
           <p className="text-[15px] text-muted">One goal. A few actions each week. The only score that matters is showing up.</p>
-          <Card className="mt-5"><Empty icon="grid" title="No Block running" sub="Pick a goal for the next 6–16 weeks and the few things you’ll do each week to get there." action={<Button variant="dark" size="sm" href="/blocks/new">Start a Block</Button>} /></Card>
+          <Card className="mt-5"><Empty icon="grid" title="No goal set yet" sub="Pick a goal for the next 6–16 weeks and the few things you’ll do each week to get there." action={<Button variant="dark" size="sm" href="/blocks/new">Start a Block</Button>} /></Card>
         </div>
       </>
     )
@@ -56,14 +56,14 @@ export default function BlocksPage() {
   }
 
   const endBlock = async () => {
-    if (!confirm('End this Block? You can start a new one straight away.')) return
+    if (!confirm('End this goal? You can set a new one straight away.')) return
     await supabase.from('blocks').update({ is_active: false }).eq('id', block.id)
     mutate(d => d && { ...d, block: null, checks: [], pastCount: d.pastCount + 1 })
   }
 
   return (
     <>
-      <BackHeader title="Your Block" right={newBtn} />
+      <BackHeader title="Your goal" right={newBtn} />
       <div className="px-4 pb-8">
         <p className="text-[15px] text-muted">One goal. A few actions each week. The only score that matters is showing up.</p>
 
@@ -124,12 +124,12 @@ export default function BlocksPage() {
         {pastCount > 0 && (
           <Card className="mt-4 flex items-center gap-3 p-4">
             <span className="flex size-9 items-center justify-center rounded-lg bg-green-tint text-green-ink"><Icon name="check" className="size-4" /></span>
-            <span className="flex-1 text-[15px] font-medium">{pastCount} past Block{pastCount === 1 ? '' : 's'} completed</span>
+            <span className="flex-1 text-[15px] font-medium">{pastCount} past goal{pastCount === 1 ? '' : 's'} completed</span>
           </Card>
         )}
 
-        <button type="button" onClick={endBlock} className="mt-6 w-full text-center text-sm text-muted">End this Block</button>
-        <p className="mt-2 text-center text-xs text-faint"><Link href="/blocks/new" className="underline">Start a different Block</Link></p>
+        <button type="button" onClick={endBlock} className="mt-6 w-full text-center text-sm text-muted">End this goal</button>
+        <p className="mt-2 text-center text-xs text-faint"><Link href="/blocks/new" className="underline">Set a different goal</Link></p>
       </div>
     </>
   )
