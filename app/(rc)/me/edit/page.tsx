@@ -19,7 +19,7 @@ import { moveItem, saveOrder } from '@/components/rc/ProfileExtras'
 
 const stamp = () => Date.now().toString(36)
 type Draft = Pick<FullProfile, 'first_name' | 'last_name' | 'what_i_do' | 'location' | 'bio' | 'height' | 'agent_name' | 'agent_email' | 'agent_phone' | 'company_name' | 'graduate_school'> & {
-  minAge: string; maxAge: string; hair: number | null; eyes: number | null; isPublic: boolean; openToWork: boolean; isGraduate: boolean; gradYear: string; showContact: boolean
+  minAge: string; maxAge: string; hair: number | null; eyes: number | null; isPublic: boolean; openToWork: boolean; isGraduate: boolean; gradYear: string; showContact: boolean; website: string; specialisms: string[]
 }
 
 export default function EditProfilePage() {
@@ -47,6 +47,7 @@ function Editor({ data, uid, caster, onRefresh, mutate }: { data: Data; uid: str
     agent_name: p.agent_name, agent_email: p.agent_email, agent_phone: p.agent_phone, company_name: p.company_name, graduate_school: p.graduate_school,
     minAge: p.minimum_age ? String(p.minimum_age) : '', maxAge: p.maximum_age ? String(p.maximum_age) : '', hair: p.hair_colour_id, eyes: p.eye_colour_id,
     isPublic: p.show_talent !== false, openToWork: p.availability_status === 'available', isGraduate: p.is_graduate, gradYear: p.graduate_year ? String(p.graduate_year) : '', showContact: p.show_agent_contact,
+    website: p.website || '', specialisms: p.specialisms || [],
   })
   const [skillIds, setSkillIds] = useState<number[]>(data.skills.map(s => s.id))
   const [skillQuery, setSkillQuery] = useState('')
@@ -93,8 +94,13 @@ function Editor({ data, uid, caster, onRefresh, mutate }: { data: Data; uid: str
       is_graduate: d.isGraduate, graduate_school: d.isGraduate ? d.graduate_school?.trim() || null : null, graduate_year: d.isGraduate && year ? year : null,
       agent_name: d.agent_name?.trim() || null, agent_email: d.agent_email?.trim() || null, agent_phone: d.agent_phone?.trim() || null,
       show_agent_contact: d.showContact, company_name: d.company_name?.trim() || null,
+      ...(caster ? {
+        // only save a website that looks like one; add https:// if they typed a bare domain
+        website: d.website.trim() ? (/^https?:\/\//i.test(d.website.trim()) ? d.website.trim() : 'https://' + d.website.trim()) : null,
+        specialisms: d.specialisms.length ? d.specialisms : null,
+      } : {}),
     }
-  }, [d, name])
+  }, [d, name, caster])
   const live = completeness({
     role: caster ? 'caster' : 'performer', picture_url: p.picture_url, first_name: name.trim() || null, what_i_do: d.what_i_do, location: d.location,
     bio: d.bio, summary: null, minimum_age: parseInt(d.minAge, 10) || null, maximum_age: parseInt(d.maxAge, 10) || null, height: d.height,
@@ -238,9 +244,25 @@ function Editor({ data, uid, caster, onRefresh, mutate }: { data: Data; uid: str
         <div id="basics" className="scroll-mt-4 space-y-5">
         <Field label="Name" autoComplete="name" value={name} onChange={e => setName(e.target.value)} placeholder="First and last name" />
         {caster
-          ? <Field label="Company" value={d.company_name || ''} onChange={e => set('company_name', e.target.value)} />
+          ? <>
+              <Field label="Company" value={d.company_name || ''} onChange={e => set('company_name', e.target.value)} placeholder="e.g. Hughes Casting" />
+              <Field label="Your role" value={d.what_i_do || ''} onChange={e => set('what_i_do', e.target.value)} placeholder="Casting director" />
+            </>
           : <Field label="Headline" value={d.what_i_do || ''} onChange={e => set('what_i_do', e.target.value)} placeholder="Actor & Dancer · London" />}
         <Field label="Location" value={d.location || ''} onChange={e => set('location', e.target.value)} placeholder="London, UK" />
+        {caster && <>
+          <Field label="Website" type="url" inputMode="url" value={d.website} onChange={e => set('website', e.target.value)} placeholder="yourcompany.com" />
+          <div>
+            <p className="mb-1.5 text-[13px] font-medium">What you cast</p>
+            <div className="flex flex-wrap gap-2">
+              {['Theatre', 'Musicals', 'TV', 'Film', 'Commercials', 'Dance', 'Music video', 'Voice', 'Tours', 'Brand'].map(t => {
+                const on = d.specialisms.includes(t)
+                return <button key={t} type="button" aria-pressed={on} onClick={() => set('specialisms', on ? d.specialisms.filter(x => x !== t) : [...d.specialisms, t])}
+                  className={cx('h-9 rounded-full border px-3.5 text-[13px] font-medium', on ? 'border-forest bg-forest text-white' : 'border-line bg-surface')}>{t}</button>
+              })}
+            </div>
+          </div>
+        </>}
         </div>
 
         <Card className="divide-y divide-line">
@@ -325,8 +347,10 @@ function Editor({ data, uid, caster, onRefresh, mutate }: { data: Data; uid: str
 
             <CvUpload uid={uid} path={p.cv_path} onChange={cv_path => mutate(x => x && { ...x, profile: { ...x.profile!, cv_path } })} />
 
+          </>
+        )}
             <section id="credits" className="scroll-mt-4">
-              <div className="mb-3 flex items-center justify-between"><h2 className="text-[18px]">Credits</h2><button type="button" onClick={() => setCredit({})} className="text-sm font-medium text-green-ink">+ Add credit</button></div>
+              <div className="mb-3 flex items-center justify-between"><h2 className="text-[18px]">{caster ? 'Productions you’ve cast' : 'Credits'}</h2><button type="button" onClick={() => setCredit({})} className="text-sm font-medium text-green-ink">+ Add credit</button></div>
               {data.credits.length === 0 ? <p className="text-sm text-muted">No credits yet.</p> : (
                 <Card className="divide-y divide-line overflow-hidden">
                   {data.credits.map(c => (
@@ -341,6 +365,8 @@ function Editor({ data, uid, caster, onRefresh, mutate }: { data: Data; uid: str
 
             <BrandsEditor uid={uid} brands={data.brands} onChange={brands => mutate(x => x && { ...x, brands })} />
             <TestimonialsEditor uid={uid} testimonials={data.testimonials} onChange={testimonials => mutate(x => x && { ...x, testimonials })} />
+        {!caster && (
+          <>
 
             <section id="representation" className="scroll-mt-4">
               <h2 className="mb-3 text-[18px]">Representation</h2>

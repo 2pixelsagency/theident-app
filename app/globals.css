@@ -55,6 +55,14 @@ html, body {
 
 /* The two allowed gradients + card shadow, as utilities */
 @utility bg-accent { background-image: var(--grad-accent); }
+/* Card titles and big figures: same face as h1–h3 so every heading reads the same */
+@utility title {
+  font-family: var(--font-display);
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  line-height: 1.1;
+}
+
 @utility bg-hero { background-image: var(--noise-light), var(--grad-hero); background-color: var(--forest); }
 /* Light-screen backdrop: Lime haze fading to white, with grain */
 @utility bg-glow { background-image: var(--noise-dark), var(--grad-glow); background-color: #ffffff; }

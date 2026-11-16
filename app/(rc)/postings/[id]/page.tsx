@@ -128,7 +128,7 @@ export default function CastingReviewPage() {
             <div key={s.key} className="flex flex-1 items-center">
               <button type="button" onClick={() => { setStageTab(s.key); setSelected([]) }} aria-pressed={stage === s.key}
                 className={cx('flex flex-1 flex-col items-center gap-0.5 rounded-lg py-1', stage === s.key ? 'text-ink' : 'text-faint')}>
-                <span className={cx('text-[20px] font-medium', stage === s.key && s.key !== 'review' && 'text-green-ink')}>{counts[s.key]}</span>
+                <span className={cx('text-[20px] title', stage === s.key && s.key !== 'review' && 'text-green-ink')}>{counts[s.key]}</span>
                 <span className={cx('text-[11px]', stage === s.key && 'border-b-2 border-green pb-0.5 font-medium text-ink')}>{s.label}</span>
               </button>
               {i < STAGES.length - 1 && <Icon name="chevron-right" className="size-3.5 text-faint" />}

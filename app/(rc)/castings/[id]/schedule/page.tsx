@@ -37,7 +37,7 @@ export default function SchedulePage() {
       <div className="px-4 pb-8">
         <div className="rounded-[var(--radius)] bg-dark p-5 text-white">
           <p className="text-xs font-medium uppercase tracking-[0.08em] text-white/60">This week · {job?.project_in || job?.production_company || 'Your contract'}</p>
-          <p className="mt-1 text-[20px] font-medium">{venue || 'Venue to be confirmed'}</p>
+          <p className="mt-1 text-[20px] title">{venue || 'Venue to be confirmed'}</p>
           <div className="mt-4 grid grid-cols-2 gap-3">
             <a href={venue ? 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(venue) : undefined} target="_blank" rel="noopener noreferrer"
               className={cx('flex h-11 items-center justify-center gap-2 rounded-xl bg-green text-sm font-medium', !venue && 'pointer-events-none opacity-50')}>
@@ -60,7 +60,7 @@ export default function SchedulePage() {
                 <li key={key} className={cx('flex items-center gap-4 rounded-[var(--radius)] p-4', off ? 'border border-dashed border-line text-faint' : 'border bg-surface shadow-card', isToday ? 'border-2 border-green' : !off && 'border-line')}>
                   <span className="w-10 text-center">
                     <span className={cx('block text-[11px] uppercase', isToday ? 'font-medium text-green-ink' : 'text-faint')}>{d.toLocaleDateString('en-GB', { weekday: 'short' })}</span>
-                    <span className="block text-[20px] font-medium">{d.getDate()}</span>
+                    <span className="block text-[20px] title">{d.getDate()}</span>
                   </span>
                   <span className="min-w-0 flex-1">
                     {off ? <span className="text-[15px]">Day off</span> : (

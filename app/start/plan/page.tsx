@@ -30,7 +30,7 @@ export default function ChoosePlan() {
               {p.id === 'pro' && <div className="bg-accent px-5 py-2 text-xs font-medium uppercase tracking-[0.08em] text-ink">Coming soon</div>}
               <div className="p-5">
                 <div className="flex items-center justify-between">
-                  <span className="text-[19px] font-medium">{p.name}</span>
+                  <span className="text-[19px] title">{p.name}</span>
                   <span className={cx('flex size-6 items-center justify-center rounded-full border-2', on ? 'border-green bg-green text-white' : 'border-line')}>
                     {on && <Icon name="check" className="size-3.5" strokeWidth={2.4} />}
                   </span>

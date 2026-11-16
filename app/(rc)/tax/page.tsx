@@ -76,7 +76,7 @@ export default function TaxPage() {
 
         <div className="mt-3 grid grid-cols-2 gap-3">
           {[['Income to date', money(income), ''], ['Allowable expenses', money(allowable), 'text-green-ink'], ['Taxable profit', money(profit), ''], ['Est. tax + NI so far', money(estimate), '']].map(([k, v, c]) => (
-            <Card key={k} className="p-4"><p className="text-xs text-muted">{k}</p><p className={cx('mt-1 text-[20px] font-medium', c)}>{v}</p></Card>
+            <Card key={k} className="p-4"><p className="text-xs text-muted">{k}</p><p className={cx('mt-1 text-[20px] title', c)}>{v}</p></Card>
           ))}
         </div>
 

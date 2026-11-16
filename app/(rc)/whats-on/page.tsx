@@ -84,7 +84,7 @@ export default function WhatsOnPage() {
                   <span className="absolute right-3 top-3 rounded-md bg-dark/80 px-2 py-1 text-xs font-medium text-white">{priceLabel(featured)}</span>
                 </div>
                 <div className="p-4">
-                  <p className="text-[19px] font-medium">{featured.title}</p>
+                  <p className="text-[19px] title">{featured.title}</p>
                   {featured.host_name && <p className="text-sm text-muted">with {featured.host_name}</p>}
                   <p className="mt-2 flex items-center gap-1.5 text-sm text-muted"><Icon name="calendar" className="size-4" /> {fmtDate(featured.start_date)} · {timeLabel(featured)} · {whereLabel(featured)}</p>
                 </div>
@@ -108,7 +108,7 @@ export default function WhatsOnPage() {
                       <Link href={'/whats-on/' + e.id} className="flex gap-3 rounded-[var(--radius)] border border-line bg-surface p-4 pr-12 shadow-card">
                         <span className="flex w-14 shrink-0 flex-col items-center justify-center rounded-xl bg-chip/70 py-2">
                           <span className="text-[11px] uppercase text-muted">{d.toLocaleDateString('en-GB', { month: 'short' })}</span>
-                          <span className="text-[22px] font-medium leading-none">{d.getDate()}</span>
+                          <span className="text-[22px] title leading-none">{d.getDate()}</span>
                         </span>
                         <span className="min-w-0 flex-1">
                           <span className="flex items-center gap-2">

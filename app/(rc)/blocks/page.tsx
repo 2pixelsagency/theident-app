@@ -72,12 +72,12 @@ export default function BlocksPage() {
             <span className="flex items-center gap-2 font-medium uppercase tracking-[0.08em] text-white/80"><span className="size-2 rounded-full bg-green" /> Working on</span>
             <span className="text-white/70">Week {week} of {block.weeks}</span>
           </div>
-          <p className="mt-2 text-[22px] font-medium">{block.goal}</p>
+          <p className="mt-2 text-[22px] title">{block.goal}</p>
           <Progress dark value={(week / block.weeks) * 100} className="mt-4" />
           <p className="mt-2 text-[13px] text-white/60">{weeksLeft === 0 ? 'Final week' : weeksLeft + ' week' + (weeksLeft === 1 ? '' : 's') + ' to go'}</p>
           <div className="mt-4 grid grid-cols-2 gap-3">
-            <div className="rounded-xl bg-dark-2 p-4"><p className="text-[22px] font-medium">{streakDays(checks)}</p><p className="text-xs text-white/60">day streak</p></div>
-            <div className="rounded-xl bg-dark-2 p-4"><p className="text-[22px] font-medium">{onTrack} / {Math.max(0, week - 1)}</p><p className="text-xs text-white/60">weeks on track</p></div>
+            <div className="rounded-xl bg-dark-2 p-4"><p className="text-[22px] title">{streakDays(checks)}</p><p className="text-xs text-white/60">day streak</p></div>
+            <div className="rounded-xl bg-dark-2 p-4"><p className="text-[22px] title">{onTrack} / {Math.max(0, week - 1)}</p><p className="text-xs text-white/60">weeks on track</p></div>
           </div>
           {block.why && <p className="mt-4 border-t border-white/10 pt-3 text-[13px] italic text-white/70">“{block.why}”</p>}
         </div>

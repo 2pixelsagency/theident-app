@@ -34,12 +34,12 @@ export default function InvoicesPage() {
         <div className="grid grid-cols-2 gap-3">
           <div className="rounded-[var(--radius)] bg-dark p-4 text-white">
             <p className="text-xs text-white/60">Outstanding</p>
-            <p className="mt-1 text-[26px] font-medium leading-tight">{money(outstanding)}</p>
+            <p className="mt-1 text-[26px] title leading-tight">{money(outstanding)}</p>
             <p className="mt-1 text-xs text-white/60">{unpaid.length} unpaid{overdue.length ? ' · ' + overdue.length + ' overdue' : ''}</p>
           </div>
           <Card className="p-4">
             <p className="text-xs text-muted">Paid</p>
-            <p className="mt-1 text-[26px] font-medium leading-tight">{money(paidTotal)}</p>
+            <p className="mt-1 text-[26px] title leading-tight">{money(paidTotal)}</p>
             <p className="mt-1 text-xs text-muted">Logged in Pay &amp; earnings</p>
           </Card>
         </div>
