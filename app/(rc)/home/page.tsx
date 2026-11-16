@@ -65,9 +65,9 @@ function PerformerHome() {
               <Button variant="dark" icon="search" href="/find">Find jobs</Button>
               <Button variant="outline" icon="plus" href="/postings/new?type=side">Post a job</Button>
             </div>
-            <BlockCard block={block} />
           </>
         )}
+        <BlockCard block={block} />
 
         <TodoList compact />
 
@@ -96,7 +96,7 @@ function PerformerHome() {
 
         {!live && (
           <div className="mt-6 grid grid-cols-3 gap-3 pb-6">
-            {[['calendar', 'Diary', '/diary'], ['grid', 'Blocks', '/blocks'], ['ticket', 'What’s on', '/whats-on']].map(([icon, label, href]) => (
+            {[['calendar', 'Diary', '/diary'], ['star', 'Goals', '/blocks'], ['ticket', 'What’s on', '/whats-on']].map(([icon, label, href]) => (
               <Link key={href} href={href} className="flex flex-col items-center gap-2 rounded-[var(--radius)] border border-line bg-surface py-4 text-[13px] shadow-card">
                 <Icon name={icon} className="size-5 text-green-ink" />{label}
               </Link>
@@ -119,9 +119,9 @@ function BlockCard({ block }: { block: Awaited<ReturnType<typeof loadActiveBlock
   if (!block) {
     return (
       <Link href="/blocks/new" className="mt-4 block rounded-[var(--radius)] border border-dashed border-line bg-surface/60 p-5">
-        <p className="flex items-center gap-2 text-xs font-medium uppercase tracking-[0.08em] text-muted"><Icon name="grid" className="size-4" /> No active Block</p>
-        <p className="mt-2 text-[18px] font-medium">Set a goal for the next few weeks</p>
-        <p className="mt-1 text-sm text-muted">One goal, a few weekly actions. We’ll keep score.</p>
+        <p className="flex items-center gap-2 text-xs font-medium uppercase tracking-[0.08em] text-muted"><Icon name="star" className="size-4" /> Your goals</p>
+        <p className="mt-2 text-[18px] font-medium">Create a showreel, take dance classes, sign with an agent…</p>
+        <p className="mt-1 text-sm text-muted">Set a goal and a few things to do each week — we’ll keep score.</p>
       </Link>
     )
   }
@@ -131,7 +131,7 @@ function BlockCard({ block }: { block: Awaited<ReturnType<typeof loadActiveBlock
     <Link href="/blocks" className="mt-4 block">
       <Card className="p-5">
         <div className="flex items-center justify-between">
-          <p className="flex items-center gap-2 text-xs font-medium uppercase tracking-[0.08em] text-muted"><span className="size-2 rounded-full bg-green" /> Active Block</p>
+          <p className="flex items-center gap-2 text-xs font-medium uppercase tracking-[0.08em] text-muted"><span className="size-2 rounded-full bg-green" /> Your goal</p>
           <span className="text-sm text-muted">{pct}%</span>
         </div>
         <p className="mt-2 text-[20px] font-medium">{block.goal}</p>

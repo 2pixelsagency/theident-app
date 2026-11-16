@@ -1,6 +1,7 @@
 import { supabase } from '@/lib/supabase'
 import { PIPELINE_SELECT, jobTitle, stageOf, type PipelineApp } from './pipeline'
 import { loadCompleteness } from './completeness'
+import { currentWeek, loadActiveBlock } from './blocks'
 import { toISODate } from './format'
 
 // A performer's to-do list: automatic items from what's happening in the app, plus their own tasks.
@@ -23,12 +24,13 @@ export function dueLabel(iso: string | null | undefined) {
 export async function loadTodos(id: string, emailVerified: boolean) {
   const today = toISODate(new Date())
   const soon = toISODate(new Date(Date.now() + 4 * DAY))
-  const [apps, saved, invoices, mine, comp] = await Promise.all([
+  const [apps, saved, invoices, mine, comp, goal] = await Promise.all([
     supabase.from('applications').select(PIPELINE_SELECT).eq('profile_id', id).is('outcome', null),
     supabase.from('saved_jobs').select('job_id, list, jobs(id, project_role, project_in, job_title, production_company, is_side_hustle, application_deadline, is_published)').eq('profile_id', id).eq('list', 'saved'),
     supabase.from('invoices').select('id, number, client_name, status, due_date').eq('profile_id', id).in('status', ['draft', 'sent']),
     supabase.from('todos').select('id, title, due_on, done_at, created_at').eq('profile_id', id).order('done_at', { nullsFirst: true }).order('due_on', { nullsFirst: false }).order('created_at').limit(100),
     loadCompleteness(id),
+    loadActiveBlock(id),
   ])
 
   const auto: AutoTodo[] = []
@@ -51,6 +53,14 @@ export async function loadTodos(id: string, emailVerified: boolean) {
   for (const inv of invoices.data || []) {
     if (inv.status === 'draft') auto.push({ key: 'inv-' + inv.id, icon: 'receipt', title: 'Send invoice ' + inv.number, sub: inv.client_name, href: '/pay/invoices/' + inv.id })
     else if (inv.due_date && inv.due_date < today) auto.push({ key: 'chase-' + inv.id, icon: 'pound', title: 'Chase overdue invoice ' + inv.number, sub: inv.client_name, href: '/pay/invoices/' + inv.id, urgent: true })
+  }
+  // This week's goal actions still to tick off (Goals → /blocks)
+  if (goal.block) {
+    const week = currentWeek(goal.block)
+    goal.block.actions.forEach((a, i) => {
+      if (!goal.checks.some(c => c.week_index === week && c.action_index === i))
+        auto.push({ key: 'goal-' + i, icon: 'star', title: a.label, sub: 'Goal: ' + goal.block!.goal + ' · this week', href: '/blocks' })
+    })
   }
   if (!emailVerified) auto.push({ key: 'verify', icon: 'mail', title: 'Verify your email', sub: 'Needed before you can apply', href: '/verify', urgent: true })
   const gap = comp?.next[0]
