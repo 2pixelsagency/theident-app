@@ -85,7 +85,8 @@ export default function JobDetailPage() {
             <Button size="lg" variant="outline" className="flex-1" href={'/castings?focus=' + app.id}>
               <Pill tone={STAGE_META[stageOf({ status: app.status as never, outcome: app.outcome })].tone}>{STAGE_META[stageOf({ status: app.status as never, outcome: app.outcome })].label}</Pill> Track application
             </Button>
-          ) : closes === 'Closed' ? <Button size="lg" variant="outline" className="flex-1" disabled>Applications closed</Button>
+          ) : j.is_demo && !me.profile?.is_demo ? <Button size="lg" variant="outline" className="flex-1" disabled>Demo listing</Button>
+          : closes === 'Closed' ? <Button size="lg" variant="outline" className="flex-1" disabled>Applications closed</Button>
           : <Button size="lg" className="flex-1" trailingIcon="arrow-right" onClick={apply}>{j.is_side_hustle ? 'I’m interested' : 'Apply now'}</Button>}
       </div>
     </>

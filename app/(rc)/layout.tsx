@@ -6,6 +6,7 @@ import { BottomNav, SideNav, isTabRoot } from '@/components/rc/nav'
 import { PageLoading, Toaster, cx } from '@/components/rc/ui'
 import { MeProvider, useMe } from '@/lib/rc/me'
 import { VerifyGate } from '@/components/rc/verify'
+import PushModal from '@/components/rc/PushModal'
 
 function Shell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
@@ -24,6 +25,7 @@ function Shell({ children }: { children: React.ReactNode }) {
       </div>
       {showNav && <BottomNav />}
       <Toaster />
+      {profile && <PushModal caster={role === 'caster'} />}
     </>
   )
 }
