@@ -23,7 +23,7 @@ export function FairPayBadge({ job, compact }: { job: PayJob; compact?: boolean 
 }
 
 // `bare` renders a <div> so the card can sit inside a SwipeRow's <li>
-export default function JobCard({ job, poster, saved, onToggleSave, bare }: { job: Job; poster?: Poster; saved?: boolean; onToggleSave?: () => void; bare?: boolean }) {
+export default function JobCard({ job, poster, saved, onToggleSave, bare, href }: { job: Job; poster?: Poster; saved?: boolean; onToggleSave?: () => void; bare?: boolean; href?: string }) {
   const El = bare ? 'div' : 'li'
   const pay = payLabel(job)
   const side = job.is_side_hustle
@@ -37,7 +37,7 @@ export default function JobCard({ job, poster, saved, onToggleSave, bare }: { jo
 
   return (
     <El className="relative rounded-[var(--radius)] border border-line bg-surface p-4 shadow-card">
-      <Link href={'/find/' + job.id} className="block pr-8">
+      <Link href={href || '/find/' + job.id} className="block pr-8">
         <span className="flex items-center gap-1.5">
           <span className="text-[17px] font-medium leading-snug">{jobTitle(job)}</span>
           {poster?.is_verified && <VerifiedTick />}

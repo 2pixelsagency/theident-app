@@ -6,7 +6,6 @@ import Icon from '@/components/rc/Icon'
 import { Button, Field, Sheet, ToggleRow, toast } from '@/components/rc/ui'
 import { supabase } from '@/lib/supabase'
 
-export const PENDING_JOIN_KEY = 'ident.pendingJoin'
 export const normaliseCode = (s: string) => s.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 6)
 export const inviteUrl = (code: string) => window.location.origin + '/join/' + code
 

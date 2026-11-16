@@ -37,6 +37,9 @@ export type Me = {
 
 const MeContext = createContext<Me | null>(null)
 
+// Where to go after logging in, set by MeProvider or public pages (e.g. Apply on /jobs/[id])
+export const PENDING_NEXT_KEY = 'ident.pendingNext'
+
 const PROFILE_COLS = 'id, first_name, last_name, picture_url, slug, location, what_i_do, account_role, company_name, availability_status, is_graduate, graduate_school, graduate_year, is_verified, email_verified'
 
 export function MeProvider({ children }: { children: React.ReactNode }) {
@@ -45,15 +48,15 @@ export function MeProvider({ children }: { children: React.ReactNode }) {
 
   const load = useCallback(async () => {
     const { data: { session } } = await supabase.auth.getSession()
-    // An invite link opened while signed out: remember it, log in, then come back to it
-    const joinPath = window.location.pathname.match(/^\/join\/([A-Za-z0-9]{6})$/)
+    // A deep link opened while signed out (invite, role, chat…): remember it, log in, then come back to it
+    const here = window.location.pathname + window.location.search
     if (!session) {
-      if (joinPath) try { localStorage.setItem('ident.pendingJoin', joinPath[1]) } catch { /* private mode */ }
+      if (here !== '/home') try { localStorage.setItem(PENDING_NEXT_KEY, here) } catch { /* private mode */ }
       router.replace('/welcome'); return
     }
     try {
-      const pending = localStorage.getItem('ident.pendingJoin')
-      if (pending) { localStorage.removeItem('ident.pendingJoin'); if (!joinPath) router.replace('/join/' + pending) }
+      const pending = localStorage.getItem(PENDING_NEXT_KEY)
+      if (pending) { localStorage.removeItem(PENDING_NEXT_KEY); if (pending !== here && pending.startsWith('/') && !pending.startsWith('//')) router.replace(pending) }
     } catch { /* private mode */ }
     const uid = session.user.id
     const [{ data: profile }, { count: notifs }, { data: convos }] = await Promise.all([
