@@ -62,7 +62,7 @@ export function MeProvider({ children }: { children: React.ReactNode }) {
     const uid = session.user.id
     const [{ data: profile }, { count: notifs }, { data: convos }] = await Promise.all([
       supabase.from('profiles').select(PROFILE_COLS).eq('id', uid).maybeSingle(),
-      supabase.from('notifications').select('id', { count: 'exact', head: true }).eq('profile_id', uid).eq('read', false),
+      supabase.from('notifications').select('id', { count: 'exact', head: true }).eq('profile_id', uid).neq('type', 'message').eq('read', false),
       supabase.from('conversations').select('id').or('user_a.eq.' + uid + ',user_b.eq.' + uid),
     ])
     let unreadMessages = 0

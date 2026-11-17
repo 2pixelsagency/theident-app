@@ -63,7 +63,7 @@ export default function PayPage() {
           </div>
         </div>
 
-        <Link href="/tax" className="mt-4 flex items-center gap-3 rounded-[var(--radius)] bg-purple-tint p-4 text-purple-ink">
+        <Link href="/tax" className="mt-4 flex items-center gap-3 rounded-[var(--radius)] bg-mint p-4 text-ink">
           <span className="flex size-11 items-center justify-center rounded-xl bg-surface"><Icon name="card" /></span>
           <span className="flex-1"><span className="block text-[15px] font-medium">Set aside for tax</span><span className="block text-[13px]">We suggest ~{money(suggested)} put by so far (20%).</span></span>
           <Icon name="chevron-right" className="size-5" />

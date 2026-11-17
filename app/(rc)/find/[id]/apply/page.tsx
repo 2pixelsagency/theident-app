@@ -4,7 +4,7 @@ import { useRef, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Icon from '@/components/rc/Icon'
 import SignaturePad, { type SignaturePadHandle } from '@/components/rc/SignaturePad'
-import { VerifiedTick } from '@/components/rc/JobCard'
+
 import { BackHeader, Button, Card, Empty, PageLoading, Pill, Tag, TextArea, UploadTile, cx, toast } from '@/components/rc/ui'
 import { supabase } from '@/lib/supabase'
 import { useMe } from '@/lib/rc/me'
@@ -56,7 +56,7 @@ export default function ApplyPage() {
   if (!data?.job) return <><BackHeader title="Apply" /><Empty icon="briefcase" title="This listing isn’t available" /></>
   if (data.existing) return <><BackHeader title="Apply" /><Empty icon="check-circle" title="You’ve already applied" sub="Follow its progress in Castings." action={<Button size="sm" variant="dark" href={'/castings?focus=' + data.existing.id}>Track application</Button>} /></>
 
-  const { job: j, poster, reels } = data
+  const { job: j, reels } = data
   const needs = new Set(j.submit_materials || ['showreel'])
   const needsReel = needs.has('showreel')
   const needsTape = needs.has('self_tape')
@@ -156,7 +156,7 @@ export default function ApplyPage() {
       <BackHeader title="Apply" right={<span className="flex items-center gap-1 rounded-full border border-line bg-surface px-3 py-1 text-xs text-muted"><Icon name="clock" className="size-3.5" /> ~2 min</span>} />
       <div className="px-4 pb-10">
         <div className="rounded-[var(--radius)] bg-dark p-5 text-white">
-          <p className="flex items-center gap-2 text-[18px] title">{jobTitle(j)} {poster?.is_verified && <VerifiedTick />}</p>
+          <p className="flex items-center gap-2 text-[18px] title">{jobTitle(j)}</p>
           <p className="mt-0.5 text-sm text-white/60">{[j.production_types?.name, j.location].filter(Boolean).join(' · ')}</p>
           <div className="mt-3 flex flex-wrap gap-2">{[pay, length].filter(Boolean).map(t => <span key={t as string} className="rounded-md bg-dark-2 px-2.5 py-1 text-xs font-medium">{t}</span>)}</div>
         </div>
@@ -184,7 +184,7 @@ export default function ApplyPage() {
             })}
           </div>
         )}
-        <UploadTile className="mt-3" icon="upload" title={uploading === 'reel' ? 'Uploading…' : 'Upload a new reel'} sub={'MP4 · up to ' + MAX_MB + 'MB'} onClick={() => reelInput.current?.click()} />
+        <UploadTile className="mt-3" icon="upload" title={uploading === 'reel' ? 'Uploading…' : 'Upload a new reel'} sub="Any video — big files are compressed for you" onClick={() => reelInput.current?.click()} />
         <input ref={reelInput} type="file" accept="video/*" className="hidden" onChange={pick('reel')} />
 
         {/* Supporting materials */}

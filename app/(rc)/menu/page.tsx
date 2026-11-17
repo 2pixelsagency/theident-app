@@ -32,22 +32,30 @@ export default function MenuPage() {
         <span className="text-sm font-medium text-green">View profile ›</span>
       </Link>
 
-      <Card className="mt-4 divide-y divide-line overflow-hidden">
-        {!caster && <ListRow icon="grid" title="Your Blocks" href="/blocks" />}
-        {!caster && <ListRow icon="briefcase" title="Castings" href="/castings" />}
+      {/* Grouped by what you're doing; nothing here repeats the bottom bar */}
+      <p className="mb-2 mt-6 text-xs font-semibold uppercase tracking-[0.08em] text-muted">{caster ? 'Your work' : 'Your career'}</p>
+      <Card className="divide-y divide-line overflow-hidden">
+        {!caster && <ListRow icon="star" title="Goals" sub="Weekly actions towards what you want" href="/blocks" />}
+        {!caster && <ListRow icon="check-square" title="To do" href="/todo" />}
         <ListRow icon="calendar" title="Diary" href="/diary" />
-        <ListRow icon="megaphone" title="Your postings" href="/postings" />
-        {caster && <ListRow icon="users" title="Find talent" href="/talent" />}
-        <ListRow icon="ticket" tone="purple" title="What’s on" sub="Auditions, workshops, talks & premieres" href="/whats-on" />
-        <ListRow icon="house" tone="purple" title="Theatre digs" sub="Find places to stay on tour" href="/digs" />
+        {!caster && <ListRow icon="megaphone" title="Your postings" sub="Side hustles and jobs you've posted" href="/postings" />}
+        {!caster && <ListRow icon="plus" title="Post a job" href="/postings/new?type=side" />}
       </Card>
 
-      <Card className="mt-4 divide-y divide-line overflow-hidden">
-        <ListRow icon="pound" tone="amber" title="Tax & expenses" sub="Track earnings & claimables" href="/tax" />
+      <p className="mb-2 mt-6 text-xs font-semibold uppercase tracking-[0.08em] text-muted">On the road</p>
+      <Card className="divide-y divide-line overflow-hidden">
+        <ListRow icon="ticket" title="What’s on" sub="Auditions, workshops, talks & premieres" href="/whats-on" />
+        <ListRow icon="house" title="Theatre digs" sub="Places to stay near the theatre" href="/digs" />
+      </Card>
+
+      <p className="mb-2 mt-6 text-xs font-semibold uppercase tracking-[0.08em] text-muted">Money</p>
+      <Card className="divide-y divide-line overflow-hidden">
         <ListRow icon="card" title="Pay & earnings" href="/pay" />
+        <ListRow icon="pound" title="Tax & expenses" sub="Receipts, claimables and your tax estimate" href="/tax" />
       </Card>
 
-      <Card className="mt-4 divide-y divide-line overflow-hidden">
+      <p className="mb-2 mt-6 text-xs font-semibold uppercase tracking-[0.08em] text-muted">Account</p>
+      <Card className="divide-y divide-line overflow-hidden">
         <ListRow icon="bell" title="Notifications" href="/inbox" right={unreadNotifications > 0 ? <span className="flex h-6 min-w-6 items-center justify-center rounded-full bg-green px-1.5 text-xs font-medium text-white">{unreadNotifications}</span> : undefined} />
         <ListRow icon="shield-check" title="ID verification" right={profile?.is_verified ? <Pill tone="green">Verified</Pill> : <span className="text-sm text-muted">Get verified</span>} href={profile?.is_verified ? undefined : '/help'} />
         <ListRow icon="settings" title="Settings" href="/settings" />

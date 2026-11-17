@@ -227,8 +227,8 @@ function Editor({ data, uid, caster, onRefresh, mutate }: { data: Data; uid: str
               </span>
             </button>
             <button type="button" onClick={() => avatarRef.current?.click()} className="min-w-0 flex-1 text-left">
-              <span className="block text-[16px] font-medium">Your headshot</span>
-              <span className="block text-[13px] leading-snug text-white/75">Tap to replace your main casting photo</span>
+              <span className="block text-[16px] font-medium">{caster ? 'Your logo' : 'Your headshot'}</span>
+              <span className="block text-[13px] leading-snug text-white/75">{caster ? 'Your company logo or a photo of you' : 'Tap to replace your main casting photo'}</span>
             </button>
             <button type="button" onClick={() => bannerRef.current?.click()} className="inline-flex h-9 shrink-0 items-center gap-1.5 rounded-full border border-white/25 bg-white/15 px-3 text-[13px] font-medium backdrop-blur-md">
               <Icon name={busyImage === 'banner' ? 'clock' : 'image'} className="size-4" /> Cover

@@ -3,7 +3,7 @@
 import { useMemo, useState } from 'react'
 import Link from 'next/link'
 import Icon from '@/components/rc/Icon'
-import { VerifiedTick } from '@/components/rc/JobCard'
+
 import { AvatarPile, Button, Empty, PageHeader, PageLoading, Pill, TabChips, cx, type Tone } from '@/components/rc/ui'
 import { supabase } from '@/lib/supabase'
 import { useMe } from '@/lib/rc/me'
@@ -31,7 +31,7 @@ function statusOf(j: Row, today: string): Status {
 }
 
 export default function PostingsPage() {
-  const { id, profile } = useMe()
+  const { id } = useMe()
   const [tab, setTab] = useState<'open' | 'shortlisting' | 'closed'>('open')
   const today = toISODate(new Date())
 
@@ -60,10 +60,6 @@ export default function PostingsPage() {
       <PageHeader title="Your postings" />
       <div className="px-4 pb-8">
         <Button variant="dark" size="lg" full icon="plus" href="/postings/new">Post a job</Button>
-        <div className="mt-3 grid grid-cols-2 gap-3">
-          <Link href="/postings/new" className="flex h-11 items-center justify-center gap-2 rounded-xl border border-line bg-surface text-sm font-medium"><span className="size-2 rounded-full bg-green" /> Casting role</Link>
-          <Link href="/postings/new?type=side" className="flex h-11 items-center justify-center gap-2 rounded-xl border border-line bg-surface text-sm font-medium"><span className="size-2 rounded-full bg-purple" /> Side hustle</Link>
-        </div>
 
         <div className="mt-5"><TabChips value={tab} onChange={setTab} options={[{ value: 'open', label: 'Open', count: grouped.open.length }, { value: 'shortlisting', label: 'Shortlisting', count: grouped.shortlisting.length }, { value: 'closed', label: 'Closed', count: grouped.closed.length }]} /></div>
 
@@ -80,7 +76,7 @@ export default function PostingsPage() {
                   <Link href={'/postings/' + j.id} className={cx('block rounded-[var(--radius)] border border-line p-4 shadow-card', st === 'closed' ? 'bg-surface/50 text-faint' : 'bg-surface')}>
                     <div className="flex items-start gap-3">
                       <div className="min-w-0 flex-1">
-                        <p className="flex items-center gap-1.5 text-[17px] font-medium">{jobTitle(j)} {profile?.is_verified && !j.is_side_hustle && st !== 'closed' && <VerifiedTick />}</p>
+                        <p className="flex items-center gap-1.5 text-[17px] font-medium">{jobTitle(j)}</p>
                         <p className="text-[13px] text-muted">{[j.is_side_hustle ? 'Side hustle' : j.production_types?.name, st === 'closed' ? 'cast complete' : closes?.toLowerCase()].filter(Boolean).join(' · ')}</p>
                       </div>
                       <Pill tone={STATUS[st].tone}>{STATUS[st].label}</Pill>
