@@ -7,6 +7,7 @@ import Icon from '@/components/rc/Icon'
 import { Button, Empty, PageLoading, Sheet, Toaster, cx, toast } from '@/components/rc/ui'
 import { supabase } from '@/lib/supabase'
 import { fullName } from '@/lib/rc/format'
+import { Claims, ShareCasting } from './ShareCasting'
 
 type Tab = 'overview' | 'safety' | 'members' | 'jobs' | 'digs' | 'chats' | 'admins'
 type Person = { id: string; first_name: string | null; last_name: string | null; company_name?: string | null; picture_url?: string | null }
@@ -265,6 +266,7 @@ type AdminJob = { id: string; project_in: string | null; project_role: string | 
 function Jobs() {
   const [rows, setRows] = useState<{ jobs: AdminJob[]; people: Map<string, Person> } | null>(null)
   const [hideDemo, setHideDemo] = useState(true)
+  const [sharing, setSharing] = useState(false)
   const load = useCallback(async () => {
     let q = supabase.from('jobs').select('id, project_in, project_role, job_title, is_published, is_demo, created_at, created_by, location').order('created_at', { ascending: false }).limit(200)
     if (hideDemo) q = q.eq('is_demo', false)
@@ -280,7 +282,12 @@ function Jobs() {
   }
   return (
     <div>
-      <label className="mb-3 flex items-center gap-2 text-sm"><input type="checkbox" checked={hideDemo} onChange={e => setHideDemo(e.target.checked)} /> Hide demo jobs</label>
+      <Claims />
+      <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+        <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={hideDemo} onChange={e => setHideDemo(e.target.checked)} /> Hide demo jobs</label>
+        <Button size="sm" icon="plus" onClick={() => setSharing(true)}>Share a casting</Button>
+      </div>
+      <ShareCasting open={sharing} onClose={() => setSharing(false)} onDone={load} />
       {!rows ? <PageLoading /> : rows.jobs.length === 0 ? <Empty icon="briefcase" title="No jobs" /> : (
         <ul className="divide-y divide-line overflow-hidden rounded-[var(--radius)] border border-line bg-surface">
           {rows.jobs.map(j => (
