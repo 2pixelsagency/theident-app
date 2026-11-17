@@ -1,10 +1,12 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Bricolage_Grotesque, Inter } from "next/font/google";
 import "./globals.css";
 import NativeAuthBridge from "@/components/NativeAuthBridge";
 // The Ident brand: Bricolage Grotesque for display, Inter for body/UI
 const bricolage = Bricolage_Grotesque({ subsets: ["latin"], weight: ["600", "700", "800"], display: "swap", variable: "--font-bricolage" });
 const inter = Inter({ subsets: ["latin"], weight: ["300", "400", "500", "600"], display: "swap", variable: "--font-inter" });
+export const viewport: Viewport = { width: "device-width", initialScale: 1, viewportFit: "cover", themeColor: "#f6f4ee" };
+
 export const metadata: Metadata = {
   title: "The Ident",
   description: "Casting and opportunities for performing arts professionals",
@@ -23,8 +25,6 @@ export default function RootLayout({
   return (
     <html lang="en" style={{ margin: 0, padding: 0 }}>
     <head>
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1, user-scalable=no" />
-  <meta name="theme-color" content="#f6f4ee" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="default" />
   <meta name="apple-mobile-web-app-title" content="The Ident" />

@@ -80,7 +80,7 @@ function BlockCard({ block }: { block: Awaited<ReturnType<typeof loadActiveBlock
   if (!block) {
     return (
       <Link href="/blocks/new" className="mt-4 block rounded-[var(--radius)] border border-dashed border-line bg-surface/60 p-5">
-        <p className="flex items-center gap-2 text-xs font-medium uppercase tracking-[0.08em] text-muted"><Icon name="star" className="size-4" /> Your goals</p>
+        <p className="flex items-center gap-2 text-xs font-medium uppercase tracking-[0.08em] text-muted"><Icon name="target" className="size-4" /> Your goals</p>
         <p className="mt-2 text-[18px] title">Create a showreel, take dance classes, sign with an agent…</p>
         <p className="mt-1 text-sm text-muted">Set a goal and a few things to do each week — we’ll keep score.</p>
       </Link>
