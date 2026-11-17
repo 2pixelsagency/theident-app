@@ -7,8 +7,10 @@ const esc = (s: string) => s.replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt
 
 type Step = { title: string; text: string }
 
-export function brandedEmail({ title, body, button, footer, steps, preheader }: {
-  title: string; body: string[]; button?: { label: string; href: string }; footer?: string; steps?: Step[]; preheader?: string
+const ASSETS = 'https://app.theident.me/email/'
+
+export function brandedEmail({ title, body, button, footer, steps, preheader, hero }: {
+  title: string; body: string[]; button?: { label: string; href: string }; footer?: string; steps?: Step[]; preheader?: string; hero?: 'performer' | 'casting'
 }) {
   const display = `font-family:'Bricolage Grotesque',Helvetica,Arial,sans-serif;font-weight:700;letter-spacing:-0.03em;`
   return (
@@ -17,8 +19,10 @@ export function brandedEmail({ title, body, button, footer, steps, preheader }: 
     (preheader ? `<div style="display:none;max-height:0;overflow:hidden;opacity:0;">${esc(preheader)}</div>` : '') +
     `<div style="max-width:520px;margin:0 auto;background:#ffffff;border-radius:22px;overflow:hidden;">` +
     `<div style="background:${C.forest};padding:22px 28px;">` +
-    `<span style="${display}font-size:20px;color:${C.lime};">The Ident</span>` +
+    // PNG wordmark in Bricolage (email apps can't load web fonts); alt text keeps it readable with images off
+    `<img src="${ASSETS}logo.png" width="150" height="27" alt="The Ident" style="display:inline-block;border:0;vertical-align:middle;color:${C.lime};${display}font-size:20px;">` +
     `<span style="float:right;font-size:12px;line-height:28px;color:#C9D6CF;">Stage · Screen · Commercials · Dance</span></div>` +
+    (hero ? `<img src="${ASSETS}hero-${hero}.jpg" width="520" alt="" style="display:block;width:100%;height:auto;border:0;">` : '') +
     `<div style="padding:30px 28px 8px;">` +
     `<h1 style="margin:0 0 12px;${display}font-size:27px;line-height:1.12;color:${C.ink};">${esc(title)}</h1>` +
     body.map(p => `<p style="margin:0 0 14px;font-size:15px;line-height:1.6;color:${C.muted};">${esc(p)}</p>`).join('') +
@@ -55,6 +59,7 @@ export function welcomeEmail({ firstName, caster, verifyLink }: { firstName: str
         { title: 'Turn on notifications', text: 'Don’t miss an audition: get an alert the moment you’re invited, recalled or booked.' },
       ]
   return brandedEmail({
+    hero: caster ? 'casting' : 'performer',
     preheader: caster ? 'Post roles, review tapes and book your cast in one place.' : 'Your castings, goals and career — all in one place.',
     title: 'Welcome to The Ident' + (firstName ? ', ' + firstName : '') + ' 👋',
     body: [caster
