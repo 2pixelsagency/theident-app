@@ -32,7 +32,7 @@ export function PublicTopBar() {
         ) : (<>
           <Link href="/welcome?side=cast" className="hidden text-sm font-medium text-muted hover:text-ink sm:inline">Post a casting</Link>
           <Link href="/welcome" className="text-sm font-semibold">Log in</Link>
-          <Link href="/start?role=performer" className="inline-flex h-9 items-center rounded-full bg-lime px-4 text-sm font-semibold text-ink shadow-cta">Join free</Link>
+          <Link href="/start?role=performer" className="inline-flex h-9 items-center rounded-full bg-lime px-4 text-sm font-semibold text-ink shadow-cta">Join</Link>
         </>)}
       </div>
     </header>
@@ -85,7 +85,7 @@ export default function PublicBoard() {
             <span className="size-2 rounded-full bg-lime ring-2 ring-forest/15" /> {loading ? 'Loading roles…' : jobs.length + ' live role' + (jobs.length === 1 ? '' : 's')}
           </p>
           <h1 className="mt-4 max-w-[680px] text-[38px] leading-[1.05] sm:text-[52px]">Castings, auditions &amp; paid work for performers</h1>
-          <p className="mt-3 max-w-[560px] text-[16px] text-muted">Theatre, screen, commercials and dance — posted by casting directors and producers. Free to browse, free to apply.</p>
+          <p className="mt-3 max-w-[560px] text-[16px] text-muted">Theatre, screen, commercials and dance — posted by casting directors and producers. Free to browse — join to apply.</p>
           <div className="mt-6 max-w-[560px]"><SearchField value={q} onChange={setQ} placeholder="Search roles, shows, places…" /></div>
         </div>
       </section>
@@ -117,7 +117,7 @@ export default function PublicBoard() {
             <div className="rounded-[var(--radius)] bg-hero p-5 text-white">
               <p className="font-display text-[22px] font-bold leading-tight">Get matched to roles</p>
               <p className="mt-2 text-sm text-white/75">Build your profile once — showreel, credits, CV — and get an alert when a role fits you.</p>
-              <Link href="/start?role=performer" className="mt-4 inline-flex h-11 w-full items-center justify-center rounded-[14px] bg-lime text-sm font-semibold text-ink shadow-cta">Join free</Link>
+              <Link href="/start?role=performer" className="mt-4 inline-flex h-11 w-full items-center justify-center rounded-[14px] bg-lime text-sm font-semibold text-ink shadow-cta">Join · 7 days free</Link>
             </div>
           )}
           <div className="rounded-[var(--radius)] border border-line bg-surface p-5">
