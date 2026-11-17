@@ -2,7 +2,9 @@
 
 import Icon from '@/components/rc/Icon'
 import { FairPayBadge, VerifiedTick } from '@/components/rc/JobCard'
-import { Avatar, Card } from '@/components/rc/ui'
+import { useState } from 'react'
+import { Avatar, Button, Card, Sheet, TextArea, toast } from '@/components/rc/ui'
+import { supabase } from '@/lib/supabase'
 import { closesLabel, lengthLabel, posterName, skillsOf, type Job, type Poster } from '@/lib/rc/jobs'
 import { ago, fmtDate } from '@/lib/rc/format'
 import { payLabel } from '@/lib/rc/pay'
@@ -31,6 +33,7 @@ export default function JobBody({ j, poster, posted }: { j: Job; poster?: Poster
   ] as const).filter(([, v]) => !!v)
   return (
     <>
+        {j.shared_by_ident && <SharedBanner j={j} />}
         {j.is_demo && <p className="mt-4 flex items-center gap-2 rounded-xl bg-butter px-4 py-3 text-[13px] font-medium text-ink"><Icon name="alert" className="size-4 shrink-0" /> Demo listing — used to show how The Ident works. It isn’t a real role.</p>}
         <h1 className="mt-5 flex items-center gap-2 text-[24px]">{jobTitle(j)}</h1>
         <p className="mt-1 text-sm text-muted">{posterName(j, poster)} · posted {ago(j.created_at)}</p>
@@ -84,5 +87,39 @@ export default function JobBody({ j, poster, posted }: { j: Job; poster?: Poster
           <p className="mt-3 flex items-start gap-2 rounded-xl bg-amber-tint px-4 py-3 text-[13px] text-amber"><Icon name="alert" className="mt-0.5 size-4 shrink-0" /> Community post — not a verified employer. Meet somewhere public and never pay to apply.</p>
         )}
     </>
+  )
+}
+
+// A casting shared by The Ident from elsewhere: credit + link back, and a way for the real poster to take it over
+function SharedBanner({ j }: { j: Job }) {
+  const [open, setOpen] = useState(false)
+  const [note, setNote] = useState('')
+  const [sent, setSent] = useState(false)
+  const handle = j.source_handle ? '@' + j.source_handle.replace(/^@/, '') : null
+  const claim = async () => {
+    const { data: { session } } = await supabase.auth.getSession()
+    if (!session) { try { localStorage.setItem('ident.pendingNext', '/find/' + j.id) } catch { /* */ } window.location.href = '/welcome?side=cast'; return }
+    const { error } = await supabase.from('job_claims').insert({ job_id: j.id, note: note.trim() || null })
+    if (error && error.code !== '23505') { toast('Couldn’t send — try again'); return }
+    setSent(true); setOpen(false); toast('Thanks — we’ll check and hand the listing over')
+  }
+  return (
+    <div className="mt-4 rounded-xl border border-line bg-surface px-4 py-3 text-[13px]">
+      <p className="flex flex-wrap items-center gap-x-1.5 text-muted">
+        <Icon name="share" className="size-4" /> Shared by The Ident{handle ? ' · via ' : ''}
+        {handle && (j.source_url ? <a href={j.source_url} target="_blank" rel="noopener noreferrer" className="font-semibold text-green-ink">{handle}</a> : <span className="font-semibold text-ink">{handle}</span>)}
+        {!handle && j.source_url && <> · <a href={j.source_url} target="_blank" rel="noopener noreferrer" className="font-semibold text-green-ink">original post</a></>}
+      </p>
+      <p className="mt-1 text-muted">Applications go straight to the casting team.{' '}
+        {sent ? <span className="font-semibold text-ink">Claim sent.</span> : <button type="button" onClick={() => setOpen(true)} className="font-semibold text-green-ink">Is this your casting? Claim it</button>}
+      </p>
+      <Sheet open={open} onClose={() => setOpen(false)} title="Claim this listing">
+        <div className="space-y-3">
+          <p className="text-sm text-muted">Posted this casting? Take over the listing to edit it and receive applications, self-tapes and reels in The Ident — free.</p>
+          <TextArea label="How can we confirm it’s yours?" value={note} onChange={e => setNote(e.target.value)} placeholder="e.g. I run @castingaccount — happy to DM from it" />
+          <Button full onClick={claim}>Send claim</Button>
+        </div>
+      </Sheet>
+    </div>
   )
 }
