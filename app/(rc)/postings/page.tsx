@@ -60,10 +60,6 @@ export default function PostingsPage() {
       <PageHeader title="Your postings" />
       <div className="px-4 pb-8">
         <Button variant="dark" size="lg" full icon="plus" href="/postings/new">Post a job</Button>
-        <div className="mt-3 grid grid-cols-2 gap-3">
-          <Link href="/postings/new" className="flex h-11 items-center justify-center gap-2 rounded-xl border border-line bg-surface text-sm font-medium"><span className="size-2 rounded-full bg-green" /> Casting role</Link>
-          <Link href="/postings/new?type=side" className="flex h-11 items-center justify-center gap-2 rounded-xl border border-line bg-surface text-sm font-medium"><span className="size-2 rounded-full bg-purple" /> Side hustle</Link>
-        </div>
 
         <div className="mt-5"><TabChips value={tab} onChange={setTab} options={[{ value: 'open', label: 'Open', count: grouped.open.length }, { value: 'shortlisting', label: 'Shortlisting', count: grouped.shortlisting.length }, { value: 'closed', label: 'Closed', count: grouped.closed.length }]} /></div>
 

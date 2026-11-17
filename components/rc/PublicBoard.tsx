@@ -32,7 +32,7 @@ export function PublicTopBar() {
         ) : (<>
           <Link href="/welcome?side=cast" className="hidden text-sm font-medium text-muted hover:text-ink sm:inline">Post a casting</Link>
           <Link href="/welcome" className="text-sm font-semibold">Log in</Link>
-          <Link href="/start" className="inline-flex h-9 items-center rounded-full bg-lime px-4 text-sm font-semibold text-ink shadow-cta">Join free</Link>
+          <Link href="/start?role=performer" className="inline-flex h-9 items-center rounded-full bg-lime px-4 text-sm font-semibold text-ink shadow-cta">Join free</Link>
         </>)}
       </div>
     </header>
@@ -117,7 +117,7 @@ export default function PublicBoard() {
             <div className="rounded-[var(--radius)] bg-hero p-5 text-white">
               <p className="font-display text-[22px] font-bold leading-tight">Get matched to roles</p>
               <p className="mt-2 text-sm text-white/75">Build your profile once — showreel, credits, CV — and get an alert when a role fits you.</p>
-              <Link href="/start" className="mt-4 inline-flex h-11 w-full items-center justify-center rounded-[14px] bg-lime text-sm font-semibold text-ink shadow-cta">Join free</Link>
+              <Link href="/start?role=performer" className="mt-4 inline-flex h-11 w-full items-center justify-center rounded-[14px] bg-lime text-sm font-semibold text-ink shadow-cta">Join free</Link>
             </div>
           )}
           <div className="rounded-[var(--radius)] border border-line bg-surface p-5">

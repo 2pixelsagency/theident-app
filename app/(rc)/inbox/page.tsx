@@ -10,7 +10,7 @@ import { useAsync } from '@/lib/rc/useAsync'
 import { ago, toISODate } from '@/lib/rc/format'
 
 type Notif = { id: string; type: string; title: string; body: string | null; data: { url?: string } | null; read: boolean; created_at: string }
-type Filter = 'all' | 'roles' | 'messages'
+type Filter = 'all' | 'roles' | 'connection' | 'digs'
 
 // Icon + tint per notification, guessing the stage from the title for pipeline updates
 function look(n: Notif): { icon: string; tile: string } {
@@ -31,11 +31,11 @@ export default function InboxPage() {
   const { id: me, refresh } = useMe()
   const [filter, setFilter] = useState<Filter>('all')
   const { data: items, loading, mutate } = useAsync(async () => {
-    const { data } = await supabase.from('notifications').select('id, type, title, body, data, read, created_at').eq('profile_id', me).order('created_at', { ascending: false }).limit(150)
+    const { data } = await supabase.from('notifications').select('id, type, title, body, data, read, created_at').eq('profile_id', me).neq('type', 'message').order('created_at', { ascending: false }).limit(150)
     return (data || []) as Notif[]
   }, [me])
 
-  const shown = useMemo(() => (items || []).filter(n => filter === 'all' || (filter === 'messages' ? n.type === 'message' : ['application', 'job_match'].includes(n.type))), [items, filter])
+  const shown = useMemo(() => (items || []).filter(n => filter === 'all' || (filter === 'roles' ? ['application', 'job_match'].includes(n.type) : n.type === filter)), [items, filter])
   const today = toISODate(new Date())
   const groups = [
     { label: 'Today', rows: shown.filter(n => n.created_at.slice(0, 10) === today) },
@@ -44,7 +44,7 @@ export default function InboxPage() {
 
   const markAll = async () => {
     mutate(l => l?.map(n => ({ ...n, read: true })))
-    const { error } = await supabase.from('notifications').update({ read: true }).eq('profile_id', me).eq('read', false)
+    const { error } = await supabase.from('notifications').update({ read: true }).eq('profile_id', me).neq('type', 'message').eq('read', false)
     if (error) toast('Couldn’t mark as read'); else refresh()
   }
 
@@ -62,7 +62,7 @@ export default function InboxPage() {
     <>
       <BackHeader title="Notifications" right={(items || []).some(n => !n.read) ? <button type="button" onClick={markAll} className="text-sm font-medium text-green-ink">Mark all read</button> : undefined} />
       <div className="px-4 pb-8">
-        <TabChips value={filter} onChange={setFilter} options={[{ value: 'all', label: 'All' }, { value: 'roles', label: 'Roles' }, { value: 'messages', label: 'Messages' }]} />
+        <TabChips value={filter} onChange={setFilter} options={[{ value: 'all', label: 'All' }, { value: 'roles', label: 'Castings & roles' }, { value: 'connection', label: 'Connections' }, { value: 'digs', label: 'Digs' }]} />
         {loading ? <PageLoading /> : groups.length === 0 ? <Empty icon="bell" title="You’re all caught up" sub="Recalls, self-tape requests, bookings and messages show up here." /> : groups.map(g => (
           <section key={g.label}>
             <p className="mb-2 mt-5 text-xs font-medium uppercase tracking-[0.08em] text-muted">{g.label}</p>

@@ -2,6 +2,8 @@
 begin;
 delete from public.cast_chats where created_by in (select id from public.profiles where is_demo);
 delete from public.jobs where is_demo;
+delete from public.events where created_by in (select id from public.profiles where is_demo);
+delete from public.digs where owner_id in (select id from public.profiles where is_demo);
 -- auth users cascade to profiles → applications, reels, credits, chats, messages, notes, todos…
 delete from auth.users where email like '%@demo.theident.me';
 commit;

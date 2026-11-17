@@ -15,6 +15,9 @@ type Side = 'perform' | 'cast'
 // The log-in screen, with two sides. The Perform / Cast toggle is the user choosing their side:
 // it swaps hero + copy in place and carries through to both Log in (→ that side's dashboard)
 // and Sign up (→ straight into that side's questions, never asked again).
+// Apple / Google buttons only once they're enabled in Supabase: set NEXT_PUBLIC_SOCIAL_LOGIN=apple,google
+const SOCIAL = (process.env.NEXT_PUBLIC_SOCIAL_LOGIN || '').split(',').map(x => x.trim()).filter(Boolean)
+
 const SIDES: Record<Side, { role: Role; label: string; hero: string; position: string; banner: string; title: [string, string]; sub: string }> = {
   perform: {
     role: 'performer',
@@ -125,16 +128,6 @@ export default function EntryScreen() {
       <div aria-hidden="true" className="absolute inset-0 -z-10 bg-scrim" />
 
       <div className="mx-auto flex w-full max-w-[430px] flex-1 flex-col px-6 pb-[max(24px,env(safe-area-inset-bottom))] pt-[max(18px,env(safe-area-inset-top))]">
-        {/* Audience-specific banner */}
-        <div className="grid text-[13px]">
-          {ORDER.map(k => (
-            <p key={k} aria-hidden={side !== k} className={cx('flex items-center gap-2 transition-opacity [grid-area:1/1]', FADE, side === k ? 'opacity-100' : 'pointer-events-none opacity-0')}>
-              <Icon name="sparkle" className="size-4 shrink-0 text-pink" />
-              <span className="text-white/90">{SIDES[k].banner} — <button type="button" onClick={() => signUp(SIDES[k].role)} tabIndex={side === k ? 0 : -1} className="font-medium text-white underline underline-offset-2">try The Ident Pro</button></span>
-            </p>
-          ))}
-        </div>
-
         <div className="flex-1" />
 
         {/* Perform / Cast segmented toggle: the white pill slides, labels cross-fade */}
@@ -167,23 +160,25 @@ export default function EntryScreen() {
           </div>
           {error && <p role="alert" className="rounded-xl bg-blossom/95 px-3.5 py-2.5 text-[14px] text-ink">{error}{unconfirmed && <> <button type="button" onClick={resendConfirm} className="font-semibold underline">Resend the link</button></>}</p>}
           <button type="submit" disabled={busy !== null || !email || !password} className="flex h-14 w-full items-center justify-center gap-2 rounded-[14px] bg-cta text-[17px] font-semibold text-ink shadow-cta transition active:scale-[0.99] disabled:opacity-70">
-            {busy === 'email' ? 'Logging in…' : <>Continue <Icon name="arrow-right" className="size-5" /></>}
+            {busy === 'email' ? 'Logging in…' : <>Log in <Icon name="arrow-right" className="size-5" /></>}
           </button>
         </form>
 
         <div className="mt-3 flex items-center justify-between">
           <Link href={'/forgot-password?side=' + side + (email ? '&email=' + encodeURIComponent(email.trim()) : '')} className="text-[13px] font-medium text-white/80">Forgot password?</Link>
-          <div className="flex items-center gap-2">
-            <span className="text-[13px] text-white/60">or</span>
-            <button type="button" aria-label="Continue with Apple" onClick={() => oauth('apple')} disabled={busy !== null} className={round}><Icon name="apple" className="size-5" /></button>
-            <button type="button" aria-label="Continue with Google" onClick={() => oauth('google')} disabled={busy !== null} className={round}><Icon name="google" className="size-5" /></button>
-          </div>
+          {SOCIAL.length > 0 && (
+            <div className="flex items-center gap-2">
+              <span className="text-[13px] text-white/60">or</span>
+              {SOCIAL.includes('apple') && <button type="button" aria-label="Continue with Apple" onClick={() => oauth('apple')} disabled={busy !== null} className={round}><Icon name="apple" className="size-5" /></button>}
+              {SOCIAL.includes('google') && <button type="button" aria-label="Continue with Google" onClick={() => oauth('google')} disabled={busy !== null} className={round}><Icon name="google" className="size-5" /></button>}
+            </div>
+          )}
         </div>
 
-        <p className="mt-5 text-center text-[15px] text-white/90">
-          New to The Ident?{' '}
-          <button type="button" onClick={() => signUp(s.role)} className="font-medium text-pink">Sign up</button>
-        </p>
+        <div className="mt-5 flex items-center gap-3 text-[12px] uppercase tracking-[0.12em] text-white/55"><span className="h-px flex-1 bg-white/25" />New here?<span className="h-px flex-1 bg-white/25" /></div>
+        <button type="button" onClick={() => signUp(s.role)} className="mt-3 flex h-14 w-full items-center justify-center rounded-[14px] border border-white/40 bg-white/10 text-[16px] font-semibold text-white backdrop-blur-md transition active:scale-[0.99]">
+          Create a free {s.role === 'caster' ? 'casting' : 'performer'} account
+        </button>
       </div>
     </main>
   )

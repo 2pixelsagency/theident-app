@@ -136,6 +136,7 @@ export default function CastingReviewPage() {
           ))}
         </Card>
 
+        {apps.length > 0 && <>
         <div className="mt-4 flex items-center justify-between text-sm">
           <span className="text-muted">Showing {shown.length} of {apps.length}{counts.no ? ' · ' : ''}{counts.no > 0 && <button type="button" className="underline" onClick={() => setStageTab('no')}>{counts.no} no</button>}</span>
           <Segmented className="w-40" value={view} onChange={setView} options={[{ value: 'grid', label: 'Grid' }, { value: 'deck', label: 'Deck' }]} />
@@ -153,6 +154,8 @@ export default function CastingReviewPage() {
             {filtering && <button type="button" onClick={() => { setQ(''); setOnlyVideo(false); setMinStars(0) }} className="shrink-0 px-2 text-sm font-medium text-green-ink">Clear</button>}
           </div>
         </div>
+
+        </>}
 
         {lastMove && (
           <div className="mt-3 flex items-center justify-between rounded-[var(--radius)] border border-line bg-surface px-4 py-3 text-sm shadow-card">

@@ -184,7 +184,7 @@ export default function ApplyPage() {
             })}
           </div>
         )}
-        <UploadTile className="mt-3" icon="upload" title={uploading === 'reel' ? 'Uploading…' : 'Upload a new reel'} sub={'MP4 · up to ' + MAX_MB + 'MB'} onClick={() => reelInput.current?.click()} />
+        <UploadTile className="mt-3" icon="upload" title={uploading === 'reel' ? 'Uploading…' : 'Upload a new reel'} sub="Any video — big files are compressed for you" onClick={() => reelInput.current?.click()} />
         <input ref={reelInput} type="file" accept="video/*" className="hidden" onChange={pick('reel')} />
 
         {/* Supporting materials */}
