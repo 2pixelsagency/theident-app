@@ -213,7 +213,7 @@ export function ToggleRow({ title, sub, checked, onChange }: { title: string; su
   )
 }
 
-const inputCls = 'w-full rounded-xl border border-line bg-field px-4 text-[15px] text-ink placeholder:text-faint outline-none transition focus:border-green focus:bg-surface'
+const inputCls = 'w-full rounded-xl border border-line bg-field px-4 text-[16px] text-ink placeholder:text-faint outline-none transition focus:border-green focus:bg-surface'
 
 export function Field({ label, hint, icon, className, ...rest }: { label?: string; hint?: string; icon?: string; className?: string } & React.InputHTMLAttributes<HTMLInputElement>) {
   return (

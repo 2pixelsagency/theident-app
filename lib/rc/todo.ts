@@ -59,12 +59,12 @@ export async function loadTodos(id: string, emailVerified: boolean) {
     const week = currentWeek(goal.block)
     goal.block.actions.forEach((a, i) => {
       if (!goal.checks.some(c => c.week_index === week && c.action_index === i))
-        auto.push({ key: 'goal-' + i, icon: 'star', title: a.label, sub: 'Goal: ' + goal.block!.goal + ' · this week', href: '/blocks' })
+        auto.push({ key: 'goal-' + i, icon: 'target', title: a.label, sub: 'Goal: ' + goal.block!.goal + ' · this week', href: '/blocks' })
     })
   }
   if (!emailVerified) auto.push({ key: 'verify', icon: 'mail', title: 'Verify your email', sub: 'Needed before you can apply', href: '/verify', urgent: true })
   const gap = comp?.next[0]
-  if (gap && (comp?.score ?? 100) < 90) auto.push({ key: 'profile-' + gap.key, icon: 'sparkle', title: gap.label, sub: 'Profile ' + comp!.score + '% complete', href: gap.href })
+  if (gap && (comp?.score ?? 100) < 90) auto.push({ key: 'profile-' + gap.key, icon: 'user', title: gap.label, sub: 'Profile ' + comp!.score + '% complete', href: gap.href })
 
   auto.sort((a, b) => Number(!!b.urgent) - Number(!!a.urgent) || (a.due || '9').localeCompare(b.due || '9'))
   return { auto, mine: (mine.data || []) as Todo[] }
