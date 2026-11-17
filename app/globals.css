@@ -52,6 +52,12 @@ html, body {
   color: var(--ink);
   -webkit-font-smoothing: antialiased;
 }
+/* Nothing may push the page sideways (wide carousels, long words) — no accidental horizontal scroll/zoom */
+html, body { overflow-x: clip; }
+/* iOS zooms into any field under 16px when you tap it: keep every field at 16px on touch screens */
+@media (pointer: coarse) {
+  input, select, textarea { font-size: max(16px, 1em) !important; }
+}
 
 /* The two allowed gradients + card shadow, as utilities */
 @utility bg-accent { background-image: var(--grad-accent); }
@@ -65,7 +71,7 @@ html, body {
 
 @utility bg-hero { background-image: var(--noise-light), var(--grad-hero); background-color: var(--forest); }
 /* Light-screen backdrop: Lime haze fading to white, with grain */
-@utility bg-glow { background-image: var(--noise-dark), var(--grad-glow); background-color: #ffffff; }
+@utility bg-glow { background-image: var(--noise-dark), var(--grad-glow); background-color: var(--bg); }
 @utility shadow-card { box-shadow: var(--shadow); }
 @utility shadow-cta { box-shadow: var(--cta-shadow); }
 /* Dark bottom-up scrim over full-bleed photos so overlaid text stays legible */

@@ -53,7 +53,7 @@
 
   /* Brand gradients, always paired with a fine grain (see bg-glow / bg-hero in globals.css) */
   --grad-accent: linear-gradient(var(--lime), var(--lime)); /* solid Lime for badges/accent buttons */
-  --grad-glow: linear-gradient(180deg, color-mix(in srgb, var(--lime) 34%, white) 0%, color-mix(in srgb, var(--lime) 14%, white) 34%, #ffffff 72%); /* light screens: Lime haze → white */
+  --grad-glow: linear-gradient(180deg, color-mix(in srgb, var(--lime) 34%, white) 0%, color-mix(in srgb, var(--lime) 14%, var(--bg)) 34%, var(--bg) 78%); /* light screens: Lime haze → paper (blends into the page, no edge) */
   --grad-hero: linear-gradient(180deg, #5f9a8e 0%, #2d5a55 34%, #14302c 58%, #0c1b1f 100%); /* dark panels: teal-green → deep Forest */
   /* Grain: tiny inline SVG noise tiles — dark specks for light backgrounds, light specks for dark ones */
   --noise-dark: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.08 0 0 0 0 0.13 0 0 0 0 0.11 0 0 0 0.11 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");

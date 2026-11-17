@@ -35,7 +35,7 @@ export default function MenuPage() {
       {/* Grouped by what you're doing; nothing here repeats the bottom bar */}
       <p className="mb-2 mt-6 text-xs font-semibold uppercase tracking-[0.08em] text-muted">{caster ? 'Your work' : 'Your career'}</p>
       <Card className="divide-y divide-line overflow-hidden">
-        {!caster && <ListRow icon="star" title="Goals" sub="Weekly actions towards what you want" href="/blocks" />}
+        {!caster && <ListRow icon="target" title="Goals" sub="Weekly actions towards what you want" href="/blocks" />}
         {!caster && <ListRow icon="check-square" title="To do" href="/todo" />}
         <ListRow icon="calendar" title="Diary" href="/diary" />
         {!caster && <ListRow icon="megaphone" title="Your postings" sub="Side hustles and jobs you've posted" href="/postings" />}

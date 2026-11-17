@@ -81,7 +81,7 @@ export function BottomNav() {
 const MORE: Record<Role, { href: string; label: string; icon: string }[]> = {
   performer: [
     { href: '/diary', label: 'Diary', icon: 'calendar' },
-    { href: '/blocks', label: 'Goals', icon: 'star' },
+    { href: '/blocks', label: 'Goals', icon: 'target' },
     { href: '/postings/new?type=side', label: 'Post a job', icon: 'plus' },
     { href: '/postings', label: 'Your postings', icon: 'megaphone' },
     { href: '/whats-on', label: 'What’s on', icon: 'ticket' },

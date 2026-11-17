@@ -197,7 +197,7 @@ export default function CreateProfile() {
         <p className="flex items-center gap-2 text-[17px] font-medium"><Icon name="sparkle" className="size-5 text-green" /> Autofill the rest</p>
         <p className="mt-1 text-[13px] text-white/70">Import once and we’ll fill your credits, skills and photos.</p>
         <div className="mt-4 space-y-2">
-          {[['file', 'Upload your CV'], ['star', 'Import from Spotlight or Mandy'], ['link', 'Paste a profile link']].map(([icon, label]) => (
+          {[['file', 'Upload your CV'], ['download', 'Import from Spotlight or Mandy'], ['link', 'Paste a profile link']].map(([icon, label]) => (
             <button key={label} type="button" onClick={soon} className="flex w-full items-center gap-3 rounded-xl border border-white/10 bg-white/5 px-3 py-3 text-left text-[15px] transition hover:bg-white/10">
               <span className="flex size-8 items-center justify-center rounded-lg bg-white/10"><Icon name={icon} className="size-[18px]" /></span>
               <span className="flex-1">{label}</span>
