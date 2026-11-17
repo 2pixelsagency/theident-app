@@ -8,6 +8,7 @@ import { Avatar, Button, Card, cx, toast } from './ui'
 import { fullName } from '@/lib/rc/format'
 import { ReportSheet, blockUser, type ReportTarget } from './Safety'
 import CastingProfile from './CastingProfile'
+import { isBoosted } from '@/lib/rc/boost'
 import { craftTag, graduateLabel, playingAge } from '@/lib/rc/talent'
 import type { Credit, FullProfileData } from '@/lib/rc/profile'
 
@@ -177,6 +178,7 @@ function PerformerProfile({ data, owner, onBack, onShare, topRight, actions, sta
               ? <img src={p.picture_url} alt={name} className="size-[104px] shrink-0 rounded-[22px] object-cover ring-4 ring-dark" />
               : <span className="shrink-0 rounded-[22px] ring-4 ring-dark"><Avatar name={name} size={104} /></span>}
             <div className="flex min-w-0 flex-wrap gap-2 pb-1">
+              {!caster && isBoosted(p.boosted_until) && <span className="inline-flex items-center gap-1 rounded-full bg-white px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.08em] text-ink"><Icon name="star" className="size-3 fill-current" /> Featured</span>}
               {!caster && p.availability_status === 'available' && <span className="inline-flex items-center gap-1.5 rounded-full bg-lime px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.08em] text-ink"><span className="size-1.5 rounded-full bg-forest" /> Open to work</span>}
               {grad && <span className="inline-flex items-center gap-1 rounded-full bg-accent px-3 py-1.5 text-[11px] font-medium text-ink"><Icon name="graduation-cap" className="size-3.5" />{grad}</span>}
             </div>
