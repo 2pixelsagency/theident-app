@@ -56,7 +56,7 @@ export default function NewBlockPage() {
     const { error } = await supabase.from('blocks').insert({ profile_id: id, goal: goal.trim(), weeks, actions: picked, why: why.trim() || null, weekly_checkin: checkin })
     setSaving(false)
     if (error) { toast('Couldn’t save your goal — try again'); return }
-    router.push('/blocks')
+    router.replace('/blocks') // the form isn't left behind in history
   }
 
   return (
