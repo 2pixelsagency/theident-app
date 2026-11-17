@@ -71,7 +71,7 @@ export default function ChangePasswordPage() {
       <div className="flex min-h-[70dvh] flex-col px-4 pb-10">
         {done ? (
           <AuthState tone="success" icon="check" title="Password changed" body={<>You’re still signed in. We’ve emailed <span className="font-medium text-ink">{me.email}</span> to confirm the change.</>}
-            action={{ label: 'Back to settings', onClick: () => router.push('/settings') }} />
+            action={{ label: 'Back to settings', onClick: () => router.replace('/settings') }} />
         ) : !hasPassword ? (
           linkSent
             ? <AuthState tone="success" icon="mail" title="Check your email" body={<>We’ve sent a link to <span className="font-medium text-ink">{me.email}</span> to set a password for your account.</>} />

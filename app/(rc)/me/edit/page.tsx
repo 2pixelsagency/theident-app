@@ -1,9 +1,8 @@
 'use client'
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { useRouter } from 'next/navigation'
 import Icon from '@/components/rc/Icon'
-import { Avatar, Button, Card, Chip, Field, PageLoading, Sheet, TextArea, Toggle, cx, toast } from '@/components/rc/ui'
+import { Avatar, Button, Card, Chip, Field, PageLoading, Sheet, TextArea, Toggle, cx, toast, useGoBack } from '@/components/rc/ui'
 import { supabase } from '@/lib/supabase'
 import { heroRound } from '@/components/rc/ProfileView'
 import { useMe } from '@/lib/rc/me'
@@ -40,7 +39,8 @@ export default function EditProfilePage() {
 type Data = Awaited<ReturnType<typeof loadFullProfile>> & { allSkills: { id: number; name: string }[]; types: { id: number; name: string }[] }
 
 function Editor({ data, uid, caster, onRefresh, mutate }: { data: Data; uid: string; caster: boolean; onRefresh: () => Promise<void>; mutate: (u: (d: Data | undefined) => Data | undefined) => void }) {
-  const router = useRouter()
+  // Done returns to where you came from (usually your profile) instead of opening it again — no back/forward loop
+  const goBack = useGoBack('/me')
   const p = data.profile!
   const [d, setD] = useState<Draft>({
     first_name: p.first_name, last_name: p.last_name, what_i_do: p.what_i_do, location: p.location, bio: p.bio || p.summary, height: p.height,
@@ -151,7 +151,7 @@ function Editor({ data, uid, caster, onRefresh, mutate }: { data: Data; uid: str
   const done = async () => {
     if (!(await flush())) { toast('Couldn’t save — check your connection'); return }
     await onRefresh() // update the name/photo shown around the app once, not on every keystroke
-    router.push('/me')
+    goBack()
   }
 
   // Skills save immediately (add / remove), reverting if the write fails

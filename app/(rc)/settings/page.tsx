@@ -51,7 +51,7 @@ export default function SettingsPage() {
     await me.refresh()
     setSwitching(false)
     toast(role === 'caster' ? 'Switched to casting' : 'Switched to performer')
-    router.push('/home')
+    router.replace('/home')
   }
 
   const logout = signOutAndReset
