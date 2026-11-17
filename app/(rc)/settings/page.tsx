@@ -7,6 +7,8 @@ import { supabase } from '@/lib/supabase'
 import { useMe } from '@/lib/rc/me'
 import { signOutAndReset } from '@/lib/rc/onboarding'
 import { useAsync } from '@/lib/rc/useAsync'
+import { PLANS, planFor, price } from '@/lib/rc/plans'
+import { isNativeApp } from '@/lib/rc/authRedirect'
 import { fullName } from '@/lib/rc/format'
 import { SUPPORT_EMAIL } from '@/lib/rc/profile'
 import { NOTIFICATION_TYPES, disablePush, enablePush, pushState, type PrefKey, type PushState } from '@/lib/rc/push'
@@ -31,6 +33,25 @@ export default function SettingsPage() {
     const { data: p } = await supabase.from('profiles').select('first_name, last_name, show_talent, availability_status, email_alerts_enabled, notification_prefs, account_role').eq('id', me.id).maybeSingle()
     return p as { first_name: string | null; last_name: string | null; show_talent: boolean | null; availability_status: string | null; email_alerts_enabled: boolean | null; notification_prefs: Partial<Prefs> | null; account_role: string } | null
   }, [me.id])
+
+  // Membership: status line + the right action (Stripe portal to manage, or subscribe)
+  const p = me.profile
+  const endLabel = (iso?: string | null) => iso ? new Date(iso).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }) : ''
+  const portal = async () => {
+    const { data: { session } } = await supabase.auth.getSession()
+    const res = await fetch('/api/plan/portal', { method: 'POST', headers: { Authorization: 'Bearer ' + (session?.access_token || '') } })
+    const j = await res.json().catch(() => ({}))
+    if (j.url) window.location.assign(j.url); else toast('Couldn’t open billing. Please try again.')
+  }
+  const native = isNativeApp()
+  const kindName = PLANS[planFor(me.role)].name
+  const membership: { sub: string; action?: string; onClick?: () => void; href?: string } =
+    p?.is_demo ? { sub: 'Demo account · full access' }
+    : p?.plan_status === 'trialing' ? { sub: kindName + ' · free trial until ' + endLabel(p.plan_period_end), action: native ? undefined : 'Manage', onClick: native ? undefined : portal }
+    : p?.plan_status === 'active' ? { sub: kindName + ' · ' + price(PLANS[planFor(me.role)].pence) + '/month' + (p.plan_period_end ? ' · renews ' + endLabel(p.plan_period_end) : ''), action: native ? undefined : 'Manage', onClick: native ? undefined : portal }
+    : p?.plan_status === 'past_due' ? { sub: 'Payment failed — update your card to keep access', action: native ? undefined : 'Fix', onClick: native ? undefined : portal }
+    : p?.plan_grace_until && new Date(p.plan_grace_until) > new Date() ? { sub: 'Free access until ' + endLabel(p.plan_grace_until), action: native ? undefined : 'Subscribe', href: native ? undefined : '/plan' }
+    : { sub: me.hasPlan ? 'Full access' : 'No active membership', action: native || me.hasPlan ? undefined : 'Subscribe', href: native || me.hasPlan ? undefined : '/plan' }
 
   if (loading || !data) return <><BackHeader title="Settings" /><PageLoading /></>
   const legacy = data.notification_prefs || {}
@@ -108,7 +129,7 @@ export default function SettingsPage() {
         <Card className="divide-y divide-line overflow-hidden">
           <ListRow icon="card" title="Payout method" sub="Coming soon" onClick={soon} />
           <ListRow icon="pound" title="Tax & expenses" href="/tax" />
-          <ListRow title="Membership" sub="Free plan · upgrade for priority" right={<span className="text-sm font-medium text-green-ink">Upgrade</span>} href="/start/plan" chevron={false} />
+          <ListRow icon="star" title="Membership" sub={membership.sub} right={membership.action && <span className="text-sm font-medium text-green-ink">{membership.action}</span>} onClick={membership.onClick} href={membership.href} chevron={false} />
         </Card>
 
         {section('Privacy & safety')}

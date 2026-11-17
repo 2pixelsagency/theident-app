@@ -177,7 +177,7 @@ export default function EntryScreen() {
 
         <div className="mt-5 flex items-center gap-3 text-[12px] uppercase tracking-[0.12em] text-white/55"><span className="h-px flex-1 bg-white/25" />New here?<span className="h-px flex-1 bg-white/25" /></div>
         <button type="button" onClick={() => signUp(s.role)} className="mt-3 flex h-14 w-full items-center justify-center rounded-[14px] border border-white/40 bg-white/10 text-[16px] font-semibold text-white backdrop-blur-md transition active:scale-[0.99]">
-          Create a free {s.role === 'caster' ? 'casting' : 'performer'} account
+          Create a {s.role === 'caster' ? 'casting' : 'performer'} account
         </button>
       </div>
     </main>

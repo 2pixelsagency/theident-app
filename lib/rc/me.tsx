@@ -23,6 +23,10 @@ export type MyProfile = {
   is_verified: boolean
   email_verified: boolean
   is_demo?: boolean
+  plan_status?: string | null
+  plan_kind?: string | null
+  plan_period_end?: string | null
+  plan_grace_until?: string | null
 }
 
 export type Me = {
@@ -33,6 +37,8 @@ export type Me = {
   name: string
   unreadNotifications: number
   unreadMessages: number
+  /** Paid up, on trial, in grace, demo or admin (server's has_plan) */
+  hasPlan: boolean
   refresh: () => Promise<void>
 }
 
@@ -41,7 +47,7 @@ const MeContext = createContext<Me | null>(null)
 // Where to go after logging in, set by MeProvider or public pages (e.g. Apply on /jobs/[id])
 export const PENDING_NEXT_KEY = 'ident.pendingNext'
 
-const PROFILE_COLS = 'id, first_name, last_name, picture_url, slug, location, what_i_do, account_role, company_name, availability_status, is_graduate, graduate_school, graduate_year, is_verified, email_verified, is_demo'
+const PROFILE_COLS = 'id, first_name, last_name, picture_url, slug, location, what_i_do, account_role, company_name, availability_status, is_graduate, graduate_school, graduate_year, is_verified, email_verified, is_demo, plan_status, plan_kind, plan_period_end, plan_grace_until'
 
 export function MeProvider({ children }: { children: React.ReactNode }) {
   const router = useRouter()
@@ -60,10 +66,11 @@ export function MeProvider({ children }: { children: React.ReactNode }) {
       if (pending) { localStorage.removeItem(PENDING_NEXT_KEY); if (pending !== here && pending.startsWith('/') && !pending.startsWith('//')) router.replace(pending) }
     } catch { /* private mode */ }
     const uid = session.user.id
-    const [{ data: profile }, { count: notifs }, { data: convos }] = await Promise.all([
+    const [{ data: profile }, { count: notifs }, { data: convos }, { data: plan, error: planErr }] = await Promise.all([
       supabase.from('profiles').select(PROFILE_COLS).eq('id', uid).maybeSingle(),
       supabase.from('notifications').select('id', { count: 'exact', head: true }).eq('profile_id', uid).neq('type', 'message').eq('read', false),
       supabase.from('conversations').select('id').or('user_a.eq.' + uid + ',user_b.eq.' + uid),
+      supabase.rpc('has_plan', { pid: uid }),
     ])
     let unreadMessages = 0
     if (convos?.length) {
@@ -80,6 +87,7 @@ export function MeProvider({ children }: { children: React.ReactNode }) {
       name: p?.first_name || session.user.email?.split('@')[0] || 'there',
       unreadNotifications: notifs || 0,
       unreadMessages,
+      hasPlan: planErr ? true : plan !== false, // fail open on a network blip; RLS still protects data
     })
     supabase.from('profiles').update({ last_active: new Date().toISOString() }).eq('id', uid).then(() => {})
   }, [router])

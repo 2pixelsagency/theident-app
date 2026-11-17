@@ -23,7 +23,25 @@ export async function POST(req: NextRequest) {
   const payload = await req.text()
   if (!verify(payload, req.headers.get('stripe-signature'), secret)) return NextResponse.json({ error: 'bad signature' }, { status: 400 })
 
-  const event = JSON.parse(payload) as { type: string; data: { object: { id: string; payment_status?: string; amount_total?: number; currency?: string; metadata?: Record<string, string> } } }
+  type Obj = { id: string; mode?: string; customer?: string; subscription?: string; status?: string; payment_status?: string; amount_total?: number; currency?: string
+    metadata?: Record<string, string>; current_period_end?: number; items?: { data?: { current_period_end?: number }[] } }
+  const event = JSON.parse(payload) as { type: string; data: { object: Obj } }
+  const admin = () => createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!, { auth: { persistSession: false } })
+
+  // Memberships (subscriptions)
+  const o = event.data.object
+  if (event.type === 'checkout.session.completed' && o.mode === 'subscription' && o.metadata?.profile_id) {
+    const { error } = await admin().rpc('apply_plan', { p_profile: o.metadata.profile_id, p_customer: o.customer || null, p_subscription: o.subscription || null, p_status: 'active', p_kind: o.metadata.kind || null, p_period_end: null })
+    if (error) return NextResponse.json({ error: 'could not apply' }, { status: 500 })
+    return NextResponse.json({ received: true })
+  }
+  if (event.type.startsWith('customer.subscription.') && o.metadata?.profile_id) {
+    const end = o.current_period_end ?? o.items?.data?.[0]?.current_period_end
+    const status = event.type === 'customer.subscription.deleted' ? 'canceled' : o.status || 'active'
+    const { error } = await admin().rpc('apply_plan', { p_profile: o.metadata.profile_id, p_customer: o.customer || null, p_subscription: o.id, p_status: status, p_kind: o.metadata.kind || null, p_period_end: end ? new Date(end * 1000).toISOString() : null })
+    if (error) return NextResponse.json({ error: 'could not apply' }, { status: 500 })
+    return NextResponse.json({ received: true })
+  }
   if (event.type === 'checkout.session.completed' || event.type === 'checkout.session.async_payment_succeeded') {
     const s = event.data.object
     const profile = s.metadata?.profile_id, days = Number(s.metadata?.days)
