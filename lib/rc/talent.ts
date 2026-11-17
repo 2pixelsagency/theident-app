@@ -3,6 +3,7 @@ import { startConversation } from '@/lib/startConversation'
 
 export type Talent = {
   id: string
+  boosted_until?: string | null
   first_name: string | null
   last_name: string | null
   picture_url: string | null
@@ -24,7 +25,7 @@ export type Talent = {
   last_active: string | null
 }
 
-export const TALENT_SELECT = 'id, first_name, last_name, picture_url, slug, location, what_i_do, bio, summary, height, minimum_age, maximum_age, availability_status, is_graduate, graduate_school, graduate_year, account_role, show_talent, is_verified, last_active'
+export const TALENT_SELECT = 'id, first_name, last_name, picture_url, slug, location, what_i_do, bio, summary, height, minimum_age, maximum_age, availability_status, is_graduate, graduate_school, graduate_year, account_role, show_talent, is_verified, last_active, boosted_until'
 
 export function playingAge(t: Pick<Talent, 'minimum_age' | 'maximum_age'>) {
   if (t.minimum_age && t.maximum_age) return t.minimum_age + '–' + t.maximum_age
