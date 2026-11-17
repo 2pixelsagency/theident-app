@@ -8,6 +8,7 @@ import { Button, Empty, PageLoading, Sheet, Toaster, cx, toast } from '@/compone
 import { supabase } from '@/lib/supabase'
 import { fullName } from '@/lib/rc/format'
 import { Claims, ShareCasting } from './ShareCasting'
+import { AreaChart, BarChart, SplitBar } from './Charts'
 
 type Tab = 'overview' | 'safety' | 'members' | 'jobs' | 'digs' | 'chats' | 'admins'
 type Person = { id: string; first_name: string | null; last_name: string | null; company_name?: string | null; picture_url?: string | null }
@@ -48,7 +49,7 @@ async function unsuspend(profileId: string) {
 export default function AdminPage() {
   const router = useRouter()
   const [ok, setOk] = useState<boolean | null>(null)
-  const [tab, setTab] = useState<Tab>('safety')
+  const [tab, setTab] = useState<Tab>('overview')
   const [thread, setThread] = useState<Thread | null>(null)
 
   useEffect(() => {
@@ -62,56 +63,236 @@ export default function AdminPage() {
 
   if (ok === null) return <PageLoading />
   if (!ok) return <div className="pt-24"><Empty icon="lock" title="Admins only" sub="This area is for The Ident’s team." action={<Button size="sm" variant="dark" href="/home">Back to the app</Button>} /></div>
+  return <Shell tab={tab} setTab={setTab} thread={thread} setThread={setThread} />
+}
 
-  const TABS: [Tab, string, string][] = [['overview', 'Overview', 'grid'], ['safety', 'Safety', 'shield'], ['members', 'Members', 'users'], ['jobs', 'Jobs', 'briefcase'], ['digs', 'Digs', 'house'], ['chats', 'Chats', 'chat'], ['admins', 'Admins', 'lock']]
+type Stats = Record<string, number>
+const NAV: { key: Tab; label: string; icon: string; sub: string; badge?: (s: Stats) => number; urgent?: (s: Stats) => boolean }[] = [
+  { key: 'overview', label: 'Overview', icon: 'grid', sub: 'How The Ident is doing today' },
+  { key: 'safety', label: 'Safety', icon: 'shield', sub: 'Flagged messages and member reports', badge: s => (s.open_flags || 0) + (s.open_reports || 0), urgent: s => (s.high_flags || 0) > 0 },
+  { key: 'members', label: 'Members', icon: 'users', sub: 'Everyone on The Ident' },
+  { key: 'jobs', label: 'Jobs', icon: 'briefcase', sub: 'Every listing, shared castings and claims', badge: s => s.claims_pending || 0 },
+  { key: 'digs', label: 'Digs', icon: 'house', sub: 'Listings waiting for your OK', badge: s => s.digs_pending || 0 },
+  { key: 'chats', label: 'Chats', icon: 'chat', sub: 'Read-only view of conversations' },
+  { key: 'admins', label: 'Admins', icon: 'lock', sub: 'Who can open this dashboard' },
+]
+
+function Shell({ tab, setTab, thread, setThread }: { tab: Tab; setTab: (t: Tab) => void; thread: Thread | null; setThread: (t: Thread | null) => void }) {
+  const [stats, setStats] = useState<Stats | null>(null)
+  const [email, setEmail] = useState('')
+  const loadStats = useCallback(() => { supabase.rpc('admin_stats').then(({ data }) => setStats(((Array.isArray(data) ? data[0] : data) || {}) as Stats)) }, [])
+   
+  useEffect(() => { loadStats(); supabase.auth.getUser().then(({ data }) => setEmail(data.user?.email || '')) }, [loadStats])
+  const go = (t: Tab) => { setTab(t); loadStats(); window.scrollTo(0, 0) }
+  const here = NAV.find(n => n.key === tab)!
+  const badge = (n: (typeof NAV)[number]) => {
+    const c = stats && n.badge ? n.badge(stats) : 0
+    if (!c) return null
+    return <span className={cx('ml-auto min-w-6 rounded-full px-1.5 py-0.5 text-center text-[11px] font-bold', stats && n.urgent?.(stats) ? 'bg-red text-white' : 'bg-lime text-ink')}>{c}</span>
+  }
   return (
-    <div className="min-h-dvh bg-bg text-ink">
-      <header className="sticky top-0 z-30 border-b border-line bg-surface/95 backdrop-blur">
-        <div className="mx-auto flex max-w-[1100px] items-center gap-3 px-4 pt-[env(safe-area-inset-top)]">
-          <Link href="/home" className="py-3 font-display text-[20px] font-bold tracking-[-0.03em]">The Ident</Link>
-          <span className="rounded-full bg-forest px-2 py-0.5 text-[11px] font-semibold text-lime">Admin</span>
-        </div>
-        <nav className="scrollbar-none mx-auto flex max-w-[1100px] gap-1 overflow-x-auto px-3 pb-2">
-          {TABS.map(([k, label, icon]) => (
-            <button key={k} type="button" onClick={() => setTab(k)} aria-pressed={tab === k}
-              className={cx('inline-flex h-9 shrink-0 items-center gap-1.5 rounded-full px-3.5 text-sm font-medium', tab === k ? 'bg-forest text-white' : 'text-muted hover:bg-chip')}>
-              <Icon name={icon} className="size-4" />{label}
+    <div className="min-h-dvh bg-bg text-ink lg:grid lg:grid-cols-[256px_1fr]">
+      {/* Sidebar (desktop) */}
+      <div className="hidden bg-forest lg:block">
+      <aside className="sticky top-0 flex h-dvh flex-col px-4 py-6 text-white">
+        <Link href="/home" className="flex items-center gap-2 px-2">
+          <span className="font-display text-[22px] font-bold tracking-[-0.03em] text-lime">The Ident</span>
+          <span className="rounded-md bg-white/10 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-white/80">Admin</span>
+        </Link>
+        <nav className="mt-8 space-y-1">
+          {NAV.map(n => (
+            <button key={n.key} type="button" onClick={() => go(n.key)} aria-current={tab === n.key ? 'page' : undefined}
+              className={cx('flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-[14px] font-medium transition', tab === n.key ? 'bg-white text-ink shadow-card' : 'text-white/75 hover:bg-white/10 hover:text-white')}>
+              <Icon name={n.icon} className="size-[18px]" />{n.label}{badge(n)}
             </button>
           ))}
         </nav>
-      </header>
-      <main className="mx-auto max-w-[1100px] px-4 pb-16 pt-4">
-        {tab === 'overview' && <Overview go={setTab} />}
-        {tab === 'safety' && <Safety open={setThread} />}
-        {tab === 'members' && <Members />}
-        {tab === 'jobs' && <Jobs />}
-        {tab === 'digs' && <Digs />}
-        {tab === 'chats' && <Chats open={setThread} />}
-        {tab === 'admins' && <Admins />}
-      </main>
+        <div className="mt-auto rounded-xl bg-white/5 p-3">
+          <p className="truncate text-[12px] text-white/60">Signed in as</p>
+          <p className="truncate text-[13px] font-medium">{email}</p>
+          <Link href="/home" className="mt-2 inline-flex items-center gap-1 text-[12px] font-semibold text-lime"><Icon name="chevron-left" className="size-3.5" />Back to the app</Link>
+        </div>
+      </aside>
+      </div>
+
+      <div className="min-w-0">
+        {/* Top bar (phones: brand + scrolling tabs) */}
+        <header className="sticky top-0 z-30 bg-forest text-white lg:hidden">
+          <div className="flex items-center gap-2 px-4 pb-2 pt-[max(12px,env(safe-area-inset-top))]">
+            <span className="font-display text-[19px] font-bold tracking-[-0.03em] text-lime">The Ident</span>
+            <span className="rounded-md bg-white/10 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.12em]">Admin</span>
+            <Link href="/home" className="ml-auto text-[12px] font-semibold text-white/80">Back to app</Link>
+          </div>
+          <nav className="scrollbar-none flex gap-1 overflow-x-auto px-3 pb-3">
+            {NAV.map(n => (
+              <button key={n.key} type="button" onClick={() => go(n.key)} aria-pressed={tab === n.key}
+                className={cx('inline-flex h-9 shrink-0 items-center gap-1.5 rounded-full px-3.5 text-[13px] font-semibold', tab === n.key ? 'bg-white text-ink' : 'bg-white/10 text-white/85')}>
+                <Icon name={n.icon} className="size-4" />{n.label}{badge(n)}
+              </button>
+            ))}
+          </nav>
+        </header>
+
+        <main className="mx-auto max-w-[1180px] px-4 pb-16 pt-6 lg:px-10 lg:pt-10">
+          <div className="mb-6">
+            <h1 className="text-[28px] lg:text-[34px]">{here.label}</h1>
+            <p className="mt-1 text-[14px] text-muted">{here.sub}</p>
+          </div>
+          {tab === 'overview' && <Overview s={stats} go={go} />}
+          {tab === 'safety' && <Safety open={setThread} />}
+          {tab === 'members' && <Members />}
+          {tab === 'jobs' && <Jobs />}
+          {tab === 'digs' && <Digs />}
+          {tab === 'chats' && <Chats open={setThread} />}
+          {tab === 'admins' && <Admins />}
+        </main>
+      </div>
       <ThreadSheet thread={thread} onClose={() => setThread(null)} />
       <Toaster />
     </div>
   )
 }
 
-function Overview({ go }: { go: (t: Tab) => void }) {
-  const [s, setS] = useState<Record<string, number> | null>(null)
-  useEffect(() => { supabase.rpc('admin_stats').then(({ data }) => setS(data as Record<string, number>)) }, [])
-  if (!s) return <PageLoading />
-  const tiles: [string, number, Tab?, boolean?][] = [
-    ['High-risk flags', s.high_flags, 'safety', s.high_flags > 0], ['Open flags', s.open_flags, 'safety'], ['Open reports', s.open_reports, 'safety', s.open_reports > 0],
-    ['Members', s.members, 'members'], ['Performers', s.performers, 'members'], ['Casting', s.casting, 'members'], ['New this week', s.new_7d, 'members'],
-    ['Live jobs', s.live_jobs, 'jobs'], ['Applications (7d)', s.applications_7d], ['Messages (7d)', s.messages_7d, 'chats'], ['Suspended', s.suspended, 'members'], ['Demo accounts', s.demo_accounts],
-  ]
+const CHIP: Record<string, string> = { forest: 'bg-forest text-lime', lime: 'bg-lime text-ink', mint: 'bg-mint text-ink', butter: 'bg-butter text-ink', blossom: 'bg-blossom text-ink', red: 'bg-red text-white' }
+function Kpi({ label, value, icon, chip = 'mint', note, onClick }: { label: string; value: number | undefined; icon: string; chip?: keyof typeof CHIP; note?: string; onClick?: () => void }) {
   return (
-    <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
-      {tiles.map(([label, n, t, alert]) => (
-        <button key={label} type="button" onClick={() => t && go(t)} className={cx('rounded-[var(--radius)] border p-4 text-left shadow-card', alert ? 'border-red/40 bg-red-tint' : 'border-line bg-surface')}>
-          <p className="text-[28px] font-semibold leading-none">{n ?? 0}</p>
-          <p className="mt-1.5 text-[13px] text-muted">{label}</p>
-        </button>
-      ))}
+    <button type="button" onClick={onClick} disabled={!onClick}
+      className={cx('flex flex-col gap-3 rounded-[20px] border border-line bg-surface p-4 text-left shadow-card transition sm:flex-row sm:items-center sm:gap-4 sm:p-5', onClick && 'hover:-translate-y-0.5 hover:shadow-lg')}>
+      <span className={cx('flex size-10 shrink-0 items-center justify-center rounded-2xl sm:size-12', CHIP[chip])}><Icon name={icon} className="size-[22px]" /></span>
+      <span className="min-w-0">
+        <span className="title block text-[28px] leading-none">{(value ?? 0).toLocaleString('en-GB')}</span>
+        <span className="mt-1 block truncate text-[13px] text-muted">{label}</span>
+        {note && <span className="mt-0.5 block text-[12px] font-semibold text-green-ink">{note}</span>}
+      </span>
+    </button>
+  )
+}
+
+function Card({ title, sub, right, children, className }: { title: string; sub?: string; right?: React.ReactNode; children: React.ReactNode; className?: string }) {
+  return (
+    <section className={cx('rounded-[24px] border border-line bg-surface p-5 shadow-card lg:p-6', className)}>
+      <div className="mb-4 flex items-start justify-between gap-3">
+        <div><h2 className="text-[18px]">{title}</h2>{sub && <p className="mt-0.5 text-[13px] text-muted">{sub}</p>}</div>
+        {right}
+      </div>
+      {children}
+    </section>
+  )
+}
+
+type Day = { day: string; signups: number; applications: number; jobs: number; messages: number }
+type RecentJob = { id: string; project_in: string | null; job_title: string | null; project_role: string | null; location: string | null; created_at: string; shared_by_ident: boolean }
+function Overview({ s, go }: { s: Stats | null; go: (t: Tab) => void }) {
+  const [range, setRange] = useState<7 | 30 | 90>(30)
+  const [series, setSeries] = useState<Day[] | null>(null)
+  const [recent, setRecent] = useState<{ people: Member[]; jobs: RecentJob[] } | null>(null)
+  useEffect(() => { supabase.rpc('admin_timeseries', { days: range }).then(({ data }) => setSeries((data || []) as Day[])) }, [range])
+  useEffect(() => {
+    Promise.all([
+      supabase.rpc('admin_members', { q: '', lim: 6 }),
+      supabase.from('jobs').select('id, project_in, job_title, project_role, location, created_at, shared_by_ident').eq('is_demo', false).order('created_at', { ascending: false }).limit(5),
+    ]).then(([m, j]) => setRecent({ people: ((m.data || []) as Member[]).filter(x => !x.is_demo), jobs: (j.data || []) as RecentJob[] }))
+  }, [])
+  if (!s) return <PageLoading />
+  const sum = (k: keyof Omit<Day, 'day'>, from = 0) => (series || []).slice(from).reduce((t, d) => t + (d[k] as number), 0)
+  const week = (k: keyof Omit<Day, 'day'>) => sum(k, Math.max(0, (series || []).length - 7))
+  const todo = [
+    s.high_flags > 0 && { t: 'safety' as Tab, label: s.high_flags + ' high-risk flag' + (s.high_flags > 1 ? 's' : ''), sub: 'Review now — may involve a young person', urgent: true },
+    s.open_reports > 0 && { t: 'safety' as Tab, label: s.open_reports + ' member report' + (s.open_reports > 1 ? 's' : ''), sub: 'Someone asked for help' },
+    s.open_flags - s.high_flags > 0 && { t: 'safety' as Tab, label: (s.open_flags - s.high_flags) + ' flagged message' + (s.open_flags - s.high_flags > 1 ? 's' : ''), sub: 'Automatic checks' },
+    s.digs_pending > 0 && { t: 'digs' as Tab, label: s.digs_pending + ' digs to approve', sub: 'Hosts are waiting to go live' },
+    s.claims_pending > 0 && { t: 'jobs' as Tab, label: s.claims_pending + ' listing claim' + (s.claims_pending > 1 ? 's' : ''), sub: 'Casting directors claiming shared jobs' },
+  ].filter(Boolean) as { t: Tab; label: string; sub: string; urgent?: boolean }[]
+  const rangeToggle = (
+    <div className="flex rounded-full bg-chip p-1 text-[12px] font-semibold">
+      {([7, 30, 90] as const).map(r => <button key={r} type="button" onClick={() => setRange(r)} aria-pressed={range === r} className={cx('rounded-full px-3 py-1', range === r ? 'bg-surface shadow-card' : 'text-muted')}>{r}d</button>)}
+    </div>
+  )
+  const when2 = (iso: string) => new Date(iso).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })
+  return (
+    <div className="space-y-5">
+      {/* KPI cards */}
+      <div className="grid grid-cols-2 gap-3 xl:grid-cols-4">
+        <Kpi label="Members" value={s.members} icon="users" chip="forest" note={s.new_7d ? '+' + s.new_7d + ' this week' : undefined} onClick={() => go('members')} />
+        <Kpi label="Live jobs" value={s.live_jobs} icon="briefcase" chip="lime" note={s.shared_jobs ? s.shared_jobs + ' shared castings' : undefined} onClick={() => go('jobs')} />
+        <Kpi label="Applications (7d)" value={s.applications_7d} icon="send" chip="mint" />
+        <Kpi label="Boosted profiles" value={s.boosted} icon="star" chip="butter" />
+      </div>
+
+      {/* Needs you */}
+      {todo.length ? (
+        <section className="rounded-[24px] bg-forest p-5 text-white shadow-card lg:p-6">
+          <p className="text-[12px] font-semibold uppercase tracking-[0.12em] text-lime">Needs you</p>
+          <div className="mt-3 grid gap-2 md:grid-cols-2 xl:grid-cols-3">
+            {todo.map(x => (
+              <button key={x.label} type="button" onClick={() => go(x.t)} className={cx('flex items-center gap-3 rounded-2xl p-4 text-left transition hover:brightness-110', x.urgent ? 'bg-red' : 'bg-white/10')}>
+                <span className="min-w-0 flex-1"><span className="block text-[15px] font-semibold">{x.label}</span><span className="block text-[12px] text-white/75">{x.sub}</span></span>
+                <Icon name="arrow-right" className="size-4 shrink-0" />
+              </button>
+            ))}
+          </div>
+        </section>
+      ) : (
+        <section className="flex items-center gap-3 rounded-[24px] border border-line bg-surface p-5 shadow-card">
+          <span className="flex size-11 items-center justify-center rounded-2xl bg-mint"><Icon name="shield-check" className="size-5" /></span>
+          <span><span className="block font-semibold">All clear</span><span className="block text-[13px] text-muted">Nothing waiting on you right now.</span></span>
+        </section>
+      )}
+
+      {/* Growth + split */}
+      <div className="grid gap-5 xl:grid-cols-3">
+        <Card className="xl:col-span-2" title="New members" sub={series ? sum('signups') + ' joined in the last ' + range + ' days · ' + week('signups') + ' this week' : 'Loading…'} right={rangeToggle}>
+          {series ? <AreaChart data={series.map(d => ({ day: d.day, value: d.signups }))} unit="new members" /> : <div className="h-48 animate-pulse rounded-xl bg-chip" />}
+        </Card>
+        <Card title="Who’s on The Ident" sub={(s.members || 0).toLocaleString('en-GB') + ' real members'}>
+          <SplitBar parts={[{ label: 'Performers', value: s.performers || 0, color: '#2E8B6A' }, { label: 'Casting', value: s.casting || 0, color: '#C7608A' }]} />
+          <div className="mt-5 grid grid-cols-2 gap-2 border-t border-line pt-4 text-[13px]">
+            <button type="button" onClick={() => go('safety')} className="rounded-xl bg-chip/60 p-3 text-left"><span className="title block text-[20px]">{s.open_flags}</span><span className="text-muted">Open flags</span></button>
+            <button type="button" onClick={() => go('members')} className="rounded-xl bg-chip/60 p-3 text-left"><span className="title block text-[20px]">{s.suspended}</span><span className="text-muted">Suspended</span></button>
+          </div>
+        </Card>
+      </div>
+
+      {/* Activity + latest jobs */}
+      <div className="grid gap-5 xl:grid-cols-3">
+        <Card className="xl:col-span-2" title="Applications" sub={series ? sum('applications') + ' in the last ' + range + ' days · ' + sum('messages') + ' messages sent' : 'Loading…'} right={rangeToggle}>
+          {series ? <BarChart data={series.map(d => ({ day: d.day, value: d.applications }))} unit="applications" /> : <div className="h-48 animate-pulse rounded-xl bg-chip" />}
+        </Card>
+        <Card title="Latest jobs" right={<button type="button" onClick={() => go('jobs')} className="text-[13px] font-semibold text-green-ink">See all</button>}>
+          {!recent ? <div className="h-40 animate-pulse rounded-xl bg-chip" /> : recent.jobs.length === 0 ? <p className="text-sm text-muted">No real jobs yet.</p> : (
+            <ul className="space-y-3">
+              {recent.jobs.map(j => (
+                <li key={j.id}><Link href={'/find/' + j.id} className="flex items-center gap-3">
+                  <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-butter"><Icon name={j.shared_by_ident ? 'share' : 'briefcase'} className="size-[18px]" /></span>
+                  <span className="min-w-0 flex-1"><span className="block truncate text-[14px] font-semibold">{[j.project_in || j.job_title, j.project_role].filter(Boolean).join(' — ')}</span><span className="block truncate text-[12px] text-muted">{j.location || 'Location TBC'}</span></span>
+                  <span className="shrink-0 text-[12px] text-muted">{when2(j.created_at)}</span>
+                </Link></li>
+              ))}
+            </ul>
+          )}
+        </Card>
+      </div>
+
+      {/* Latest sign-ups */}
+      <Card title="Latest sign-ups" right={<button type="button" onClick={() => go('members')} className="text-[13px] font-semibold text-green-ink">See all</button>}>
+        {!recent ? <div className="h-32 animate-pulse rounded-xl bg-chip" /> : (
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[560px] text-left text-[14px]">
+              <thead className="text-[12px] uppercase tracking-[0.06em] text-muted"><tr><th className="pb-2 font-medium">Member</th><th className="pb-2 font-medium">Role</th><th className="pb-2 font-medium">Joined</th><th className="pb-2 font-medium">Status</th></tr></thead>
+              <tbody className="divide-y divide-line">
+                {recent.people.map(m => (
+                  <tr key={m.id}>
+                    <td className="py-2.5"><Link href={'/talent/' + m.id} className="flex items-center gap-3"><span className="flex size-9 items-center justify-center rounded-full bg-mint text-[12px] font-semibold">{(m.first_name || m.email || '?').slice(0, 1).toUpperCase()}</span><span><span className="block font-semibold">{fullName(m) || '—'}</span><span className="block text-[12px] text-muted">{m.email}</span></span></Link></td>
+                    <td className="py-2.5">{m.account_role === 'caster' ? 'Casting' : 'Performer'}</td>
+                    <td className="py-2.5 text-muted">{when2(m.created_at)}</td>
+                    <td className="py-2.5">{m.suspended ? <span className="rounded-full bg-red px-2 py-0.5 text-[11px] font-semibold text-white">Suspended</span> : m.email_verified ? <span className="rounded-full bg-mint px-2 py-0.5 text-[11px] font-semibold">Verified</span> : <span className="rounded-full bg-chip px-2 py-0.5 text-[11px]">Unverified</span>}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </Card>
     </div>
   )
 }
