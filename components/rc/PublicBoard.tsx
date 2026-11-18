@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import Icon from '@/components/rc/Icon'
 import JobCard from '@/components/rc/JobCard'
+import Typewriter from '@/components/rc/Typewriter'
 import { Empty, PageLoading, SearchField, cx } from '@/components/rc/ui'
 import { supabase } from '@/lib/supabase'
 import { useAsync } from '@/lib/rc/useAsync'
@@ -81,12 +82,12 @@ export default function PublicBoard() {
       <PublicTopBar />
       <section className="relative overflow-hidden bg-glow">
         <div className="mx-auto max-w-[1080px] px-4 pb-8 pt-10 sm:pt-14">
-          <p className="inline-flex items-center gap-2 rounded-full bg-surface/80 px-3 py-1 text-[13px] font-medium shadow-card">
+          <p className="rise inline-flex items-center gap-2 rounded-full bg-surface/80 px-3 py-1 text-[13px] font-medium shadow-card">
             <span className="size-2 rounded-full bg-lime ring-2 ring-forest/15" /> {loading ? 'Loading roles…' : jobs.length + ' live role' + (jobs.length === 1 ? '' : 's')}
           </p>
-          <h1 className="mt-4 max-w-[680px] text-[38px] leading-[1.05] sm:text-[52px]">Castings, auditions &amp; paid work for performers</h1>
-          <p className="mt-3 max-w-[560px] text-[16px] text-muted">Theatre, screen, commercials and dance — posted by casting directors and producers. Free to browse — join to apply.</p>
-          <div className="mt-6 max-w-[560px]"><SearchField value={q} onChange={setQ} placeholder="Search roles, shows, places…" /></div>
+          <h1 className="mt-4 min-h-[3.15em] max-w-[680px] sm:min-h-[2.1em] text-[38px] leading-[1.05] sm:text-[52px]"><Typewriter text="Castings, auditions & paid work for " words={['performers', 'actors', 'dancers', 'singers', 'musicians']} /></h1>
+          <p className="rise mt-3 max-w-[560px] text-[16px] text-muted" style={{ '--d': '900ms' } as React.CSSProperties}>Theatre, screen, commercials and dance — posted by casting directors and producers. Free to browse — join to apply.</p>
+          <div className="rise mt-6 max-w-[560px]" style={{ '--d': '1050ms' } as React.CSSProperties}><SearchField value={q} onChange={setQ} placeholder="Search roles, shows, places…" /></div>
         </div>
       </section>
 
@@ -105,14 +106,14 @@ export default function PublicBoard() {
           ) : groups.map(g => (
             <section key={g.label}>
               <h2 className="mb-3 mt-7 text-xs font-semibold uppercase tracking-[0.1em] text-muted">{g.label}</h2>
-              <ul className="space-y-3">
+              <ul className="rise-stagger space-y-3">
                 {g.jobs.map(j => <JobCard key={j.id} job={j} poster={data?.posters.get(j.created_by || '')} href={(signedIn ? '/find/' : '/jobs/') + j.id} />)}
               </ul>
             </section>
           ))}
         </div>
 
-        <aside className="mt-8 space-y-4 lg:sticky lg:top-32 lg:mt-7 lg:self-start">
+        <aside className="rise mt-8 space-y-4 lg:sticky lg:top-32 lg:mt-7 lg:self-start">
           {!signedIn && (
             <div className="rounded-[var(--radius)] bg-hero p-5 text-white">
               <p className="font-display text-[22px] font-bold leading-tight">Get matched to roles</p>

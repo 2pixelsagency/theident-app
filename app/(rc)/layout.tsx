@@ -3,7 +3,7 @@
 import { Suspense, useEffect } from 'react'
 import { usePathname } from 'next/navigation'
 import { BottomNav, SideNav, isTabRoot } from '@/components/rc/nav'
-import { PageLoading, Toaster, cx, trackNav } from '@/components/rc/ui'
+import { PageLoading, Toaster, cx, listenNav, trackNav } from '@/components/rc/ui'
 import { MeProvider, useMe } from '@/lib/rc/me'
 import { VerifyGate } from '@/components/rc/verify'
 import PushModal from '@/components/rc/PushModal'
@@ -12,6 +12,7 @@ import PlanPaywall from '@/components/rc/PlanPaywall'
 function Shell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
   const { role, profile, hasPlan } = useMe()
+  useEffect(() => listenNav(), [])
   useEffect(() => { trackNav() }, [pathname])
   const showNav = isTabRoot(pathname, role) && !(profile && !hasPlan)
   // Soft gate: browsing is open, but applying and posting wait for a verified email (also enforced by RLS)

@@ -22,8 +22,9 @@ function Finish() {
       const draft = readDraft()
       const { data: p, error: err } = await supabase.from('profiles').select('first_name, account_role').eq('id', uid).maybeSingle()
       if (err) { setError(err.message); return }
-      const role: Role = isRole(picked) ? picked : draft?.role ?? (isRole(p?.account_role) ? p.account_role : 'performer')
-      await switchSide(uid, role)
+      // Existing (onboarded) accounts keep their type; only a brand-new account takes the side picked at sign-up
+      const role: Role = p?.first_name && isRole(p.account_role) ? p.account_role : isRole(picked) ? picked : draft?.role ?? (isRole(p?.account_role) ? p.account_role : 'performer')
+      if (!p?.first_name) await switchSide(uid, role)
 
       if (!p?.first_name) {
         // Brand-new account: verification (Google/Apple emails count as verified) then question 1

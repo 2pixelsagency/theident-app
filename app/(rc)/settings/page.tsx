@@ -1,8 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { useRouter } from 'next/navigation'
-import { BackHeader, Card, ListRow, PageLoading, Segmented, Toggle, toast } from '@/components/rc/ui'
+import { BackHeader, Card, ListRow, PageLoading, Toggle, toast } from '@/components/rc/ui'
 import { supabase } from '@/lib/supabase'
 import { useMe } from '@/lib/rc/me'
 import { signOutAndReset } from '@/lib/rc/onboarding'
@@ -16,9 +15,7 @@ import { NOTIFICATION_TYPES, disablePush, enablePush, pushState, type PrefKey, t
 type Prefs = Record<PrefKey | 'marketing', boolean>
 
 export default function SettingsPage() {
-  const router = useRouter()
   const me = useMe()
-  const [switching, setSwitching] = useState(false)
   const [push, setPush] = useState<PushState | 'busy' | null>(null)
   useEffect(() => { let live = true; pushState().then(s => live && setPush(s)); return () => { live = false } }, [])
   const togglePush = async (on: boolean) => {
@@ -64,17 +61,6 @@ export default function SettingsPage() {
   }
   const setPref = (k: keyof Prefs, v: boolean) => update({ notification_prefs: { ...prefs, [k]: v }, ...(k === 'matches' ? { email_alerts_enabled: v } : {}) })
 
-  const switchRole = async (role: 'performer' | 'caster') => {
-    if (role === me.role) return
-    setSwitching(true)
-    const { error } = await supabase.from('profiles').update({ account_role: role }).eq('id', me.id)
-    if (error) { setSwitching(false); toast('Couldn’t switch'); return }
-    await me.refresh()
-    setSwitching(false)
-    toast(role === 'caster' ? 'Switched to casting' : 'Switched to performer')
-    router.replace('/home')
-  }
-
   const logout = signOutAndReset
 
   const section = (title: string) => <p className="mb-2 mt-6 text-xs font-medium uppercase tracking-[0.08em] text-muted">{title}</p>
@@ -90,9 +76,11 @@ export default function SettingsPage() {
     <>
       <BackHeader title="Settings" />
       <div className="px-4 pb-12">
-        {section('Using The Ident as')}
-        <Segmented value={me.role} onChange={v => !switching && switchRole(v)} options={[{ value: 'performer', label: 'Performer' }, { value: 'caster', label: 'Casting / hiring' }]} />
-        <p className="mt-2 text-xs text-muted">Switches your home screen and bottom nav. Your profile and history stay the same.</p>
+        {section('Account type')}
+        <Card className="px-4 py-3.5">
+          <p className="text-[15px] font-medium">{me.role === 'caster' ? 'Casting / hiring' : 'Performer'}</p>
+          <p className="text-[13px] text-muted">Your account type is set when you join. Need it changed? Contact <a href={'mailto:' + SUPPORT_EMAIL} className="font-medium text-green-ink">support</a>.</p>
+        </Card>
 
         {section('Account')}
         <Card className="divide-y divide-line overflow-hidden">

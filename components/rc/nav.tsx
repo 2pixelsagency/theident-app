@@ -1,5 +1,6 @@
 'use client'
 
+import Typewriter from './Typewriter'
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
@@ -152,8 +153,8 @@ export function HomeHeader({ subline }: { subline?: string }) {
         <IconButton icon="inbox" label={role === 'caster' ? 'Submissions' : 'Castings'} href={role === 'caster' ? '/postings' : '/castings'} />
         <IconButton icon="bell" label="Notifications" href="/inbox" dot={unreadNotifications > 0} />
       </div>
-      <h1 className="mt-4 text-[26px]">Hi, {name}</h1>
-      <p className="mt-1 text-sm text-muted">{subline ?? fmtDate(new Date(), { weekday: 'long', day: 'numeric', month: 'long' })}</p>
+      <h1 className="mt-4 min-h-[1.2em] text-[26px]"><Typewriter key={name} text={'Hi, ' + name} once="home-greeting" /></h1>
+      <p className="rise mt-1 text-sm text-muted" style={{ '--d': '350ms' } as React.CSSProperties}>{subline ?? fmtDate(new Date(), { weekday: 'long', day: 'numeric', month: 'long' })}</p>
     </header>
   )
 }

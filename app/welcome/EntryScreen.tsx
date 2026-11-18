@@ -7,7 +7,7 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import Icon from '@/components/rc/Icon'
 import { cx } from '@/components/rc/ui'
 import { supabase } from '@/lib/supabase'
-import { dashboardFor, startSignup, switchSide, type Role } from '@/lib/rc/onboarding'
+import { dashboardFor, startSignup, type Role } from '@/lib/rc/onboarding'
 import { authRedirect } from '@/lib/rc/authRedirect'
 
 type Side = 'perform' | 'cast'
@@ -84,11 +84,12 @@ export default function EntryScreen() {
       else setError('We couldn’t log you in just now. Check your connection and try again.')
       return
     }
-    await switchSide(data.user.id, s.role)
-    // Never finished onboarding → pick up at question 1 on this side
-    const { data: p } = await supabase.from('profiles').select('first_name').eq('id', data.user.id).maybeSingle()
-    if (!p?.first_name) { startSignup(s.role); router.replace('/start/profile'); return }
-    router.replace(dashboardFor(s.role))
+    // Accounts are one type for good: log in to the side the account belongs to, whichever toggle was showing
+    const { data: p } = await supabase.from('profiles').select('first_name, account_role').eq('id', data.user.id).maybeSingle()
+    const side: Role = p?.account_role === 'caster' ? 'caster' : 'performer'
+    // Never finished onboarding → pick up at question 1
+    if (!p?.first_name) { startSignup(side); router.replace('/start/profile'); return }
+    router.replace(dashboardFor(side))
   }
 
   const resendConfirm = async () => {
