@@ -33,7 +33,8 @@ export default function TalentProfilePage() {
     // Casting relationship with this person across my postings
     let apps: (CasterApp & { jobs: { project_in: string | null; project_role: string | null; job_title: string | null; is_side_hustle: boolean; production_company: string | null } | null })[] = []
     let postings: { id: string; title: string }[] = []
-    if (me.role === 'caster') {
+    // Anyone who has posted a job can cast it — performers included
+    {
       const { data: mine } = await supabase.from('jobs').select('id, project_in, project_role, job_title, is_side_hustle, production_company').eq('created_by', me.id).eq('is_published', true).order('created_at', { ascending: false })
       postings = (mine || []).map(j => ({ id: j.id, title: jobTitle(j) }))
       if (mine?.length) {
@@ -42,7 +43,7 @@ export default function TalentProfilePage() {
       }
     }
     return { full, shortlists: (count as number | null) ?? 0, apps, postings }
-  }, [talentId, me.id, me.role])
+  }, [talentId, me.id])
 
   if (loading) return <PageLoading />
   if (!data?.full.profile) return <div className="pt-16"><Empty icon="user" title="Profile not found" /></div>
@@ -52,7 +53,7 @@ export default function TalentProfilePage() {
   const app = apps.find(a => a.id === appParam) || apps.find(a => !a.outcome) || null
   const step = nextStep(app)
   const name = fullName(t)
-  const isCaster = me.role === 'caster'
+  const isCaster = me.role === 'caster' || postings.length > 0
   const isMe = me.id === t.id
 
   const message = async () => {

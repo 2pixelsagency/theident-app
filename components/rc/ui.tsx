@@ -67,17 +67,41 @@ export function DarkCard({ className, children }: { className?: string; children
 /* ---------- Headers ---------- */
 
 // Back arrow + title, flush-left and on one line. No tap "box" behind the arrow.
-// In-app history: the (rc) layout counts screens visited this session. Back goes back when there's somewhere
-// in the app to go back to; otherwise it *replaces* with a fallback so it never builds a back-and-forth loop.
-const NAV_KEY = 'ident.navDepth'
-export function trackNav() { try { sessionStorage.setItem(NAV_KEY, String(Number(sessionStorage.getItem(NAV_KEY) || 0) + 1)) } catch { /* private mode */ } }
+// In-app history. The (rc) layout records every screen in a small stack (sessionStorage). Visiting a screen
+// that's already in the stack (e.g. Profile → Edit → save → Profile) collapses the loop, so Back never
+// bounces between two screens. Back uses the browser's history only when we know the previous browser
+// entry is the previous screen; otherwise it replaces with the right screen (or the fallback).
+type NavEntry = { path: string; pushed: boolean }
+const STACK_KEY = 'ident.navStack', INTENT_KEY = 'ident.navIntent'
+const readStack = (): NavEntry[] => { try { const v = JSON.parse(sessionStorage.getItem(STACK_KEY) || '[]'); return Array.isArray(v) ? v : [] } catch { return [] } }
+const writeStack = (s: NavEntry[]) => { try { sessionStorage.setItem(STACK_KEY, JSON.stringify(s.slice(-40))) } catch { /* private mode */ } }
+const setIntent = (v: 'pop' | 'replace') => { try { sessionStorage.setItem(INTENT_KEY, v) } catch { /* */ } }
+const bare = (p: string) => p.split('?')[0].replace(/\/$/, '') || '/'
+export function listenNav() {
+  const on = () => setIntent('pop')
+  window.addEventListener('popstate', on)
+  return () => window.removeEventListener('popstate', on)
+}
+export function trackNav() {
+  let intent: string | null = null
+  try { intent = sessionStorage.getItem(INTENT_KEY); sessionStorage.removeItem(INTENT_KEY) } catch { /* */ }
+  const here = window.location.pathname + window.location.search
+  const s = readStack()
+  const i = s.findIndex(e => bare(e.path) === bare(here))
+  if (i >= 0) {
+    const t = s.slice(0, i + 1)
+    t[i] = { path: here, pushed: intent === 'pop' ? s[i].pushed : false }
+    writeStack(t)
+  } else writeStack([...s, { path: here, pushed: intent === null }])
+}
 export function useGoBack(fallback = '/home') {
   const router = useRouter()
   return () => {
-    let depth = 0
-    try { depth = Number(sessionStorage.getItem(NAV_KEY) || 0) } catch { /* */ }
-    if (depth > 1) { try { sessionStorage.setItem(NAV_KEY, String(depth - 2)) } catch { /* */ } router.back() }
-    else router.replace(fallback)
+    const s = readStack()
+    const cur = s[s.length - 1], prev = s[s.length - 2]
+    if (prev && cur?.pushed) { setIntent('pop'); router.back(); return }
+    setIntent('replace')
+    router.replace(prev ? prev.path : fallback)
   }
 }
 

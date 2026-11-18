@@ -56,7 +56,7 @@ function PerformerHome() {
       <HomeHeader subline={subline} />
       <VerifyBanner />
       <HomeCompleteness />
-      <div className="px-4">
+      <div className="rise-stagger px-4">
         {live && <LiveCard app={live} shows={todayShows} now={now} />}
         <LatestJobs limit={3} postHref="/postings/new?type=side" />
         <TodoList compact />
@@ -181,7 +181,7 @@ function CasterHome() {
       <HomeHeader subline={sub} />
       <VerifyBanner />
       <HomeCompleteness />
-      <div className="px-4">
+      <div className="rise-stagger px-4">
         <div className="mt-4 grid grid-cols-2 gap-3">
           <Link href="/postings" className="flex items-center gap-3 rounded-[var(--radius)] border border-line bg-surface p-4 shadow-card">
             <span className="text-[26px] font-semibold leading-none">{toReview.length}</span>
