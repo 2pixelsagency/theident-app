@@ -20,9 +20,7 @@ export function BrandsEditor({ uid, brands, onChange }: { uid: string; brands: B
     const brand_name = name.trim()
     if (!brand_name) return
     setBusy(true)
-    // Logo lookup (server-side key); a missing logo just shows initials
-    const logo = await fetch('/api/brandfetch?brand=' + encodeURIComponent(brand_name)).then(r => r.json()).then(d => (d.logo as string | null) ?? null).catch(() => null)
-    const { data, error } = await supabase.from('profile_brands').insert({ profile_id: uid, brand_name, logo_url: logo, sort_order: brands.length }).select('id, brand_name, logo_url').single()
+    const { data, error } = await supabase.from('profile_brands').insert({ profile_id: uid, brand_name, logo_url: null, sort_order: brands.length }).select('id, brand_name, logo_url').single()
     setBusy(false)
     if (error || !data) { toast('Couldn’t add that brand'); return }
     onChange([...brands, data as Brand])
@@ -40,11 +38,7 @@ export function BrandsEditor({ uid, brands, onChange }: { uid: string; brands: B
       {brands.length > 0 && (
         <div className="mb-3 flex flex-wrap gap-2">
           {brands.map(b => (
-            <span key={b.id} className="inline-flex h-10 items-center gap-2 rounded-xl border border-line bg-surface pl-2 pr-1 text-sm font-medium">
-              {b.logo_url
-                // eslint-disable-next-line @next/next/no-img-element
-                ? <img src={b.logo_url} alt="" className="size-6 rounded object-contain" />
-                : <span className="flex size-6 items-center justify-center rounded bg-forest text-[10px] text-white">{b.brand_name.slice(0, 2).toUpperCase()}</span>}
+            <span key={b.id} className="inline-flex h-10 items-center gap-2 rounded-xl border border-line bg-surface pl-3 pr-1 text-sm font-medium">
               {b.brand_name}
               <button type="button" aria-label={'Remove ' + b.brand_name} onClick={() => remove(b)} className="inline-flex size-7 items-center justify-center rounded-full text-muted hover:bg-chip"><Icon name="x" className="size-3.5" /></button>
             </span>
