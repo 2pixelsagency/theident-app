@@ -130,9 +130,8 @@ export default function CastingProfile({ data, owner, onBack, onShare, topRight,
           {brands.length ? (
             <div className="grid grid-cols-3 gap-2 sm:grid-cols-4">
               {brands.map(b => (
-                <div key={b.id} className="flex aspect-[3/2] items-center justify-center rounded-xl border border-line bg-surface p-3 text-center">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  {b.logo_url ? <img src={b.logo_url} alt={b.brand_name} className="max-h-9 max-w-full object-contain grayscale" /> : <span className="font-display text-[15px] font-bold leading-tight">{b.brand_name}</span>}
+                <div key={b.id} title={b.brand_name} className="flex min-h-[64px] items-center justify-center rounded-xl border border-line bg-surface px-3 py-3 text-center">
+                  <span className="line-clamp-2 font-display text-[15px] font-bold leading-tight tracking-[-0.01em]">{b.brand_name}</span>
                 </div>
               ))}
             </div>
