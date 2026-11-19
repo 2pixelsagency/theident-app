@@ -4,12 +4,13 @@ import { useMemo, useRef, useState } from 'react'
 import Link from 'next/link'
 import { useParams } from 'next/navigation'
 import Icon from '@/components/rc/Icon'
-import { Avatar, BackHeader, Button, Card, Empty, PageLoading, Segmented, Sheet, cx, toast } from '@/components/rc/ui'
+import { Avatar, BackHeader, Button, Card, Empty, PageLoading, Sheet, cx, toast } from '@/components/rc/ui'
 import { supabase } from '@/lib/supabase'
 import { useMe } from '@/lib/rc/me'
 import { useAsync } from '@/lib/rc/useAsync'
 import { ProductionChatCard } from '@/components/rc/CastInvite'
 import { fullName, toISODate } from '@/lib/rc/format'
+import RecallForm, { type RecallPatch } from '@/components/rc/RecallForm'
 import { CASTER_APP_SELECT, casterStage, setStage, stageNote, type CasterApp, type CasterStage } from '@/lib/rc/casting'
 import { craftTag } from '@/lib/rc/talent'
 import { jobTitle } from '@/lib/rc/pipeline'
@@ -31,6 +32,8 @@ export default function CastingReviewPage() {
   const [selected, setSelected] = useState<string[]>([])
   const [lastMove, setLastMove] = useState<Move | null>(null)
   const [manage, setManage] = useState(false)
+  const [showFilters, setShowFilters] = useState(false)
+  const [recallFor, setRecallFor] = useState<string[] | null>(null)
   const [q, setQ] = useState('')
   const [onlyVideo, setOnlyVideo] = useState(false)
   const [minStars, setMinStars] = useState(0)
@@ -90,14 +93,20 @@ export default function CastingReviewPage() {
     const prev = lastMove
     setLastMove(null)
     mutate(d => d && { ...d, apps: d.apps.map(a => prev.before.find(b => b.id === a.id) || a) })
-    await Promise.all(prev.before.map(b => setStage(b.id, { status: b.status, outcome: b.outcome, shortlisted: b.shortlisted, due_at: b.due_at })))
+    await Promise.all(prev.before.map(b => setStage(b.id, { status: b.status, outcome: b.outcome, shortlisted: b.shortlisted, due_at: b.due_at, recall_kind: b.recall_kind ?? null, meeting_url: b.meeting_url ?? null })))
   }
 
   const inAWeek = () => { const d = new Date(); d.setDate(d.getDate() + 7); d.setHours(18, 0, 0, 0); return d.toISOString() }
   const shortlist = (ids: string[]) => apply(ids, { shortlisted: true }, 'moved to Shortlist')
   const requestTape = (ids: string[]) => apply(ids, { status: 'audition', shortlisted: true, due_at: inAWeek() }, 'asked for a self-tape')
   const moveToNo = (ids: string[]) => apply(ids, { outcome: 'declined' }, 'moved to No — they’ll get a kind “not this time” note')
-  const recall = (ids: string[]) => apply(ids, { status: 'callback', shortlisted: true }, 'invited to recall')
+  // Recall opens a sheet: another tape, a video call (with link) or in person
+  const recall = (ids: string[]) => setRecallFor(ids)
+  const sendRecall = async (patch: RecallPatch) => {
+    const ids = recallFor || []
+    setRecallFor(null)
+    await apply(ids, patch, patch.recall_kind === 'self_tape' ? 'asked for another tape' : patch.recall_kind === 'video_call' ? 'sent a video call invite' : 'invited to recall')
+  }
   const reviewActions = (id: string) => {
     const a = apps.find(x => x.id === id)
     const st = a ? casterStage(a) : 'review'
@@ -119,17 +128,17 @@ export default function CastingReviewPage() {
 
   return (
     <>
-      <BackHeader title={(job.project_in || title) + ' — review'} right={<><span className="text-sm text-muted">{apps.length} in</span><button type="button" onClick={() => setManage(true)} aria-label="Manage posting" className="inline-flex size-9 items-center justify-center rounded-full hover:bg-chip"><Icon name="more" /></button></>} />
-      <div className="px-4 pb-24">
-        <div className="mb-3"><ProductionChatCard jobId={job.id} canCreate title={job.project_in || title} /></div>
+      <BackHeader title={job.project_in || title} right={<><button type="button" onClick={() => setManage(true)} aria-label="Manage posting" className="inline-flex size-9 items-center justify-center rounded-full hover:bg-chip"><Icon name="more" /></button></>} />
+      <div className="px-4 pb-28">
+        <p className="-mt-1 mb-4 text-sm text-muted">{[job.project_in ? job.project_role : null, apps.length + ' applicant' + (apps.length === 1 ? '' : 's')].filter(Boolean).join(' · ')}</p>
         {/* Stage stepper */}
-        <Card className="flex items-center px-2 py-3">
+        <Card className="flex items-center px-1 py-4">
           {STAGES.map((s, i) => (
             <div key={s.key} className="flex flex-1 items-center">
               <button type="button" onClick={() => { setStageTab(s.key); setSelected([]) }} aria-pressed={stage === s.key}
                 className={cx('flex flex-1 flex-col items-center gap-0.5 rounded-lg py-1', stage === s.key ? 'text-ink' : 'text-faint')}>
                 <span className={cx('text-[20px] title', stage === s.key && s.key !== 'review' && 'text-green-ink')}>{counts[s.key]}</span>
-                <span className={cx('text-[11px]', stage === s.key && 'border-b-2 border-green pb-0.5 font-medium text-ink')}>{s.label}</span>
+                <span className={cx('mt-0.5 text-[12px]', stage === s.key && 'border-b-2 border-green pb-0.5 font-semibold text-ink')}>{s.label}</span>
               </button>
               {i < STAGES.length - 1 && <Icon name="chevron-right" className="size-3.5 text-faint" />}
             </div>
@@ -137,24 +146,33 @@ export default function CastingReviewPage() {
         </Card>
 
         {apps.length > 0 && <>
-        <div className="mt-4 flex items-center justify-between text-sm">
-          <span className="text-muted">Showing {shown.length} of {apps.length}{counts.no ? ' · ' : ''}{counts.no > 0 && <button type="button" className="underline" onClick={() => setStageTab('no')}>{counts.no} no</button>}</span>
-          <Segmented className="w-40" value={view} onChange={setView} options={[{ value: 'grid', label: 'Grid' }, { value: 'deck', label: 'Deck' }]} />
+        <div className="mt-5 flex items-center gap-2">
+          <input value={q} onChange={e => setQ(e.target.value)} placeholder="Search applicants" aria-label="Search applicants"
+            className="h-11 min-w-0 flex-1 rounded-xl border border-line bg-field px-4 text-[15px] outline-none focus:border-green focus:bg-surface" />
+          <button type="button" onClick={() => setShowFilters(v => !v)} aria-pressed={showFilters || filtering} aria-label="Filters"
+            className={cx('relative inline-flex size-11 shrink-0 items-center justify-center rounded-xl border', showFilters || filtering ? 'border-forest bg-forest text-white' : 'border-line bg-surface')}>
+            <Icon name="filter" className="size-[18px]" />
+          </button>
+          <button type="button" onClick={() => setView(v => (v === 'grid' ? 'deck' : 'grid'))} aria-label={view === 'grid' ? 'Swipe through one by one' : 'Show as grid'}
+            className="inline-flex size-11 shrink-0 items-center justify-center rounded-xl border border-line bg-surface">
+            <Icon name={view === 'grid' ? 'layers' : 'grid'} className="size-[18px]" />
+          </button>
         </div>
-
-        {/* Search, filters and sort */}
-        <div className="mt-3 space-y-2">
-          <input value={q} onChange={e => setQ(e.target.value)} placeholder="Search name, place, skills…" aria-label="Search applicants"
-            className="h-11 w-full rounded-xl border border-line bg-field px-4 text-[15px] outline-none focus:border-green focus:bg-surface" />
-          <div className="scrollbar-none -mx-4 flex gap-2 overflow-x-auto px-4">
+        {(showFilters || filtering) && (
+          <div className="scrollbar-none -mx-4 mt-2 flex gap-2 overflow-x-auto px-4">
             <FilterChip on={onlyVideo} onClick={() => setOnlyVideo(v => !v)} icon="play" label="Has reel or tape" />
             <FilterChip on={minStars === 3} onClick={() => setMinStars(v => (v === 3 ? 0 : 3))} icon="star" label="3★ +" />
             <FilterChip on={minStars === 4} onClick={() => setMinStars(v => (v === 4 ? 0 : 4))} icon="star" label="4★ +" />
             <FilterChip on={sort === 'rating'} onClick={() => setSort(v => (v === 'rating' ? 'newest' : 'rating'))} icon="trending" label="Top rated first" />
             {filtering && <button type="button" onClick={() => { setQ(''); setOnlyVideo(false); setMinStars(0) }} className="shrink-0 px-2 text-sm font-medium text-green-ink">Clear</button>}
           </div>
+        )}
+        <div className="mt-4 flex items-center justify-between text-sm">
+          <span className="text-muted">{shown.length} {STAGES.find(x => x.key === stage)?.label.toLowerCase() || 'here'}{counts.no > 0 && <> · <button type="button" className="underline" onClick={() => setStageTab('no')}>{counts.no} no</button></>}</span>
+          {view === 'grid' && shown.length > 0 && stage !== 'no' && stage !== 'booked' && (
+            <button type="button" className="font-semibold text-green-ink" onClick={() => setSelected(selected.length ? [] : shown.map(x => x.id))}>{selected.length ? 'Clear selection' : 'Select all'}</button>
+          )}
         </div>
-
         </>}
 
         {lastMove && (
@@ -172,19 +190,20 @@ export default function CastingReviewPage() {
           <Deck key={stage} rows={shown} onYes={id => (stage === 'review' ? shortlist([id]) : requestTape([id]))} onNo={id => moveToNo([id])} yesLabel={stage === 'review' ? 'Shortlist' : 'Self-tape'} />
         ) : (
           <>
-            {stage !== 'no' && stage !== 'booked' && (
-              <div className="scrollbar-none -mx-4 mt-3 flex gap-2 overflow-x-auto px-4">
-                {selected.length < shown.length
-                  ? <BulkChip icon="check-square" label="Select all" onClick={() => setSelected(shown.map(a => a.id))} disabled={false} />
-                  : <BulkChip icon="x" label="Clear" onClick={() => setSelected([])} disabled={false} />}
-                {stage === 'review' && <BulkChip icon="heart" label="Shortlist" onClick={() => shortlist(selected)} disabled={!selected.length} tone />}
-                {stage === 'shortlist' && <BulkChip icon="calendar" label="Invite to recall" onClick={() => recall(selected)} disabled={!selected.length} tone />}
-                <BulkChip icon="video" label="Request self-tape" onClick={() => requestTape(selected)} disabled={!selected.length} />
-                <BulkChip icon="x" label="Move to No" onClick={() => moveToNo(selected)} disabled={!selected.length} />
-                {selected.length > 0 && <span className="self-center whitespace-nowrap pl-1 text-sm font-medium">{selected.length} selected</span>}
+            {selected.length > 0 && stage !== 'no' && stage !== 'booked' && (
+              <div className="fixed inset-x-0 bottom-0 z-40 border-t border-line bg-surface/95 px-4 pb-[max(12px,env(safe-area-inset-bottom))] pt-3 backdrop-blur lg:pl-[17rem]">
+                <div className="mx-auto max-w-[720px]">
+                  <p className="mb-2 text-sm font-semibold">{selected.length} selected</p>
+                  <div className="scrollbar-none flex gap-2 overflow-x-auto">
+                    {stage === 'review' && <BulkChip icon="heart" label="Shortlist" onClick={() => shortlist(selected)} disabled={false} tone />}
+                    {stage === 'shortlist' && <BulkChip icon="calendar" label="Recall" onClick={() => recall(selected)} disabled={false} tone />}
+                    <BulkChip icon="video" label="Ask for self-tape" onClick={() => requestTape(selected)} disabled={false} />
+                    <BulkChip icon="x" label="No" onClick={() => moveToNo(selected)} disabled={false} />
+                  </div>
+                </div>
               </div>
             )}
-            <ul className="mt-3 grid grid-cols-2 gap-3">
+            <ul className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-3">
               {shown.map(a => {
                 const on = selected.includes(a.id)
                 const p = a.profiles
@@ -223,8 +242,12 @@ export default function CastingReviewPage() {
         onIndex={i => setReview(r => r && { ...r, index: i })} onClose={() => setReview(null)}
         onNote={n => mutate(d => d && { ...d, notes: new Map(d.notes).set(n.application_id, n) })} actions={reviewActions} />
 
+      <Sheet open={!!recallFor} onClose={() => setRecallFor(null)} title={'Recall ' + (recallFor ? nameOf(recallFor) : '')}>
+        {recallFor && <RecallForm key={recallFor.join()} who={recallFor.length === 1 ? (apps.find(a => a.id === recallFor[0])?.profiles?.first_name || 'them') : 'everyone'} onSubmit={sendRecall} />}
+      </Sheet>
       <Sheet open={manage} onClose={() => setManage(false)} title="Manage posting">
         <div className="space-y-3">
+          <ProductionChatCard jobId={job.id} canCreate title={job.project_in || title} />
           <Button variant="outline" full href={'/find/' + job.id}>View public listing</Button>
           <Button variant="outline" full onClick={closeApplications}>Close applications</Button>
         </div>

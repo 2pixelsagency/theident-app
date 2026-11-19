@@ -9,7 +9,8 @@ import { supabase } from '@/lib/supabase'
 import { useMe } from '@/lib/rc/me'
 import { useAsync } from '@/lib/rc/useAsync'
 import { ago } from '@/lib/rc/format'
-import { PIPELINE_SELECT, STAGE_META, jobSub, jobTitle, nextAction, stageOf, type PipelineApp, type Stage } from '@/lib/rc/pipeline'
+import CastingNextStep from '@/components/rc/CastingNextStep'
+import { PIPELINE_SELECT, STAGE_META, jobSub, jobTitle, needsTape, nextAction, stageOf, type PipelineApp, type Stage } from '@/lib/rc/pipeline'
 
 type Tab = 'active' | 'self_tape' | 'pencilled' | 'recall' | 'booked'
 const TABS: { value: Tab; label: string }[] = [
@@ -34,7 +35,7 @@ export default function CastingsPage() {
   const { id } = useMe()
   const focus = useSearchParams().get('focus')
   const [tab, setTab] = useState<Tab>('active')
-  const { data: apps, loading } = useAsync(async () => {
+  const { data: apps, loading, mutate } = useAsync(async () => {
     const { data } = await supabase.from('applications').select(PIPELINE_SELECT).eq('profile_id', id).order('updated_at', { ascending: false })
     return (data || []) as unknown as PipelineApp[]
   }, [id])
@@ -71,7 +72,7 @@ export default function CastingsPage() {
             action={tab === 'active' ? <Button size="sm" variant="dark" href="/find">Find roles</Button> : undefined} />
         ) : (
           <ul className="mt-3 space-y-3 pb-6">
-            {shown.map(a => <CastingCard key={a.id} app={a} focused={a.id === focus} />)}
+            {shown.map(a => <CastingCard key={a.id} app={a} focused={a.id === focus} onChange={p => mutate(l => l && l.map(x => x.id === a.id ? { ...x, ...p } : x))} />)}
           </ul>
         )}
       </div>
@@ -79,7 +80,7 @@ export default function CastingsPage() {
   )
 }
 
-function CastingCard({ app, focused }: { app: PipelineApp; focused: boolean }) {
+function CastingCard({ app, focused, onChange }: { app: PipelineApp; focused: boolean; onChange: (p: Partial<PipelineApp>) => void }) {
   const stage = stageOf(app)
   const meta = STAGE_META[stage]
   const title = jobTitle(app.jobs)
@@ -118,15 +119,19 @@ function CastingCard({ app, focused }: { app: PipelineApp; focused: boolean }) {
       <Card className={cx('p-4', focused && 'ring-2 ring-green')}>
         <div className="flex items-start gap-3">
           <div className="min-w-0 flex-1">
-            <Link href={'/find/' + app.job_id} className="text-[17px] font-medium">{title}</Link>
-            <p className="text-[13px] text-muted">{sub}</p>
+            <Link href={'/find/' + app.job_id} className="block text-[17px] font-semibold leading-snug">{title}</Link>
+            {sub && <p className="mt-0.5 text-[13px] text-muted">{sub}</p>}
           </div>
-          <Pill tone={meta.tone}>{meta.label}</Pill>
+          <Pill tone={meta.tone}>{app.status === 'callback' && app.recall_kind === 'video_call' ? 'Video call' : meta.label}</Pill>
         </div>
-        <div className={cx('mt-3 flex items-center gap-2 rounded-xl px-3.5 py-3 text-sm font-medium', ACTION_STYLE[stage])}>
-          <Icon name={meta.icon} className="size-[18px] shrink-0" />
+        <div className={cx('mt-4 flex items-center gap-2.5 rounded-xl px-3.5 py-3 text-sm font-medium', ACTION_STYLE[stage])}>
+          <Icon name={app.tape_sent_at && needsTape(app) ? 'check-circle' : meta.icon} className="size-[18px] shrink-0" />
           <span>{nextAction(app)}</span>
         </div>
+        {app.next_step_note && stage !== 'applied' && (
+          <p className="mt-3 border-l-2 border-line pl-3 text-[13px] leading-relaxed text-muted"><span className="font-medium text-ink">From casting:</span> {app.next_step_note}</p>
+        )}
+        <CastingNextStep app={app} onChange={onChange} />
       </Card>
     </li>
   )

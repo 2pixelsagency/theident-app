@@ -5,6 +5,7 @@ import { Button, Chip, Field, Sheet, TextArea, toast } from './ui'
 import { supabase } from '@/lib/supabase'
 import { setStage, type CasterApp, type CastingStep } from '@/lib/rc/casting'
 import { toISODate } from '@/lib/rc/format'
+import RecallForm, { type RecallPatch } from './RecallForm'
 
 type Posting = { id: string; title: string }
 
@@ -36,6 +37,18 @@ export default function CastingActionSheet({ open, onClose, step, app, profileId
   const [terms, setTerms] = useState('')
   const [saving, setSaving] = useState(false)
   const copy = COPY[step.field]
+
+  // Recall has its own options (another tape / video call / in person)
+  const sendRecall = async (patch: RecallPatch) => {
+    if (!app) return
+    setSaving(true)
+    const error = await setStage(app.id, patch)
+    setSaving(false)
+    if (error) { toast('Couldn’t update — try again'); return }
+    toast('Recall sent to ' + talentName)
+    onDone({ id: app.id, ...patch })
+    onClose()
+  }
 
   const submit = async () => {
     setSaving(true)
@@ -72,6 +85,7 @@ export default function CastingActionSheet({ open, onClose, step, app, profileId
 
   return (
     <Sheet open={open} onClose={onClose} title={copy.title}>
+      {step.field === 'datetime' && app ? <RecallForm who={talentName.split(' ')[0]} saving={saving} onSubmit={sendRecall} /> : (
       <div className="space-y-4">
         {!app && (
           postings.length ? (
@@ -100,6 +114,7 @@ export default function CastingActionSheet({ open, onClose, step, app, profileId
         <TextArea label={'Note to ' + talentName.split(' ')[0] + ' (optional)'} value={note} onChange={e => setNote(e.target.value)} placeholder={step.field === 'due' ? 'e.g. Two contrasting speeches, under 3 minutes' : step.field === 'datetime' ? 'e.g. Studio 2, Spotlight Studios — bring heels' : 'Anything they should know'} />
         <Button full size="lg" onClick={submit} disabled={saving || (!app && !postings.length)}>{saving ? 'Sending…' : copy.cta}</Button>
       </div>
+      )}
     </Sheet>
   )
 }

@@ -19,6 +19,10 @@ export type PipelineApp = {
   held_to: string | null
   next_step_note: string | null
   contract_signed_at: string | null
+  recall_kind?: 'self_tape' | 'video_call' | 'in_person' | null
+  meeting_url?: string | null
+  tape_sent_at?: string | null
+  nda_signed?: boolean | null
   jobs: PipelineJob | null
 }
 
@@ -35,10 +39,12 @@ export type PipelineJob = {
   start_date: string | null
   end_date: string | null
   salary: string | null
+  requires_nda?: boolean | null
+  nda_text?: string | null
   production_types?: { name: string } | null
 }
 
-export const PIPELINE_SELECT = 'id, job_id, status, outcome, created_at, due_at, held_from, held_to, next_step_note, contract_signed_at, jobs(id, project_role, project_in, job_title, company, production_company, casting_team, is_side_hustle, location, start_date, end_date, salary, production_types(name))'
+export const PIPELINE_SELECT = 'id, job_id, status, outcome, created_at, due_at, held_from, held_to, next_step_note, contract_signed_at, recall_kind, meeting_url, tape_sent_at, nda_signed, jobs(id, project_role, project_in, job_title, company, production_company, casting_team, is_side_hustle, location, start_date, end_date, salary, requires_nda, nda_text, production_types(name))'
 
 export function stageOf(a: Pick<PipelineApp, 'status' | 'outcome'>): Stage {
   if (a.outcome) return 'closed'
@@ -80,13 +86,26 @@ export function jobSub(j: PipelineJob | null | undefined) {
 // The single next thing the performer needs to do or know
 export function nextAction(a: PipelineApp): string {
   const stage = stageOf(a)
-  if (a.next_step_note && stage !== 'booked') return a.next_step_note
+  if (needsTape(a) && a.tape_sent_at) return 'Self-tape sent — casting will be in touch'
   switch (stage) {
-    case 'self_tape': return a.due_at ? `Submit your self-tape by ${fmtDate(a.due_at)}` : 'Submit your self-tape'
-    case 'recall': return a.due_at ? `Recall — ${fmtDate(a.due_at)}, ${fmtTime(a.due_at)}` : 'Recall — time to be confirmed'
+    case 'self_tape': return a.due_at ? `Send your self-tape by ${fmtDate(a.due_at)}` : 'Send your self-tape'
+    case 'recall':
+      if (a.recall_kind === 'self_tape') return a.due_at ? `Recall: send a new tape by ${fmtDate(a.due_at)}` : 'Recall: send a new tape'
+      if (a.recall_kind === 'video_call') return a.due_at ? `Video call — ${fmtDate(a.due_at)}, ${fmtTime(a.due_at)}` : 'Video call — time to be confirmed'
+      return a.due_at ? `Recall — ${fmtDate(a.due_at)}, ${fmtTime(a.due_at)}` : 'Recall — time to be confirmed'
     case 'pencilled': return a.held_from ? `Held for shoot dates · ${fmtRange(a.held_from, a.held_to)}` : 'Held — dates to be confirmed'
     case 'booked': return a.contract_signed_at ? 'Contract signed — you’re booked' : 'Sign your contract to confirm'
     case 'closed': return 'Not this time'
     default: return 'Submitted — awaiting response'
   }
+}
+
+// Casting has asked for a tape at this stage (a self-tape request, or a recall by tape)
+export function needsTape(a: Pick<PipelineApp, 'status' | 'outcome' | 'recall_kind'>) {
+  const st = stageOf(a)
+  return st === 'self_tape' || (st === 'recall' && a.recall_kind === 'self_tape')
+}
+// The NDA must be signed before sending tapes or joining a recall
+export function needsNda(a: Pick<PipelineApp, 'nda_signed' | 'jobs'>) {
+  return !!a.jobs?.requires_nda && !a.nda_signed
 }
