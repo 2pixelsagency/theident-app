@@ -7,6 +7,7 @@ import { VerifyBanner } from '@/components/rc/verify'
 import { HomeCompleteness } from '@/components/rc/Completeness'
 import TodoList from '@/components/rc/TodoList'
 import LatestJobs from '@/components/rc/LatestJobs'
+import HiringCard from '@/components/rc/HiringCard'
 import WeekStrip from '@/components/rc/WeekStrip'
 import { Button, Card, PageLoading, Pill, Progress, SectionTitle } from '@/components/rc/ui'
 import { supabase } from '@/lib/supabase'
@@ -58,7 +59,8 @@ function PerformerHome() {
       <HomeCompleteness />
       <div className="rise-stagger px-4">
         {live && <LiveCard app={live} shows={todayShows} now={now} />}
-        <LatestJobs limit={3} postHref="/postings/new?type=side" />
+        <HiringCard />
+        <LatestJobs limit={3} />
         <TodoList compact />
         <BlockCard block={block} />
         <SectionTitle title="This week" action="Diary" href="/diary" />
