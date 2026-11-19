@@ -18,9 +18,14 @@ export type CasterApp = {
   held_from: string | null
   held_to: string | null
   cover_note: string | null
+  recall_kind?: RecallKind | null
+  meeting_url?: string | null
+  tape_sent_at?: string | null
 }
 
-export const CASTER_APP_SELECT = 'id, job_id, profile_id, status, outcome, shortlisted, invited, created_at, due_at, held_from, held_to, cover_note'
+export type RecallKind = 'self_tape' | 'video_call' | 'in_person'
+
+export const CASTER_APP_SELECT = 'id, job_id, profile_id, status, outcome, shortlisted, invited, created_at, due_at, held_from, held_to, cover_note, recall_kind, meeting_url, tape_sent_at'
 
 export function casterStage(a: Pick<CasterApp, 'status' | 'outcome' | 'shortlisted'>): CasterStage {
   if (a.outcome) return 'no'
@@ -43,14 +48,18 @@ export function nextStep(app: Pick<CasterApp, 'status' | 'outcome'> | null): Cas
 }
 
 export function stageNote(a: CasterApp) {
+  if (a.status === 'audition' && a.tape_sent_at) return 'Self-tape received'
   if (a.status === 'audition') return a.due_at ? 'Self-tape due ' + fmtDate(a.due_at) : 'Self-tape requested'
-  if (a.status === 'callback') return a.due_at ? 'Recall ' + fmtDate(a.due_at) : 'Recalled'
+  if (a.status === 'callback') {
+    if (a.recall_kind === 'self_tape') return a.tape_sent_at ? 'Recall tape received' : 'Recall tape' + (a.due_at ? ' due ' + fmtDate(a.due_at) : ' requested')
+    return (a.recall_kind === 'video_call' ? 'Video call ' : 'Recall ') + (a.due_at ? fmtDate(a.due_at) : '')
+  }
   if (a.status === 'offer') return 'Pencilled'
   if (a.status === 'booked') return 'Booked'
   return a.invited ? 'Invited' : 'Applied ' + fmtDate(a.created_at, { day: 'numeric', month: 'short' })
 }
 
-export async function setStage(appId: string, patch: Partial<Pick<CasterApp, 'status' | 'outcome' | 'shortlisted' | 'due_at' | 'held_from' | 'held_to'>> & { next_step_note?: string | null; contract_terms?: string | null }) {
+export async function setStage(appId: string, patch: Partial<Pick<CasterApp, 'status' | 'outcome' | 'shortlisted' | 'due_at' | 'held_from' | 'held_to' | 'recall_kind' | 'meeting_url'>> & { next_step_note?: string | null; contract_terms?: string | null }) {
   const { error } = await supabase.from('applications').update(patch).eq('id', appId)
   return error
 }
