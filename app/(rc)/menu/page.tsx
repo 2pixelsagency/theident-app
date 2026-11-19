@@ -39,7 +39,7 @@ export default function MenuPage() {
         {!caster && <ListRow icon="check-square" title="To do" href="/todo" />}
         <ListRow icon="calendar" title="Diary" href="/diary" />
         {!caster && <ListRow icon="megaphone" title="Your postings" sub="Side hustles and jobs you've posted" href="/postings" />}
-        {!caster && <ListRow icon="plus" title="Post a job" href="/postings/new?type=side" />}
+        {!caster && <ListRow icon="plus" title="Post a job" href="/postings/new" />}
       </Card>
 
       <p className="mb-2 mt-6 text-xs font-semibold uppercase tracking-[0.08em] text-muted">On the road</p>
