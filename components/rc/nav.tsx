@@ -83,7 +83,6 @@ const MORE: Record<Role, { href: string; label: string; icon: string }[]> = {
   performer: [
     { href: '/diary', label: 'Diary', icon: 'calendar' },
     { href: '/blocks', label: 'Goals', icon: 'target' },
-    { href: '/postings/new', label: 'Post a job', icon: 'plus' },
     { href: '/postings', label: 'Your postings', icon: 'megaphone' },
     { href: '/whats-on', label: 'What’s on', icon: 'ticket' },
     { href: '/classes', label: 'Classes', icon: 'sparkle' },
@@ -96,8 +95,6 @@ const MORE: Record<Role, { href: string; label: string; icon: string }[]> = {
     { href: '/whats-on', label: 'What’s on', icon: 'ticket' },
     { href: '/classes', label: 'Classes', icon: 'sparkle' },
     { href: '/digs', label: 'Theatre digs', icon: 'house' },
-    { href: '/pay', label: 'Pay & earnings', icon: 'card' },
-    { href: '/tax', label: 'Tax & expenses', icon: 'pound' },
   ],
 }
 
@@ -123,7 +120,7 @@ export function SideNav() {
       <Link href="/home" className="mb-6 px-3 font-display text-[24px] font-bold tracking-[-0.03em] text-forest">The Ident</Link>
       <nav className="scrollbar-none flex-1 overflow-y-auto">
         <ul className="space-y-0.5">{NAV[role].filter(n => n.href !== '/me').map(n => link(n, n.href === '/chats' ? unreadMessages : undefined))}</ul>
-        <p className="mb-1 mt-6 px-3 text-xs font-medium uppercase tracking-[0.08em] text-faint">More</p>
+        <p className="mb-1 mt-6 px-3 text-xs font-semibold uppercase tracking-[0.08em] text-faint">More</p>
         <ul className="space-y-0.5">{MORE[role].map(n => link(n))}</ul>
         <ul className="mt-6 space-y-0.5">
           {link({ href: '/inbox', label: 'Notifications', icon: 'bell' }, unreadNotifications)}

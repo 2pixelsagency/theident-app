@@ -4,7 +4,6 @@ import { useEffect, useState } from 'react'
 import { BackHeader, Card, ListRow, PageLoading, Toggle, toast } from '@/components/rc/ui'
 import { supabase } from '@/lib/supabase'
 import { useMe } from '@/lib/rc/me'
-import { signOutAndReset } from '@/lib/rc/onboarding'
 import { useAsync } from '@/lib/rc/useAsync'
 import { PLANS, planFor, price } from '@/lib/rc/plans'
 import { isNativeApp } from '@/lib/rc/authRedirect'
@@ -61,29 +60,22 @@ export default function SettingsPage() {
   }
   const setPref = (k: keyof Prefs, v: boolean) => update({ notification_prefs: { ...prefs, [k]: v }, ...(k === 'matches' ? { email_alerts_enabled: v } : {}) })
 
-  const logout = signOutAndReset
 
-  const section = (title: string) => <p className="mb-2 mt-6 text-xs font-medium uppercase tracking-[0.08em] text-muted">{title}</p>
+  const section = (title: string) => <p className="mb-2 mt-6 text-xs font-semibold uppercase tracking-[0.08em] text-muted">{title}</p>
   const toggleRow = (title: string, sub: string | null, checked: boolean, onChange: (v: boolean) => void) => (
     <div className="flex items-center gap-3 px-4 py-3.5">
       <div className="flex-1"><p className="text-[15px] font-medium">{title}</p>{sub && <p className="text-[13px] text-muted">{sub}</p>}</div>
       <Toggle checked={checked} onChange={onChange} label={title} />
     </div>
   )
-  const soon = () => toast('Coming soon')
 
   return (
     <>
       <BackHeader title="Settings" />
       <div className="px-4 pb-12">
-        {section('Account type')}
-        <Card className="px-4 py-3.5">
-          <p className="text-[15px] font-medium">{me.role === 'caster' ? 'Casting / hiring' : 'Performer'}</p>
-          <p className="text-[13px] text-muted">Your account type is set when you join. Need it changed? Contact <a href={'mailto:' + SUPPORT_EMAIL} className="font-medium text-green-ink">support</a>.</p>
-        </Card>
-
         {section('Account')}
         <Card className="divide-y divide-line overflow-hidden">
+          <ListRow icon={me.role === 'caster' ? 'megaphone' : 'sparkle'} title={me.role === 'caster' ? 'Casting account' : 'Performer account'} sub="Set when you join — contact support to change it" href={'mailto:' + SUPPORT_EMAIL + '?subject=' + encodeURIComponent('Change my account type')} chevron={false} />
           <ListRow icon="user" title="Name" sub={fullName(data)} href="/me/edit" />
           <ListRow icon="mail" title="Email" sub={me.email || '—'} chevron={false} />
           <ListRow icon="lock" title="Password" sub="Change your password" href="/settings/password" />
@@ -105,7 +97,7 @@ export default function SettingsPage() {
             <p className="px-4 py-3.5 text-[13px] text-muted">Notifications are blocked for The Ident in your browser or phone settings. Allow them there, then come back.</p>
           ) : toggleRow('Push notifications on this device', push === 'on' ? 'Alerts arrive even when the app is closed' : 'Get alerts for castings and messages', push === 'on', v => push !== 'busy' && push !== null && togglePush(v))}
         </Card>
-        <p className="mb-2 mt-4 text-[13px] text-muted">Choose what alerts you. Everything still appears in your inbox.</p>
+        <p className="mb-2 mt-4 px-1 text-[13px] text-muted">Choose what alerts you — everything still appears in your inbox.</p>
         <Card className="divide-y divide-line overflow-hidden">
           {NOTIFICATION_TYPES.filter(t => me.role === 'performer' || t.key !== 'matches').map(t => (
             <div key={t.key}>{toggleRow(t.title, t.sub, prefs[t.key], v => setPref(t.key, v))}</div>
@@ -113,30 +105,16 @@ export default function SettingsPage() {
           {toggleRow('Tips & news from The Ident', null, prefs.marketing, v => setPref('marketing', v))}
         </Card>
 
-        {section('Payments')}
+        {section('Membership')}
         <Card className="divide-y divide-line overflow-hidden">
-          <ListRow icon="card" title="Payout method" sub="Coming soon" onClick={soon} />
-          <ListRow icon="pound" title="Tax & expenses" href="/tax" />
           <ListRow icon="star" title="Membership" sub={membership.sub} right={membership.action && <span className="text-sm font-medium text-green-ink">{membership.action}</span>} onClick={membership.onClick} href={membership.href} chevron={false} />
         </Card>
 
-        {section('Privacy & safety')}
+        {section('Privacy')}
         <Card className="divide-y divide-line overflow-hidden">
-          <ListRow title="Who can message me" right={<span className="text-sm font-medium">Connections</span>} chevron={false} />
-          <ListRow title="Blocked accounts" onClick={soon} />
-          <ListRow title="Data & privacy" sub="Request a copy or deletion of your data" href={'mailto:' + SUPPORT_EMAIL + '?subject=' + encodeURIComponent('Data request')} />
+          <ListRow icon="shield-check" title="Data & privacy" sub="Request a copy or deletion of your data" href={'mailto:' + SUPPORT_EMAIL + '?subject=' + encodeURIComponent('Data request')} />
         </Card>
 
-        {section('Preferences')}
-        <Card className="divide-y divide-line overflow-hidden">
-          <ListRow title="Appearance" right={<span className="text-sm font-medium">Light</span>} chevron={false} />
-          <ListRow title="Language" right={<span className="text-sm font-medium">English (UK)</span>} chevron={false} />
-        </Card>
-
-        <Card className="mt-6 divide-y divide-line overflow-hidden">
-          <ListRow title="Help & support" href="/help" />
-          <ListRow title="Log out" danger onClick={logout} chevron={false} />
-        </Card>
         <p className="mt-6 text-center text-xs text-faint">The Ident · beta</p>
       </div>
     </>

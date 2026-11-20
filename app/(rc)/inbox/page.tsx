@@ -65,7 +65,7 @@ export default function InboxPage() {
         <TabChips value={filter} onChange={setFilter} options={[{ value: 'all', label: 'All' }, { value: 'roles', label: 'Castings & roles' }, { value: 'connection', label: 'Connections' }, { value: 'digs', label: 'Digs' }]} />
         {loading ? <PageLoading /> : groups.length === 0 ? <Empty icon="bell" title="You’re all caught up" sub="Recalls, self-tape requests, bookings and messages show up here." /> : groups.map(g => (
           <section key={g.label}>
-            <p className="mb-2 mt-5 text-xs font-medium uppercase tracking-[0.08em] text-muted">{g.label}</p>
+            <p className="mb-2 mt-6 text-xs font-semibold uppercase tracking-[0.08em] text-muted">{g.label}</p>
             <ul className="space-y-2">
               {g.rows.map(n => {
                 const l = look(n)

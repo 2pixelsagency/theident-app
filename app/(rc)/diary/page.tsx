@@ -72,7 +72,7 @@ export default function DiaryPage() {
           </div>
         </Card>
 
-        <p className="mb-3 mt-6 text-xs font-medium uppercase tracking-[0.08em] text-muted">{selected ? fmtDate(selected, { weekday: 'long', day: 'numeric', month: 'long' }) : 'Upcoming'}</p>
+        <p className="mb-3 mt-6 text-xs font-semibold uppercase tracking-[0.08em] text-muted">{selected ? fmtDate(selected, { weekday: 'long', day: 'numeric', month: 'long' }) : 'Upcoming'}</p>
         {agenda.length === 0 ? (
           <Card><Empty icon="calendar" title={selected ? 'Nothing on this day' : 'Nothing coming up'} sub="Self-tapes, recalls, pencils and bookings appear here automatically." /></Card>
         ) : (

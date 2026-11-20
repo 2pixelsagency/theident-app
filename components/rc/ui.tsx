@@ -105,7 +105,7 @@ export function useGoBack(fallback = '/home') {
   }
 }
 
-function BackArrow({ back, onBack }: { back?: string; onBack?: () => void }) {
+export function BackArrow({ back, onBack }: { back?: string; onBack?: () => void }) {
   const fallbackBack = useGoBack(back || '/home')
   const goBack = () => (onBack ? onBack() : fallbackBack())
   return (
@@ -153,7 +153,7 @@ export function SectionTitle({ title, action, href, className }: { title: string
 }
 
 export function Eyebrow({ children, className }: { children: React.ReactNode; className?: string }) {
-  return <p className={cx('mb-2 text-xs font-medium uppercase tracking-[0.08em] text-muted', className)}>{children}</p>
+  return <p className={cx('mb-2 text-xs font-semibold uppercase tracking-[0.08em] text-muted', className)}>{children}</p>
 }
 
 /* ---------- Chips & pills ---------- */
