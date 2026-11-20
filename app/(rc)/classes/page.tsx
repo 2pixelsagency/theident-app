@@ -84,7 +84,7 @@ export default function ClassesPage() {
             sub={tab === 'spare' ? 'Can’t make a class you’ve booked? Post it here so someone else can go.' : 'Teach a class or workshop? List it here for free.'}
             action={<Button size="sm" variant="dark" icon="plus" onClick={() => setPosting(true)}>{tab === 'spare' ? 'Pass on a space' : 'List a class'}</Button>} /></div>
         ) : (
-          <ul className="rise-stagger mt-4 space-y-3">
+          <ul className="rise-stagger mt-4 space-y-3 lg:grid lg:grid-cols-2 lg:gap-4 lg:space-y-0">
             {list.map(s => {
               const mine = s.created_by === me, taken = s.status === 'taken'
               return (
