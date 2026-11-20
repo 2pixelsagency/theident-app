@@ -4,7 +4,7 @@ import Link from 'next/link'
 import Icon from './Icon'
 import { Tag, cx } from './ui'
 import { fairPay, payLabel, type PayJob } from '@/lib/rc/pay'
-import { closesLabel, lengthLabel, posterName, type Job, type Poster } from '@/lib/rc/jobs'
+import { closesLabel, jobSource, lengthLabel, posterName, type Job, type Poster } from '@/lib/rc/jobs'
 import { jobTitle } from '@/lib/rc/pipeline'
 
 export function VerifiedTick({ className = 'size-[18px]' }: { className?: string }) {
@@ -46,6 +46,7 @@ export default function JobCard({ job, poster, saved, onToggleSave, bare, href }
           {pay && <Tag tone={side ? 'purple' : 'neutral'}>{pay}</Tag>}
           {tags.slice(0, 2).map(t => <Tag key={t as string}>{t}</Tag>)}
           <FairPayBadge job={job} compact />
+          {jobSource(job, poster) === 'community' && poster && <span className="rounded-full bg-blossom px-2 py-0.5 text-[11px] font-semibold text-ink">Community</span>}
           {job.is_demo && <span className="rounded-full bg-butter px-2 py-0.5 text-[11px] font-semibold text-ink">Demo</span>}
           {closes && !side && closes !== 'Closed' && <span className="self-center text-xs text-muted">{closes}</span>}
         </span>

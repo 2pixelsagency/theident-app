@@ -8,7 +8,7 @@ import Typewriter from '@/components/rc/Typewriter'
 import { Empty, PageLoading, SearchField, cx } from '@/components/rc/ui'
 import { supabase } from '@/lib/supabase'
 import { useAsync } from '@/lib/rc/useAsync'
-import { JOB_SELECT, jobMatchesQuery, loadPosters, type Job } from '@/lib/rc/jobs'
+import { JOB_SELECT, jobMatchesQuery, jobSource, loadPosters, type Job } from '@/lib/rc/jobs'
 import { toISODate } from '@/lib/rc/format'
 
 function useSignedIn() {
@@ -40,7 +40,7 @@ export function PublicTopBar() {
   )
 }
 
-type Cat = 'all' | 'side' | string
+type Cat = 'all' | 'side' | 'casting' | 'community' | string
 const dayKey = (iso: string) => {
   const days = Math.floor((Date.now() - new Date(iso).getTime()) / 864e5)
   return days < 1 ? 'Today' : days < 7 ? 'This week' : days < 31 ? 'This month' : 'Earlier'
@@ -65,7 +65,9 @@ export default function PublicBoard() {
     for (const j of jobs) if (!j.is_side_hustle && j.production_types?.name) counts.set(j.production_types.name, (counts.get(j.production_types.name) || 0) + 1)
     return [...counts.entries()].sort((a, b) => b[1] - a[1]).map(([name]) => name)
   }, [jobs])
-  const shown = jobs.filter(j => jobMatchesQuery(j, q) && (cat === 'all' || (cat === 'side' ? j.is_side_hustle : !j.is_side_hustle && j.production_types?.name === cat)))
+  const shown = jobs.filter(j => jobMatchesQuery(j, q) && (cat === 'all' || (cat === 'side' ? j.is_side_hustle
+    : cat === 'casting' || cat === 'community' ? jobSource(j, data?.posters.get(j.created_by || '')) === cat
+    : !j.is_side_hustle && j.production_types?.name === cat)))
   const groups = shown.reduce<{ label: string; jobs: Job[] }[]>((acc, j) => {
     const label = dayKey(j.created_at)
     const last = acc[acc.length - 1]
@@ -94,6 +96,8 @@ export default function PublicBoard() {
       <div className="sticky top-14 z-30 border-b border-line/70 bg-bg/90 backdrop-blur">
         <div className="scrollbar-none mx-auto flex max-w-[1080px] gap-2 overflow-x-auto px-4 py-3">
           {chip('all', 'All roles')}
+          {chip('casting', 'From casting')}
+          {chip('community', 'Community')}
           {cats.map(c => chip(c, c))}
           {jobs.some(j => j.is_side_hustle) && chip('side', 'Side hustles')}
         </div>
