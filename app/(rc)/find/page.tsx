@@ -10,7 +10,7 @@ import { Button, Chip, Empty, Field, PageHeader, PageLoading, SearchField, Segme
 import { supabase } from '@/lib/supabase'
 import { useMe } from '@/lib/rc/me'
 import { useAsync } from '@/lib/rc/useAsync'
-import { JOB_SELECT, jobMatchesQuery, loadPosters, skillsOf, type Job } from '@/lib/rc/jobs'
+import { JOB_SELECT, jobMatchesQuery, jobSource, loadPosters, skillsOf, type Job, type JobSource } from '@/lib/rc/jobs'
 import { NO_FILTERS, PAY_UNITS, ROLE_TYPES, activeCount, applyFilters, experienceOf, optionsFrom, typeOf, type JobFilters } from '@/lib/rc/jobFilters'
 import { toISODate } from '@/lib/rc/format'
 
@@ -29,6 +29,7 @@ export default function FindPage() {
   const [sort, setSort] = useState<Sort>('newest')
   const [filters, setFilters] = useState<JobFilters>(NO_FILTERS)
   const [showFilters, setShowFilters] = useState(false)
+  const [source, setSource] = useState<JobSource | null>(null)
 
   const { data, loading, mutate } = useAsync(async () => {
     const today = toISODate(new Date())
@@ -53,7 +54,7 @@ export default function FindPage() {
   const laterCount = jobs.filter(j => listOf(j.id) === 'later').length
 
   const shown = useMemo(() => {
-    let list = applyFilters(jobs.filter(j => jobMatchesQuery(j, q)), filters)
+    let list = applyFilters(jobs.filter(j => jobMatchesQuery(j, q) && (!source || jobSource(j, data?.posters.get(j.created_by || '')) === source)), filters)
     list = list.filter(j => {
       const l = data?.lists.get(j.id)
       return view === 'all' ? l !== 'later' : l === view
@@ -61,7 +62,7 @@ export default function FindPage() {
     if (sort === 'closing') list = [...list].sort((a, b) => (a.application_deadline || '9999').localeCompare(b.application_deadline || '9999'))
     if (sort === 'pay') list = [...list].sort((a, b) => Number(b.pay_amount || 0) - Number(a.pay_amount || 0))
     return list
-  }, [jobs, data, q, filters, sort, view])
+  }, [jobs, data, q, filters, sort, view, source])
 
   // Filter choices come from what's actually listed (production types: the full list for roles)
   const options = useMemo(() => ({
@@ -104,8 +105,10 @@ export default function FindPage() {
     return { right, left }
   }
 
-  const setTab = (t: Tab) => { setFilters(NO_FILTERS); setView('all'); router.replace(t === 'side' ? '/find?tab=side' : '/find') }
+  const setTab = (t: Tab) => { setFilters(NO_FILTERS); setSource(null); setView('all'); router.replace(t === 'side' ? '/find?tab=side' : '/find') }
   const quick: { label: string; on: boolean; toggle: () => void }[] = [
+    { label: 'From casting', on: source === 'casting', toggle: () => setSource(s => (s === 'casting' ? null : 'casting')) },
+    { label: 'Community', on: source === 'community', toggle: () => setSource(s => (s === 'community' ? null : 'community')) },
     { label: 'Paid', on: filters.paidOnly, toggle: () => setF('paidOnly', !filters.paidOnly) },
     { label: 'Fair pay', on: filters.fairOnly, toggle: () => setF('fairOnly', !filters.fairOnly) },
     { label: 'Closing this week', on: filters.closingWithin === 7, toggle: () => setF('closingWithin', filters.closingWithin === 7 ? 0 : 7) },
