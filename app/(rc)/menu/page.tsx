@@ -45,6 +45,7 @@ export default function MenuPage() {
       <p className="mb-2 mt-6 text-xs font-semibold uppercase tracking-[0.08em] text-muted">On the road</p>
       <Card className="divide-y divide-line overflow-hidden">
         <ListRow icon="ticket" title="What’s on" sub="Auditions, workshops, talks & premieres" href="/whats-on" />
+        <ListRow icon="sparkle" title="Classes" sub="Spare class spaces & classes to book" href="/classes" />
         <ListRow icon="house" title="Theatre digs" sub="Places to stay near the theatre" href="/digs" />
       </Card>
 
