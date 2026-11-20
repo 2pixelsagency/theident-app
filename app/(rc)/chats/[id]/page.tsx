@@ -5,7 +5,7 @@ import Link from 'next/link'
 import { useParams } from 'next/navigation'
 import Icon from '@/components/rc/Icon'
 import { Bubble, Composer, DayDivider, dayLabel, useStickToBottom } from '@/components/rc/chat'
-import { Avatar, Button, Empty, PageLoading, Sheet, toast, useGoBack } from '@/components/rc/ui'
+import { BackArrow, Avatar, Button, Empty, PageLoading, Sheet, toast, useGoBack } from '@/components/rc/ui'
 import { ReportSheet, SafetyNote, blockUser, unblockUser, type ReportTarget } from '@/components/rc/Safety'
 import { supabase } from '@/lib/supabase'
 import { useMe } from '@/lib/rc/me'
@@ -68,8 +68,8 @@ export default function ThreadPage() {
 
   return (
     <div className="flex min-h-dvh flex-col">
-      <header className="sticky top-0 z-30 flex items-center gap-3 border-b border-line bg-surface/95 px-3 pb-3 pt-[max(12px,env(safe-area-inset-top))] backdrop-blur">
-        <button type="button" aria-label="Back" onClick={goBack} className="inline-flex size-9 items-center justify-center rounded-full hover:bg-chip"><Icon name="chevron-left" className="size-6" /></button>
+      <header className="sticky top-0 z-30 flex items-center gap-3 border-b border-line bg-surface/95 px-4 pb-3 pt-[max(14px,env(safe-area-inset-top))] backdrop-blur">
+        <BackArrow onBack={goBack} />
         <Link href={other ? '/talent/' + other.id : '#'} className="flex min-w-0 flex-1 items-center gap-3">
           <Avatar src={other?.picture_url} name={name} size={40} />
           <span className="min-w-0">

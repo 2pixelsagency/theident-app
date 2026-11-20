@@ -11,7 +11,7 @@ import { craftTag } from '@/lib/rc/talent'
 // App hub linking everything that isn't in the bottom nav
 export default function MenuPage() {
   const goBack = useGoBack('/home')
-  const { profile, role, unreadNotifications } = useMe()
+  const { profile, role } = useMe()
   const caster = role === 'caster'
 
   const logout = signOutAndReset
@@ -19,7 +19,7 @@ export default function MenuPage() {
   return (
     <div className="px-4 pb-10 pt-[max(16px,env(safe-area-inset-top))]">
       <div className="flex items-center justify-between">
-        <h1 className="text-[22px]">Menu</h1>
+        <h1 className="text-[20px]">Menu</h1>
         <button type="button" aria-label="Close menu" onClick={goBack} className="inline-flex size-10 items-center justify-center rounded-full hover:bg-chip"><Icon name="x" className="size-6" /></button>
       </div>
 
@@ -38,26 +38,26 @@ export default function MenuPage() {
         {!caster && <ListRow icon="target" title="Goals" sub="Weekly actions towards what you want" href="/blocks" />}
         {!caster && <ListRow icon="check-square" title="To do" href="/todo" />}
         <ListRow icon="calendar" title="Diary" href="/diary" />
-        {!caster && <ListRow icon="megaphone" title="Your postings" sub="Side hustles and jobs you've posted" href="/postings" />}
-        {!caster && <ListRow icon="plus" title="Post a job" href="/postings/new" />}
+        {!caster && <ListRow icon="megaphone" title="Your postings" sub="Post a job and review applicants" href="/postings" />}
       </Card>
 
-      <p className="mb-2 mt-6 text-xs font-semibold uppercase tracking-[0.08em] text-muted">On the road</p>
+      <p className="mb-2 mt-6 text-xs font-semibold uppercase tracking-[0.08em] text-muted">Community</p>
       <Card className="divide-y divide-line overflow-hidden">
         <ListRow icon="ticket" title="What’s on" sub="Auditions, workshops, talks & premieres" href="/whats-on" />
         <ListRow icon="sparkle" title="Classes" sub="Spare class spaces & classes to book" href="/classes" />
         <ListRow icon="house" title="Theatre digs" sub="Places to stay near the theatre" href="/digs" />
       </Card>
 
-      <p className="mb-2 mt-6 text-xs font-semibold uppercase tracking-[0.08em] text-muted">Money</p>
-      <Card className="divide-y divide-line overflow-hidden">
-        <ListRow icon="card" title="Pay & earnings" href="/pay" />
-        <ListRow icon="pound" title="Tax & expenses" sub="Receipts, claimables and your tax estimate" href="/tax" />
-      </Card>
+      {!caster && (<>
+        <p className="mb-2 mt-6 text-xs font-semibold uppercase tracking-[0.08em] text-muted">Money</p>
+        <Card className="divide-y divide-line overflow-hidden">
+          <ListRow icon="card" title="Pay & earnings" sub="Payments, invoices and what to set aside" href="/pay" />
+          <ListRow icon="pound" title="Tax & expenses" sub="Receipts and your tax estimate" href="/tax" />
+        </Card>
+      </>)}
 
       <p className="mb-2 mt-6 text-xs font-semibold uppercase tracking-[0.08em] text-muted">Account</p>
       <Card className="divide-y divide-line overflow-hidden">
-        <ListRow icon="bell" title="Notifications" href="/inbox" right={unreadNotifications > 0 ? <span className="flex h-6 min-w-6 items-center justify-center rounded-full bg-green px-1.5 text-xs font-medium text-white">{unreadNotifications}</span> : undefined} />
         <ListRow icon="shield-check" title="ID verification" right={profile?.is_verified ? <Pill tone="green">Verified</Pill> : <span className="text-sm text-muted">Get verified</span>} href={profile?.is_verified ? undefined : '/help'} />
         <ListRow icon="settings" title="Settings" href="/settings" />
         <ListRow icon="help" title="Help & support" href="/help" />

@@ -36,7 +36,7 @@ export default function SchedulePage() {
       <BackHeader title="Schedule" right={<IconButton icon="plus" label="Add to diary" href="/diary" />} />
       <div className="px-4 pb-8">
         <div className="rounded-[var(--radius)] bg-dark p-5 text-white">
-          <p className="text-xs font-medium uppercase tracking-[0.08em] text-white/60">This week · {job?.project_in || job?.production_company || 'Your contract'}</p>
+          <p className="text-xs font-semibold uppercase tracking-[0.08em] text-white/60">This week · {job?.project_in || job?.production_company || 'Your contract'}</p>
           <p className="mt-1 text-[20px] title">{venue || 'Venue to be confirmed'}</p>
           <div className="mt-4 grid grid-cols-2 gap-3">
             <a href={venue ? 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(venue) : undefined} target="_blank" rel="noopener noreferrer"

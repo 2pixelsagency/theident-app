@@ -100,7 +100,7 @@ export default function NewCastChatPage() {
 
         {pickedPeople.length > 0 && (
           <>
-            <p className="mb-2 mt-5 text-xs font-medium uppercase tracking-[0.08em] text-muted">Invited · {pickedPeople.length}</p>
+            <p className="mb-2 mt-6 text-xs font-semibold uppercase tracking-[0.08em] text-muted">Invited · {pickedPeople.length}</p>
             <div className="scrollbar-none -mx-4 flex gap-4 overflow-x-auto px-4">
               {pickedPeople.map(p => (
                 <button key={p.id} type="button" onClick={() => toggle(p.id)} className="flex w-14 shrink-0 flex-col items-center gap-1 text-center text-xs text-muted">

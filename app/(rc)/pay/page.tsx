@@ -78,7 +78,7 @@ export default function PayPage() {
         <Button className="mt-4" size="lg" full icon="plus" onClick={() => setLogging(true)}>Log a payment or expense</Button>
 
         <div className="mb-3 mt-6 flex items-center justify-between">
-          <p className="text-xs font-medium uppercase tracking-[0.08em] text-muted">Recent activity</p>
+          <p className="text-xs font-semibold uppercase tracking-[0.08em] text-muted">Recent activity</p>
           {activity.length > 0 && <button type="button" onClick={() => exportLedger(yearPayments, expenses, ty.label)} className="text-sm font-medium text-green-ink">Export CSV</button>}
         </div>
         {activity.length === 0 ? <Card><Empty icon="pound" title="Nothing logged yet" sub="Log each payment as it lands — we’ll keep a running total and put tax aside." /></Card> : (
@@ -95,11 +95,6 @@ export default function PayPage() {
           </ul>
         )}
 
-        <Link href="/tax" className="upload mt-4 flex items-center gap-3 p-4">
-          <span className="flex size-11 items-center justify-center rounded-xl bg-accent text-ink"><Icon name="check-square" /></span>
-          <span className="flex-1"><span className="block text-[15px] font-medium">Open Tax &amp; expenses</span><span className="block text-[13px] text-muted">Self-assessment ready, receipts stored</span></span>
-          <Icon name="chevron-right" className="size-4 text-faint" />
-        </Link>
       </div>
 
       <LogMoneySheet key={String(logging)} open={logging} onClose={() => setLogging(false)} uid={id} jobs={jobs.map(j => ({ id: j.id, title: j.title }))}

@@ -85,7 +85,7 @@ export default function ContractPage() {
         <div className="rounded-[var(--radius)] bg-dark p-5 text-white">
           <div className="flex items-start gap-3">
             <div className="flex-1">
-              <p className="text-xs font-medium uppercase tracking-[0.08em] text-white/60">Engagement</p>
+              <p className="text-xs font-semibold uppercase tracking-[0.08em] text-white/60">Engagement</p>
               <p className="mt-1 text-[20px] title">{jobTitle(j)}</p>
               <p className="text-sm text-white/60">{[j?.project_role, j?.production_company || j?.company].filter(Boolean).join(' · ')}</p>
             </div>
