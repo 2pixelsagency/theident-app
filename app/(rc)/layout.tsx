@@ -9,6 +9,9 @@ import { VerifyGate } from '@/components/rc/verify'
 import PushModal from '@/components/rc/PushModal'
 import PlanPaywall from '@/components/rc/PlanPaywall'
 
+// Screens that use the full desktop width
+const WIDE = /^\/(home|find|classes|postings|talent|digs|whats-on)\/?$/
+
 function Shell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
   const { role, profile, hasPlan } = useMe()
@@ -24,9 +27,9 @@ function Shell({ children }: { children: React.ReactNode }) {
   return (
     <>
       <SideNav />
-      {/* Phone: single column. Desktop: content column beside the left rail. */}
-      <div className="lg:pl-64">
-        <div className={cx('mx-auto min-h-dvh w-full max-w-[480px] md:max-w-[640px] lg:max-w-[720px] lg:pb-12', showNav && 'pb-32')}><Suspense fallback={<PageLoading />}>{paywalled ? <div className="flex min-h-dvh flex-col px-6 pb-8"><PlanPaywall role={role} next={pathname} /></div> : gated ? <VerifyGate action={gated} /> : children}</Suspense></div>
+      {/* Phone: single column. Desktop: beside the slim rail — boards and Home go wide, detail screens stay readable. */}
+      <div className="lg:pl-[76px]">
+        <div className={cx('mx-auto min-h-dvh w-full max-w-[480px] md:max-w-[640px] lg:pb-12', WIDE.test(pathname) ? 'lg:max-w-[1180px] lg:px-6' : 'lg:max-w-[760px]', showNav && 'pb-32 lg:pb-12')}><Suspense fallback={<PageLoading />}>{paywalled ? <div className="flex min-h-dvh flex-col px-6 pb-8"><PlanPaywall role={role} next={pathname} /></div> : gated ? <VerifyGate action={gated} /> : children}</Suspense></div>
       </div>
       {showNav && <BottomNav />}
       <Toaster />

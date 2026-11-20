@@ -98,7 +98,7 @@ const MORE: Record<Role, { href: string; label: string; icon: string }[]> = {
   ],
 }
 
-// Desktop (lg+) left rail; replaces the floating pill
+// Desktop (lg+) slim icon rail (Upwork-style); labels appear on hover. Replaces the floating pill.
 export function SideNav() {
   const pathname = usePathname()
   const { role, unreadMessages, unreadNotifications, profile, name } = useMe()
@@ -106,32 +106,30 @@ export function SideNav() {
     const active = pathname === item.href || pathname.startsWith(item.href + '/')
     return (
       <li key={item.href}>
-        <Link href={item.href} aria-current={active ? 'page' : undefined}
-          className={cx('flex items-center gap-3 rounded-xl px-3 py-2.5 text-[15px] transition hover:bg-chip', active ? 'bg-chip font-medium text-ink' : 'text-muted')}>
-          <Icon name={item.icon} className="size-[22px]" strokeWidth={active ? 1.9 : 1.6} />
-          <span className="flex-1">{item.label}</span>
-          {!!badge && <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-green px-1.5 text-[11px] font-medium text-white">{badge}</span>}
+        <Link href={item.href} aria-label={item.label} aria-current={active ? 'page' : undefined}
+          className={cx('group relative flex size-11 items-center justify-center rounded-xl transition hover:bg-chip', active ? 'bg-chip text-ink' : 'text-muted hover:text-ink')}>
+          <Icon name={item.icon} className="size-[22px]" strokeWidth={active ? 2 : 1.6} />
+          {!!badge && <span className="absolute right-1.5 top-1.5 size-2 rounded-full bg-red ring-2 ring-surface" />}
+          <span className="pointer-events-none absolute left-full top-1/2 z-50 ml-3 -translate-y-1/2 whitespace-nowrap rounded-lg bg-dark px-2.5 py-1.5 text-[13px] font-medium text-white opacity-0 shadow-card transition group-hover:opacity-100">{item.label}</span>
         </Link>
       </li>
     )
   }
   return (
-    <aside aria-label="Main" className="fixed inset-y-0 left-0 z-40 hidden w-64 flex-col border-r border-line bg-surface px-3 py-6 lg:flex">
-      <Link href="/home" className="mb-6 px-3 font-display text-[24px] font-bold tracking-[-0.03em] text-forest">The Ident</Link>
-      <nav className="scrollbar-none flex-1 overflow-y-auto">
-        <ul className="space-y-0.5">{NAV[role].filter(n => n.href !== '/me').map(n => link(n, n.href === '/chats' ? unreadMessages : undefined))}</ul>
-        <p className="mb-1 mt-6 px-3 text-xs font-semibold uppercase tracking-[0.08em] text-faint">More</p>
-        <ul className="space-y-0.5">{MORE[role].map(n => link(n))}</ul>
-        <ul className="mt-6 space-y-0.5">
+    <aside aria-label="Main" className="fixed inset-y-0 left-0 z-40 hidden w-[76px] flex-col items-center border-r border-line bg-surface py-5 lg:flex">
+      <Link href="/home" aria-label="The Ident home" className="flex size-11 items-center justify-center rounded-full bg-forest font-display text-[17px] font-bold tracking-[-0.04em] text-lime">Id</Link>
+      <Link href="/me" aria-label="Your profile" className="mt-5 rounded-full ring-2 ring-transparent transition hover:ring-line"><Avatar src={profile?.picture_url} name={name} size={40} /></Link>
+      <nav className="scrollbar-none mt-6 flex w-full flex-1 flex-col items-center overflow-y-auto">
+        <ul className="flex flex-col items-center gap-1">{NAV[role].filter(n => n.href !== '/me').map(n => link(n, n.href === '/chats' ? unreadMessages : undefined))}
           {link({ href: '/inbox', label: 'Notifications', icon: 'bell' }, unreadNotifications)}
-          {link({ href: '/settings', label: 'Settings', icon: 'settings' })}
-          {link({ href: '/help', label: 'Help & support', icon: 'help' })}
         </ul>
+        <span className="my-4 h-px w-8 bg-line" />
+        <ul className="flex flex-col items-center gap-1">{MORE[role].map(n => link(n))}</ul>
       </nav>
-      <Link href="/me" className="mt-4 flex items-center gap-3 rounded-xl px-3 py-2.5 hover:bg-chip">
-        <Avatar src={profile?.picture_url} name={name} size={36} />
-        <span className="min-w-0 flex-1"><span className="block truncate text-[15px] font-medium">{name || 'Your profile'}</span><span className="block text-[13px] text-muted">View profile</span></span>
-      </Link>
+      <ul className="mt-4 flex flex-col items-center gap-1">
+        {link({ href: '/settings', label: 'Settings', icon: 'settings' })}
+        {link({ href: '/help', label: 'Help & support', icon: 'help' })}
+      </ul>
     </aside>
   )
 }

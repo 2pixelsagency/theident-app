@@ -98,7 +98,7 @@ export default function WhatsOnPage() {
             {list.length === 0 && !featured ? (
               <Card><Empty icon="ticket" title={mine ? 'Nothing saved yet' : 'Nothing listed here yet'} sub={mine ? 'Tap the bookmark on an event to keep it here.' : 'Try another location or type — or host one yourself.'} /></Card>
             ) : (
-              <ul className="space-y-3">
+              <ul className="space-y-3 lg:grid lg:grid-cols-2 lg:gap-4 lg:space-y-0">
                 {list.map(e => {
                   const t = typeMeta(e.event_type)
                   const d = new Date(e.start_date + 'T00:00:00')
