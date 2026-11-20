@@ -71,7 +71,7 @@ export default function HostEventPage() {
   }
 
   const card = 'space-y-4 rounded-[var(--radius)] border border-line bg-surface p-4 shadow-card'
-  const label = 'text-xs font-medium uppercase tracking-[0.08em] text-muted'
+  const label = 'text-xs font-semibold uppercase tracking-[0.08em] text-muted'
 
   return (
     <>

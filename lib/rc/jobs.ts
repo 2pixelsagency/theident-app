@@ -45,14 +45,20 @@ export type Job = PayJob & {
 
 export const JOB_SELECT = 'id, is_side_hustle, project_role, project_in, job_title, company, production_company, casting_team, location, salary, is_paid, pay_amount, pay_unit, contract_dates, start_date, end_date, application_deadline, age_range, gender_requirement, appearance_notes, description, short_summary, commitment_level, schedule, job_category, experience, experience_level, created_at, created_by, requires_nda, nda_text, submit_materials, application_method, application_email, submission_link, is_published, is_demo, source_url, source_handle, shared_by_ident, production_type_id, production_types(name), job_skills(skills(id, name))'
 
-export type Poster = { id: string; first_name: string | null; last_name: string | null; company_name: string | null; picture_url: string | null; is_verified: boolean }
+export type Poster = { id: string; first_name: string | null; last_name: string | null; company_name: string | null; picture_url: string | null; is_verified: boolean; account_role?: string | null }
 
 // jobs.created_by points at auth.users, so posters are fetched separately
 export async function loadPosters(ids: (string | null)[]) {
   const unique = Array.from(new Set(ids.filter((x): x is string => !!x)))
   if (!unique.length) return new Map<string, Poster>()
-  const { data } = await supabase.from('profiles').select('id, first_name, last_name, company_name, picture_url, is_verified').in('id', unique)
+  const { data } = await supabase.from('profiles').select('id, first_name, last_name, company_name, picture_url, is_verified, account_role').in('id', unique)
   return new Map((data || []).map(p => [p.id, p as Poster]))
+}
+
+// Who posted it: a casting account (or a real casting shared by The Ident), or a performer in the community
+export type JobSource = 'casting' | 'community'
+export function jobSource(job: Pick<Job, 'shared_by_ident'>, poster?: Poster): JobSource {
+  return job.shared_by_ident || poster?.account_role === 'caster' ? 'casting' : 'community'
 }
 
 export function posterName(job: Job, poster?: Poster) {

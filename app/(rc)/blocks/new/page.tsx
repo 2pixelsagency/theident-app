@@ -115,5 +115,5 @@ export default function NewBlockPage() {
 }
 
 function Step({ n, label, optional }: { n: number; label: string; optional?: boolean }) {
-  return <p className="mb-2 mt-6 text-xs font-medium uppercase tracking-[0.08em] text-muted">{n} · {label}{optional && <span className="normal-case tracking-normal text-faint"> · optional</span>}</p>
+  return <p className="mb-2 mt-6 text-xs font-semibold uppercase tracking-[0.08em] text-muted">{n} · {label}{optional && <span className="normal-case tracking-normal text-faint"> · optional</span>}</p>
 }

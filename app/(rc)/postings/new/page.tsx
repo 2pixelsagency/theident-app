@@ -118,7 +118,7 @@ function PostJobForm() {
   }
 
   const section = 'rounded-[var(--radius)] border border-line bg-surface p-4 shadow-card space-y-4'
-  const label = 'text-xs font-medium uppercase tracking-[0.08em] text-muted'
+  const label = 'text-xs font-semibold uppercase tracking-[0.08em] text-muted'
 
   return (
     <>

@@ -153,14 +153,14 @@ function Editor({ initial, invoice, profileId, onSaved }: { initial: Draft; invo
         right={invoice && (late ? <Pill tone="amber">Overdue</Pill> : <Pill tone={STATUS_META[status].tone}>{STATUS_META[status].label}</Pill>)} />
       <div className="space-y-5 px-4 pb-6">
         <section className="space-y-3">
-          <p className="text-xs font-medium uppercase tracking-[0.08em] text-muted">Bill to</p>
+          <p className="text-xs font-semibold uppercase tracking-[0.08em] text-muted">Bill to</p>
           <Field label="Client or company" value={d.client_name} onChange={e => set('client_name', e.target.value)} placeholder="e.g. Seaside Productions Ltd" />
           <Field label="Client email" type="email" inputMode="email" value={d.client_email} onChange={e => set('client_email', e.target.value)} placeholder="accounts@example.com" />
           <TextArea label="Client address (optional)" rows={2} value={d.client_address} onChange={e => set('client_address', e.target.value)} />
         </section>
 
         <section>
-          <p className="mb-3 text-xs font-medium uppercase tracking-[0.08em] text-muted">Work</p>
+          <p className="mb-3 text-xs font-semibold uppercase tracking-[0.08em] text-muted">Work</p>
           <div className="space-y-3">
             {d.items.map((it, i) => (
               <Card key={i} className="space-y-3 p-3">
@@ -198,7 +198,7 @@ function Editor({ initial, invoice, profileId, onSaved }: { initial: Draft; invo
         </section>
 
         <section className="space-y-3">
-          <p className="text-xs font-medium uppercase tracking-[0.08em] text-muted">From</p>
+          <p className="text-xs font-semibold uppercase tracking-[0.08em] text-muted">From</p>
           <TextArea label="Your name, address & contact" rows={3} value={d.from_details} onChange={e => set('from_details', e.target.value)} />
           <TextArea label="Payment details & notes" rows={3} value={d.notes} onChange={e => set('notes', e.target.value)} placeholder={'Bank: …\nSort code: …  Account: …\nUTR (optional)'} />
           <p className="text-xs text-muted">Saved for your next invoice. Only you and the people you send it to see these.</p>
