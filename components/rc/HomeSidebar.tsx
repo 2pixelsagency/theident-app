@@ -12,7 +12,7 @@ import { craftTag } from '@/lib/rc/talent'
 import { isBoosted } from '@/lib/rc/boost'
 import { PLANS, planFor } from '@/lib/rc/plans'
 
-const card = 'rounded-[24px] bg-surface p-6 shadow-card'
+const card = 'rounded-[10px] bg-surface p-6 shadow-card'
 const endLabel = (iso?: string | null) => (iso ? new Date(iso).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }) : '')
 
 // Desktop Home right-hand column: you at a glance (Upwork-style) — profile, visibility, reach, membership.

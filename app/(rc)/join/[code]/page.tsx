@@ -38,7 +38,7 @@ export default function JoinCastChatPage() {
 
   return (
     <div className="flex min-h-dvh flex-col items-center justify-center px-6 text-center">
-      <span className="flex size-20 items-center justify-center rounded-3xl bg-forest font-display text-3xl font-bold text-lime">{invite.name.slice(0, 1).toUpperCase()}</span>
+      <span className="flex size-20 items-center justify-center rounded-[14px] bg-forest font-display text-3xl font-bold text-lime">{invite.name.slice(0, 1).toUpperCase()}</span>
       <p className="mt-6 text-sm text-muted">You’re invited to a cast chat</p>
       <h1 className="mt-1 font-display text-[28px] font-bold leading-tight">{invite.name}</h1>
       <p className="mt-2 flex items-center gap-1.5 text-sm text-muted"><Icon name="users" className="size-4" /> {invite.members} {invite.members === 1 ? 'person' : 'people'}{invite.production_name ? ' · ' + invite.production_name : ''}</p>

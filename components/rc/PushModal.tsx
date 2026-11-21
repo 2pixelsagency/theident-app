@@ -34,9 +34,9 @@ export default function PushModal({ caster }: { caster?: boolean }) {
 
   return (
     <div role="dialog" aria-modal="true" aria-labelledby="push-modal-title" className="fixed inset-0 z-[300] flex items-end justify-center bg-scrim p-4 sm:items-center">
-      <div className="w-full max-w-[400px] overflow-hidden rounded-[28px] bg-surface shadow-card">
+      <div className="w-full max-w-[400px] overflow-hidden rounded-[16px] bg-surface shadow-card">
         <div className="relative flex flex-col items-center bg-hero px-6 pb-7 pt-9 text-center text-white">
-          <span className="flex size-16 items-center justify-center rounded-2xl bg-lime text-ink shadow-cta"><Icon name="bell" className="size-8" /></span>
+          <span className="flex size-16 items-center justify-center rounded-xl bg-lime text-ink shadow-cta"><Icon name="bell" className="size-8" /></span>
           <h2 id="push-modal-title" className="mt-5 text-[26px] leading-tight text-white">{caster ? 'Never miss an applicant' : 'Don’t miss an audition'}</h2>
           <p className="mt-2 text-[15px] text-white/80">
             {caster ? 'Get an alert the moment someone applies or replies to you.' : 'Casting moves fast. Get an alert the second you’re invited, recalled, pencilled or booked.'}
@@ -50,7 +50,7 @@ export default function PushModal({ caster }: { caster?: boolean }) {
               <li className="flex gap-3"><span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-lime text-xs font-bold text-ink">3</span> Open The Ident from your Home Screen and turn notifications on</li>
             </ol>
           ) : (
-            <button type="button" onClick={turnOn} disabled={busy} className="h-[52px] w-full rounded-[14px] bg-lime text-[16px] font-semibold text-ink shadow-cta disabled:opacity-60">
+            <button type="button" onClick={turnOn} disabled={busy} className="h-[52px] w-full rounded-[10px] bg-lime text-[16px] font-semibold text-ink shadow-cta disabled:opacity-60">
               {busy ? 'Turning on…' : 'Turn on notifications'}
             </button>
           )}

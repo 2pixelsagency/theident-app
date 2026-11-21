@@ -55,7 +55,7 @@ export default function BoostCard({ uid, until: initial }: { uid: string; until:
         <div className="mt-4 grid grid-cols-2 gap-2">
           {BOOST_PLANS.map(p => (
             <button key={p.id} type="button" onClick={() => setPlan(p.id)} aria-pressed={plan === p.id}
-              className={cx('rounded-[14px] border p-3 text-left transition', plan === p.id ? 'border-lime bg-white/10' : 'border-white/20')}>
+              className={cx('rounded-[10px] border p-3 text-left transition', plan === p.id ? 'border-lime bg-white/10' : 'border-white/20')}>
               <span className="block text-[13px] text-white/70">{p.label}</span>
               <span className="title block text-[20px] text-white">{gbp(p.pence)}</span>
               {p.id === 'month' && <span className="mt-1 inline-block rounded-full bg-lime px-2 py-0.5 text-[10px] font-semibold text-ink">Best value</span>}
@@ -63,7 +63,7 @@ export default function BoostCard({ uid, until: initial }: { uid: string; until:
           ))}
         </div>
         <button type="button" onClick={buy} disabled={!!busy || waiting}
-          className="mt-4 h-12 w-full rounded-[14px] bg-lime text-[15px] font-semibold text-ink shadow-cta disabled:opacity-60">
+          className="mt-4 h-12 w-full rounded-[10px] bg-lime text-[15px] font-semibold text-ink shadow-cta disabled:opacity-60">
           {busy ? 'Opening checkout…' : (active ? 'Extend' : 'Boost') + ' for ' + gbp(BOOST_PLANS.find(p => p.id === plan)!.pence)}
         </button>
         <p className="mt-2 text-center text-[11px] text-white/55">Secure payment by Stripe · Apple Pay & Google Pay · one-off, no subscription</p>

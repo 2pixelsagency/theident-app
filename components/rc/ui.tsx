@@ -35,8 +35,8 @@ type ButtonProps = {
 export function Button({ variant = 'primary', size = 'md', href, icon, trailingIcon, full, className, children, ...rest }: ButtonProps) {
   const cls = cx(
     'inline-flex items-center justify-center gap-2 font-semibold transition disabled:opacity-50 disabled:pointer-events-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-lime',
-    size === 'lg' && 'h-14 rounded-[14px] text-base px-6',
-    size === 'md' && 'h-12 rounded-[14px] text-[15px] px-5',
+    size === 'lg' && 'h-14 rounded-[10px] text-base px-6',
+    size === 'md' && 'h-12 rounded-[10px] text-[15px] px-5',
     size === 'sm' && 'h-9 rounded-full text-[13px] px-4',
     full && 'w-full',
     VARIANTS[variant],
@@ -115,14 +115,14 @@ export function BackArrow({ back, onBack }: { back?: string; onBack?: () => void
   )
 }
 
-const headerCls = 'sticky top-0 z-30 bg-bg/95 px-4 pb-3 pt-[max(14px,env(safe-area-inset-top))] backdrop-blur lg:pt-6'
+const headerCls = 'sticky top-0 z-30 bg-bg/95 px-4 pb-3 pt-[max(14px,env(safe-area-inset-top))] backdrop-blur lg:static lg:bg-transparent lg:pb-5 lg:pt-6 lg:backdrop-blur-none'
 
 export function BackHeader({ title, right, back, onBack }: { title: string; right?: React.ReactNode; back?: string; onBack?: () => void }) {
   return (
     <header className={headerCls}>
       <div className="flex items-center gap-1.5">
         <BackArrow back={back} onBack={onBack} />
-        <h1 className="flex-1 truncate text-[20px] leading-tight">{title}</h1>
+        <h1 className="flex-1 truncate text-[20px] leading-tight lg:text-[28px]">{title}</h1>
         {right}
       </div>
     </header>
@@ -135,7 +135,7 @@ export function PageHeader({ title, right, sub, back = '/home' }: { title: strin
     <header className={headerCls}>
       <div className="flex items-center gap-1.5">
         <BackArrow back={back} />
-        <h1 className="flex-1 truncate text-[20px] leading-tight">{title}</h1>
+        <h1 className="flex-1 truncate text-[20px] leading-tight lg:text-[28px]">{title}</h1>
         {right}
       </div>
       {sub && <p className="mt-1 text-sm text-muted">{sub}</p>}
@@ -191,7 +191,7 @@ export function Tag({ children, tone = 'neutral' }: { children: React.ReactNode;
 
 export function Segmented<T extends string>({ value, options, onChange, className }: { value: T; options: { value: T; label: string }[]; onChange: (v: T) => void; className?: string }) {
   return (
-    <div role="tablist" className={cx('flex rounded-[14px] bg-chip p-1', className)}>
+    <div role="tablist" className={cx('flex rounded-[10px] bg-chip p-1', className)}>
       {options.map(o => (
         <button key={o.value} type="button" role="tab" aria-selected={value === o.value} onClick={() => onChange(o.value)}
           className={cx('h-10 flex-1 rounded-[11px] text-sm font-medium transition', value === o.value ? 'bg-dark text-white shadow-card' : 'text-muted')}>
@@ -266,7 +266,7 @@ export function SearchField({ placeholder, value, onChange }: { placeholder: str
     <label className="relative block">
       <Icon name="search" className="pointer-events-none absolute left-4 top-1/2 size-[18px] -translate-y-1/2 text-muted" />
       <input type="search" value={value} onChange={e => onChange(e.target.value)} placeholder={placeholder}
-        className="h-12 w-full rounded-[14px] border border-line bg-surface pl-11 pr-4 text-[15px] outline-none placeholder:text-faint focus:border-green" />
+        className="h-12 w-full rounded-[10px] border border-line bg-surface pl-11 pr-4 text-[15px] outline-none placeholder:text-faint focus:border-green" />
     </label>
   )
 }
@@ -359,7 +359,7 @@ export function AvatarPile({ people, size = 30, max = 3 }: { people: { id: strin
 export function Empty({ icon = 'sparkle', title, sub, action }: { icon?: string; title: string; sub?: string; action?: React.ReactNode }) {
   return (
     <div className="flex flex-col items-center px-6 py-12 text-center">
-      <span className="mb-3 flex size-12 items-center justify-center rounded-2xl bg-green-tint text-green-ink"><Icon name={icon} className="size-6" /></span>
+      <span className="mb-3 flex size-12 items-center justify-center rounded-xl bg-green-tint text-green-ink"><Icon name={icon} className="size-6" /></span>
       <p className="text-[15px] font-medium">{title}</p>
       {sub && <p className="mt-1 max-w-72 text-sm text-muted">{sub}</p>}
       {action && <div className="mt-4">{action}</div>}
@@ -409,7 +409,7 @@ export function Toaster() {
   }, [])
   if (!t) return null
   return (
-    <div role="status" className="fixed inset-x-0 bottom-32 z-[200] lg:bottom-8 lg:left-64 flex justify-center px-4">
+    <div role="status" className="fixed inset-x-0 bottom-32 z-[200] lg:bottom-8 lg:left-[76px] flex justify-center px-4">
       <div className="flex max-w-[440px] items-center gap-3 rounded-full bg-dark py-3 pl-5 pr-3 text-sm text-white shadow-card">
         <span className="line-clamp-2">{t.msg}</span>
         {t.action && <button type="button" onClick={() => { t.action!.onClick(); setT(null) }} className="shrink-0 rounded-full bg-lime px-3 py-1 text-[13px] font-semibold text-ink">{t.action.label}</button>}
@@ -431,7 +431,7 @@ export function Sheet({ open, onClose, title, children }: { open: boolean; onClo
   return (
     <div className="fixed inset-0 z-[150]" role="dialog" aria-modal="true" aria-label={title}>
       <button type="button" aria-label="Close" onClick={onClose} className="absolute inset-0 bg-dark/40" />
-      <div className="absolute inset-x-0 bottom-0 mx-auto max-h-[90dvh] max-w-[480px] overflow-y-auto rounded-t-[24px] lg:bottom-auto lg:top-1/2 lg:-translate-y-1/2 lg:rounded-[24px] lg:pb-6 bg-bg px-4 pb-[max(20px,env(safe-area-inset-bottom))] pt-3">
+      <div className="absolute inset-x-0 bottom-0 mx-auto max-h-[90dvh] max-w-[480px] overflow-y-auto rounded-t-[14px] lg:bottom-auto lg:top-1/2 lg:-translate-y-1/2 lg:rounded-[10px] lg:pb-6 bg-bg px-4 pb-[max(20px,env(safe-area-inset-bottom))] pt-3">
         <div className="mx-auto mb-3 h-1 w-10 rounded-full bg-line" />
         <div className="mb-4 flex items-center justify-between">
           <h2 className="text-[20px]">{title}</h2>

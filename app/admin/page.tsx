@@ -157,8 +157,8 @@ const CHIP: Record<string, string> = { forest: 'bg-forest text-lime', lime: 'bg-
 function Kpi({ label, value, icon, chip = 'mint', note, onClick }: { label: string; value: number | undefined; icon: string; chip?: keyof typeof CHIP; note?: string; onClick?: () => void }) {
   return (
     <button type="button" onClick={onClick} disabled={!onClick}
-      className={cx('flex flex-col gap-3 rounded-[20px] border border-line bg-surface p-4 text-left shadow-card transition sm:flex-row sm:items-center sm:gap-4 sm:p-5', onClick && 'hover:-translate-y-0.5 hover:shadow-lg')}>
-      <span className={cx('flex size-10 shrink-0 items-center justify-center rounded-2xl sm:size-12', CHIP[chip])}><Icon name={icon} className="size-[22px]" /></span>
+      className={cx('flex flex-col gap-3 rounded-[10px] border border-line bg-surface p-4 text-left shadow-card transition sm:flex-row sm:items-center sm:gap-4 sm:p-5', onClick && 'hover:-translate-y-0.5 hover:shadow-lg')}>
+      <span className={cx('flex size-10 shrink-0 items-center justify-center rounded-xl sm:size-12', CHIP[chip])}><Icon name={icon} className="size-[22px]" /></span>
       <span className="min-w-0">
         <span className="title block text-[28px] leading-none">{(value ?? 0).toLocaleString('en-GB')}</span>
         <span className="mt-1 block truncate text-[13px] text-muted">{label}</span>
@@ -170,7 +170,7 @@ function Kpi({ label, value, icon, chip = 'mint', note, onClick }: { label: stri
 
 function Card({ title, sub, right, children, className }: { title: string; sub?: string; right?: React.ReactNode; children: React.ReactNode; className?: string }) {
   return (
-    <section className={cx('rounded-[24px] border border-line bg-surface p-5 shadow-card lg:p-6', className)}>
+    <section className={cx('rounded-[10px] border border-line bg-surface p-5 shadow-card lg:p-6', className)}>
       <div className="mb-4 flex items-start justify-between gap-3">
         <div><h2 className="text-[18px]">{title}</h2>{sub && <p className="mt-0.5 text-[13px] text-muted">{sub}</p>}</div>
         {right}
@@ -221,11 +221,11 @@ function Overview({ s, go }: { s: Stats | null; go: (t: Tab) => void }) {
 
       {/* Needs you */}
       {todo.length ? (
-        <section className="rounded-[24px] bg-forest p-5 text-white shadow-card lg:p-6">
+        <section className="rounded-[10px] bg-forest p-5 text-white shadow-card lg:p-6">
           <p className="text-[12px] font-semibold uppercase tracking-[0.12em] text-lime">Needs you</p>
           <div className="mt-3 grid gap-2 md:grid-cols-2 xl:grid-cols-3">
             {todo.map(x => (
-              <button key={x.label} type="button" onClick={() => go(x.t)} className={cx('flex items-center gap-3 rounded-2xl p-4 text-left transition hover:brightness-110', x.urgent ? 'bg-red' : 'bg-white/10')}>
+              <button key={x.label} type="button" onClick={() => go(x.t)} className={cx('flex items-center gap-3 rounded-xl p-4 text-left transition hover:brightness-110', x.urgent ? 'bg-red' : 'bg-white/10')}>
                 <span className="min-w-0 flex-1"><span className="block text-[15px] font-semibold">{x.label}</span><span className="block text-[12px] text-white/75">{x.sub}</span></span>
                 <Icon name="arrow-right" className="size-4 shrink-0" />
               </button>
@@ -233,8 +233,8 @@ function Overview({ s, go }: { s: Stats | null; go: (t: Tab) => void }) {
           </div>
         </section>
       ) : (
-        <section className="flex items-center gap-3 rounded-[24px] border border-line bg-surface p-5 shadow-card">
-          <span className="flex size-11 items-center justify-center rounded-2xl bg-mint"><Icon name="shield-check" className="size-5" /></span>
+        <section className="flex items-center gap-3 rounded-[10px] border border-line bg-surface p-5 shadow-card">
+          <span className="flex size-11 items-center justify-center rounded-xl bg-mint"><Icon name="shield-check" className="size-5" /></span>
           <span><span className="block font-semibold">All clear</span><span className="block text-[13px] text-muted">Nothing waiting on you right now.</span></span>
         </section>
       )}

@@ -107,7 +107,7 @@ export default function EntryScreen() {
     if (err) { setError('Couldn’t start ' + (provider === 'apple' ? 'Apple' : 'Google') + ' sign-in. Please try again.'); setBusy(null) }
   }
 
-  const glass = 'h-[52px] w-full rounded-[14px] border border-white/20 bg-white/10 px-4 text-[16px] text-white outline-none backdrop-blur-md transition placeholder:text-white/60 focus:border-white/50'
+  const glass = 'h-[52px] w-full rounded-[10px] border border-white/20 bg-white/10 px-4 text-[16px] text-white outline-none backdrop-blur-md transition placeholder:text-white/60 focus:border-white/50'
   const round = 'inline-flex size-11 items-center justify-center rounded-full border border-white/20 bg-white/10 text-white backdrop-blur-md transition active:scale-95 disabled:opacity-60'
 
   return (
@@ -160,7 +160,7 @@ export default function EntryScreen() {
             <button type="button" onClick={() => setShowPw(v => !v)} className="absolute right-4 top-1/2 -translate-y-1/2 text-[13px] font-medium text-white/75">{showPw ? 'Hide' : 'Show'}</button>
           </div>
           {error && <p role="alert" className="rounded-xl bg-blossom/95 px-3.5 py-2.5 text-[14px] text-ink">{error}{unconfirmed && <> <button type="button" onClick={resendConfirm} className="font-semibold underline">Resend the link</button></>}</p>}
-          <button type="submit" disabled={busy !== null || !email || !password} className="flex h-14 w-full items-center justify-center gap-2 rounded-[14px] bg-cta text-[17px] font-semibold text-ink shadow-cta transition active:scale-[0.99] disabled:opacity-70">
+          <button type="submit" disabled={busy !== null || !email || !password} className="flex h-14 w-full items-center justify-center gap-2 rounded-[10px] bg-cta text-[17px] font-semibold text-ink shadow-cta transition active:scale-[0.99] disabled:opacity-70">
             {busy === 'email' ? 'Logging in…' : <>Log in <Icon name="arrow-right" className="size-5" /></>}
           </button>
         </form>
@@ -177,7 +177,7 @@ export default function EntryScreen() {
         </div>
 
         <div className="mt-5 flex items-center gap-3 text-[12px] uppercase tracking-[0.12em] text-white/55"><span className="h-px flex-1 bg-white/25" />New here?<span className="h-px flex-1 bg-white/25" /></div>
-        <button type="button" onClick={() => signUp(s.role)} className="mt-3 flex h-14 w-full items-center justify-center rounded-[14px] border border-white/40 bg-white/10 text-[16px] font-semibold text-white backdrop-blur-md transition active:scale-[0.99]">
+        <button type="button" onClick={() => signUp(s.role)} className="mt-3 flex h-14 w-full items-center justify-center rounded-[10px] border border-white/40 bg-white/10 text-[16px] font-semibold text-white backdrop-blur-md transition active:scale-[0.99]">
           Create a {s.role === 'caster' ? 'casting' : 'performer'} account
         </button>
       </div>

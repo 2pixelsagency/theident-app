@@ -164,7 +164,7 @@ export default function FindPage() {
             sub={view === 'later' ? 'Swipe a job left to park it here and come back to it.' : view === 'saved' ? 'Swipe a job right to add it to your shortlist.' : q || active ? 'Try a different search or clear your filters.' : 'New listings appear here as soon as they’re approved.'}
             action={active ? <Button size="sm" variant="outline" onClick={() => setFilters(NO_FILTERS)}>Clear filters</Button> : undefined} />
         ) : (
-          <ul className="space-y-3 lg:grid lg:grid-cols-2 lg:gap-4 lg:space-y-0">
+          <ul className="space-y-3">
             {shown.map(j => {
               const { right, left } = swipeFor(j)
               return (

@@ -191,7 +191,7 @@ export default function CastingReviewPage() {
         ) : (
           <>
             {selected.length > 0 && stage !== 'no' && stage !== 'booked' && (
-              <div className="fixed inset-x-0 bottom-0 z-40 border-t border-line bg-surface/95 px-4 pb-[max(12px,env(safe-area-inset-bottom))] pt-3 backdrop-blur lg:pl-[17rem]">
+              <div className="fixed inset-x-0 bottom-0 z-40 border-t border-line bg-surface/95 px-4 pb-[max(12px,env(safe-area-inset-bottom))] pt-3 backdrop-blur lg:pl-[76px]">
                 <div className="mx-auto max-w-[720px]">
                   <p className="mb-2 text-sm font-semibold">{selected.length} selected</p>
                   <div className="scrollbar-none flex gap-2 overflow-x-auto">
@@ -294,7 +294,7 @@ function Deck({ rows: initial, onYes, onNo, yesLabel }: { rows: Row[]; onYes: (i
   return (
     <div className="mt-4">
       <div
-        className="relative aspect-[3/4] touch-pan-y select-none overflow-hidden rounded-[24px] bg-dark text-white shadow-card transition-transform"
+        className="relative aspect-[3/4] touch-pan-y select-none overflow-hidden rounded-[10px] bg-dark text-white shadow-card transition-transform"
         style={{ transform: `translateX(${dx}px) rotate(${dx / 25}deg)` }}
         onPointerDown={e => { start.current = e.clientX }}
         onPointerMove={e => { if (start.current != null) setDx(e.clientX - start.current) }}

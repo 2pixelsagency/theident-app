@@ -233,13 +233,13 @@ function CasterHome() {
 // Upwork-style: wide main column + a sticky "you at a glance" sidebar, tight consistent gaps
 function DesktopHome({ hero, aside, children }: { hero: React.ReactNode; aside: React.ReactNode; children: React.ReactNode }) {
   return (
-    <div className="grid grid-cols-[minmax(0,1fr)_340px] gap-6 pb-10 pt-8">
-      <div className="min-w-0 space-y-6 [&>section]:mt-0">
+    <div className="grid grid-cols-[minmax(0,1fr)_340px] gap-6 pb-10 pt-6">
+      <div className="min-w-0 space-y-6 px-4 [&>section]:mt-0">
         {hero}
         <VerifyBanner />
         {children}
       </div>
-      <div className="sticky top-8 space-y-4 self-start [&_section]:mt-0">
+      <div className="sticky top-6 space-y-4 self-start [&_section]:mt-0">
         <HomeSidebar />
         {aside}
       </div>
@@ -250,10 +250,10 @@ function DesktopHome({ hero, aside, children }: { hero: React.ReactNode; aside: 
 function DesktopHero({ subline, cta, second }: { subline?: string; cta: { label: string; href: string }; second: { label: string; href: string } }) {
   const { name } = useMe()
   return (
-    <section className="relative overflow-hidden rounded-[28px] bg-forest px-10 py-10 text-white">
+    <section className="relative overflow-hidden rounded-[16px] bg-forest px-10 py-10 text-white">
       <p className="text-[15px] font-medium text-lime">{subline ?? new Date().toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' })}</p>
       <h1 className="mt-3 max-w-[560px] text-[40px] leading-[1.08] text-white"><Typewriter key={name} text={'Hi, ' + name} once="home-greeting" /></h1>
-      <p className="rise mt-2 max-w-[460px] text-[16px] text-white/70" style={{ '--d': '300ms' } as React.CSSProperties}>Here’s what’s new in castings, auditions and work today.</p>
+      <p className="rise mt-2 max-w-[400px] text-[16px] text-white/70" style={{ '--d': '300ms' } as React.CSSProperties}>Here’s what’s new in castings, auditions and work today.</p>
       <div className="rise mt-7 flex gap-3" style={{ '--d': '450ms' } as React.CSSProperties}>
         <Link href={cta.href} className="inline-flex h-12 items-center rounded-full bg-lime px-6 text-[15px] font-semibold text-ink shadow-cta">{cta.label}</Link>
         <Link href={second.href} className="inline-flex h-12 items-center rounded-full border border-white/30 px-6 text-[15px] font-semibold text-white hover:bg-white/10">{second.label}</Link>
@@ -261,7 +261,7 @@ function DesktopHero({ subline, cta, second }: { subline?: string; cta: { label:
       {/* Stacked casting cards */}
       <div aria-hidden className="pointer-events-none absolute right-12 top-1/2 hidden w-[220px] -translate-y-1/2 xl:block">
         {[0, 1, 2].map(i => (
-          <div key={i} className="absolute inset-x-0 rounded-2xl bg-white p-4 shadow-[0_12px_30px_-12px_rgb(0_0_0/0.45)]" style={{ top: i * 26 - 40, transform: `scale(${1 - i * 0.06})`, opacity: 1 - i * 0.25, zIndex: 3 - i }}>
+          <div key={i} className="absolute inset-x-0 rounded-xl bg-white p-4 shadow-[0_12px_30px_-12px_rgb(0_0_0/0.45)]" style={{ top: i * 26 - 40, transform: `scale(${1 - i * 0.06})`, opacity: 1 - i * 0.25, zIndex: 3 - i }}>
             <div className="flex items-center justify-between"><span className="h-2 w-20 rounded-full bg-chip" />{i === 0 && <span className="rounded-full bg-lime px-2 py-0.5 text-[10px] font-bold text-ink">BOOKED</span>}</div>
             <span className="mt-3 block h-2 w-36 rounded-full bg-chip" /><span className="mt-2 block h-2 w-28 rounded-full bg-chip" />
           </div>
@@ -276,10 +276,10 @@ function DesktopSearch() {
   const [q, setQ] = useState('')
   return (
     <form onSubmit={e => { e.preventDefault(); router.push('/find' + (q.trim() ? '?q=' + encodeURIComponent(q.trim()) : '')) }}
-      className="flex h-14 items-center gap-3 rounded-full border border-line bg-surface px-5 shadow-card focus-within:border-green">
+      className="flex h-14 items-center gap-3 rounded-xl border border-line bg-surface px-5 shadow-card focus-within:border-green">
       <Icon name="search" className="size-5 text-muted" />
       <input value={q} onChange={e => setQ(e.target.value)} placeholder="Search roles, shows, places…" aria-label="Search roles" className="h-full flex-1 bg-transparent text-[16px] outline-none placeholder:text-faint" />
-      <button type="submit" className="rounded-full bg-forest px-5 py-2 text-[14px] font-semibold text-white">Search</button>
+      <button type="submit" className="rounded-[10px] bg-forest px-5 py-2 text-[14px] font-semibold text-white">Search</button>
     </form>
   )
 }

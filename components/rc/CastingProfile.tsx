@@ -63,11 +63,11 @@ export default function CastingProfile({ data, owner, onBack, onShare, topRight,
 
         <div className="relative px-5 pb-6">
           <div className="-mt-12 flex items-end justify-between gap-3">
-            <span className="flex size-24 shrink-0 items-center justify-center overflow-hidden rounded-[22px] bg-surface shadow-card ring-4 ring-surface">
+            <span className="flex size-24 shrink-0 items-center justify-center overflow-hidden rounded-[10px] bg-surface shadow-card ring-4 ring-surface">
               {p.picture_url
                 // eslint-disable-next-line @next/next/no-img-element
                 ? <img src={p.picture_url} alt={company} className="size-full object-cover" />
-                : <Avatar name={company} size={96} className="rounded-[22px]" />}
+                : <Avatar name={company} size={96} className="rounded-[10px]" />}
             </span>
             {p.is_verified && <span className="mb-1 inline-flex items-center gap-1 rounded-full bg-mint px-3 py-1 text-[12px] font-semibold text-ink"><Icon name="shield-check" className="size-3.5" /> Verified casting</span>}
           </div>

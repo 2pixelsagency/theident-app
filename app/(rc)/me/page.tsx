@@ -55,7 +55,7 @@ export default function MyProfilePage() {
           </>}
           statusLine={p.show_talent === false ? 'Hidden — casting can’t find you in search right now' : 'Preview — this is what a casting director sees'}
         />
-        <div className="pointer-events-none fixed inset-x-0 bottom-0 z-50 flex justify-center px-4 pb-[calc(env(safe-area-inset-bottom)+108px)] lg:left-64 lg:pb-8">
+        <div className="pointer-events-none fixed inset-x-0 bottom-0 z-50 flex justify-center px-4 pb-[calc(env(safe-area-inset-bottom)+108px)] lg:left-[76px] lg:pb-8">
           <button type="button" onClick={() => setPreview(false)} className="pointer-events-auto inline-flex h-12 items-center gap-2 rounded-full bg-lime px-5 text-[15px] font-semibold text-ink shadow-cta focus-visible:outline-2 focus-visible:outline-forest">
             <Icon name="eye" className="size-[18px]" /> Previewing as casting · Exit
           </button>
@@ -82,8 +82,8 @@ export default function MyProfilePage() {
         {!caster && <BoostCard uid={p.id} until={p.boosted_until} />}
         {!caster && (
           <div className="mt-4 grid grid-cols-2 gap-2">
-            <button type="button" onClick={() => { setPreview(true); window.scrollTo(0, 0) }} className="flex h-11 items-center justify-center gap-2 rounded-[14px] border border-line bg-surface text-sm font-semibold"><Icon name="eye" className="size-4" /> Preview as casting</button>
-            <button type="button" onClick={requestTestimonial} className="flex h-11 items-center justify-center gap-2 rounded-[14px] border border-line bg-surface text-sm font-semibold"><Icon name="send" className="size-4" /> Ask for a testimonial</button>
+            <button type="button" onClick={() => { setPreview(true); window.scrollTo(0, 0) }} className="flex h-11 items-center justify-center gap-2 rounded-[10px] border border-line bg-surface text-sm font-semibold"><Icon name="eye" className="size-4" /> Preview as casting</button>
+            <button type="button" onClick={requestTestimonial} className="flex h-11 items-center justify-center gap-2 rounded-[10px] border border-line bg-surface text-sm font-semibold"><Icon name="send" className="size-4" /> Ask for a testimonial</button>
           </div>
         )}
       </>}

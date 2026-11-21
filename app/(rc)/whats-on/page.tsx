@@ -78,7 +78,7 @@ export default function WhatsOnPage() {
         {loading ? <PageLoading /> : (
           <>
             {featured && (
-              <Link href={'/whats-on/' + featured.id} className="mt-4 block overflow-hidden rounded-[20px] border border-line bg-surface shadow-card">
+              <Link href={'/whats-on/' + featured.id} className="mt-4 block overflow-hidden rounded-[10px] border border-line bg-surface shadow-card">
                 <div className="relative h-36 bg-hero bg-cover bg-center" style={featured.cover_image_url ? { backgroundImage: `url(${featured.cover_image_url})` } : undefined}>
                   <span className="absolute left-3 top-3 inline-flex items-center gap-1 rounded-md bg-surface px-2 py-1 text-[11px] font-medium uppercase tracking-wide"><Icon name="star" className="size-3 fill-current" /> Featured · {typeMeta(featured.event_type).label}</span>
                   <span className="absolute right-3 top-3 rounded-md bg-dark/80 px-2 py-1 text-xs font-medium text-white">{priceLabel(featured)}</span>
@@ -98,7 +98,7 @@ export default function WhatsOnPage() {
             {list.length === 0 && !featured ? (
               <Card><Empty icon="ticket" title={mine ? 'Nothing saved yet' : 'Nothing listed here yet'} sub={mine ? 'Tap the bookmark on an event to keep it here.' : 'Try another location or type — or host one yourself.'} /></Card>
             ) : (
-              <ul className="space-y-3 lg:grid lg:grid-cols-2 lg:gap-4 lg:space-y-0">
+              <ul className="space-y-3">
                 {list.map(e => {
                   const t = typeMeta(e.event_type)
                   const d = new Date(e.start_date + 'T00:00:00')

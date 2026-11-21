@@ -5,7 +5,7 @@ The look is carried over from the website and defined in code by `tokens.css` (c
 ## Foundations
 - **Fonts:** **Bricolage Grotesque** for display/headings (bold, tight: weight 700, `letter-spacing -0.03em`), **Inter** for body/UI (300–600). Both loaded with `next/font` in `app/layout.tsx`.
 - **Palette:** Paper `#F6F4EE` (background) · Ink `#15211C` (text) · **Forest `#123127`** (primary buttons, dark panels) · **Lime `#CBF24C`** (the single punchy accent) · pastels Blossom `#F9D9E6`, Butter `#F4E79A`, Mint `#CDEBD6` for soft fills.
-- **Backgrounds:** soft gradients with a fine grain, never flat blobs. Light screens use `bg-glow` (Lime haze → white); dark panels use `bg-hero` (teal-green → deep Forest). Clean white cards on top, generous radius (`--radius` 20px). No squiggles.
+- **Backgrounds:** soft gradients with a fine grain, never flat blobs. Light screens use `bg-glow` (Lime haze → white); dark panels use `bg-hero` (teal-green → deep Forest). Clean white cards on top, a tight radius (`--radius` 12px; inputs and buttons 10px, sheets 14px). No squiggles.
 - Class names stay stable (`bg-green` = Forest action colour, `bg-dark` = Forest panel, `bg-green-tint` = Mint…); new utilities `bg-forest`, `bg-lime`, `bg-blossom`, `bg-butter`, `bg-mint`.
 
 ## Hard rules

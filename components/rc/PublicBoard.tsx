@@ -122,7 +122,7 @@ export default function PublicBoard() {
             <div className="rounded-[var(--radius)] bg-hero p-5 text-white">
               <p className="font-display text-[22px] font-bold leading-tight">Get matched to roles</p>
               <p className="mt-2 text-sm text-white/75">Build your profile once — showreel, credits, CV — and get an alert when a role fits you.</p>
-              <Link href="/start?role=performer" className="mt-4 inline-flex h-11 w-full items-center justify-center rounded-[14px] bg-lime text-sm font-semibold text-ink shadow-cta">Join · 7 days free</Link>
+              <Link href="/start?role=performer" className="mt-4 inline-flex h-11 w-full items-center justify-center rounded-[10px] bg-lime text-sm font-semibold text-ink shadow-cta">Join · 7 days free</Link>
             </div>
           )}
           <div className="rounded-[var(--radius)] border border-line bg-surface p-5">
