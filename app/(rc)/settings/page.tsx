@@ -113,6 +113,8 @@ export default function SettingsPage() {
         {section('Privacy')}
         <Card className="divide-y divide-line overflow-hidden">
           <ListRow icon="shield-check" title="Data & privacy" sub="Request a copy or deletion of your data" href={'mailto:' + SUPPORT_EMAIL + '?subject=' + encodeURIComponent('Data request')} />
+          <ListRow icon="file" title="Privacy policy" href="/privacy" />
+          <ListRow icon="file" title="Terms of use" href="/terms" />
         </Card>
 
         <p className="mt-6 text-center text-xs text-faint">The Ident · beta</p>
