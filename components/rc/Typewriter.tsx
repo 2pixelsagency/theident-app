@@ -38,8 +38,7 @@ export default function Typewriter({ text, words, speed = 42, once, className }:
   const typing = !skip && (n < text.length || !!words?.length)
   return (
     <span className={className} aria-label={text + (words?.[0] || '')}>
-      <span aria-hidden>{text.slice(0, n)}{words?.length ? <span className="text-green-ink">{words[w.i].slice(0, w.len)}</span> : null}</span>
-      {typing && <span aria-hidden className="type-caret" />}
+      <span aria-hidden>{text.slice(0, n)}<span className="whitespace-nowrap">{words?.length ? <span className="text-green-ink">{words[w.i].slice(0, w.len)}</span> : null}{typing && <span aria-hidden className="type-caret" />}</span></span>
     </span>
   )
 }

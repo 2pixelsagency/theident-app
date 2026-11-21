@@ -1,30 +1,22 @@
 import Link from 'next/link'
 import { SUPPORT_EMAIL } from '@/lib/rc/profile'
+import SiteNav from './Nav'
 
-const NAV = [
-  { href: '/performers', label: 'For performers' },
-  { href: '/casting', label: 'For casting' },
-  { href: '/jobs', label: 'Browse roles' },
-  { href: '/pricing', label: 'Pricing' },
-]
-
-// Marketing site header (theident.me). Server component — no client JS.
-export function SiteHeader() {
+// One spacing scale for the whole site
+export const SECTION = 'py-20 md:py-28'
+export function Container({ children, className = '' }: { children: React.ReactNode; className?: string }) {
+  return <div className={'mx-auto w-full max-w-[1180px] px-5 md:px-8 ' + className}>{children}</div>
+}
+export function SectionHead({ eyebrow, title, sub, light, center, action }: { eyebrow: string; title: React.ReactNode; sub?: string; light?: boolean; center?: boolean; action?: React.ReactNode }) {
   return (
-    <header className="sticky top-0 z-40 border-b border-line/70 bg-bg/90 backdrop-blur">
-      <div className="mx-auto flex h-16 max-w-[1180px] items-center gap-6 px-5 pt-[env(safe-area-inset-top)]">
-        <Link href="/" className="font-display text-[22px] font-bold tracking-[-0.03em] text-forest">The Ident</Link>
-        <nav className="hidden flex-1 items-center gap-6 md:flex">
-          {NAV.map(n => <Link key={n.href} href={n.href} className="text-[15px] font-medium text-muted transition hover:text-ink">{n.label}</Link>)}
-        </nav>
-        <span className="flex-1 md:hidden" />
-        <Link href="/welcome" className="text-[15px] font-semibold">Log in</Link>
-        <Link href="/start?role=performer" className="inline-flex h-10 items-center rounded-[10px] bg-lime px-4 text-[15px] font-semibold text-ink shadow-cta">Start free trial</Link>
+    <div className={'mb-12 flex flex-wrap items-end justify-between gap-6 md:mb-14 ' + (center ? 'flex-col items-center text-center' : '')}>
+      <div className={center ? 'mx-auto max-w-[720px]' : 'max-w-[720px]'}>
+        <p className={'text-[13px] font-semibold uppercase tracking-[0.12em] ' + (light ? 'text-lime' : 'text-green-ink')}>{eyebrow}</p>
+        <h2 className={'mt-3 text-[34px] leading-[1.06] tracking-[-0.02em] md:text-[48px] ' + (light ? 'text-white' : '')}>{title}</h2>
+        {sub && <p className={'mt-4 text-[17px] leading-relaxed md:text-[18px] ' + (light ? 'text-white/70' : 'text-muted')}>{sub}</p>}
       </div>
-      <nav className="scrollbar-none flex gap-5 overflow-x-auto border-t border-line/60 px-5 py-2.5 md:hidden">
-        {NAV.map(n => <Link key={n.href} href={n.href} className="shrink-0 text-[14px] font-medium text-muted">{n.label}</Link>)}
-      </nav>
-    </header>
+      {action}
+    </div>
   )
 }
 
@@ -37,7 +29,7 @@ export function SiteFooter() {
   )
   return (
     <footer className="bg-forest text-white">
-      <div className="mx-auto grid max-w-[1180px] gap-10 px-5 py-14 md:grid-cols-[1.4fr_1fr_1fr_1fr]">
+      <div className="mx-auto grid max-w-[1180px] gap-10 px-5 py-16 md:grid-cols-[1.4fr_1fr_1fr_1fr] md:px-8">
         <div>
           <p className="font-display text-[26px] font-bold tracking-[-0.03em]">The Ident</p>
           <p className="mt-2 max-w-[320px] text-[15px] text-white/70">Castings, auditions and paid work for performers — and one place for casting teams to find them.</p>
@@ -46,7 +38,7 @@ export function SiteFooter() {
         {col('Company', [['/contact', 'Contact & help'], ['/welcome', 'Log in'], ['/start?role=performer', 'Join']])}
         {col('Legal', [['/privacy', 'Privacy policy'], ['/terms', 'Terms of use']])}
       </div>
-      <div className="mx-auto flex max-w-[1180px] flex-wrap items-center justify-between gap-3 border-t border-white/10 px-5 py-6 text-[13px] text-white/50">
+      <div className="mx-auto flex max-w-[1180px] flex-wrap items-center justify-between gap-3 border-t border-white/10 px-5 py-6 text-[13px] text-white/50 md:px-8">
         <span>© {new Date().getFullYear()} The Ident</span>
         <a href={'mailto:' + SUPPORT_EMAIL} className="hover:text-white">{SUPPORT_EMAIL}</a>
       </div>
@@ -57,8 +49,8 @@ export function SiteFooter() {
 export function SiteShell({ children }: { children: React.ReactNode }) {
   return (
     <div className="min-h-dvh bg-bg text-ink">
-      <SiteHeader />
-      <main>{children}</main>
+      <SiteNav />
+      <main className="-mt-[68px]">{children}</main>
       <SiteFooter />
     </div>
   )
