@@ -32,7 +32,7 @@ export function VerifyBanner() {
   const { resend, busy } = useResendVerification()
   if (!profile || profile.email_verified) return null
   return (
-    <div role="status" className="mx-4 mt-3 flex items-center gap-2.5 rounded-2xl bg-butter px-4 py-3 text-[13px] text-ink">
+    <div role="status" className="mx-4 mt-3 flex items-center gap-2.5 rounded-xl bg-butter px-4 py-3 text-[13px] text-ink">
       <Icon name="mail" className="size-4 shrink-0" />
       <span className="min-w-0 flex-1">Verify <span className="font-semibold">{email}</span> to apply and post.</span>
       <button type="button" onClick={resend} disabled={busy} className="shrink-0 rounded-md font-semibold underline focus-visible:outline-2 focus-visible:outline-forest">{busy ? 'Sending…' : 'Resend'}</button>

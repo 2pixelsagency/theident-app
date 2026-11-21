@@ -66,7 +66,7 @@ export default function PostingsPage() {
         {loading ? <PageLoading /> : grouped[tab].length === 0 ? (
           <Empty icon="megaphone" title={tab === 'open' ? 'Nothing open right now' : 'Nothing here'} sub={tab === 'open' ? 'Post a casting role or side hustle — submissions land here.' : undefined} />
         ) : (
-          <ul className="mt-3 space-y-3 lg:grid lg:grid-cols-2 lg:gap-4 lg:space-y-0">
+          <ul className="mt-3 space-y-3">
             {grouped[tab].map(j => {
               const st = statusOf(j, today)
               const subs = (data?.subs || []).filter(s => s.job_id === j.id)

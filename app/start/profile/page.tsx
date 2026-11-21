@@ -193,7 +193,7 @@ export default function CreateProfile() {
         </div>
       </div>
 
-      <div className="mt-5 rounded-[20px] bg-hero p-5 text-white">
+      <div className="mt-5 rounded-[10px] bg-hero p-5 text-white">
         <p className="flex items-center gap-2 text-[17px] font-medium"><Icon name="sparkle" className="size-5 text-green" /> Autofill the rest</p>
         <p className="mt-1 text-[13px] text-white/70">Import once and we’ll fill your credits, skills and photos.</p>
         <div className="mt-4 space-y-2">

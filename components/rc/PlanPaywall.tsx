@@ -30,7 +30,7 @@ export default function PlanPaywall({ role, next = '/home', title, sub, firstTim
       <h1 className="mt-10 text-[28px] leading-tight">{title || (firstTime ? 'One last step' : 'Your membership')}</h1>
       <p className="mt-1.5 text-[15px] text-muted">{sub || (native ? 'Your account doesn’t have an active membership.' : (kind === 'casting' ? 'Post roles, review applicants and book your cast — all in one place.' : 'Everything in The Ident for less than a coffee a month.'))}</p>
 
-      <div className="mt-7 overflow-hidden rounded-[20px] border-2 border-green bg-surface shadow-card">
+      <div className="mt-7 overflow-hidden rounded-[10px] border-2 border-green bg-surface shadow-card">
         {!native && TRIAL_DAYS > 0 && <div className="bg-lime px-5 py-2 text-xs font-semibold uppercase tracking-[0.08em] text-ink">{TRIAL_DAYS}-day free trial</div>}
         <div className="p-5">
           <div className="flex items-baseline justify-between gap-3">

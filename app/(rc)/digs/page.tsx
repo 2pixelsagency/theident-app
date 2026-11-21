@@ -114,7 +114,7 @@ export default function DigsPage() {
               {shown.map((d, i) => {
                 const price = priceLabel(d)
                 return (
-                  <li key={d.id} className="overflow-hidden rounded-[20px] border border-line bg-surface shadow-card">
+                  <li key={d.id} className="overflow-hidden rounded-[10px] border border-line bg-surface shadow-card">
                     <div className={cx('relative aspect-[16/9] bg-cover bg-center', !photo(d) && TINTS[i % TINTS.length])} style={photo(d) ? { backgroundImage: `url(${photo(d)})` } : undefined}>
                       {!photo(d) && <Icon name="house" className="absolute bottom-4 right-6 size-14 text-ink/20" strokeWidth={1.2} />}
                       {d.walk_minutes != null && <span className="absolute left-3 top-3 rounded-full bg-surface px-2.5 py-1 text-xs font-semibold">{d.walk_minutes} min to the theatre</span>}
@@ -143,7 +143,7 @@ export default function DigsPage() {
           <p className="mb-3 text-[13px] text-muted">Opens their site with your town{data.from ? ' and contract dates' : ''} filled in.</p>
           <div className="grid grid-cols-2 gap-2">
             {elsewhere(town, data.from, data.to).map(s => (
-              <a key={s.name} href={s.href} target="_blank" rel="noopener noreferrer" className="flex h-12 items-center justify-between rounded-[14px] border border-line bg-surface px-4 text-sm font-semibold">
+              <a key={s.name} href={s.href} target="_blank" rel="noopener noreferrer" className="flex h-12 items-center justify-between rounded-[10px] border border-line bg-surface px-4 text-sm font-semibold">
                 {s.name}<Icon name="arrow-right" className="size-4 -rotate-45 text-muted" />
               </a>
             ))}

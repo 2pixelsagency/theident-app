@@ -14,8 +14,8 @@ import type { Credit, FullProfileData } from '@/lib/rc/profile'
 
 // Button styles for controls floated over the headshot
 export const heroRound = 'inline-flex size-10 items-center justify-center rounded-full bg-dark/45 text-white backdrop-blur-md transition active:scale-95'
-export const heroPrimary = 'flex h-14 flex-[1.4] items-center justify-center gap-2 rounded-[14px] bg-bg text-[15px] font-medium text-ink transition active:scale-[0.98] disabled:opacity-60'
-export const heroSecondary = 'flex h-14 flex-1 items-center justify-center gap-2 rounded-[14px] border border-white/25 bg-white/10 text-[15px] font-medium text-white backdrop-blur-md transition active:scale-[0.98] disabled:opacity-60'
+export const heroPrimary = 'flex h-14 flex-[1.4] items-center justify-center gap-2 rounded-[10px] bg-bg text-[15px] font-medium text-ink transition active:scale-[0.98] disabled:opacity-60'
+export const heroSecondary = 'flex h-14 flex-1 items-center justify-center gap-2 rounded-[10px] border border-white/25 bg-white/10 text-[15px] font-medium text-white backdrop-blur-md transition active:scale-[0.98] disabled:opacity-60'
 
 export type ProfileViewProps = {
   data: FullProfileData
@@ -175,8 +175,8 @@ function PerformerProfile({ data, owner, onBack, onShare, topRight, actions, sta
           <div className="flex items-end gap-4">
             {p.picture_url
               // eslint-disable-next-line @next/next/no-img-element
-              ? <img src={p.picture_url} alt={name} className="size-[104px] shrink-0 rounded-[22px] object-cover ring-4 ring-dark" />
-              : <span className="shrink-0 rounded-[22px] ring-4 ring-dark"><Avatar name={name} size={104} /></span>}
+              ? <img src={p.picture_url} alt={name} className="size-[104px] shrink-0 rounded-[10px] object-cover ring-4 ring-dark" />
+              : <span className="shrink-0 rounded-[10px] ring-4 ring-dark"><Avatar name={name} size={104} /></span>}
             <div className="flex min-w-0 flex-wrap gap-2 pb-1">
               {!caster && isBoosted(p.boosted_until) && <span className="inline-flex items-center gap-1 rounded-full bg-white px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.08em] text-ink"><Icon name="star" className="size-3 fill-current" /> Featured</span>}
               {!caster && p.availability_status === 'available' && <span className="inline-flex items-center gap-1.5 rounded-full bg-lime px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.08em] text-ink"><span className="size-1.5 rounded-full bg-forest" /> Open to work</span>}
