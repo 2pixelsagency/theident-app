@@ -47,18 +47,18 @@ export default function PublicJobPage() {
     <div className="min-h-dvh bg-bg text-ink">
       <PublicTopBar />
       <div className="mx-auto max-w-[720px] px-4 pb-32">
-        <div className="mt-2 flex items-center justify-between">
-          <Link href="/" className="inline-flex items-center gap-1 text-sm font-medium text-green-ink"><Icon name="chevron-left" className="size-4" /> All roles</Link>
+        <div className="mt-4 flex items-center justify-between">
+          <Link href="/jobs" className="inline-flex items-center gap-1 text-sm font-medium text-green-ink"><Icon name="chevron-left" className="size-4" /> All roles</Link>
           <button type="button" onClick={share} aria-label="Share" className="inline-flex size-10 items-center justify-center rounded-full hover:bg-chip"><Icon name="share" className="size-5" /></button>
         </div>
         {loading ? <PageLoading /> : !data ? (
-          <div className="pt-12"><Empty icon="briefcase" title="This listing isn’t available" sub="It may have closed or been removed." action={<Button size="sm" variant="dark" href="/">See all roles</Button>} /></div>
+          <div className="pt-12"><Empty icon="briefcase" title="This listing isn’t available" sub="It may have closed or been removed." action={<Button size="sm" variant="dark" href="/jobs">See all roles</Button>} /></div>
         ) : <JobBody j={data.j} poster={data.poster} posted={data.posted} />}
       </div>
       {data && (
         <div className="fixed inset-x-0 bottom-0 z-30 border-t border-line bg-surface px-4 pb-[max(16px,env(safe-area-inset-bottom))] pt-3">
           <div className="mx-auto flex max-w-[720px] items-center gap-3">
-            <p className="hidden flex-1 text-sm text-muted sm:block">Free for performers. Apply with your profile in two taps.</p>
+            <p className="hidden flex-1 text-sm text-muted sm:block">Apply with your profile in two taps — 7 days free.</p>
             {closesLabel(data.j) === 'Closed'
               ? <Button size="lg" variant="outline" className="flex-1 sm:flex-none" disabled>Applications closed</Button>
               : <Button size="lg" className="flex-1 sm:flex-none" trailingIcon="arrow-right" onClick={apply}>{data.j.is_side_hustle ? 'I’m interested' : 'Apply on The Ident'}</Button>}

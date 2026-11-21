@@ -5,6 +5,7 @@ import Link from 'next/link'
 import Icon from '@/components/rc/Icon'
 import JobCard from '@/components/rc/JobCard'
 import Typewriter from '@/components/rc/Typewriter'
+import SiteNav from '@/components/site/Nav'
 import { Empty, PageLoading, SearchField, cx } from '@/components/rc/ui'
 import { supabase } from '@/lib/supabase'
 import { useAsync } from '@/lib/rc/useAsync'
@@ -21,23 +22,9 @@ function useSignedIn() {
   return signedIn
 }
 
+// Same floating nav as the website, so the board and the site feel like one place
 export function PublicTopBar() {
-  const signedIn = useSignedIn()
-  return (
-    <header className="sticky top-0 z-40 border-b border-line/70 bg-bg/90 backdrop-blur">
-      <div className="mx-auto flex h-14 max-w-[1080px] items-center gap-3 px-4 pt-[env(safe-area-inset-top)]">
-        <Link href="/" className="font-display text-[20px] font-bold tracking-[-0.03em]">The Ident</Link>
-        <span className="flex-1" />
-        {signedIn ? (
-          <Link href="/home" className="inline-flex h-9 items-center rounded-full bg-forest px-4 text-sm font-semibold text-white">Open app</Link>
-        ) : (<>
-          <Link href="/welcome?side=cast" className="hidden text-sm font-medium text-muted hover:text-ink sm:inline">Post a casting</Link>
-          <Link href="/welcome" className="text-sm font-semibold">Log in</Link>
-          <Link href="/start?role=performer" className="inline-flex h-9 items-center rounded-full bg-lime px-4 text-sm font-semibold text-ink shadow-cta">Join</Link>
-        </>)}
-      </div>
-    </header>
-  )
+  return <SiteNav />
 }
 
 type Cat = 'all' | 'side' | 'casting' | 'community' | string
@@ -82,8 +69,8 @@ export default function PublicBoard() {
   return (
     <div className="min-h-dvh bg-bg text-ink">
       <PublicTopBar />
-      <section className="relative overflow-hidden bg-glow">
-        <div className="mx-auto max-w-[1080px] px-4 pb-8 pt-10 sm:pt-14">
+      <section className="relative -mt-[68px] overflow-hidden bg-glow">
+        <div className="mx-auto max-w-[1180px] px-5 pb-10 pt-28 md:px-8 md:pt-36">
           <p className="rise inline-flex items-center gap-2 rounded-full bg-surface/80 px-3 py-1 text-[13px] font-medium shadow-card">
             <span className="size-2 rounded-full bg-lime ring-2 ring-forest/15" /> {loading ? 'Loading roles…' : jobs.length + ' live role' + (jobs.length === 1 ? '' : 's')}
           </p>
@@ -93,8 +80,8 @@ export default function PublicBoard() {
         </div>
       </section>
 
-      <div className="sticky top-14 z-30 border-b border-line/70 bg-bg/90 backdrop-blur">
-        <div className="scrollbar-none mx-auto flex max-w-[1080px] gap-2 overflow-x-auto px-4 py-3">
+      <div className="sticky top-[68px] z-30 border-b border-line/70 bg-bg/90 backdrop-blur">
+        <div className="scrollbar-none mx-auto flex max-w-[1180px] gap-2 overflow-x-auto px-5 py-3 md:px-8">
           {chip('all', 'All roles')}
           {chip('casting', 'From casting')}
           {chip('community', 'Community')}
@@ -103,7 +90,7 @@ export default function PublicBoard() {
         </div>
       </div>
 
-      <main className="mx-auto max-w-[1080px] px-4 pb-16 lg:grid lg:grid-cols-[1fr_300px] lg:gap-8">
+      <main className="mx-auto max-w-[1180px] px-5 pb-16 md:px-8 lg:grid lg:grid-cols-[1fr_300px] lg:gap-8">
         <div>
           {loading ? <PageLoading /> : shown.length === 0 ? (
             <div className="pt-10"><Empty icon="search" title="No roles match" sub="Try a different search or category." /></div>
