@@ -17,7 +17,7 @@ export default function PricingPage() {
   const card = (kind: 'performer' | 'casting', href: string, cta: string, dark?: boolean) => {
     const p = PLANS[kind]
     return (
-      <div className={'flex flex-col rounded-[var(--radius)] p-7 shadow-card ' + (dark ? 'bg-forest text-white' : 'border border-line bg-surface')}>
+      <div className={'flex flex-col rounded-[16px] p-8 shadow-card ' + (dark ? 'bg-forest text-white' : 'border border-line bg-surface')}>
         <p className={'text-[15px] font-semibold ' + (dark ? 'text-lime' : 'text-green-ink')}>{p.name}</p>
         <p className="mt-3"><span className="font-display text-[48px] font-bold leading-none">{price(p.pence)}</span><span className={dark ? 'text-white/70' : 'text-muted'}> / month</span></p>
         <p className={'mt-2 text-[14px] ' + (dark ? 'text-white/70' : 'text-muted')}>{TRIAL_DAYS} days free, then billed monthly. Cancel any time.</p>
@@ -29,18 +29,18 @@ export default function PricingPage() {
   return (
     <>
       <section className="bg-glow">
-        <div className="mx-auto max-w-[1000px] px-5 pb-6 pt-14 text-center md:pt-20">
+        <div className="mx-auto max-w-[1000px] px-5 pb-10 pt-32 text-center md:px-8 md:pt-40">
           <Eyebrow>Pricing</Eyebrow>
-          <h1 className="mt-3 text-[40px] leading-[1.05] md:text-[56px]">Simple pricing. No commission.</h1>
+          <h1 className="mt-4 text-[42px] leading-[1.03] tracking-[-0.03em] md:text-[64px]">Simple pricing. No commission.</h1>
           <p className="mx-auto mt-4 max-w-[560px] text-[18px] text-muted">One plan for performers, one for casting teams. Try either free for {TRIAL_DAYS} days.</p>
         </div>
       </section>
-      <section className="mx-auto grid max-w-[1000px] gap-5 px-5 py-10 md:grid-cols-2">
+      <section className="mx-auto grid max-w-[1000px] gap-5 px-5 pb-16 pt-4 md:grid-cols-2 md:px-8">
         {card('performer', '/start?role=performer', 'Start free trial')}
         {card('casting', '/start?role=caster', 'Start casting', true)}
       </section>
-      <section className="mx-auto max-w-[760px] px-5 pb-20 pt-6">
-        <h2 className="text-[28px]">Questions</h2>
+      <section className="mx-auto max-w-[760px] px-5 pb-28 pt-8 md:px-8">
+        <h2 className="text-[32px] tracking-[-0.02em] md:text-[40px]">Questions</h2>
         <div className="mt-6 divide-y divide-line rounded-[var(--radius)] border border-line bg-surface">
           {FAQ.map(([q, a]) => (
             <details key={q} className="group px-5 py-4">
