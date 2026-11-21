@@ -3,6 +3,7 @@ import Icon from '@/components/rc/Icon'
 import Typewriter from '@/components/rc/Typewriter'
 import Marquee from './Marquee'
 import RolesCarousel from './RolesCarousel'
+import HeadshotWave from './HeadshotWave'
 import { Container, Cta, SECTION, SectionHead } from './Chrome'
 import { PLANS, TRIAL_DAYS, price } from '@/lib/rc/plans'
 
@@ -70,6 +71,12 @@ export default function MarketingHome() {
         <Marquee speed={45} items={KINDS.map(k => (
           <span key={k} className="inline-flex items-center gap-3 px-3 text-[15px] font-medium text-muted"><span className="size-1.5 rounded-full bg-lime ring-2 ring-forest/10" />{k}</span>
         ))} />
+      </section>
+
+      {/* ───── Headshot wave ───── */}
+      <section className="overflow-clip pt-20 md:pt-28">
+        <Container><SectionHead center eyebrow="On The Ident" title="Performers, ready for their next role" sub="Actors, dancers, singers and musicians build their profile once and get seen by casting." /></Container>
+        <HeadshotWave />
       </section>
 
       {/* ───── Roles carousel ───── */}

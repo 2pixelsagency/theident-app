@@ -26,8 +26,8 @@ export default function SettingsPage() {
     } catch { setPush(await pushState()); toast('Couldn’t turn on notifications') }
   }
   const { data, loading, mutate } = useAsync(async () => {
-    const { data: p } = await supabase.from('profiles').select('first_name, last_name, show_talent, availability_status, email_alerts_enabled, notification_prefs, account_role').eq('id', me.id).maybeSingle()
-    return p as { first_name: string | null; last_name: string | null; show_talent: boolean | null; availability_status: string | null; email_alerts_enabled: boolean | null; notification_prefs: Partial<Prefs> | null; account_role: string } | null
+    const { data: p } = await supabase.from('profiles').select('first_name, last_name, show_talent, feature_on_site, availability_status, email_alerts_enabled, notification_prefs, account_role').eq('id', me.id).maybeSingle()
+    return p as { first_name: string | null; last_name: string | null; show_talent: boolean | null; feature_on_site?: boolean | null; availability_status: string | null; email_alerts_enabled: boolean | null; notification_prefs: Partial<Prefs> | null; account_role: string } | null
   }, [me.id])
 
   // Membership: status line + the right action (Stripe portal to manage, or subscribe)
@@ -84,6 +84,7 @@ export default function SettingsPage() {
         {section('Profile & visibility')}
         <Card className="divide-y divide-line overflow-hidden">
           {me.role === 'performer' && toggleRow('Open to work', 'Show the green badge on your profile', data.availability_status === 'available', v => update({ availability_status: v ? 'available' : null }))}
+          {me.role === 'performer' && toggleRow('Feature me on theident.me', 'Show your headshot and first name on our website', !!data.feature_on_site, v => update({ feature_on_site: v }, v ? 'You may appear on theident.me' : 'Removed from the website'))}
           {toggleRow('Public profile', data.show_talent === false ? 'Hidden from talent search and your public link' : 'Visible in talent search and at your public link', data.show_talent !== false, v => update({ show_talent: v }))}
         </Card>
 
