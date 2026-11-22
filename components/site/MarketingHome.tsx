@@ -2,6 +2,7 @@ import Link from 'next/link'
 import Icon from '@/components/rc/Icon'
 import RolesCarousel from './RolesCarousel'
 import HeroTalent from './HeroTalent'
+import WorkedWith from './WorkedWith'
 import { Container, Cta, SECTION, SectionHead } from './Chrome'
 import { PLANS, TRIAL_DAYS, price } from '@/lib/rc/plans'
 
@@ -15,6 +16,7 @@ export default function MarketingHome() {
   return (
     <>
       <HeroTalent />
+      <WorkedWith />
 
       {/* ───── Roles carousel ───── */}
       <section className={'overflow-x-clip ' + SECTION}>
