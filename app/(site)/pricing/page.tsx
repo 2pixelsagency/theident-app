@@ -28,7 +28,7 @@ export default function PricingPage() {
   }
   return (
     <>
-      <section className="bg-glow">
+      <section className="bg-bg">
         <div className="mx-auto max-w-[1000px] px-5 pb-10 pt-32 text-center md:px-8 md:pt-40">
           <Eyebrow>Pricing</Eyebrow>
           <h1 className="mt-4 text-[42px] leading-[1.03] tracking-[-0.03em] md:text-[64px]">Simple pricing. No commission.</h1>

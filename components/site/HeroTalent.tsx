@@ -81,7 +81,7 @@ function Headshots() {
 
 export default function HeroTalent() {
   return (
-    <section className="relative overflow-clip bg-glow">
+    <section className="relative overflow-clip bg-bg">
       <div className="mx-auto max-w-[1180px] px-5 pt-32 text-center md:px-8 md:pt-40">
         <p className="rise inline-flex items-center gap-2 rounded-full border border-line/70 bg-surface/80 px-3 py-1.5 text-[13px] font-medium shadow-card backdrop-blur">
           <span className="relative flex size-2"><span className="absolute inline-flex size-full animate-ping rounded-full bg-lime opacity-75" /><span className="relative inline-flex size-2 rounded-full bg-green" /></span>

@@ -42,7 +42,7 @@ export default async function PeoplePage({ searchParams }: Props) {
 
   return (
     <>
-      <section className="bg-glow">
+      <section className="bg-bg">
         <Container className="pb-12 pt-32 md:pt-40">
           <p className="text-[13px] font-semibold uppercase tracking-[0.12em] text-green-ink">Talent</p>
           <h1 className="mt-4 max-w-[820px] text-[42px] leading-[1.03] tracking-[-0.03em] md:text-[64px]">{craft ? plural(craft) : 'Performers'} on The Ident</h1>

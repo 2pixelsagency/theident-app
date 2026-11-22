@@ -9,7 +9,7 @@ export default function FeaturePage({ eyebrow, title, intro, cta, groups, closin
 }) {
   return (
     <>
-      <section className="bg-glow">
+      <section className="bg-bg">
         <Container className="pb-20 pt-32 md:pb-24 md:pt-40">
           <Eyebrow>{eyebrow}</Eyebrow>
           <h1 className="mt-4 max-w-[860px] text-[42px] leading-[1.03] tracking-[-0.03em] md:text-[64px]">{title}</h1>
