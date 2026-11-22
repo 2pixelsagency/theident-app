@@ -8,6 +8,7 @@ export default function CastingPage() {
     <FeaturePage eyebrow="For casting teams" title="From breakdown to booked, without the email chains."
       intro={`Casting directors, producers and companies use The Ident to find and book performers. ${TRIAL_DAYS} days free, then ${price(PLANS.casting.pence)} a month.`}
       cta={{ href: '/start?role=caster', label: 'Start casting' }}
+      facts={[[price(PLANS.casting.pence), 'a month, after your trial'], [TRIAL_DAYS + ' days', 'free to post and review'], ['3 ways', 'to recall: tape, call or in person']]}
       groups={[
         { title: 'Post and review', features: [
           { icon: 'megaphone', title: 'Post a role in minutes', body: 'Choose the materials you need — reel, self-tape, headshots, CV — and a closing date.' },

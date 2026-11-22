@@ -1,5 +1,6 @@
+import Link from 'next/link'
 import Icon from '@/components/rc/Icon'
-import { Cta, Eyebrow } from '@/components/site/Chrome'
+import { Container } from '@/components/site/Chrome'
 import { PLANS, TRIAL_DAYS, price } from '@/lib/rc/plans'
 
 export const metadata = { title: 'Pricing · The Ident', description: `Performers ${price(PLANS.performer.pence)}/month, casting ${price(PLANS.casting.pence)}/month. ${TRIAL_DAYS}-day free trial, cancel any time.` }
@@ -14,42 +15,57 @@ const FAQ = [
 ]
 
 export default function PricingPage() {
-  const card = (kind: 'performer' | 'casting', href: string, cta: string, dark?: boolean) => {
+  const plan = (kind: 'performer' | 'casting', href: string, cta: string, dark?: boolean) => {
     const p = PLANS[kind]
     return (
-      <div className={'flex flex-col rounded-[16px] p-8 shadow-card ' + (dark ? 'bg-forest text-white' : 'border border-line bg-surface')}>
-        <p className={'text-[15px] font-semibold ' + (dark ? 'text-lime' : 'text-green-ink')}>{p.name}</p>
-        <p className="mt-3"><span className="font-display text-[48px] font-bold leading-none">{price(p.pence)}</span><span className={dark ? 'text-white/70' : 'text-muted'}> / month</span></p>
-        <p className={'mt-2 text-[14px] ' + (dark ? 'text-white/70' : 'text-muted')}>{TRIAL_DAYS} days free, then billed monthly. Cancel any time.</p>
-        <ul className="mt-6 flex-1 space-y-2.5">{p.features.map(f => <li key={f} className="flex items-start gap-2.5 text-[15px]"><Icon name="check" className={'mt-0.5 size-4 shrink-0 ' + (dark ? 'text-lime' : 'text-green')} />{f}</li>)}</ul>
-        <div className="mt-8"><Cta href={href}>{cta}</Cta></div>
+      <div className={'flex flex-col p-8 md:p-12 ' + (dark ? 'bg-forest text-white' : 'bg-surface')}>
+        <div className="flex items-center justify-between">
+          <p className={'text-[13px] font-semibold uppercase tracking-[0.12em] ' + (dark ? 'text-lime' : 'text-green-ink')}>{p.name}</p>
+          <p className={'text-[13px] ' + (dark ? 'text-white/60' : 'text-muted')}>{kind === 'casting' ? 'Casting directors & producers' : 'Actors, dancers, singers'}</p>
+        </div>
+        <p className="mt-10 flex items-start gap-1"><span className="mt-3 text-[22px] font-semibold">£</span><span className="font-display text-[88px] font-bold leading-none tracking-[-0.04em]">{(p.pence / 100).toFixed(2)}</span></p>
+        <p className={'mt-3 text-[15px] ' + (dark ? 'text-white/70' : 'text-muted')}>per month · {TRIAL_DAYS} days free · cancel any time</p>
+        <ul className={'mt-10 flex-1 divide-y border-t ' + (dark ? 'divide-white/10 border-white/10' : 'divide-line border-line')}>
+          {p.features.map(f => <li key={f} className="flex items-start gap-3 py-3.5 text-[16px]"><Icon name="check" className={'mt-1 size-4 shrink-0 ' + (dark ? 'text-lime' : 'text-green')} />{f}</li>)}
+        </ul>
+        <Link href={href} className={'group mt-10 inline-flex h-14 items-center justify-between rounded-full pl-7 pr-2 text-[16px] font-semibold ' + (dark ? 'bg-lime text-ink' : 'bg-forest text-white')}>
+          {cta}<span className={'flex size-10 items-center justify-center rounded-full transition group-hover:translate-x-0.5 ' + (dark ? 'bg-forest text-lime' : 'bg-lime text-ink')}><Icon name="arrow-right" className="size-5" /></span>
+        </Link>
       </div>
     )
   }
   return (
     <>
-      <section className="bg-bg">
-        <div className="mx-auto max-w-[1000px] px-5 pb-10 pt-32 text-center md:px-8 md:pt-40">
-          <Eyebrow>Pricing</Eyebrow>
-          <h1 className="mt-4 text-[42px] leading-[1.03] tracking-[-0.03em] md:text-[64px]">Simple pricing. No commission.</h1>
-          <p className="mx-auto mt-4 max-w-[560px] text-[18px] text-muted">One plan for performers, one for casting teams. Try either free for {TRIAL_DAYS} days.</p>
+      <Container className="pb-14 pt-32 md:pt-44">
+        <p className="rise text-[13px] font-semibold uppercase tracking-[0.12em] text-green-ink">Pricing</p>
+        <div className="mt-5 grid gap-6 md:grid-cols-[1.4fr_1fr] md:items-end">
+          <h1 className="rise text-[44px] leading-[1.02] tracking-[-0.035em] md:text-[72px]" style={{ '--d': '100ms' } as React.CSSProperties}>Two plans.<br />No commission. Ever.</h1>
+          <p className="rise text-[18px] leading-relaxed text-muted" style={{ '--d': '200ms' } as React.CSSProperties}>One plan for performers, one for casting teams. Try either free for {TRIAL_DAYS} days — browsing roles is always free.</p>
         </div>
-      </section>
-      <section className="mx-auto grid max-w-[1000px] gap-5 px-5 pb-16 pt-4 md:grid-cols-2 md:px-8">
-        {card('performer', '/start?role=performer', 'Start free trial')}
-        {card('casting', '/start?role=caster', 'Start casting', true)}
-      </section>
-      <section className="mx-auto max-w-[760px] px-5 pb-28 pt-8 md:px-8">
-        <h2 className="text-[32px] tracking-[-0.02em] md:text-[40px]">Questions</h2>
-        <div className="mt-6 divide-y divide-line rounded-[var(--radius)] border border-line bg-surface">
+      </Container>
+      <Container>
+        <div className="rise grid overflow-hidden rounded-[16px] border border-line shadow-[0_30px_70px_-40px_rgb(18_49_39/0.5)] md:grid-cols-2" style={{ '--d': '300ms' } as React.CSSProperties}>
+          {plan('performer', '/start?role=performer', 'Start free trial')}
+          {plan('casting', '/start?role=caster', 'Start casting', true)}
+        </div>
+      </Container>
+      <Container className="grid gap-10 py-24 md:grid-cols-[minmax(240px,340px)_1fr] md:gap-16 md:py-32">
+        <div className="md:sticky md:top-28 md:self-start">
+          <h2 className="text-[34px] leading-[1.05] tracking-[-0.025em] md:text-[44px]">Questions,<br />answered</h2>
+          <p className="mt-4 text-muted">Something else? <Link href="/contact" className="font-semibold text-green-ink underline">Get in touch</Link>.</p>
+        </div>
+        <div className="divide-y divide-line border-y border-line">
           {FAQ.map(([q, a]) => (
-            <details key={q} className="group px-5 py-4">
-              <summary className="flex cursor-pointer list-none items-center justify-between gap-4 text-[16px] font-semibold">{q}<Icon name="plus" className="size-4 shrink-0 transition group-open:rotate-45" /></summary>
-              <p className="mt-2 text-[15px] leading-relaxed text-muted">{a}</p>
+            <details key={q} className="group py-6">
+              <summary className="flex cursor-pointer list-none items-center justify-between gap-6 text-[20px] font-semibold leading-snug md:text-[22px]">
+                {q}
+                <span className="flex size-10 shrink-0 items-center justify-center rounded-full border border-line transition group-open:rotate-45 group-open:border-forest group-open:bg-forest group-open:text-lime"><Icon name="plus" className="size-4" /></span>
+              </summary>
+              <p className="mt-3 max-w-[620px] text-[16px] leading-relaxed text-muted">{a}</p>
             </details>
           ))}
         </div>
-      </section>
+      </Container>
     </>
   )
 }

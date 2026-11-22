@@ -1,12 +1,10 @@
 import Link from 'next/link'
 import Icon from '@/components/rc/Icon'
-import Marquee from './Marquee'
 import RolesCarousel from './RolesCarousel'
 import HeroTalent from './HeroTalent'
 import { Container, Cta, SECTION, SectionHead } from './Chrome'
 import { PLANS, TRIAL_DAYS, price } from '@/lib/rc/plans'
 
-const KINDS = ['West End', 'Musical theatre', 'TV drama', 'Feature film', 'Commercials', 'Dance', 'Music videos', 'UK tours', 'Panto', 'Cruise ships', 'Voice over', 'Short film', 'Theme parks', 'Corporate']
 const STEPS = [
   { n: '01', title: 'Build your Ident', body: 'Headshots, showreel, credits, skills and CV — one profile that casting can trust.', tone: 'bg-surface', chip: 'Profile 100% complete', chipTone: 'bg-mint' },
   { n: '02', title: 'Find and apply', body: 'Roles from casting directors and the community, filtered to what fits you. Apply in a tap.', tone: 'bg-butter', chip: '3 new roles match you', chipTone: 'bg-surface' },
@@ -18,20 +16,13 @@ export default function MarketingHome() {
     <>
       <HeroTalent />
 
-      {/* ───── Marquee ───── */}
-      <section className="border-y border-line bg-surface py-6">
-        <Marquee speed={45} items={KINDS.map(k => (
-          <span key={k} className="inline-flex items-center gap-3 px-3 text-[15px] font-medium text-muted"><span className="size-1.5 rounded-full bg-lime ring-2 ring-forest/10" />{k}</span>
-        ))} />
-      </section>
-
       {/* ───── Roles carousel ───── */}
-      <section className={SECTION}>
+      <section className={'overflow-x-clip ' + SECTION}>
         <Container>
           <SectionHead eyebrow="Live now" title="Roles casting this week" sub="Real castings from casting directors, producers and the community — updated as they’re posted."
             action={<Link href="/jobs" className="inline-flex items-center gap-1.5 text-[15px] font-semibold text-green-ink">All roles <Icon name="arrow-right" className="size-4" /></Link>} />
-          <RolesCarousel />
         </Container>
+        <RolesCarousel />
       </section>
 
       {/* ───── Bento ───── */}
