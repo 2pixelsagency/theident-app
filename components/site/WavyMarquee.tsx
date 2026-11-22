@@ -97,12 +97,13 @@ export default function WavyMarquee<T>({ items, render, flipped, className = '' 
     window.addEventListener('scroll', onScroll, { passive: true })
 
     // Drag / swipe to fling (horizontal only; vertical swipes still scroll the page)
-    let startX = 0, startY = 0, prevX = 0, axis: 'x' | 'y' | null = null, down = false
-    const onDown = (e: PointerEvent) => { down = true; axis = null; startX = prevX = e.clientX; startY = e.clientY }
+    let startX = 0, startY = 0, prevX = 0, axis: 'x' | 'y' | null = null, down = false, moved = false
+    const onDown = (e: PointerEvent) => { down = true; moved = false; axis = null; startX = prevX = e.clientX; startY = e.clientY }
     const onMove = (e: PointerEvent) => {
       if (!down) return
       if (!axis) { const dx = Math.abs(e.clientX - startX), dy = Math.abs(e.clientY - startY); if (dx + dy < 6) return; axis = dx > dy ? 'x' : 'y' }
       if (axis !== 'x') return
+      moved = true
       const d = e.clientX - prevX; prevX = e.clientX
       if (!d) return
       dragging = true; c.style.cursor = 'grabbing'
@@ -110,6 +111,9 @@ export default function WavyMarquee<T>({ items, render, flipped, className = '' 
       target = Math.min(1 + Math.abs(d) / avgWidth * 100 * DRAG_SPEED, MAX_DRAG_SPEED)
     }
     const onUp = () => { down = false; dragging = false; c.style.cursor = 'grab' }
+    // Swallow the click that ends a drag so cards (links) only open on a real tap
+    const onClick = (e: MouseEvent) => { if (moved) { e.preventDefault(); e.stopPropagation(); moved = false } }
+    c.addEventListener('click', onClick, true)
     c.addEventListener('pointerdown', onDown)
     window.addEventListener('pointermove', onMove)
     window.addEventListener('pointerup', onUp)
@@ -124,7 +128,7 @@ export default function WavyMarquee<T>({ items, render, flipped, className = '' 
     return () => {
       cancelAnimationFrame(raf); io.disconnect(); clearTimeout(rt)
       window.removeEventListener('scroll', onScroll); window.removeEventListener('resize', onResize)
-      c.removeEventListener('pointerdown', onDown); window.removeEventListener('pointermove', onMove)
+      c.removeEventListener('pointerdown', onDown); c.removeEventListener('click', onClick, true); window.removeEventListener('pointermove', onMove)
       window.removeEventListener('pointerup', onUp); window.removeEventListener('pointercancel', onUp)
     }
   }, [items.length, batches, flipped])

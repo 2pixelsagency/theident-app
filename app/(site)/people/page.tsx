@@ -10,7 +10,8 @@ export const revalidate = 600
 const CRAFTS = ['Actor', 'Dancer', 'Singer', 'Musical theatre', 'Musician', 'Presenter', 'Voiceover', 'Model']
 const PLURAL: Record<string, string> = { 'Musical theatre': 'Musical theatre performers', Voiceover: 'Voiceover artists' }
 const plural = (c: string) => PLURAL[c] || c + 's'
-type Props = { searchParams: Promise<{ craft?: string; in?: string }> }
+type Props = { searchParams: Promise<{ craft?: string; in?: string; q?: string }> }
+const STOP = new Set(['in', 'a', 'an', 'the', 'for', 'and', 'with', 'of', 'to', 'guy', 'girl', 'playing', 'age'])
 
 export async function generateMetadata({ searchParams }: Props): Promise<Metadata> {
   const { craft, in: place } = await searchParams
@@ -26,12 +27,15 @@ export async function generateMetadata({ searchParams }: Props): Promise<Metadat
 type Row = { slug: string | null; first_name: string | null; last_name: string | null; picture_url: string | null; what_i_do: string | null; location: string | null; availability_status: string | null; is_graduate: boolean | null; graduate_school: string | null }
 
 export default async function PeoplePage({ searchParams }: Props) {
-  const { craft, in: place } = await searchParams
+  const { craft, in: place, q: query } = await searchParams
   let q = supabaseServer.from('profiles').select('slug, first_name, last_name, picture_url, what_i_do, location, availability_status, is_graduate, graduate_school')
     .eq('account_role', 'performer').eq('is_demo', false).or('show_talent.is.null,show_talent.eq.true').not('slug', 'is', null).not('first_name', 'is', null)
     .order('last_active', { ascending: false, nullsFirst: false }).limit(200)
   if (craft) q = q.ilike('what_i_do', '%' + craft.replace(/[%_]/g, '') + '%')
   if (place) q = q.ilike('location', '%' + place.replace(/[%_]/g, '') + '%')
+  // Free-text search from the homepage: every meaningful word must match somewhere on the profile
+  const words = (query || '').toLowerCase().replace(/[^a-z0-9\s-]/g, ' ').split(/\s+/).filter(w => w.length > 1 && !STOP.has(w)).slice(0, 5)
+  for (const w of words) q = q.or(['first_name', 'last_name', 'what_i_do', 'location', 'bio', 'summary'].map(c => `${c}.ilike.%${w}%`).join(','))
   const { data } = await q
   const people = (data || []) as Row[]
   const link = (c?: string) => '/people' + (c ? '?craft=' + encodeURIComponent(c) : '')
@@ -42,7 +46,7 @@ export default async function PeoplePage({ searchParams }: Props) {
         <Container className="pb-12 pt-32 md:pt-40">
           <p className="text-[13px] font-semibold uppercase tracking-[0.12em] text-green-ink">Talent</p>
           <h1 className="mt-4 max-w-[820px] text-[42px] leading-[1.03] tracking-[-0.03em] md:text-[64px]">{craft ? plural(craft) : 'Performers'} on The Ident</h1>
-          <p className="mt-4 max-w-[600px] text-[18px] text-muted">Headshots, showreels, credits and skills — browse performers{place ? ' in ' + place : ''} and connect on The Ident.</p>
+          <p className="mt-4 max-w-[600px] text-[18px] text-muted">{query ? <>Results for “{query}”. </> : null}Headshots, showreels, credits and skills — browse performers{place ? ' in ' + place : ''} and connect on The Ident.</p>
           <nav aria-label="Filter by craft" className="mt-8 flex flex-wrap gap-2">
             <Link href={link()} className={'rounded-full border px-4 py-2 text-[14px] font-medium ' + (!craft ? 'border-forest bg-forest text-white' : 'border-line bg-surface')}>All</Link>
             {CRAFTS.map(c => <Link key={c} href={link(c)} className={'rounded-full border px-4 py-2 text-[14px] font-medium ' + (craft === c ? 'border-forest bg-forest text-white' : 'border-line bg-surface hover:border-ink/30')}>{PLURAL[c] ? c : c + 's'}</Link>)}
