@@ -83,6 +83,7 @@ const MORE: Record<Role, { href: string; label: string; icon: string }[]> = {
   performer: [
     { href: '/diary', label: 'Diary', icon: 'calendar' },
     { href: '/blocks', label: 'Goals', icon: 'target' },
+    { href: '/talent', label: 'People', icon: 'users' },
     { href: '/postings', label: 'Your postings', icon: 'megaphone' },
     { href: '/whats-on', label: 'What’s on', icon: 'ticket' },
     { href: '/classes', label: 'Classes', icon: 'sparkle' },

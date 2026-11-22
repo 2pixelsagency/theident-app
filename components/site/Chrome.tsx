@@ -34,7 +34,7 @@ export function SiteFooter() {
           <p className="font-display text-[26px] font-bold tracking-[-0.03em]">The Ident</p>
           <p className="mt-2 max-w-[320px] text-[15px] text-white/70">Castings, auditions and paid work for performers — and one place for casting teams to find them.</p>
         </div>
-        {col('Product', [['/performers', 'For performers'], ['/casting', 'For casting'], ['/jobs', 'Browse roles'], ['/pricing', 'Pricing']])}
+        {col('Product', [['/performers', 'For performers'], ['/casting', 'For casting'], ['/jobs', 'Browse roles'], ['/people', 'Browse talent'], ['/pricing', 'Pricing']])}
         {col('Company', [['/contact', 'Contact & help'], ['/welcome', 'Log in'], ['/start?role=performer', 'Join']])}
         {col('Legal', [['/privacy', 'Privacy policy'], ['/terms', 'Terms of use']])}
       </div>

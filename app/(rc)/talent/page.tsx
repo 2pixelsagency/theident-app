@@ -1,20 +1,30 @@
 'use client'
 
 import { useMemo, useState } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { isBoosted } from '@/lib/rc/boost'
 import Link from 'next/link'
 import Icon from '@/components/rc/Icon'
-import { Avatar, Chip, Empty, Field, PageHeader, PageLoading, SearchField, Sheet, Button } from '@/components/rc/ui'
+import { Avatar, Chip, Empty, Field, PageHeader, PageLoading, SearchField, Segmented, Sheet, Button, toast } from '@/components/rc/ui'
 import { supabase } from '@/lib/supabase'
 import { useMe } from '@/lib/rc/me'
 import { useAsync } from '@/lib/rc/useAsync'
 import { fullName } from '@/lib/rc/format'
-import { TALENT_SELECT, craftTag, type Talent } from '@/lib/rc/talent'
+import { TALENT_SELECT, craftTag, messageOrConnect, type Talent } from '@/lib/rc/talent'
 
 const CRAFTS = ['Actor', 'Dancer', 'Singer', 'Musical theatre', 'Presenter', 'Model', 'Voiceover']
 
+type Who = 'performers' | 'casting'
+
+// Find people: performers (talent search) and casting teams — for every member, with one-tap Message
 export default function TalentPage() {
-  const { id } = useMe()
+  const { id, profile } = useMe()
+  const router = useRouter()
+  const params = useSearchParams()
+  const [who, setWho] = useState<Who>(params.get('who') === 'casting' ? 'casting' : 'performers')
+  const [nearMe, setNearMe] = useState(false)
+  const [busy, setBusy] = useState<string | null>(null)
+  const myTown = (profile?.location || '').split(',')[0].trim()
   const [q, setQ] = useState('')
   const [openOnly, setOpenOnly] = useState(false)
   const [gradOnly, setGradOnly] = useState(false)
@@ -25,10 +35,19 @@ export default function TalentPage() {
   const [showFilters, setShowFilters] = useState(false)
 
   const { data: people, loading } = useAsync(async () => {
-    const { data } = await supabase.from('profiles').select(TALENT_SELECT).eq('account_role', 'performer').neq('id', id)
+    const { data } = await supabase.from('profiles').select(TALENT_SELECT + ', company_name').eq('account_role', who === 'casting' ? 'caster' : 'performer').neq('id', id)
       .order('last_active', { ascending: false, nullsFirst: false }).limit(300)
-    return ((data || []) as Talent[]).filter(t => t.show_talent !== false && (t.first_name || t.last_name))
-  }, [id])
+    // Performers can hide themselves from search; casting teams are always findable
+    return ((data || []) as unknown as (Talent & { company_name?: string | null })[]).filter(t => (who === 'casting' || t.show_talent !== false) && (t.first_name || t.last_name || t.company_name))
+  }, [id, who])
+  const message = async (t: Talent) => {
+    setBusy(t.id)
+    const res = await messageOrConnect(id, t.id)
+    setBusy(null)
+    if (res.conversationId) router.push('/chats/' + res.conversationId)
+    else if (res.requested) toast('Connection request sent — you can chat once ' + (t.first_name || 'they') + ' accepts')
+    else toast('Couldn’t start a chat — try again')
+  }
 
   const years = useMemo(() => Array.from(new Set((people || []).map(p => p.graduate_year).filter(Boolean))).sort((a, b) => (b as number) - (a as number)) as number[], [people])
 
@@ -39,6 +58,7 @@ export default function TalentPage() {
     if (gradOnly && school.trim() && !(t.graduate_school || '').toLowerCase().includes(school.trim().toLowerCase())) return false
     if (crafts.length && !crafts.some(c => (t.what_i_do || '').toLowerCase().includes(c.toLowerCase()))) return false
     if (location.trim() && !(t.location || '').toLowerCase().includes(location.trim().toLowerCase())) return false
+    if (nearMe && myTown && !(t.location || '').toLowerCase().includes(myTown.toLowerCase())) return false
     if (q.trim()) {
       const hay = [t.first_name, t.last_name, t.what_i_do, t.location, t.graduate_school].join(' ').toLowerCase()
       if (!q.toLowerCase().split(/\s+/).every(w => hay.includes(w))) return false
@@ -46,27 +66,32 @@ export default function TalentPage() {
     return true
   })
     // Boosted (Featured) performers first, then the usual order
-    .sort((a, b) => Number(isBoosted(b.boosted_until)) - Number(isBoosted(a.boosted_until))), [people, openOnly, gradOnly, gradYear, school, crafts, location, q])
+    .sort((a, b) => Number(isBoosted(b.boosted_until)) - Number(isBoosted(a.boosted_until))), [people, openOnly, gradOnly, gradYear, school, crafts, location, q, nearMe, myTown])
 
   const extra = crafts.length + (location ? 1 : 0) + (gradYear ? 1 : 0) + (school ? 1 : 0)
 
   return (
     <>
-      <PageHeader title="Talent" right={<Button size="sm" variant="outline" icon="sliders" onClick={() => setShowFilters(true)}>{extra ? 'Filters · ' + extra : 'Filters'}</Button>} />
+      <PageHeader title="People" right={who === 'performers' ? <Button size="sm" variant="outline" icon="sliders" onClick={() => setShowFilters(true)}>{extra ? 'Filters · ' + extra : 'Filters'}</Button> : undefined} />
       <div className="px-4 pb-8">
-        <SearchField value={q} onChange={setQ} placeholder="Search names, skills, schools…" />
+        <Segmented className="mb-3" value={who} onChange={v => { setWho(v); router.replace(v === 'casting' ? '/talent?who=casting' : '/talent') }} options={[{ value: 'performers', label: 'Performers' }, { value: 'casting', label: 'Casting' }]} />
+        <SearchField value={q} onChange={setQ} placeholder={who === 'casting' ? 'Search casting directors, companies…' : 'Search names, skills, schools…'} />
         <div className="scrollbar-none -mx-4 mt-3 flex gap-2 overflow-x-auto px-4">
+          {myTown && <Chip selected={nearMe} onClick={() => setNearMe(v => !v)}><Icon name="pin" className="size-4" /> Near {myTown}</Chip>}
+          {who === 'performers' && <>
           <Chip selected={openOnly} tone="green" onClick={() => setOpenOnly(v => !v)}>Open to work</Chip>
           <Chip selected={gradOnly} tone="purple" onClick={() => setGradOnly(v => !v)}><Icon name="graduation-cap" className="size-4" /> Recent graduates</Chip>
           {CRAFTS.slice(0, 4).map(c => <Chip key={c} selected={crafts.includes(c)} onClick={() => setCrafts(l => l.includes(c) ? l.filter(x => x !== c) : [...l, c])}>{c}</Chip>)}
+          </>}
         </div>
 
-        <p className="mb-3 mt-4 text-sm text-muted"><span className="font-medium text-ink">{shown.length}</span> performers</p>
+        <p className="mb-3 mt-4 text-sm text-muted"><span className="font-medium text-ink">{shown.length}</span> {who === 'casting' ? 'casting teams' : 'performers'}</p>
         {loading ? <PageLoading /> : shown.length === 0 ? <Empty icon="users" title="No one matches yet" sub="Try fewer filters or a broader search." /> : (
-          <ul className="grid grid-cols-2 gap-3">
+          <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3">
             {shown.map(t => (
               <li key={t.id}>
-                <Link href={'/talent/' + t.id} className="block overflow-hidden rounded-[var(--radius)] border border-line bg-surface shadow-card">
+                <div className="overflow-hidden rounded-[var(--radius)] border border-line bg-surface shadow-card">
+                <Link href={'/talent/' + t.id} className="block">
                   <span className="relative block aspect-[4/5] bg-chip">
                     {t.picture_url
                       // eslint-disable-next-line @next/next/no-img-element
@@ -78,11 +103,15 @@ export default function TalentPage() {
                       {t.is_graduate && <span className="inline-flex items-center gap-1 rounded-full bg-accent px-2 py-0.5 text-[10px] font-medium text-ink"><Icon name="graduation-cap" className="size-3" />Grad{t.graduate_year ? ' ’' + String(t.graduate_year).slice(2) : ''}</span>}
                     </span>
                   </span>
-                  <span className="block p-3">
-                    <span className="block truncate text-sm font-medium">{fullName(t)}</span>
-                    <span className="block truncate text-xs text-muted">{[t.location, craftTag(t)].filter(Boolean).join(' · ')}</span>
+                  <span className="block p-3 pb-2">
+                    <span className="block truncate text-sm font-medium">{who === 'casting' ? (t as Talent & { company_name?: string | null }).company_name || fullName(t) : fullName(t)}</span>
+                    <span className="block truncate text-xs text-muted">{who === 'casting' ? [fullName(t), t.location?.split(',')[0]].filter(Boolean).join(' · ') : [t.location?.split(',')[0], craftTag(t)].filter(Boolean).join(' · ')}</span>
                   </span>
                 </Link>
+                <div className="-mt-1 px-3 pb-3">
+                  <button type="button" onClick={() => message(t)} disabled={busy === t.id} className="inline-flex h-9 w-full items-center justify-center gap-1.5 rounded-[10px] border border-line text-[13px] font-semibold transition hover:bg-chip disabled:opacity-50"><Icon name="chat" className="size-4" />{busy === t.id ? 'Opening…' : 'Message'}</button>
+                </div>
+                </div>
               </li>
             ))}
           </ul>

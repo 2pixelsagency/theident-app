@@ -38,6 +38,7 @@ export default function MenuPage() {
         {!caster && <ListRow icon="target" title="Goals" sub="Weekly actions towards what you want" href="/blocks" />}
         {!caster && <ListRow icon="check-square" title="To do" href="/todo" />}
         <ListRow icon="calendar" title="Diary" href="/diary" />
+        {!caster && <ListRow icon="users" title="People" sub="Find performers and casting to connect with" href="/talent" />}
         {!caster && <ListRow icon="megaphone" title="Your postings" sub="Post a job and review applicants" href="/postings" />}
       </Card>
 

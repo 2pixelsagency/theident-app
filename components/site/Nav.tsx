@@ -11,6 +11,7 @@ const NAV = [
   { href: '/performers', label: 'Performers' },
   { href: '/casting', label: 'Casting' },
   { href: '/jobs', label: 'Roles' },
+  { href: '/people', label: 'Talent' },
   { href: '/pricing', label: 'Pricing' },
 ]
 

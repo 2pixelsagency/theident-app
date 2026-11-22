@@ -1,76 +1,64 @@
-'use client'
-
-import { useEffect } from 'react'
-import Link from 'next/link'
-import { useParams, useRouter } from 'next/navigation'
-import Icon from '@/components/rc/Icon'
-import ProfileView, { heroPrimary, heroSecondary } from '@/components/rc/ProfileView'
-import { ClientOnly, Empty, PageLoading, Toaster, toast } from '@/components/rc/ui'
-import { supabase } from '@/lib/supabase'
-import { useAsync } from '@/lib/rc/useAsync'
-import { fullName } from '@/lib/rc/format'
+import type { Metadata } from 'next'
+import { notFound } from 'next/navigation'
+import PublicProfileClient from '@/components/rc/PublicProfileClient'
+import { supabaseServer, SITE_URL } from '@/lib/supabaseServer'
 import { loadFullProfile } from '@/lib/rc/profile'
+import { fullName } from '@/lib/rc/format'
 
-// Public profile link (theident.me/<slug>). Same immersive layout as in the app.
-// Signed-in visitors are sent to the in-app version so owners can edit and casters can invite.
-function PublicProfile() {
-  const { slug } = useParams<{ slug: string }>()
-  const router = useRouter()
+// Public profile link (theident.me/<slug>) — server-rendered so Google can index it.
+export const revalidate = 300
 
-  const { data, loading } = useAsync(async () => {
-    const [{ data: { session } }, { data: row }] = await Promise.all([
-      supabase.auth.getSession(),
-      supabase.from('profiles').select('id, show_talent').eq('slug', slug).maybeSingle(),
-    ])
-    if (!row) return { state: 'missing' as const }
-    const me = session?.user?.id
-    if (me) return { state: 'redirect' as const, to: me === row.id ? '/me' : '/talent/' + row.id }
-    if (row.show_talent === false) return { state: 'hidden' as const }
-    supabase.from('profile_views').insert({ profile_id: row.id, viewer_id: null }).then(() => {}, () => {})
-    return { state: 'ok' as const, full: await loadFullProfile(row.id, false) }
-  }, [slug])
+type Props = { params: Promise<{ slug: string }> }
 
-  useEffect(() => { if (data?.state === 'redirect') router.replace(data.to) }, [data, router])
-
-  if (loading || !data || data.state === 'redirect') return <PageLoading />
-  if (data.state !== 'ok' || !data.full.profile) {
-    return (
-      <div className="px-6 pt-24">
-        <Empty icon="user" title={data.state === 'hidden' ? 'This profile is private' : 'Profile not found'} sub={data.state === 'hidden' ? 'The owner has hidden it from public view.' : 'Check the link and try again.'} />
-        <Link href="/welcome" className="mx-auto mt-6 block w-fit text-sm font-medium text-green-ink">Go to The Ident ›</Link>
-      </div>
-    )
-  }
-
-  const p = data.full.profile
-  const share = async () => {
-    try { if (navigator.share) await navigator.share({ title: fullName(p), url: window.location.href }); else { await navigator.clipboard.writeText(window.location.href); toast('Link copied') } } catch { /* dismissed */ }
-  }
-
-  return (
-    <>
-      <ProfileView
-        data={data.full}
-        onBack={() => (window.history.length > 1 ? router.back() : router.push('/welcome'))}
-        onShare={share}
-        actions={<>
-          <Link href="/welcome" className={heroPrimary}><Icon name="chat" className="size-[18px]" /> Message {p.first_name || ''}</Link>
-          <Link href="/start?role=performer" className={heroSecondary}>Join The Ident</Link>
-        </>}
-        statusLine="On The Ident — the career app for performers"
-      />
-      <p className="pb-10 text-center text-xs text-faint">Made with <Link href="/welcome" className="font-medium text-green-ink">The Ident</Link></p>
-    </>
-  )
+async function load(slug: string) {
+  const { data: row } = await supabaseServer.from('profiles').select('id, show_talent, is_demo').eq('slug', slug).maybeSingle()
+  if (!row || row.show_talent === false) return null
+  const full = await loadFullProfile(row.id, false, supabaseServer)
+  return full.profile ? { full, demo: !!row.is_demo } : null
 }
 
-export default function PublicProfilePage() {
+const craftOf = (what?: string | null) => (what || 'Performer').split(',').map(s => s.trim()).filter(Boolean).slice(0, 2).join(' & ')
+
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const { slug } = await params
+  const r = await load(slug)
+  if (!r) return { title: 'Profile not found · The Ident', robots: { index: false } }
+  const p = r.full.profile!
+  const name = fullName(p) || 'Performer'
+  const title = `${name} — ${craftOf(p.what_i_do)}${p.location ? ' · ' + p.location.split(',')[0] : ''} | The Ident`
+  const description = (p.summary || p.bio || `${name} is a ${craftOf(p.what_i_do).toLowerCase()}${p.location ? ' based in ' + p.location : ''} on The Ident. See their showreel, credits and skills.`).replace(/\s+/g, ' ').slice(0, 160)
+  return {
+    title, description,
+    alternates: { canonical: `${SITE_URL}/${slug}` },
+    robots: r.demo ? { index: false, follow: true } : { index: true, follow: true },
+    openGraph: { title, description, url: `${SITE_URL}/${slug}`, type: 'profile', images: p.picture_url ? [{ url: p.picture_url }] : undefined },
+    twitter: { card: p.picture_url ? 'summary_large_image' : 'summary', title, description, images: p.picture_url ? [p.picture_url] : undefined },
+  }
+}
+
+export default async function PublicProfilePage({ params }: Props) {
+  const { slug } = await params
+  const r = await load(slug)
+  if (!r) notFound()
+  const p = r.full.profile!
+  // Structured data: a Person with their craft, place, credits and skills
+  const jsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'Person',
+    name: fullName(p),
+    url: `${SITE_URL}/${slug}`,
+    image: p.picture_url || undefined,
+    jobTitle: craftOf(p.what_i_do),
+    description: p.summary || p.bio || undefined,
+    homeLocation: p.location ? { '@type': 'Place', name: p.location } : undefined,
+    alumniOf: p.is_graduate && p.graduate_school ? { '@type': 'EducationalOrganization', name: p.graduate_school } : undefined,
+    knowsAbout: r.full.skills.map(s => s.name).slice(0, 20),
+    performerIn: r.full.credits.slice(0, 10).map(c => ({ '@type': 'CreativeWork', name: c.title })),
+  }
   return (
-    <div className="min-h-dvh bg-bg text-ink">
-      <div className="mx-auto w-full max-w-[480px] md:max-w-[640px] lg:max-w-[720px]">
-        <ClientOnly><PublicProfile /></ClientOnly>
-      </div>
-      <Toaster />
-    </div>
+    <>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, '\\u003c') }} />
+      <PublicProfileClient full={r.full} />
+    </>
   )
 }
