@@ -19,7 +19,7 @@ const TAU = Math.PI * 2
 const viewportFor = (w: number) => (VIEWPORT.find(([min]) => w >= min) || VIEWPORT[VIEWPORT.length - 1]).slice(1) as [number, number]
 const wrap = (min: number, max: number, v: number) => { const r = max - min; return ((((v - min) % r) + r) % r) + min }
 
-export default function WavyMarquee<T>({ items, render, flipped, className = '' }: { items: T[]; render: (item: T, i: number) => React.ReactNode; flipped?: boolean; className?: string }) {
+export default function WavyMarquee<T>({ items, render, flipped, flat, className = '' }: { items: T[]; render: (item: T, i: number) => React.ReactNode; flipped?: boolean; flat?: boolean; className?: string }) {
   const container = useRef<HTMLDivElement>(null)
   const list = useRef<HTMLDivElement>(null)
   const [batches, setBatches] = useState(2)
@@ -57,10 +57,11 @@ export default function WavyMarquee<T>({ items, render, flipped, className = '' 
     const draw = () => {
       if (!loopWidth || !waveLength) return
       const x = wrap(-loopWidth, 0, travel)
-      const amp = WAVE_Y + (speed - 1) * WAVE_BOOST
+      const amp = flat ? 0 : WAVE_Y + (speed - 1) * WAVE_BOOST
       const phaseTravel = travel / waveLength * TAU * WAVE_TRAVEL
       const cw = c.offsetWidth
       l.style.transform = `translate3d(${x}px,0,0)`
+      if (!amp) return
       for (let i = 0; i < els.length; i++) {
         const ix = xs[i] + x
         if (ix + ws[i] < 0 || ix > cw) continue
@@ -131,7 +132,7 @@ export default function WavyMarquee<T>({ items, render, flipped, className = '' 
       c.removeEventListener('pointerdown', onDown); c.removeEventListener('click', onClick, true); window.removeEventListener('pointermove', onMove)
       window.removeEventListener('pointerup', onUp); window.removeEventListener('pointercancel', onUp)
     }
-  }, [items.length, batches, flipped])
+  }, [items.length, batches, flipped, flat])
 
   return (
     <div ref={container} className={'relative w-full cursor-grab select-none ' + className}>

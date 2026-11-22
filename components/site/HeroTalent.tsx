@@ -41,7 +41,7 @@ function TypedSearch() {
   )
 }
 
-// Portrait headshots riding the wave; tap one to open their profile
+// Portrait headshots in a gently scrolling row; tap one to open their profile
 function Headshots() {
   const { data } = useAsync(async () => {
     const cols = 'id, slug, first_name, last_name, picture_url, what_i_do, location'
@@ -55,12 +55,12 @@ function Headshots() {
   }, [])
   const card = 'w-[clamp(9.5em,15vw,17em)] aspect-[4/5]'
   if (!data) return (
-    <div className="flex justify-center gap-[clamp(.75em,1.125vw,2.25em)] overflow-hidden py-[clamp(2.5em,5vw,6em)]">
-      {Array.from({ length: 7 }).map((_, i) => <div key={i} className={card + ' shrink-0 animate-pulse rounded-[12px] bg-chip'} style={{ transform: `translateY(${Math.round(Math.sin(i / 1.6) * 28)}px)`, animationDelay: i * 80 + 'ms' }} />)}
+    <div className="flex justify-center gap-[clamp(.75em,1.125vw,2.25em)] overflow-hidden py-12 md:py-16">
+      {Array.from({ length: 7 }).map((_, i) => <div key={i} className={card + ' shrink-0 animate-pulse rounded-[12px] bg-chip'} style={{ animationDelay: i * 80 + 'ms' }} />)}
     </div>
   )
   return (
-    <WavyMarquee items={data} className="py-[clamp(2.5em,5vw,6em)]" render={(f, i) => {
+    <WavyMarquee flat items={data} className="py-12 md:py-16" render={(f, i) => {
       const name = [f.first_name, f.last_name].filter(Boolean).join(' ')
       return (
         <Link href={'/' + (f.slug || '')} draggable={false} aria-label={'View ' + name + '’s profile'}
