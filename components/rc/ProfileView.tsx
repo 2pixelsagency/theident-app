@@ -310,7 +310,7 @@ function PerformerProfile({ data, owner, onBack, onShare, topRight, actions, sta
             <Head title="Gallery" owner={owner} edit="gallery" count={gallery.length} />
             {gallery.length ? <div className="grid grid-cols-3 gap-2">
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              {gallery.map(g => <a key={g.id} href={g.url} target="_blank" rel="noopener noreferrer"><img src={g.url} alt="" className="aspect-square w-full rounded-xl object-cover" /></a>)}
+              {gallery.map(g => <a key={g.id} href={g.url} target="_blank" rel="noopener noreferrer" aria-label={'Open photo of ' + (fullName(p) || 'this performer')}><img src={g.url} alt={(fullName(p) || 'Performer') + ' — production still or photo'} loading="lazy" className="aspect-square w-full rounded-xl object-cover" /></a>)}
             </div> : <Ghost>Production stills and headshots — they show you in the work.</Ghost>}
           </>
         )}

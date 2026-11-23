@@ -340,7 +340,7 @@ export function Avatar({ src, name, size = 44, className, ring }: { src?: string
       style={{ width: size, height: size, fontSize: Math.max(11, size * 0.34) }}>
       {src
         // eslint-disable-next-line @next/next/no-img-element
-        ? <img src={src} alt="" className="size-full object-cover" />
+        ? <img src={src} alt={name ? name + ' photo' : ''} className="size-full object-cover" />
         : initials}
     </span>
   )

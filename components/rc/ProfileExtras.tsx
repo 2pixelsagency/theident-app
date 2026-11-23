@@ -164,7 +164,7 @@ export function GalleryEditor({ uid, photos, onChange, onCover }: { uid: string;
         {photos.map(ph => (
           <button key={ph.id} type="button" onClick={() => setMenu(ph)} aria-label="Photo options" className="relative aspect-square overflow-hidden rounded-xl bg-chip">
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={ph.url} alt="" className="size-full object-cover" />
+            <img src={ph.url} alt="Your gallery photo" className="size-full object-cover" />
             <span className="absolute right-1.5 top-1.5 flex size-7 items-center justify-center rounded-full bg-surface/90 text-ink"><Icon name="more" className="size-3.5" /></span>
           </button>
         ))}

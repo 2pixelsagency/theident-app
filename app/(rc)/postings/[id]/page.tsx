@@ -213,7 +213,7 @@ export default function CastingReviewPage() {
                       <span className="block aspect-[4/3.4] bg-chip">
                         {p?.picture_url
                           // eslint-disable-next-line @next/next/no-img-element
-                          ? <img src={p.picture_url} alt="" className="size-full object-cover" />
+                          ? <img src={p.picture_url} alt={fullName(p) + ' headshot'} loading="lazy" className="size-full object-cover" />
                           : <span className="flex size-full items-center justify-center"><Avatar name={fullName(p)} size={56} /></span>}
                       </span>
                       <span className="block p-3">

@@ -1,7 +1,7 @@
 import FeaturePage from '@/components/site/FeaturePage'
 import { PLANS, TRIAL_DAYS, price } from '@/lib/rc/plans'
 
-export const metadata = { title: 'For casting · The Ident', description: 'Post roles, review self-tapes inline, recall by tape or video call, and book your cast — all in one place.' }
+export const metadata = { alternates: { canonical: '/casting' }, title: 'For casting · The Ident', description: 'Post roles, review self-tapes inline, recall by tape or video call, and book your cast — all in one place.' }
 
 export default function CastingPage() {
   return (

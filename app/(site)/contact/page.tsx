@@ -2,7 +2,7 @@ import Icon from '@/components/rc/Icon'
 import { Container } from '@/components/site/Chrome'
 import { SUPPORT_EMAIL } from '@/lib/rc/profile'
 
-export const metadata = { title: 'Contact & help · The Ident', description: 'Get help with your account, membership or a casting.' }
+export const metadata = { alternates: { canonical: '/contact' }, title: 'Contact & help · The Ident', description: 'Get help with your account, membership or a casting.' }
 
 const TOPICS = [
   ['Account & login', 'Trouble logging in, changing your email, or your account type.'],

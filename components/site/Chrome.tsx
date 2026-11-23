@@ -2,6 +2,7 @@ import Link from 'next/link'
 import Icon from '@/components/rc/Icon'
 import { SUPPORT_EMAIL } from '@/lib/rc/profile'
 import SiteNav from './Nav'
+import ScrollReveal from './ScrollReveal'
 
 // One spacing scale for the whole site
 export const SECTION = 'py-20 md:py-28'
@@ -53,6 +54,7 @@ export function SiteShell({ children }: { children: React.ReactNode }) {
       <SiteNav />
       <main className="-mt-[68px]">{children}</main>
       <SiteFooter />
+      <ScrollReveal />
     </div>
   )
 }
