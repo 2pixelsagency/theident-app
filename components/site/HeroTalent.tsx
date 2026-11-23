@@ -44,7 +44,7 @@ function TypedSearch() {
 // Portrait headshots in a gently scrolling row. Members who opted in ("Feature me on theident.me") show
 // with their name and open their profile; the site's own headshots (used with permission) fill the row
 // without names and open the talent directory.
-const SITE_FACES = [1, 2, 3, 4, 5, 6, 7].map(n => '/headshots/face-' + n + '.webp')
+const SITE_FACES = [1, 2, 3, 4, 5, 6, 7, 8].map(n => '/headshots/face-' + n + '.webp')
 type Card = { key: string; src: string; href: string; name?: string; sub?: string }
 
 function Headshots() {
