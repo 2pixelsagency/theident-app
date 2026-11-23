@@ -2,8 +2,10 @@ import Link from 'next/link'
 import Icon from '@/components/rc/Icon'
 import { Container } from '@/components/site/Chrome'
 import { PLANS, TRIAL_DAYS, price } from '@/lib/rc/plans'
+import JsonLd from '@/components/site/JsonLd'
+import Faq from '@/components/site/Faq'
 
-export const metadata = { title: 'Pricing · The Ident', description: `Performers ${price(PLANS.performer.pence)}/month, casting ${price(PLANS.casting.pence)}/month. ${TRIAL_DAYS}-day free trial, cancel any time.` }
+export const metadata = { alternates: { canonical: '/pricing' }, title: 'Pricing · The Ident', description: `Performers ${price(PLANS.performer.pence)}/month, casting ${price(PLANS.casting.pence)}/month. ${TRIAL_DAYS}-day free trial, cancel any time.` }
 
 const FAQ = [
   ['Is there a free trial?', `Yes — ${TRIAL_DAYS} days free on either plan. We’ll remind you before it ends, and you can cancel any time.`],
@@ -20,7 +22,7 @@ export default function PricingPage() {
     return (
       <div className={'flex flex-col p-8 md:p-12 ' + (dark ? 'bg-forest text-white' : 'bg-surface')}>
         <div className="flex items-center justify-between">
-          <p className={'text-[13px] font-semibold uppercase tracking-[0.12em] ' + (dark ? 'text-lime' : 'text-green-ink')}>{p.name}</p>
+          <p className={'eyebrow text-[13px] font-semibold uppercase tracking-[0.12em] ' + (dark ? 'text-lime' : 'text-green-ink')}>{p.name}</p>
           <p className={'text-[13px] ' + (dark ? 'text-white/60' : 'text-muted')}>{kind === 'casting' ? 'Casting directors & producers' : 'Actors, dancers, singers'}</p>
         </div>
         <p className="mt-10 flex items-start gap-1"><span className="mt-3 text-[22px] font-semibold">£</span><span className="font-display text-[88px] font-bold leading-none tracking-[-0.04em]">{(p.pence / 100).toFixed(2)}</span></p>
@@ -36,8 +38,9 @@ export default function PricingPage() {
   }
   return (
     <>
+      <JsonLd data={{ '@context': 'https://schema.org', '@type': 'FAQPage', mainEntity: FAQ.map(([q, a]) => ({ '@type': 'Question', name: q, acceptedAnswer: { '@type': 'Answer', text: a } })) }} />
       <Container className="pb-14 pt-32 md:pt-44">
-        <p className="rise text-[13px] font-semibold uppercase tracking-[0.12em] text-green-ink">Pricing</p>
+        <p className="rise eyebrow text-[13px] font-semibold uppercase tracking-[0.12em] text-green-ink">Pricing</p>
         <div className="mt-5 grid gap-6 md:grid-cols-[1.4fr_1fr] md:items-end">
           <h1 className="rise text-[44px] leading-[1.02] tracking-[-0.035em] md:text-[72px]" style={{ '--d': '100ms' } as React.CSSProperties}>Two plans.<br />No commission. Ever.</h1>
           <p className="rise text-[18px] leading-relaxed text-muted" style={{ '--d': '200ms' } as React.CSSProperties}>One plan for performers, one for casting teams. Try either free for {TRIAL_DAYS} days — browsing roles is always free.</p>
@@ -54,17 +57,7 @@ export default function PricingPage() {
           <h2 className="text-[34px] leading-[1.05] tracking-[-0.025em] md:text-[44px]">Questions,<br />answered</h2>
           <p className="mt-4 text-muted">Something else? <Link href="/contact" className="font-semibold text-green-ink underline">Get in touch</Link>.</p>
         </div>
-        <div className="divide-y divide-line border-y border-line">
-          {FAQ.map(([q, a]) => (
-            <details key={q} className="group py-6">
-              <summary className="flex cursor-pointer list-none items-center justify-between gap-6 text-[20px] font-semibold leading-snug md:text-[22px]">
-                {q}
-                <span className="flex size-10 shrink-0 items-center justify-center rounded-full border border-line transition group-open:rotate-45 group-open:border-forest group-open:bg-forest group-open:text-lime"><Icon name="plus" className="size-4" /></span>
-              </summary>
-              <p className="mt-3 max-w-[620px] text-[16px] leading-relaxed text-muted">{a}</p>
-            </details>
-          ))}
-        </div>
+        <Faq items={FAQ as [string, string][]} />
       </Container>
     </>
   )

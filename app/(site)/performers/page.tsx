@@ -1,7 +1,7 @@
 import FeaturePage from '@/components/site/FeaturePage'
 import { PLANS, TRIAL_DAYS, price } from '@/lib/rc/plans'
 
-export const metadata = { title: 'For performers · The Ident', description: 'Find castings, apply with your reel, track recalls and bookings, and manage your career in one app.' }
+export const metadata = { alternates: { canonical: '/performers' }, title: 'For performers · The Ident', description: 'Find castings, apply with your reel, track recalls and bookings, and manage your career in one app.' }
 
 export default function PerformersPage() {
   return (

@@ -95,7 +95,7 @@ export default function TalentPage() {
                   <span className="relative block aspect-[4/5] bg-chip">
                     {t.picture_url
                       // eslint-disable-next-line @next/next/no-img-element
-                      ? <img src={t.picture_url} alt="" className="size-full object-cover" />
+                      ? <img src={t.picture_url} alt={fullName(t) + ' headshot'} loading="lazy" className="size-full object-cover" />
                       : <span className="flex size-full items-center justify-center"><Avatar name={fullName(t)} size={72} /></span>}
                     <span className="absolute left-2 top-2 flex flex-col items-start gap-1">
                       {isBoosted(t.boosted_until) && <span className="inline-flex items-center gap-1 rounded-full bg-lime px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-ink"><Icon name="star" className="size-3 fill-current" />Featured</span>}

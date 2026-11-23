@@ -3,7 +3,7 @@ import { LegalPage } from '@/components/site/Legal'
 import { SUPPORT_EMAIL } from '@/lib/rc/profile'
 import { PLANS, TRIAL_DAYS, price } from '@/lib/rc/plans'
 
-export const metadata = { title: 'Terms of use · The Ident' }
+export const metadata = { alternates: { canonical: '/terms' }, title: 'Terms of use · The Ident', description: 'The terms for using The Ident — memberships, posting roles, your content and safety.' }
 
 // DRAFT for the owner to review (ideally with a solicitor) before launch:
 // add the registered company name and address, and confirm governing law.

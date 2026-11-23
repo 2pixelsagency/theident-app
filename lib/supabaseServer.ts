@@ -5,4 +5,4 @@ export const supabaseServer = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!
   auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
 })
 
-export const SITE_URL = 'https://theident.me'
+export const SITE_URL = 'https://www.theident.me'

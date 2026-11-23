@@ -8,7 +8,7 @@ const inter = Inter({ subsets: ["latin"], weight: ["300", "400", "500", "600"], 
 export const viewport: Viewport = { width: "device-width", initialScale: 1, viewportFit: "cover", themeColor: "#f6f4ee" };
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://theident.me"),
+  metadataBase: new URL("https://www.theident.me"),
   title: "The Ident — castings, auditions & paid work for performers",
   description: "Find castings, auditions and paid work. Apply with your reel, track every recall, and get found by casting directors.",
   openGraph: { siteName: "The Ident", type: "website", locale: "en_GB" },

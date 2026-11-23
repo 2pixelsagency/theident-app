@@ -5,6 +5,10 @@ import HeroTalent from './HeroTalent'
 import WorkedWith from './WorkedWith'
 import { Container, Cta, SECTION, SectionHead } from './Chrome'
 import { PLANS, TRIAL_DAYS, price } from '@/lib/rc/plans'
+import JsonLd from './JsonLd'
+import Faq from './Faq'
+import { HOME_FAQ } from '@/lib/site/faq'
+import { SITE_URL } from '@/lib/supabaseServer'
 
 const STEPS = [
   { n: '01', title: 'Build your Ident', body: 'Headshots, showreel, credits, skills and CV — one profile that casting can trust.', tone: 'bg-surface', chip: 'Profile 100% complete', chipTone: 'bg-mint' },
@@ -15,6 +19,20 @@ const STEPS = [
 export default function MarketingHome() {
   return (
     <>
+      <JsonLd data={{
+        '@context': 'https://schema.org',
+        '@graph': [
+          { '@type': 'Organization', '@id': SITE_URL + '/#org', name: 'The Ident', url: SITE_URL, logo: SITE_URL + '/icon-512.png', email: 'hello@theident.me', description: 'A casting app for performers and casting teams in the UK.' },
+          { '@type': 'WebSite', '@id': SITE_URL + '/#website', url: SITE_URL, name: 'The Ident', publisher: { '@id': SITE_URL + '/#org' },
+            potentialAction: { '@type': 'SearchAction', target: { '@type': 'EntryPoint', urlTemplate: SITE_URL + '/people?q={search_term_string}' }, 'query-input': 'required name=search_term_string' } },
+          { '@type': 'SoftwareApplication', name: 'The Ident', applicationCategory: 'BusinessApplication', operatingSystem: 'Web, iOS', url: SITE_URL,
+            offers: [
+              { '@type': 'Offer', name: 'Performer membership', price: (PLANS.performer.pence / 100).toFixed(2), priceCurrency: 'GBP', category: 'subscription' },
+              { '@type': 'Offer', name: 'Casting membership', price: (PLANS.casting.pence / 100).toFixed(2), priceCurrency: 'GBP', category: 'subscription' },
+            ] },
+          { '@type': 'FAQPage', mainEntity: HOME_FAQ.map(([q, a]) => ({ '@type': 'Question', name: q, acceptedAnswer: { '@type': 'Answer', text: a } })) },
+        ],
+      }} />
       <HeroTalent />
       <WorkedWith />
 
@@ -34,7 +52,7 @@ export default function MarketingHome() {
           <div className="grid auto-rows-[minmax(220px,auto)] gap-4 md:grid-cols-6">
             {/* Pipeline */}
             <div className="flex flex-col justify-between overflow-hidden rounded-[16px] bg-forest p-7 text-white md:col-span-4 md:row-span-2">
-              <div><p className="text-[13px] font-semibold uppercase tracking-[0.1em] text-lime">Castings</p><p className="mt-3 max-w-[420px] text-[28px] font-semibold leading-tight">Every casting, from applied to booked, in one view.</p></div>
+              <div><p className="eyebrow text-[13px] font-semibold uppercase tracking-[0.1em] text-lime">Castings</p><p className="mt-3 max-w-[420px] text-[28px] font-semibold leading-tight">Every casting, from applied to booked, in one view.</p></div>
               <div className="mt-8 space-y-2.5">
                 {[['The Glass Orchard — Nell (lead)', 'Send your self-tape by Fri', 'bg-butter text-ink'], ['Harbour Lights — Young witness', 'Video call · Tue 14:00', 'bg-mint text-ink'], ['Pulse — UK arena tour', 'Booked · sign your contract', 'bg-lime text-ink']].map(([t, s, tone]) => (
                   <div key={t} className="flex items-center justify-between gap-4 rounded-[12px] bg-white/[0.06] px-4 py-3 ring-1 ring-white/10">
@@ -127,6 +145,17 @@ export default function MarketingHome() {
               </div>
             ))}
           </div>
+        </Container>
+      </section>
+
+      {/* ───── FAQ (answer-engine friendly) ───── */}
+      <section className={SECTION}>
+        <Container className="grid gap-10 md:grid-cols-[minmax(240px,340px)_1fr] md:gap-16">
+          <div className="md:sticky md:top-28 md:self-start">
+            <p className="eyebrow text-[13px] font-semibold uppercase tracking-[0.12em] text-green-ink">FAQ</p>
+            <h2 className="mt-3 text-[34px] leading-[1.05] tracking-[-0.025em] md:text-[44px]">Good questions</h2>
+          </div>
+          <Faq items={HOME_FAQ} />
         </Container>
       </section>
 

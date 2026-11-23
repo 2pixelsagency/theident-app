@@ -14,7 +14,7 @@ export default function FeaturePage({ eyebrow, title, intro, cta, facts, groups,
       <section className="border-b border-line">
         <Container className="grid gap-14 pb-20 pt-32 md:grid-cols-[1.5fr_1fr] md:items-end md:pb-24 md:pt-44">
           <div>
-            <p className="rise text-[13px] font-semibold uppercase tracking-[0.12em] text-green-ink">{eyebrow}</p>
+            <p className="rise eyebrow text-[13px] font-semibold uppercase tracking-[0.12em] text-green-ink">{eyebrow}</p>
             <h1 className="rise mt-5 text-[44px] leading-[1.02] tracking-[-0.035em] md:text-[72px]" style={{ '--d': '100ms' } as React.CSSProperties}>{title}</h1>
             <p className="rise mt-6 max-w-[560px] text-[18px] leading-relaxed text-muted" style={{ '--d': '200ms' } as React.CSSProperties}>{intro}</p>
             <div className="rise mt-9 flex flex-wrap gap-3" style={{ '--d': '300ms' } as React.CSSProperties}><Cta href={cta.href}>{cta.label}</Cta><Cta href="/pricing" variant="outline">Pricing</Cta></div>

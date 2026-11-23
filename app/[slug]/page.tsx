@@ -11,8 +11,9 @@ export const revalidate = 300
 type Props = { params: Promise<{ slug: string }> }
 
 async function load(slug: string) {
-  const { data: row } = await supabaseServer.from('profiles').select('id, show_talent, is_demo, placeholder_account').eq('slug', slug).maybeSingle()
-  if (!row || row.show_talent === false) return null
+  const { data: row } = await supabaseServer.from('profiles').select('id, show_talent, is_demo, placeholder_account, account_role').eq('slug', slug).maybeSingle()
+  // Casting pages are always public (show_talent only controls performers in talent search)
+  if (!row || (row.show_talent === false && row.account_role !== 'caster')) return null
   const full = await loadFullProfile(row.id, false, supabaseServer)
   return full.profile ? { full, demo: !!row.is_demo || !!row.placeholder_account } : null
 }

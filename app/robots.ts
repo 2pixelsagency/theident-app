@@ -1,8 +1,11 @@
 import type { MetadataRoute } from 'next'
+import { headers } from 'next/headers'
 import { SITE_URL } from '@/lib/supabaseServer'
 
-// Public pages are crawlable; the signed-in app, admin and APIs are not
-export default function robots(): MetadataRoute.Robots {
+// www.theident.me is the site Google indexes; app.theident.me is the app and asks not to be indexed at all.
+export default async function robots(): Promise<MetadataRoute.Robots> {
+  const host = ((await headers()).get('host') || '').toLowerCase()
+  if (host.startsWith('app.')) return { rules: { userAgent: '*', disallow: '/' } }
   return {
     rules: {
       userAgent: '*',

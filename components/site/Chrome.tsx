@@ -2,6 +2,7 @@ import Link from 'next/link'
 import Icon from '@/components/rc/Icon'
 import { SUPPORT_EMAIL } from '@/lib/rc/profile'
 import SiteNav from './Nav'
+import ScrollReveal from './ScrollReveal'
 
 // One spacing scale for the whole site
 export const SECTION = 'py-20 md:py-28'
@@ -12,7 +13,7 @@ export function SectionHead({ eyebrow, title, sub, light, center, action }: { ey
   return (
     <div className={'mb-12 flex flex-wrap items-end justify-between gap-6 md:mb-14 ' + (center ? 'flex-col items-center text-center' : '')}>
       <div className={center ? 'mx-auto max-w-[720px]' : 'max-w-[720px]'}>
-        <p className={'text-[13px] font-semibold uppercase tracking-[0.12em] ' + (light ? 'text-lime' : 'text-green-ink')}>{eyebrow}</p>
+        <p className={'eyebrow text-[13px] font-semibold uppercase tracking-[0.12em] ' + (light ? 'text-lime' : 'text-green-ink')}>{eyebrow}</p>
         <h2 className={'mt-3 text-[34px] leading-[1.06] tracking-[-0.02em] md:text-[48px] ' + (light ? 'text-white' : '')}>{title}</h2>
         {sub && <p className={'mt-4 text-[17px] leading-relaxed md:text-[18px] ' + (light ? 'text-white/70' : 'text-muted')}>{sub}</p>}
       </div>
@@ -53,13 +54,14 @@ export function SiteShell({ children }: { children: React.ReactNode }) {
       <SiteNav />
       <main className="-mt-[68px]">{children}</main>
       <SiteFooter />
+      <ScrollReveal />
     </div>
   )
 }
 
 // Shared bits
 export function Eyebrow({ children }: { children: React.ReactNode }) {
-  return <p className="text-[13px] font-semibold uppercase tracking-[0.1em] text-green-ink">{children}</p>
+  return <p className="eyebrow text-[13px] font-semibold uppercase tracking-[0.1em] text-green-ink">{children}</p>
 }
 export function Cta({ href, children, variant = 'lime', arrow = true }: { href: string; children: React.ReactNode; variant?: 'lime' | 'dark' | 'outline' | 'ghost-light'; arrow?: boolean }) {
   const cls = variant === 'lime' ? 'bg-lime text-ink shadow-cta hover:bg-forest hover:text-lime'
