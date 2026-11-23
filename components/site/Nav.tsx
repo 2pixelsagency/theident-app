@@ -47,13 +47,13 @@ export default function SiteNav() {
         </nav>
         <span className="flex-1 md:hidden" />
         {signedIn ? (
-          <Link href="/home" className="hidden h-10 items-center gap-1.5 whitespace-nowrap rounded-[10px] bg-forest px-4 text-[14px] font-semibold text-white transition hover:bg-forest/90 sm:inline-flex">
-            Open app <Icon name="arrow-right" className="size-4" />
+          <Link href="/home" className="hidden h-10 items-center gap-1.5 whitespace-nowrap group rounded-[10px] bg-forest px-4 text-[14px] font-semibold text-white transition-colors duration-300 hover:bg-lime hover:text-ink sm:inline-flex">
+            Open app <Icon name="arrow-right" className="cta-arrow size-4" />
           </Link>
         ) : (<>
         <Link href="/welcome" className="hidden rounded-[10px] px-3.5 py-2 text-[14px] font-semibold hover:bg-chip/70 sm:inline-flex">Log in</Link>
-        <Link href="/start?role=performer" className="hidden h-10 items-center gap-1.5 whitespace-nowrap rounded-[10px] bg-forest sm:inline-flex px-4 text-[14px] font-semibold text-white transition hover:bg-forest/90">
-          Start free trial <Icon name="arrow-right" className="size-4" />
+        <Link href="/start?role=performer" className="hidden h-10 items-center gap-1.5 whitespace-nowrap rounded-[10px] group bg-forest sm:inline-flex px-4 text-[14px] font-semibold text-white transition-colors duration-300 hover:bg-lime hover:text-ink">
+          Start free trial <Icon name="arrow-right" className="cta-arrow size-4" />
         </Link>
         </>)}
         <button type="button" aria-label={open ? 'Close menu' : 'Open menu'} aria-expanded={open} onClick={() => setOpen(o => !o)}

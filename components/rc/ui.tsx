@@ -13,12 +13,12 @@ export function cx(...parts: (string | false | null | undefined)[]) {
 
 type Variant = 'primary' | 'dark' | 'outline' | 'accent' | 'ghost' | 'light'
 const VARIANTS: Record<Variant, string> = {
-  primary: 'bg-green text-white shadow-cta hover:opacity-90', // Forest, neutral shadow (no coloured glow)
-  dark: 'bg-dark text-white hover:opacity-90',
-  outline: 'border border-line bg-surface text-ink hover:bg-field',
-  accent: 'bg-accent text-ink hover:opacity-90', // Ink text on Lime, always
+  primary: 'bg-green text-white shadow-cta hover:bg-lime hover:text-ink', // Forest → Lime on hover
+  dark: 'bg-dark text-white hover:bg-lime hover:text-ink',
+  outline: 'border border-line bg-surface text-ink hover:border-forest hover:bg-forest hover:text-white',
+  accent: 'bg-accent text-ink hover:bg-forest hover:text-lime', // Ink text on Lime, always
   ghost: 'text-green-ink hover:bg-green-tint',
-  light: 'bg-surface text-ink hover:opacity-90',
+  light: 'bg-surface text-ink hover:bg-lime',
 }
 
 type ButtonProps = {
@@ -34,7 +34,7 @@ type ButtonProps = {
 
 export function Button({ variant = 'primary', size = 'md', href, icon, trailingIcon, full, className, children, ...rest }: ButtonProps) {
   const cls = cx(
-    'inline-flex items-center justify-center gap-2 font-semibold transition disabled:opacity-50 disabled:pointer-events-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-lime',
+    'group inline-flex cursor-pointer items-center justify-center gap-2 font-semibold transition-[background-color,color,border-color,transform,box-shadow] duration-300 ease-out active:scale-[.98] disabled:opacity-50 disabled:pointer-events-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-lime',
     size === 'lg' && 'h-14 rounded-[10px] text-base px-6',
     size === 'md' && 'h-12 rounded-[10px] text-[15px] px-5',
     size === 'sm' && 'h-9 rounded-full text-[13px] px-4',
@@ -42,7 +42,7 @@ export function Button({ variant = 'primary', size = 'md', href, icon, trailingI
     VARIANTS[variant],
     className,
   )
-  const inner = <>{icon && <Icon name={icon} className="size-[18px]" />}{children}{trailingIcon && <Icon name={trailingIcon} className="size-[18px]" />}</>
+  const inner = <>{icon && <Icon name={icon} className="size-[18px]" />}{children}{trailingIcon && <Icon name={trailingIcon} className="cta-arrow size-[18px]" />}</>
   if (href) return <Link href={href} className={cls}>{inner}</Link>
   return <button type="button" className={cls} {...rest}>{inner}</button>
 }

@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import Icon from '@/components/rc/Icon'
 import WavyMarquee from './WavyMarquee'
+import { Cta } from './Chrome'
 import { supabase } from '@/lib/supabase'
 import { useAsync } from '@/lib/rc/useAsync'
 
@@ -36,7 +37,7 @@ function TypedSearch() {
       <Icon name="search" className="size-5 shrink-0 text-muted" />
       <input value={q} onChange={e => setQ(e.target.value)} aria-label="Search talent" placeholder={ph}
         className="h-full min-w-0 flex-1 bg-transparent text-[16px] outline-none placeholder:text-ink/70" />
-      <button type="submit" className="h-11 shrink-0 rounded-[10px] bg-forest px-5 text-[15px] font-semibold text-white transition hover:bg-forest/90">Search now</button>
+      <button type="submit" className="group inline-flex h-11 shrink-0 items-center gap-1.5 rounded-[10px] bg-forest px-5 text-[15px] font-semibold text-white transition-colors duration-300 hover:bg-lime hover:text-ink active:scale-[.98]">Search now <Icon name="arrow-right" className="cta-arrow size-4" /></button>
     </form>
   )
 }
@@ -109,9 +110,9 @@ export default function HeroTalent() {
       </div>
       <Headshots />
       <div className="rise flex flex-wrap justify-center gap-3 px-5 pb-20 md:pb-28" style={{ '--d': '600ms' } as React.CSSProperties}>
-        <Link href="/people" className="inline-flex h-12 items-center gap-1.5 rounded-[10px] bg-forest px-6 text-[15px] font-semibold text-white">Browse talent <Icon name="arrow-right" className="size-4" /></Link>
-        <Link href="/start?role=performer" className="inline-flex h-12 items-center rounded-[10px] bg-lime px-6 text-[15px] font-semibold text-ink shadow-cta">Start 7-day free trial</Link>
-        <Link href="/performers" className="inline-flex h-12 items-center rounded-[10px] border border-line bg-surface px-6 text-[15px] font-semibold">Features</Link>
+        <Cta href="/people" variant="dark">Browse talent</Cta>
+        <Cta href="/start?role=performer">Start 7-day free trial</Cta>
+        <Cta href="/performers" variant="outline" arrow={false}>Features</Cta>
       </div>
     </section>
   )
