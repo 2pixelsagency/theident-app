@@ -41,7 +41,7 @@ export default function PublicProfileClient({ full }: { full: Full }) {
           </>}
           statusLine="On The Ident — the career app for performers"
         />
-        <p className="pb-10 text-center text-xs text-faint">Made with <Link href="/" className="font-medium text-green-ink">The Ident</Link> · <Link href="/people" className="font-medium text-green-ink">Browse more talent</Link></p>
+        <p className="pb-10 text-center text-xs text-faint">Made with <Link href="https://www.theident.me/" className="font-medium text-green-ink">The Ident</Link> · <Link href="/people" className="font-medium text-green-ink">Browse more talent</Link></p>
       </div>
       <Toaster />
     </div>

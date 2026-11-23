@@ -21,6 +21,10 @@ export default function SiteNav() {
   const [scrolled, setScrolled] = useState(false)
   const [open, setOpen] = useState(false)
   const [signedIn, setSignedIn] = useState(false)
+  // On app.theident.me "/" opens the app, so the logo points at the website itself
+  const [home, setHome] = useState('/')
+  // eslint-disable-next-line react-hooks/set-state-in-effect
+  useEffect(() => { if (window.location.hostname.startsWith('app.')) setHome('https://www.theident.me/') }, [])
   useEffect(() => { let live = true; supabase.auth.getSession().then(({ data: { session } }) => live && setSignedIn(!!session)); return () => { live = false } }, [])
   useEffect(() => {
     const on = () => setScrolled(window.scrollY > 12)
@@ -35,7 +39,7 @@ export default function SiteNav() {
     <header className="sticky top-0 z-50 px-3 pt-[max(12px,env(safe-area-inset-top))] md:px-6">
       <div className={cx('mx-auto flex h-14 max-w-[1180px] items-center gap-2 rounded-[14px] border pl-4 pr-2 transition-all duration-300',
         scrolled || open ? 'border-line/80 bg-surface/80 shadow-[0_10px_30px_-18px_rgb(18_49_39/0.45)] backdrop-blur-xl backdrop-saturate-150' : 'border-transparent bg-transparent')}>
-        <Link href="/" className="mr-4 flex shrink-0 items-center gap-2 whitespace-nowrap font-display text-[19px] font-bold tracking-[-0.03em] text-forest">
+        <Link href={home} aria-label="The Ident home" className="mr-4 flex shrink-0 items-center gap-2 whitespace-nowrap font-display text-[19px] font-bold tracking-[-0.03em] text-forest">
           <span className="flex size-8 items-center justify-center rounded-[9px] bg-forest text-[14px] text-lime">Id</span>The Ident
         </Link>
         <nav className="hidden flex-1 items-center gap-1 md:flex">
