@@ -3,6 +3,7 @@
 const LOGOS: { name: string; src: string; h: number; covers: string[] }[] = [
   { name: 'Royal Ballet & Opera', src: '/logos/royal-ballet-opera.svg', h: 56, covers: ['royal opera house', 'royal ballet', 'royal ballet & opera', 'royal ballet and opera'] },
   { name: 'Grindrod Burton Casting', src: '/logos/grindrod-burton.svg', h: 44, covers: ['grindrod burton', 'grindrod burton casting'] },
+  { name: 'Stuart Burt Casting', src: '/logos/stuart-burt.svg', h: 44, covers: ['stuart burt', 'stuart burt casting'] },
   { name: 'Pearson Casting', src: '/logos/pearson-casting.svg', h: 58, covers: ['pearson casting'] },
   { name: 'The Place', src: '/logos/the-place.svg', h: 40, covers: ['the place', 'the place london'] },
   { name: 'Dee Bee Phunky International Casting', src: '/logos/dee-bee-phunky.svg', h: 64, covers: ['dee bee phunky', 'dee bee phunky casting'] },
