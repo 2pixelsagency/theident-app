@@ -5,6 +5,7 @@ const LOGOS: { name: string; src: string; h: number; covers: string[] }[] = [
   { name: 'Grindrod Burton Casting', src: '/logos/grindrod-burton.svg', h: 44, covers: ['grindrod burton', 'grindrod burton casting'] },
   { name: 'Pearson Casting', src: '/logos/pearson-casting.svg', h: 58, covers: ['pearson casting'] },
   { name: 'The Place', src: '/logos/the-place.svg', h: 40, covers: ['the place', 'the place london'] },
+  { name: 'Dee Bee Phunky International Casting', src: '/logos/dee-bee-phunky.svg', h: 64, covers: ['dee bee phunky', 'dee bee phunky casting'] },
   { name: 'Bloomcasting', src: '/logos/bloomcasting.svg', h: 17, covers: ['bloomcasting', 'bloom casting'] },
 ]
 
