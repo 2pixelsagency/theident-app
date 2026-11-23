@@ -98,13 +98,14 @@ export default function HeroTalent() {
           <span className="relative flex size-2"><span className="absolute inline-flex size-full animate-ping rounded-full bg-lime opacity-75" /><span className="relative inline-flex size-2 rounded-full bg-green" /></span>
           Live castings, updated daily
         </p>
-        <h1 className="rise mx-auto mt-6 max-w-[900px] text-[44px] leading-[1.02] tracking-[-0.035em] md:text-[76px]" style={{ '--d': '120ms' } as React.CSSProperties}>
-          Find the role. Get the recall.<br /><span className="inline-block -skew-x-6 text-green-ink">Book the job.</span>
+        <h1 className="rise mx-auto mt-7 max-w-[1100px] text-[42px] leading-[1.04] tracking-[-0.035em] [text-wrap:balance] sm:text-[clamp(44px,5.2vw,74px)]" style={{ '--d': '120ms' } as React.CSSProperties}>
+          <span className="sm:whitespace-nowrap">Find the role. Get the recall.</span><br />
+          <span className="inline-block -skew-x-6 text-green-ink">Book the job.</span>
         </h1>
-        <p className="rise mx-auto mt-5 max-w-[560px] text-[17px] leading-relaxed text-muted md:text-[19px]" style={{ '--d': '260ms' } as React.CSSProperties}>
+        <p className="rise mx-auto mt-6 max-w-[600px] text-[17px] leading-relaxed text-muted [text-wrap:balance] md:text-[19px]" style={{ '--d': '260ms' } as React.CSSProperties}>
           Castings, auditions and paid work in one app. Apply with your reel, track every self-tape and recall, and get found by casting directors.
         </p>
-        <div className="mt-9"><TypedSearch /></div>
+        <div className="mt-10"><TypedSearch /></div>
       </div>
       <Headshots />
       <div className="rise flex flex-wrap justify-center gap-3 px-5 pb-20 md:pb-28" style={{ '--d': '600ms' } as React.CSSProperties}>
