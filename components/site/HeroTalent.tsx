@@ -103,7 +103,7 @@ export default function HeroTalent() {
           <span className="sm:whitespace-nowrap">Find the role. Get the recall.</span><br />
           <span className="inline-block -skew-x-6 text-green-ink">Book the job.</span>
         </h1>
-        <p className="rise mx-auto mt-6 max-w-[600px] text-[17px] leading-relaxed text-muted [text-wrap:balance] md:text-[19px]" style={{ '--d': '260ms' } as React.CSSProperties}>
+        <p className="rise mx-auto mt-5 max-w-[540px] text-[15px] leading-relaxed text-muted [text-wrap:balance] md:text-[17px]" style={{ '--d': '260ms' } as React.CSSProperties}>
           Castings, auditions and paid work in one app. Apply with your reel, track every self-tape and recall, and get found by casting directors.
         </p>
         <div className="mt-10"><TypedSearch /></div>
