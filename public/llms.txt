@@ -5,14 +5,14 @@
 Pricing: Performers £1.99/month, Casting £10.99/month, each after a 7-day free trial. Browsing the job board is free. No commission on work booked.
 
 ## Key pages
-- [Live roles (job board)](https://theident.me/jobs): castings, auditions and paid work, updated daily
-- [Talent directory](https://theident.me/people): public performer profiles with headshots, credits and skills
-- [For performers](https://theident.me/performers): what performers get
-- [For casting](https://theident.me/casting): what casting teams get
-- [Pricing](https://theident.me/pricing): plans and FAQ
-- [Contact & help](https://theident.me/contact)
-- [Privacy policy](https://theident.me/privacy) · [Terms of use](https://theident.me/terms)
+- [Live roles (job board)](https://www.theident.me/jobs): castings, auditions and paid work, updated daily
+- [Talent directory](https://www.theident.me/people): public performer profiles with headshots, credits and skills
+- [For performers](https://www.theident.me/performers): what performers get
+- [For casting](https://www.theident.me/casting): what casting teams get
+- [Pricing](https://www.theident.me/pricing): plans and FAQ
+- [Contact & help](https://www.theident.me/contact)
+- [Privacy policy](https://www.theident.me/privacy) · [Terms of use](https://www.theident.me/terms)
 
 ## Notes
-- Performer profiles live at https://theident.me/<name>. Contact details are never public.
+- Performer profiles live at https://www.theident.me/<name>. Contact details are never public.
 - Roles marked "Community" are posted by performers; others are posted by casting teams or shared (with credit) by The Ident.
