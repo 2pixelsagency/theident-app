@@ -6,6 +6,7 @@ import WorkedWith from './WorkedWith'
 import { Container, Cta, SECTION, SectionHead } from './Chrome'
 import { PLANS, TRIAL_DAYS, price } from '@/lib/rc/plans'
 import JsonLd from './JsonLd'
+import Faq from './Faq'
 import { HOME_FAQ } from '@/lib/site/faq'
 import { SITE_URL } from '@/lib/supabaseServer'
 
@@ -154,17 +155,7 @@ export default function MarketingHome() {
             <p className="text-[13px] font-semibold uppercase tracking-[0.12em] text-green-ink">FAQ</p>
             <h2 className="mt-3 text-[34px] leading-[1.05] tracking-[-0.025em] md:text-[44px]">Good questions</h2>
           </div>
-          <div className="divide-y divide-line border-y border-line">
-            {HOME_FAQ.map(([q, a]) => (
-              <details key={q} className="group py-6">
-                <summary className="flex list-none items-center justify-between gap-6">
-                  <h3 className="text-[20px] font-semibold leading-snug md:text-[22px]">{q}</h3>
-                  <span className="flex size-10 shrink-0 items-center justify-center rounded-full border border-line transition group-open:rotate-45 group-open:border-forest group-open:bg-forest group-open:text-lime"><Icon name="plus" className="size-4" /></span>
-                </summary>
-                <p className="mt-3 max-w-[640px] text-[16px] leading-relaxed text-muted">{a}</p>
-              </details>
-            ))}
-          </div>
+          <Faq items={HOME_FAQ} />
         </Container>
       </section>
 

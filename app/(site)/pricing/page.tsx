@@ -3,6 +3,7 @@ import Icon from '@/components/rc/Icon'
 import { Container } from '@/components/site/Chrome'
 import { PLANS, TRIAL_DAYS, price } from '@/lib/rc/plans'
 import JsonLd from '@/components/site/JsonLd'
+import Faq from '@/components/site/Faq'
 
 export const metadata = { alternates: { canonical: '/pricing' }, title: 'Pricing · The Ident', description: `Performers ${price(PLANS.performer.pence)}/month, casting ${price(PLANS.casting.pence)}/month. ${TRIAL_DAYS}-day free trial, cancel any time.` }
 
@@ -56,17 +57,7 @@ export default function PricingPage() {
           <h2 className="text-[34px] leading-[1.05] tracking-[-0.025em] md:text-[44px]">Questions,<br />answered</h2>
           <p className="mt-4 text-muted">Something else? <Link href="/contact" className="font-semibold text-green-ink underline">Get in touch</Link>.</p>
         </div>
-        <div className="divide-y divide-line border-y border-line">
-          {FAQ.map(([q, a]) => (
-            <details key={q} className="group py-6">
-              <summary className="flex cursor-pointer list-none items-center justify-between gap-6 text-[20px] font-semibold leading-snug md:text-[22px]">
-                {q}
-                <span className="flex size-10 shrink-0 items-center justify-center rounded-full border border-line transition group-open:rotate-45 group-open:border-forest group-open:bg-forest group-open:text-lime"><Icon name="plus" className="size-4" /></span>
-              </summary>
-              <p className="mt-3 max-w-[620px] text-[16px] leading-relaxed text-muted">{a}</p>
-            </details>
-          ))}
-        </div>
+        <Faq items={FAQ as [string, string][]} />
       </Container>
     </>
   )
