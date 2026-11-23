@@ -52,7 +52,7 @@ export default function MarketingHome() {
           <div className="grid auto-rows-[minmax(220px,auto)] gap-4 md:grid-cols-6">
             {/* Pipeline */}
             <div className="flex flex-col justify-between overflow-hidden rounded-[16px] bg-forest p-7 text-white md:col-span-4 md:row-span-2">
-              <div><p className="text-[13px] font-semibold uppercase tracking-[0.1em] text-lime">Castings</p><p className="mt-3 max-w-[420px] text-[28px] font-semibold leading-tight">Every casting, from applied to booked, in one view.</p></div>
+              <div><p className="eyebrow text-[13px] font-semibold uppercase tracking-[0.1em] text-lime">Castings</p><p className="mt-3 max-w-[420px] text-[28px] font-semibold leading-tight">Every casting, from applied to booked, in one view.</p></div>
               <div className="mt-8 space-y-2.5">
                 {[['The Glass Orchard — Nell (lead)', 'Send your self-tape by Fri', 'bg-butter text-ink'], ['Harbour Lights — Young witness', 'Video call · Tue 14:00', 'bg-mint text-ink'], ['Pulse — UK arena tour', 'Booked · sign your contract', 'bg-lime text-ink']].map(([t, s, tone]) => (
                   <div key={t} className="flex items-center justify-between gap-4 rounded-[12px] bg-white/[0.06] px-4 py-3 ring-1 ring-white/10">
@@ -152,7 +152,7 @@ export default function MarketingHome() {
       <section className={SECTION}>
         <Container className="grid gap-10 md:grid-cols-[minmax(240px,340px)_1fr] md:gap-16">
           <div className="md:sticky md:top-28 md:self-start">
-            <p className="text-[13px] font-semibold uppercase tracking-[0.12em] text-green-ink">FAQ</p>
+            <p className="eyebrow text-[13px] font-semibold uppercase tracking-[0.12em] text-green-ink">FAQ</p>
             <h2 className="mt-3 text-[34px] leading-[1.05] tracking-[-0.025em] md:text-[44px]">Good questions</h2>
           </div>
           <Faq items={HOME_FAQ} />

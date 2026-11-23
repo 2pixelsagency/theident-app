@@ -15,7 +15,7 @@ export default function ContactPage() {
   return (
     <>
       <Container className="pb-16 pt-32 md:pt-44">
-        <p className="rise text-[13px] font-semibold uppercase tracking-[0.12em] text-green-ink">Contact &amp; help</p>
+        <p className="rise eyebrow text-[13px] font-semibold uppercase tracking-[0.12em] text-green-ink">Contact &amp; help</p>
         <h1 className="rise mt-5 max-w-[900px] text-[44px] leading-[1.02] tracking-[-0.035em] md:text-[72px]" style={{ '--d': '100ms' } as React.CSSProperties}>Talk to a real person.</h1>
         <p className="rise mt-6 max-w-[560px] text-[18px] leading-relaxed text-muted" style={{ '--d': '200ms' } as React.CSSProperties}>Email us and we’ll usually reply within one working day.</p>
         <a href={'mailto:' + SUPPORT_EMAIL} className="rise group mt-12 inline-flex items-center gap-4 break-all font-display text-[30px] font-bold tracking-[-0.02em] text-forest underline decoration-lime decoration-[6px] underline-offset-[10px] md:text-[56px]" style={{ '--d': '300ms' } as React.CSSProperties}>

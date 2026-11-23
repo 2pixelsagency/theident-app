@@ -22,7 +22,7 @@ export default function PricingPage() {
     return (
       <div className={'flex flex-col p-8 md:p-12 ' + (dark ? 'bg-forest text-white' : 'bg-surface')}>
         <div className="flex items-center justify-between">
-          <p className={'text-[13px] font-semibold uppercase tracking-[0.12em] ' + (dark ? 'text-lime' : 'text-green-ink')}>{p.name}</p>
+          <p className={'eyebrow text-[13px] font-semibold uppercase tracking-[0.12em] ' + (dark ? 'text-lime' : 'text-green-ink')}>{p.name}</p>
           <p className={'text-[13px] ' + (dark ? 'text-white/60' : 'text-muted')}>{kind === 'casting' ? 'Casting directors & producers' : 'Actors, dancers, singers'}</p>
         </div>
         <p className="mt-10 flex items-start gap-1"><span className="mt-3 text-[22px] font-semibold">£</span><span className="font-display text-[88px] font-bold leading-none tracking-[-0.04em]">{(p.pence / 100).toFixed(2)}</span></p>
@@ -40,7 +40,7 @@ export default function PricingPage() {
     <>
       <JsonLd data={{ '@context': 'https://schema.org', '@type': 'FAQPage', mainEntity: FAQ.map(([q, a]) => ({ '@type': 'Question', name: q, acceptedAnswer: { '@type': 'Answer', text: a } })) }} />
       <Container className="pb-14 pt-32 md:pt-44">
-        <p className="rise text-[13px] font-semibold uppercase tracking-[0.12em] text-green-ink">Pricing</p>
+        <p className="rise eyebrow text-[13px] font-semibold uppercase tracking-[0.12em] text-green-ink">Pricing</p>
         <div className="mt-5 grid gap-6 md:grid-cols-[1.4fr_1fr] md:items-end">
           <h1 className="rise text-[44px] leading-[1.02] tracking-[-0.035em] md:text-[72px]" style={{ '--d': '100ms' } as React.CSSProperties}>Two plans.<br />No commission. Ever.</h1>
           <p className="rise text-[18px] leading-relaxed text-muted" style={{ '--d': '200ms' } as React.CSSProperties}>One plan for performers, one for casting teams. Try either free for {TRIAL_DAYS} days — browsing roles is always free.</p>
