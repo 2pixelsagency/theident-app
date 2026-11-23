@@ -41,17 +41,25 @@ function TypedSearch() {
   )
 }
 
-// Portrait headshots in a gently scrolling row; tap one to open their profile
+// Portrait headshots in a gently scrolling row. Members who opted in ("Feature me on theident.me") show
+// with their name and open their profile; the site's own headshots (used with permission) fill the row
+// without names and open the talent directory.
+const SITE_FACES = [1, 2, 3, 4, 5, 6].map(n => '/headshots/face-' + n + '.webp')
+type Card = { key: string; src: string; href: string; name?: string; sub?: string }
+
 function Headshots() {
   const { data } = useAsync(async () => {
-    const cols = 'id, slug, first_name, last_name, picture_url, what_i_do, location'
-    const { data: real } = await supabase.from('profiles').select(cols).eq('account_role', 'performer').eq('feature_on_site', true).eq('is_demo', false).not('picture_url', 'is', null).not('slug', 'is', null).limit(30)
-    let faces = (real || []) as Face[]
-    if (faces.length < 8) {
-      const { data: demo } = await supabase.from('profiles').select(cols).eq('account_role', 'performer').eq('is_demo', true).not('picture_url', 'is', null).limit(20)
-      faces = [...faces, ...((demo || []) as Face[])]
-    }
-    return faces
+    const { data: real } = await supabase.from('profiles').select('id, slug, first_name, last_name, picture_url, what_i_do, location')
+      .eq('account_role', 'performer').eq('feature_on_site', true).eq('is_demo', false).not('picture_url', 'is', null).not('slug', 'is', null).limit(30)
+    const members: Card[] = ((real || []) as Face[]).map(f => ({
+      key: f.id, src: f.picture_url, href: '/' + f.slug, name: [f.first_name, f.last_name].filter(Boolean).join(' '),
+      sub: [(f.what_i_do || '').split(',')[0], f.location?.split(',')[0]].filter(Boolean).join(' · '),
+    }))
+    // Interleave so named members are spread through the row
+    const cards: Card[] = []
+    const site = SITE_FACES.map((src, i) => ({ key: 'site-' + i, src, href: '/people' }))
+    for (let i = 0; i < Math.max(members.length, site.length); i++) { if (members[i]) cards.push(members[i]); if (site[i]) cards.push(site[i]) }
+    return cards
   }, [])
   const card = 'w-[clamp(9.5em,15vw,17em)] aspect-[4/5]'
   if (!data) return (
@@ -60,22 +68,23 @@ function Headshots() {
     </div>
   )
   return (
-    <WavyMarquee flat items={data} className="py-12 md:py-16" render={(f, i) => {
-      const name = [f.first_name, f.last_name].filter(Boolean).join(' ')
-      return (
-        <Link href={'/' + (f.slug || '')} draggable={false} aria-label={'View ' + name + '’s profile'}
-          className={'group relative block overflow-hidden rounded-[12px] bg-chip shadow-[0_22px_44px_-26px_rgb(18_49_39/0.6)] ' + card}
-          style={{ animation: 'rc-rise .8s cubic-bezier(.2,.7,.2,1) both', animationDelay: Math.min(i, 10) * 70 + 'ms' }}>
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={f.picture_url} alt={name + ' headshot'} draggable={false} loading="lazy" className="size-full object-cover transition duration-500 group-hover:scale-[1.04]" />
+    <WavyMarquee flat items={data} className="py-12 md:py-16" render={(c, i) => (
+      <Link href={c.href} draggable={false} aria-label={c.name ? 'View ' + c.name + '’s profile' : 'Browse talent'}
+        className={'group relative block overflow-hidden rounded-[12px] bg-chip shadow-[0_22px_44px_-26px_rgb(18_49_39/0.6)] ' + card}
+        style={{ animation: 'rc-rise .8s cubic-bezier(.2,.7,.2,1) both', animationDelay: Math.min(i, 10) * 70 + 'ms' }}>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src={c.src} alt={c.name ? c.name + ' headshot' : 'Performer headshot'} draggable={false} loading="lazy" className="size-full object-cover transition duration-500 group-hover:scale-[1.04]" />
+        {c.name ? (
           <span className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-dark/80 via-dark/30 to-transparent p-3 pt-10 text-white">
-            <span className="block truncate text-[15px] font-semibold">{name}</span>
-            <span className="block truncate text-[12px] text-white/75">{[(f.what_i_do || '').split(',')[0], f.location?.split(',')[0]].filter(Boolean).join(' · ')}</span>
+            <span className="block truncate text-[15px] font-semibold">{c.name}</span>
+            {c.sub && <span className="block truncate text-[12px] text-white/75">{c.sub}</span>}
             <span className="mt-2 inline-flex translate-y-1 items-center gap-1 rounded-full bg-lime px-2.5 py-1 text-[11px] font-semibold text-ink opacity-0 transition group-hover:translate-y-0 group-hover:opacity-100">View profile <Icon name="arrow-right" className="size-3" /></span>
           </span>
-        </Link>
-      )
-    }} />
+        ) : (
+          <span className="absolute bottom-3 left-3 inline-flex translate-y-1 items-center gap-1 rounded-full bg-lime px-2.5 py-1 text-[11px] font-semibold text-ink opacity-0 transition group-hover:translate-y-0 group-hover:opacity-100">Browse talent <Icon name="arrow-right" className="size-3" /></span>
+        )}
+      </Link>
+    )} />
   )
 }
 
