@@ -1,7 +1,7 @@
 import { LegalPage } from '@/components/site/Legal'
 import { SUPPORT_EMAIL } from '@/lib/rc/profile'
 
-export const metadata = { title: 'Privacy policy · The Ident' }
+export const metadata = { alternates: { canonical: '/privacy' }, title: 'Privacy policy · The Ident', description: 'What The Ident collects, why, who sees it, and your rights under UK data protection law.' }
 
 // DRAFT for the owner to review (ideally with a solicitor) before launch:
 // add the registered company name, company number and registered address in section 1.

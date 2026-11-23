@@ -2,8 +2,9 @@ import Link from 'next/link'
 import Icon from '@/components/rc/Icon'
 import { Container } from '@/components/site/Chrome'
 import { PLANS, TRIAL_DAYS, price } from '@/lib/rc/plans'
+import JsonLd from '@/components/site/JsonLd'
 
-export const metadata = { title: 'Pricing · The Ident', description: `Performers ${price(PLANS.performer.pence)}/month, casting ${price(PLANS.casting.pence)}/month. ${TRIAL_DAYS}-day free trial, cancel any time.` }
+export const metadata = { alternates: { canonical: '/pricing' }, title: 'Pricing · The Ident', description: `Performers ${price(PLANS.performer.pence)}/month, casting ${price(PLANS.casting.pence)}/month. ${TRIAL_DAYS}-day free trial, cancel any time.` }
 
 const FAQ = [
   ['Is there a free trial?', `Yes — ${TRIAL_DAYS} days free on either plan. We’ll remind you before it ends, and you can cancel any time.`],
@@ -36,6 +37,7 @@ export default function PricingPage() {
   }
   return (
     <>
+      <JsonLd data={{ '@context': 'https://schema.org', '@type': 'FAQPage', mainEntity: FAQ.map(([q, a]) => ({ '@type': 'Question', name: q, acceptedAnswer: { '@type': 'Answer', text: a } })) }} />
       <Container className="pb-14 pt-32 md:pt-44">
         <p className="rise text-[13px] font-semibold uppercase tracking-[0.12em] text-green-ink">Pricing</p>
         <div className="mt-5 grid gap-6 md:grid-cols-[1.4fr_1fr] md:items-end">

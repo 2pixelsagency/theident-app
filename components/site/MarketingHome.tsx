@@ -5,6 +5,9 @@ import HeroTalent from './HeroTalent'
 import WorkedWith from './WorkedWith'
 import { Container, Cta, SECTION, SectionHead } from './Chrome'
 import { PLANS, TRIAL_DAYS, price } from '@/lib/rc/plans'
+import JsonLd from './JsonLd'
+import { HOME_FAQ } from '@/lib/site/faq'
+import { SITE_URL } from '@/lib/supabaseServer'
 
 const STEPS = [
   { n: '01', title: 'Build your Ident', body: 'Headshots, showreel, credits, skills and CV — one profile that casting can trust.', tone: 'bg-surface', chip: 'Profile 100% complete', chipTone: 'bg-mint' },
@@ -15,6 +18,20 @@ const STEPS = [
 export default function MarketingHome() {
   return (
     <>
+      <JsonLd data={{
+        '@context': 'https://schema.org',
+        '@graph': [
+          { '@type': 'Organization', '@id': SITE_URL + '/#org', name: 'The Ident', url: SITE_URL, logo: SITE_URL + '/icon-512.png', email: 'hello@theident.me', description: 'A casting app for performers and casting teams in the UK.' },
+          { '@type': 'WebSite', '@id': SITE_URL + '/#website', url: SITE_URL, name: 'The Ident', publisher: { '@id': SITE_URL + '/#org' },
+            potentialAction: { '@type': 'SearchAction', target: { '@type': 'EntryPoint', urlTemplate: SITE_URL + '/people?q={search_term_string}' }, 'query-input': 'required name=search_term_string' } },
+          { '@type': 'SoftwareApplication', name: 'The Ident', applicationCategory: 'BusinessApplication', operatingSystem: 'Web, iOS', url: SITE_URL,
+            offers: [
+              { '@type': 'Offer', name: 'Performer membership', price: (PLANS.performer.pence / 100).toFixed(2), priceCurrency: 'GBP', category: 'subscription' },
+              { '@type': 'Offer', name: 'Casting membership', price: (PLANS.casting.pence / 100).toFixed(2), priceCurrency: 'GBP', category: 'subscription' },
+            ] },
+          { '@type': 'FAQPage', mainEntity: HOME_FAQ.map(([q, a]) => ({ '@type': 'Question', name: q, acceptedAnswer: { '@type': 'Answer', text: a } })) },
+        ],
+      }} />
       <HeroTalent />
       <WorkedWith />
 
@@ -125,6 +142,27 @@ export default function MarketingHome() {
                 <p className="mt-5 text-[18px] font-semibold">{t}</p>
                 <p className="mt-1.5 text-[14px] leading-relaxed text-white/70">{b}</p>
               </div>
+            ))}
+          </div>
+        </Container>
+      </section>
+
+      {/* ───── FAQ (answer-engine friendly) ───── */}
+      <section className={SECTION}>
+        <Container className="grid gap-10 md:grid-cols-[minmax(240px,340px)_1fr] md:gap-16">
+          <div className="md:sticky md:top-28 md:self-start">
+            <p className="text-[13px] font-semibold uppercase tracking-[0.12em] text-green-ink">FAQ</p>
+            <h2 className="mt-3 text-[34px] leading-[1.05] tracking-[-0.025em] md:text-[44px]">Good questions</h2>
+          </div>
+          <div className="divide-y divide-line border-y border-line">
+            {HOME_FAQ.map(([q, a]) => (
+              <details key={q} className="group py-6">
+                <summary className="flex list-none items-center justify-between gap-6">
+                  <h3 className="text-[20px] font-semibold leading-snug md:text-[22px]">{q}</h3>
+                  <span className="flex size-10 shrink-0 items-center justify-center rounded-full border border-line transition group-open:rotate-45 group-open:border-forest group-open:bg-forest group-open:text-lime"><Icon name="plus" className="size-4" /></span>
+                </summary>
+                <p className="mt-3 max-w-[640px] text-[16px] leading-relaxed text-muted">{a}</p>
+              </details>
             ))}
           </div>
         </Container>

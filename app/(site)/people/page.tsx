@@ -3,6 +3,7 @@ import Link from 'next/link'
 import Icon from '@/components/rc/Icon'
 import { Container, Cta } from '@/components/site/Chrome'
 import { supabaseServer, SITE_URL } from '@/lib/supabaseServer'
+import JsonLd from '@/components/site/JsonLd'
 
 // Public, crawlable talent directory (theident.me/people). Only public, real (non-demo) performers.
 export const revalidate = 600
@@ -42,6 +43,8 @@ export default async function PeoplePage({ searchParams }: Props) {
 
   return (
     <>
+      <JsonLd data={{ '@context': 'https://schema.org', '@type': 'ItemList', name: (craft ? plural(craft) : 'Performers') + ' on The Ident',
+        itemListElement: people.slice(0, 50).map((p, i) => ({ '@type': 'ListItem', position: i + 1, url: SITE_URL + '/' + p.slug, name: [p.first_name, p.last_name].filter(Boolean).join(' ') })) }} />
       <section className="bg-bg">
         <Container className="pb-12 pt-32 md:pt-40">
           <p className="text-[13px] font-semibold uppercase tracking-[0.12em] text-green-ink">Talent</p>
