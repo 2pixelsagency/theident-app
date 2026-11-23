@@ -31,12 +31,13 @@ export function SiteFooter() {
   )
   return (
     <footer className="bg-forest text-white">
-      <div className="mx-auto grid max-w-[1180px] gap-10 px-5 py-16 md:grid-cols-[1.4fr_1fr_1fr_1fr] md:px-8">
+      <div className="mx-auto grid max-w-[1180px] gap-10 px-5 py-16 md:grid-cols-[1.4fr_1fr_1fr_1fr_1fr] md:px-8">
         <div>
           <p className="font-display text-[26px] font-bold tracking-[-0.03em]">The Ident</p>
           <p className="mt-2 max-w-[320px] text-[15px] text-white/70">Castings, auditions and paid work for performers — and one place for casting teams to find them.</p>
         </div>
         {col('Product', [['/performers', 'For performers'], ['/casting', 'For casting'], ['/jobs', 'Browse roles'], ['/people', 'Browse talent'], ['/pricing', 'Pricing']])}
+        {col('Auditions', [['/auditions', 'All auditions'], ['/auditions/musical-theatre', 'Musical theatre'], ['/auditions/dance', 'Dance'], ['/auditions/tv-and-film', 'TV & film'], ['/auditions/london', 'London'], ['/auditions/manchester', 'Manchester']])}
         {col('Company', [['/contact', 'Contact & help'], ['/welcome', 'Log in'], ['/start?role=performer', 'Join']])}
         {col('Legal', [['/privacy', 'Privacy policy'], ['/terms', 'Terms of use']])}
       </div>
