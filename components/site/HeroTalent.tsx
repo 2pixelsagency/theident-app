@@ -99,10 +99,10 @@ export default function HeroTalent() {
           Live castings, updated daily
         </p>
         <h1 className="rise mx-auto mt-6 max-w-[900px] text-[44px] leading-[1.02] tracking-[-0.035em] md:text-[76px]" style={{ '--d': '120ms' } as React.CSSProperties}>
-          You’re not <span className="inline-block -skew-x-6 text-green-ink">boring.</span><br />So why is your ident?
+          Find the role. Get the recall.<br /><span className="inline-block -skew-x-6 text-green-ink">Book the job.</span>
         </h1>
         <p className="rise mx-auto mt-5 max-w-[560px] text-[17px] leading-relaxed text-muted md:text-[19px]" style={{ '--d': '260ms' } as React.CSSProperties}>
-          Showcase your talent with a strong ident, put your best work front and centre, and stay visible to casting — all in one place.
+          Castings, auditions and paid work in one app. Apply with your reel, track every self-tape and recall, and get found by casting directors.
         </p>
         <div className="mt-9"><TypedSearch /></div>
       </div>
