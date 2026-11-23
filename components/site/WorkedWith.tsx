@@ -1,5 +1,4 @@
 // "Our performers have worked with" — logo strip.
-// production companies). Text wordmarks only: no third-party logos, and no claim that these companies use The Ident.
 // Logos supplied by the companies' agreement (black SVGs in /public/logos). RBO shown as its wordmark only, without the Royal Arms.
 const LOGOS: { name: string; src: string; h: number; covers: string[] }[] = [
   { name: 'Royal Ballet & Opera', src: '/logos/royal-ballet-opera.svg', h: 56, covers: ['royal opera house', 'royal ballet', 'royal ballet & opera', 'royal ballet and opera'] },
