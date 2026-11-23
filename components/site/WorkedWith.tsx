@@ -9,7 +9,7 @@ const rank = (k: string) => { const i = FEATURED_KEYS.indexOf(k); return i < 0 ?
 // 'Amazon' and 'Amazon Studios' are the same company on the strip
 const ALIAS: Record<string, string> = { amazon: 'amazon studios', 'bbc one': 'bbc', 'sky one': 'sky' }
 
-export default async function WorkedWith({ max = 8 }: { max?: number }) {
+export default async function WorkedWith({ max = 7 }: { max?: number }) {
   const [{ data: brands }, { data: credits }] = await Promise.all([
     supabaseServer.from('profile_brands').select('brand_name, profiles!inner(is_demo, show_talent)').eq('profiles.is_demo', false).limit(500),
     supabaseServer.from('credits').select('production_company, profiles!inner(is_demo, show_talent)').eq('profiles.is_demo', false).not('production_company', 'is', null).limit(500),
@@ -36,9 +36,9 @@ export default async function WorkedWith({ max = 8 }: { max?: number }) {
     <section className="border-y border-line bg-surface">
       <div className="mx-auto max-w-[1180px] px-5 py-12 text-center md:px-8 md:py-14">
         <p className="text-[13px] font-semibold uppercase tracking-[0.12em] text-muted">Our performers have worked with</p>
-        <ul className="mt-7 flex flex-wrap items-center justify-center gap-x-10 gap-y-5 md:gap-x-14">
+        <ul className="scrollbar-none -mx-5 mt-7 flex items-center gap-x-8 overflow-x-auto whitespace-nowrap px-5 md:mx-0 md:justify-between md:gap-x-6 md:overflow-visible md:px-0">
           {list.map(b => (
-            <li key={b.name} className="font-display text-[20px] font-bold tracking-[-0.02em] text-ink/45 transition hover:text-ink md:text-[24px]">{b.name}</li>
+            <li key={b.name} className="shrink-0 font-display text-[18px] font-bold tracking-[-0.02em] text-ink md:text-[clamp(16px,1.6vw,22px)]">{b.name}</li>
           ))}
         </ul>
       </div>

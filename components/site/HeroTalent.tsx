@@ -44,7 +44,8 @@ function TypedSearch() {
 // Portrait headshots in a gently scrolling row. Members who opted in ("Feature me on theident.me") show
 // with their name and open their profile; the site's own headshots (used with permission) fill the row
 // without names and open the talent directory.
-const SITE_FACES = [1, 2, 3, 4, 5, 6, 7, 8, 9].map(n => '/headshots/face-' + n + '.webp')
+// (Members now have their own accounts; extra unnamed site photos can be listed here.)
+const SITE_FACES: string[] = []
 type Card = { key: string; src: string; href: string; name?: string; sub?: string }
 
 function Headshots() {
@@ -68,21 +69,22 @@ function Headshots() {
     </div>
   )
   return (
-    <WavyMarquee flat items={data} className="py-12 md:py-16" render={(c, i) => (
+    <WavyMarquee flat arc={36} speedFactor={0.4} items={data} className="pb-16 pt-12 md:pb-20 md:pt-16" render={(c, i) => (
       <Link href={c.href} draggable={false} aria-label={c.name ? 'View ' + c.name + '’s profile' : 'Browse talent'}
-        className={'group relative block overflow-hidden rounded-[12px] bg-chip shadow-[0_22px_44px_-26px_rgb(18_49_39/0.6)] ' + card}
+        className={'group relative block rounded-[12px] [perspective:800px] ' + card}
         style={{ animation: 'rc-rise .8s cubic-bezier(.2,.7,.2,1) both', animationDelay: Math.min(i, 10) * 70 + 'ms' }}>
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src={c.src} alt={c.name ? c.name + ' headshot' : 'Performer headshot'} draggable={false} loading="lazy" className="size-full object-cover transition duration-500 group-hover:scale-[1.04]" />
-        {c.name ? (
-          <span className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-dark/80 via-dark/30 to-transparent p-3 pt-10 text-white">
-            <span className="block truncate text-[15px] font-semibold">{c.name}</span>
-            {c.sub && <span className="block truncate text-[12px] text-white/75">{c.sub}</span>}
-            <span className="mt-2 inline-flex translate-y-1 items-center gap-1 rounded-full bg-lime px-2.5 py-1 text-[11px] font-semibold text-ink opacity-0 transition group-hover:translate-y-0 group-hover:opacity-100">View profile <Icon name="arrow-right" className="size-3" /></span>
-          </span>
-        ) : (
-          <span className="absolute bottom-3 left-3 inline-flex translate-y-1 items-center gap-1 rounded-full bg-lime px-2.5 py-1 text-[11px] font-semibold text-ink opacity-0 transition group-hover:translate-y-0 group-hover:opacity-100">Browse talent <Icon name="arrow-right" className="size-3" /></span>
-        )}
+        <span className="absolute inset-0 overflow-hidden rounded-[12px] bg-chip shadow-[0_22px_44px_-26px_rgb(18_49_39/0.6)] ring-0 ring-lime/0 transition-all duration-[600ms] ease-[cubic-bezier(.2,.8,.2,1)] group-hover:-translate-y-3 group-hover:shadow-[0_40px_70px_-30px_rgb(18_49_39/0.75)] group-hover:ring-[3px] group-hover:ring-lime">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={c.src} alt={c.name ? c.name + ' headshot' : 'Performer headshot'} draggable={false} loading="lazy"
+            className="size-full scale-[1.02] object-cover transition duration-[900ms] ease-[cubic-bezier(.2,.8,.2,1)] group-hover:scale-110 group-hover:brightness-[.85]" />
+          {c.name && (
+            <span className="absolute inset-x-0 bottom-0 translate-y-3 bg-gradient-to-t from-dark/85 via-dark/40 to-transparent p-3.5 pt-14 text-left text-white opacity-0 transition-all duration-500 ease-out group-hover:translate-y-0 group-hover:opacity-100">
+              <span className="block truncate text-[16px] font-semibold">{c.name}</span>
+              {c.sub && <span className="block truncate text-[12px] text-white/75">{c.sub}</span>}
+              <span className="mt-2.5 inline-flex items-center gap-1 rounded-full bg-lime px-3 py-1 text-[11px] font-semibold text-ink">View profile <Icon name="arrow-right" className="size-3 transition group-hover:translate-x-0.5" /></span>
+            </span>
+          )}
+        </span>
       </Link>
     )} />
   )

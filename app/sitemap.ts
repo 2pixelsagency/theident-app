@@ -8,7 +8,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const now = new Date()
   const today = now.toISOString().slice(0, 10)
   const [{ data: people }, { data: jobs }] = await Promise.all([
-    supabaseServer.from('profiles').select('slug, updated_at').eq('account_role', 'performer').eq('is_demo', false).or('show_talent.is.null,show_talent.eq.true').not('slug', 'is', null).not('first_name', 'is', null).limit(5000),
+    supabaseServer.from('profiles').select('slug, updated_at').eq('account_role', 'performer').eq('is_demo', false).or('show_talent.is.null,show_talent.eq.true').not('slug', 'is', null).not('first_name', 'is', null).eq('placeholder_account', false).limit(5000),
     supabaseServer.from('jobs').select('id, created_at').eq('is_published', true).eq('is_demo', false).or('application_deadline.is.null,application_deadline.gte.' + today).limit(5000),
   ])
   const page = (path: string, priority: number, changeFrequency: 'daily' | 'weekly' | 'monthly' = 'weekly') => ({ url: SITE_URL + path, lastModified: now, changeFrequency, priority })

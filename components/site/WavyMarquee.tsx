@@ -19,7 +19,7 @@ const TAU = Math.PI * 2
 const viewportFor = (w: number) => (VIEWPORT.find(([min]) => w >= min) || VIEWPORT[VIEWPORT.length - 1]).slice(1) as [number, number]
 const wrap = (min: number, max: number, v: number) => { const r = max - min; return ((((v - min) % r) + r) % r) + min }
 
-export default function WavyMarquee<T>({ items, render, flipped, flat, className = '' }: { items: T[]; render: (item: T, i: number) => React.ReactNode; flipped?: boolean; flat?: boolean; className?: string }) {
+export default function WavyMarquee<T>({ items, render, flipped, flat, arc = 0, speedFactor = 1, className = '' }: { items: T[]; render: (item: T, i: number) => React.ReactNode; flipped?: boolean; flat?: boolean; arc?: number; speedFactor?: number; className?: string }) {
   const container = useRef<HTMLDivElement>(null)
   const list = useRef<HTMLDivElement>(null)
   const [batches, setBatches] = useState(2)
@@ -44,7 +44,7 @@ export default function WavyMarquee<T>({ items, render, flipped, flat, className
     let els: HTMLElement[] = [], xs: number[] = [], ws: number[] = [], hs: number[] = []
     let loopWidth = 0, waveLength = 0, avgWidth = 1
     let travel = 0, speed = 1, target = 1, dir = baseDir
-    let active = true, dragging = false, raf = 0, last = performance.now()
+    let active = true, dragging = false, raf = 0, last = performance.now(), hover = false, ease = 1
 
     const measure = () => {
       els = Array.from(l.children) as HTMLElement[]
@@ -61,11 +61,15 @@ export default function WavyMarquee<T>({ items, render, flipped, flat, className
       const phaseTravel = travel / waveLength * TAU * WAVE_TRAVEL
       const cw = c.offsetWidth
       l.style.transform = `translate3d(${x}px,0,0)`
-      if (!amp) return
+      if (!amp && !arc) return
       for (let i = 0; i < els.length; i++) {
         const ix = xs[i] + x
         if (ix + ws[i] < 0 || ix > cw) continue
-        els[i].style.transform = `translate3d(0,${Math.sin(ix / waveLength * TAU + phaseTravel) * hs[i] * amp}px,0)`
+        if (arc) {
+          // Gentle curve: cards drop and tilt slightly towards the edges
+          const d = Math.max(-1.2, Math.min(1.2, (ix + ws[i] / 2 - cw / 2) / (cw / 2)))
+          els[i].style.transform = `translate3d(0,${d * d * arc}px,0) rotate(${d * 2.5}deg)`
+        } else els[i].style.transform = `translate3d(0,${Math.sin(ix / waveLength * TAU + phaseTravel) * hs[i] * amp}px,0)`
       }
     }
     const tick = (now: number) => {
@@ -73,7 +77,9 @@ export default function WavyMarquee<T>({ items, render, flipped, flat, className
       if (active && loopWidth) {
         speed += ((target !== 1 ? target : 1) - speed) * DRAG_EASE
         if (target !== 1) target += (1 - target) * DRAG_EASE
-        travel += AUTO_SPEED * speedScale * speed * dir * dt / 1000
+        // Glide almost to a stop while hovered so cards are easy to open
+        ease += ((hover && !dragging ? 0.08 : 1) - ease) * 0.06
+        travel += AUTO_SPEED * speedFactor * ease * speedScale * speed * dir * dt / 1000
         draw()
       }
       raf = requestAnimationFrame(tick)
@@ -115,6 +121,9 @@ export default function WavyMarquee<T>({ items, render, flipped, flat, className
     // Swallow the click that ends a drag so cards (links) only open on a real tap
     const onClick = (e: MouseEvent) => { if (moved) { e.preventDefault(); e.stopPropagation(); moved = false } }
     c.addEventListener('click', onClick, true)
+    const onEnter = (e: PointerEvent) => { if (e.pointerType === 'mouse') hover = true }
+    const onLeave = () => { hover = false }
+    c.addEventListener('pointerenter', onEnter); c.addEventListener('pointerleave', onLeave)
     c.addEventListener('pointerdown', onDown)
     window.addEventListener('pointermove', onMove)
     window.addEventListener('pointerup', onUp)
@@ -129,10 +138,11 @@ export default function WavyMarquee<T>({ items, render, flipped, flat, className
     return () => {
       cancelAnimationFrame(raf); io.disconnect(); clearTimeout(rt)
       window.removeEventListener('scroll', onScroll); window.removeEventListener('resize', onResize)
+      c.removeEventListener('pointerenter', onEnter); c.removeEventListener('pointerleave', onLeave)
       c.removeEventListener('pointerdown', onDown); c.removeEventListener('click', onClick, true); window.removeEventListener('pointermove', onMove)
       window.removeEventListener('pointerup', onUp); window.removeEventListener('pointercancel', onUp)
     }
-  }, [items.length, batches, flipped, flat])
+  }, [items.length, batches, flipped, flat, arc, speedFactor])
 
   return (
     <div ref={container} className={'relative w-full cursor-grab select-none ' + className}>
