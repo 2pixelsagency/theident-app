@@ -25,19 +25,19 @@ const OWNER_PROFILE_COLS = PUBLIC_PROFILE_COLS + ', email_alerts_enabled, notifi
 export type FullProfileData = Awaited<ReturnType<typeof loadFullProfile>>
 
 // self=true also loads the owner's own settings
-export async function loadFullProfile(id: string, self = true) {
+export async function loadFullProfile(id: string, self = true, db: typeof supabase = supabase) {
   const [p, contact, reels, skills, credits, brands, testimonials, gallery, hair, eyes, conns] = await Promise.all([
-    supabase.from('profiles').select(self ? OWNER_PROFILE_COLS : PUBLIC_PROFILE_COLS).eq('id', id).maybeSingle(),
-    supabase.rpc('profile_contact', { pid: id }).maybeSingle(),
-    supabase.from('reels').select('id, label, url, sort_order, poster_url, duration_s').eq('profile_id', id).order('sort_order'),
-    supabase.from('profile_skills').select('skills(id, name)').eq('profile_id', id),
-    supabase.from('credits').select('id, title, role, year, production_company, director, production_type_id, production_types(name)').eq('profile_id', id).order('year', { ascending: false }),
-    supabase.from('profile_brands').select('id, brand_name, logo_url').eq('profile_id', id).order('sort_order'),
-    supabase.from('testimonials').select('id, quote, author_name, author_title').eq('profile_id', id).order('sort_order'),
-    supabase.from('gallery_images').select('id, url').eq('profile_id', id).order('sort_order'),
-    supabase.from('hair_colours').select('id, name').order('id'),
-    supabase.from('eye_colours').select('id, name').order('id'),
-    supabase.from('connections').select('id', { count: 'exact', head: true }).eq('status', 'accepted').or(`requester_id.eq.${id},receiver_id.eq.${id}`),
+    db.from('profiles').select(self ? OWNER_PROFILE_COLS : PUBLIC_PROFILE_COLS).eq('id', id).maybeSingle(),
+    db.rpc('profile_contact', { pid: id }).maybeSingle(),
+    db.from('reels').select('id, label, url, sort_order, poster_url, duration_s').eq('profile_id', id).order('sort_order'),
+    db.from('profile_skills').select('skills(id, name)').eq('profile_id', id),
+    db.from('credits').select('id, title, role, year, production_company, director, production_type_id, production_types(name)').eq('profile_id', id).order('year', { ascending: false }),
+    db.from('profile_brands').select('id, brand_name, logo_url').eq('profile_id', id).order('sort_order'),
+    db.from('testimonials').select('id, quote, author_name, author_title').eq('profile_id', id).order('sort_order'),
+    db.from('gallery_images').select('id, url').eq('profile_id', id).order('sort_order'),
+    db.from('hair_colours').select('id, name').order('id'),
+    db.from('eye_colours').select('id, name').order('id'),
+    db.from('connections').select('id', { count: 'exact', head: true }).eq('status', 'accepted').or(`requester_id.eq.${id},receiver_id.eq.${id}`),
   ])
   return {
     profile: p.data ? { ...(p.data as unknown as FullProfile), ...((contact.data as { agent_email: string | null; agent_phone: string | null } | null) ?? { agent_email: null, agent_phone: null }) } : null,

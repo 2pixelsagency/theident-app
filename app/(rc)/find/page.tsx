@@ -119,7 +119,7 @@ export default function FindPage() {
     <>
       <PageHeader title="Find jobs" />
       <div className="px-4 pb-24">
-        <Segmented value={tab} onChange={setTab} options={[{ value: 'roles', label: 'Roles' }, { value: 'side', label: 'Side hustles' }]} />
+        <Segmented value={tab as Tab | 'people'} onChange={v => v === 'people' ? router.push('/talent') : setTab(v)} options={[{ value: 'roles', label: 'Roles' }, { value: 'side', label: 'Side hustles' }, { value: 'people', label: 'People' }]} />
         <div className="mt-4"><SearchField value={q} onChange={setQ} placeholder={tab === 'side' ? 'Teaching, promo, modelling, events…' : 'Search roles, skills, locations…'} /></div>
 
         <div className="scrollbar-none -mx-4 mt-3 flex gap-2 overflow-x-auto px-4">

@@ -85,7 +85,7 @@ export default function SettingsPage() {
         <Card className="divide-y divide-line overflow-hidden">
           {me.role === 'performer' && toggleRow('Open to work', 'Show the green badge on your profile', data.availability_status === 'available', v => update({ availability_status: v ? 'available' : null }))}
           {me.role === 'performer' && toggleRow('Feature me on theident.me', 'Show your headshot and first name on our website', !!data.feature_on_site, v => update({ feature_on_site: v }, v ? 'You may appear on theident.me' : 'Removed from the website'))}
-          {toggleRow('Public profile', data.show_talent === false ? 'Hidden from talent search and your public link' : 'Visible in talent search and at your public link', data.show_talent !== false, v => update({ show_talent: v }))}
+          {toggleRow('Public profile', data.show_talent === false ? 'Hidden from talent search and your public link' : 'Visible in talent search, at your public link and on Google', data.show_talent !== false, v => update({ show_talent: v }))}
         </Card>
 
         {section('Notifications')}
