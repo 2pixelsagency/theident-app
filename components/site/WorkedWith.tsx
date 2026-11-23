@@ -1,5 +1,4 @@
-
-// "Our performers have worked with" — real names from members' own profiles ("Worked with" + credits'
+// "Our performers have worked with" — logo strip.
 // production companies). Text wordmarks only: no third-party logos, and no claim that these companies use The Ident.
 // Logos supplied by the companies' agreement (black SVGs in /public/logos). RBO shown as its wordmark only, without the Royal Arms.
 const LOGOS: { name: string; src: string; h: number; covers: string[] }[] = [
