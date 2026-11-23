@@ -93,6 +93,12 @@ html, body { overflow-x: clip; }
 .rise-stagger > :nth-child(7) { animation-delay: 420ms } .rise-stagger > :nth-child(n+8) { animation-delay: 480ms }
 @keyframes rc-caret { 50% { opacity: 0 } }
 .type-caret { display: inline-block; width: .08em; height: .9em; margin-left: .06em; vertical-align: -.08em; background: var(--green-ink, currentColor); border-radius: 2px; animation: rc-caret 1s steps(1) infinite; }
+/* Everything clickable gets the pointer */
+button:not(:disabled), [role="button"]:not([aria-disabled="true"]), summary, label[for], select, input[type="checkbox"], input[type="radio"] { cursor: pointer; }
+/* Arrow nudge inside any hovered CTA (.cta-arrow) */
+.group:hover .cta-arrow, .group:focus-visible .cta-arrow { transform: translateX(4px); }
+.cta-arrow { transition: transform .35s cubic-bezier(.2,.8,.2,1); }
+
 /* Marketing site: marquee + reveal */
 @keyframes rc-marquee { from { transform: translateX(0); } to { transform: translateX(-50%); } }
 .marquee { display: flex; width: max-content; animation: rc-marquee var(--speed, 40s) linear infinite; }

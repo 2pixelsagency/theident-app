@@ -69,7 +69,7 @@ export default function PublicBoard() {
   return (
     <div className="min-h-dvh bg-bg text-ink">
       <PublicTopBar />
-      <section className="relative -mt-[68px] overflow-hidden bg-glow">
+      <section className="relative -mt-[68px] overflow-hidden bg-bg">
         <div className="mx-auto max-w-[1180px] px-5 pb-10 pt-28 md:px-8 md:pt-36">
           <p className="rise inline-flex items-center gap-2 rounded-full bg-surface/80 px-3 py-1 text-[13px] font-medium shadow-card">
             <span className="size-2 rounded-full bg-lime ring-2 ring-forest/15" /> {loading ? 'Loading roles…' : jobs.length + ' live role' + (jobs.length === 1 ? '' : 's')}

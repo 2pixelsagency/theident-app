@@ -11,10 +11,10 @@ export const revalidate = 300
 type Props = { params: Promise<{ slug: string }> }
 
 async function load(slug: string) {
-  const { data: row } = await supabaseServer.from('profiles').select('id, show_talent, is_demo').eq('slug', slug).maybeSingle()
+  const { data: row } = await supabaseServer.from('profiles').select('id, show_talent, is_demo, placeholder_account').eq('slug', slug).maybeSingle()
   if (!row || row.show_talent === false) return null
   const full = await loadFullProfile(row.id, false, supabaseServer)
-  return full.profile ? { full, demo: !!row.is_demo } : null
+  return full.profile ? { full, demo: !!row.is_demo || !!row.placeholder_account } : null
 }
 
 const craftOf = (what?: string | null) => (what || 'Performer').split(',').map(s => s.trim()).filter(Boolean).slice(0, 2).join(' & ')

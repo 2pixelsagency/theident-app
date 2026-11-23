@@ -8,6 +8,7 @@ export default function PerformersPage() {
     <FeaturePage eyebrow="For performers" title="Spend less time chasing castings and more time performing."
       intro={`Actors, dancers, singers and musicians use The Ident to find work, apply with their materials and keep their career moving. ${TRIAL_DAYS} days free, then ${price(PLANS.performer.pence)} a month.`}
       cta={{ href: '/start?role=performer', label: 'Start free trial' }}
+      facts={[[price(PLANS.performer.pence), 'a month, after your trial'], [TRIAL_DAYS + ' days', 'free to try everything'], ['0%', 'commission on work you book']]}
       groups={[
         { title: 'Find and apply', features: [
           { icon: 'search', title: 'Every role, one board', body: 'Theatre, screen, commercials, dance and side hustles — from casting directors and the community.' },

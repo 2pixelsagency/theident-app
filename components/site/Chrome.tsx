@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import Icon from '@/components/rc/Icon'
 import { SUPPORT_EMAIL } from '@/lib/rc/profile'
 import SiteNav from './Nav'
 
@@ -60,7 +61,14 @@ export function SiteShell({ children }: { children: React.ReactNode }) {
 export function Eyebrow({ children }: { children: React.ReactNode }) {
   return <p className="text-[13px] font-semibold uppercase tracking-[0.1em] text-green-ink">{children}</p>
 }
-export function Cta({ href, children, variant = 'lime' }: { href: string; children: React.ReactNode; variant?: 'lime' | 'dark' | 'outline' | 'ghost-light' }) {
-  const cls = variant === 'lime' ? 'bg-lime text-ink shadow-cta' : variant === 'dark' ? 'bg-forest text-white' : variant === 'outline' ? 'border border-line bg-surface text-ink' : 'border border-white/30 text-white hover:bg-white/10'
-  return <Link href={href} className={'inline-flex h-12 items-center justify-center rounded-[10px] px-6 text-[15px] font-semibold transition ' + cls}>{children}</Link>
+export function Cta({ href, children, variant = 'lime', arrow = true }: { href: string; children: React.ReactNode; variant?: 'lime' | 'dark' | 'outline' | 'ghost-light'; arrow?: boolean }) {
+  const cls = variant === 'lime' ? 'bg-lime text-ink shadow-cta hover:bg-forest hover:text-lime'
+    : variant === 'dark' ? 'bg-forest text-white hover:bg-lime hover:text-ink'
+    : variant === 'outline' ? 'border border-line bg-surface text-ink hover:border-forest hover:bg-forest hover:text-white'
+    : 'border border-white/30 text-white hover:border-lime hover:bg-lime hover:text-ink'
+  return (
+    <Link href={href} className={'group inline-flex h-12 cursor-pointer items-center justify-center gap-2 rounded-[10px] px-6 text-[15px] font-semibold transition-[background-color,color,border-color,transform] duration-300 ease-out active:scale-[.98] ' + cls}>
+      {children}{arrow && <Icon name="arrow-right" className="cta-arrow size-4" />}
+    </Link>
+  )
 }
