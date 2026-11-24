@@ -1,11 +1,11 @@
 // The Ident blog: practical guides for performers and casting teams. Written by The Ident team.
 // Keep posts accurate and general; no made-up stats, quotes or stories.
 export type Block = { h?: string; p?: string[]; list?: string[] }
-export type Post = { slug: string; title: string; description: string; date: string; readMins: number; tag: string; tone: string; blocks: Block[] }
+export type Post = { slug: string; title: string; description: string; date: string; readMins: number; tag: string; tone: string; art: 'tape' | 'recall' | 'reel' | 'money'; blocks: Block[] }
 
 export const POSTS: Post[] = [
   {
-    slug: 'how-to-film-a-self-tape',
+    slug: 'how-to-film-a-self-tape', art: 'tape',
     title: 'How to film a self-tape at home',
     description: 'A simple setup for clean, well-lit self-tapes — framing, sound, readers and what to send.',
     date: '2026-11-24', readMins: 5, tag: 'Self-tapes', tone: 'bg-butter',
@@ -20,7 +20,7 @@ export const POSTS: Post[] = [
     ],
   },
   {
-    slug: 'what-happens-at-a-recall',
+    slug: 'what-happens-at-a-recall', art: 'recall',
     title: 'What happens at a recall',
     description: 'Recalls, callbacks and chemistry reads explained — and how to prepare for each kind.',
     date: '2026-11-24', readMins: 4, tag: 'Auditions', tone: 'bg-mint',
@@ -33,7 +33,7 @@ export const POSTS: Post[] = [
     ],
   },
   {
-    slug: 'showreel-tips',
+    slug: 'showreel-tips', art: 'reel',
     title: 'Showreel tips: what casting want to see',
     description: 'Keep it short, start strong and show your range — a practical checklist for actors’ and dancers’ reels.',
     date: '2026-11-24', readMins: 4, tag: 'Profile', tone: 'bg-blossom',
@@ -47,7 +47,7 @@ export const POSTS: Post[] = [
     ],
   },
   {
-    slug: 'self-employed-performer-tax-basics',
+    slug: 'self-employed-performer-tax-basics', art: 'money',
     title: 'Tax basics for self-employed performers in the UK',
     description: 'Self Assessment, records and setting money aside — the essentials for freelance performers.',
     date: '2026-11-24', readMins: 5, tag: 'Money', tone: 'bg-lime',

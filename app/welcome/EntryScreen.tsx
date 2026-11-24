@@ -1,10 +1,10 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import Image from 'next/image'
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Icon from '@/components/rc/Icon'
+import LogoMark from '@/components/LogoMark'
 import { cx } from '@/components/rc/ui'
 import { supabase } from '@/lib/supabase'
 import { dashboardFor, startSignup, type Role } from '@/lib/rc/onboarding'
@@ -12,8 +12,8 @@ import { authRedirect } from '@/lib/rc/authRedirect'
 
 type Side = 'perform' | 'cast'
 
-// The log-in screen, with two sides. The Perform / Cast toggle is the user choosing their side:
-// it swaps hero + copy in place and carries through to both Log in (→ that side's dashboard)
+// The log-in screen: a clean centred form on Paper (photo heroes set aside for now). The Perform / Cast
+// toggle is the user choosing their side: it swaps the copy in place and carries through to both Log in (→ that side's dashboard)
 // and Sign up (→ straight into that side's questions, never asked again).
 // Apple / Google buttons only once they're enabled in Supabase: set NEXT_PUBLIC_SOCIAL_LOGIN=apple,google
 const SOCIAL = (process.env.NEXT_PUBLIC_SOCIAL_LOGIN || '').split(',').map(x => x.trim()).filter(Boolean)
@@ -47,8 +47,6 @@ const FADE = 'duration-[280ms] ease-out will-change-[opacity]'
 export default function EntryScreen() {
   const router = useRouter()
   const [side, setSide] = useState<Side>(useSearchParams().get('side') === 'cast' ? 'cast' : 'perform')
-  const [firstSide] = useState(side)
-  const [broken, setBroken] = useState<Partial<Record<Side, boolean>>>({})
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [showPw, setShowPw] = useState(false)
@@ -107,77 +105,72 @@ export default function EntryScreen() {
     if (err) { setError('Couldn’t start ' + (provider === 'apple' ? 'Apple' : 'Google') + ' sign-in. Please try again.'); setBusy(null) }
   }
 
-  const glass = 'h-[52px] w-full rounded-[10px] border border-white/20 bg-white/10 px-4 text-[16px] text-white outline-none backdrop-blur-md transition placeholder:text-white/60 focus:border-white/50'
-  const round = 'inline-flex size-11 items-center justify-center rounded-full border border-white/20 bg-white/10 text-white backdrop-blur-md transition active:scale-95 disabled:opacity-60'
+  const field = 'h-12 w-full rounded-[14px] border border-line-strong bg-surface px-4 text-[16px] text-ink outline-none transition placeholder:text-faint focus:border-forest focus:ring-2 focus:ring-lime/50'
+  const outline = 'flex h-12 w-full items-center justify-center gap-2 rounded-full border border-line-strong bg-surface text-[15px] font-semibold text-ink transition-colors hover:border-forest disabled:opacity-60'
 
   return (
-    <main className="relative isolate flex min-h-dvh flex-col overflow-hidden bg-dark text-white">
-      {/* Full-bleed heroes, stacked and cross-faded; they run behind the notch */}
-      {ORDER.map(k => (
-        <div key={k} aria-hidden="true" className={cx('absolute inset-0 -z-20 transition-opacity', FADE, side === k ? 'opacity-100' : 'opacity-0')}>
-          {broken[k]
-            ? <div className="size-full bg-hero" />
-            // next/image serves a resized WebP/AVIF instead of the full-size upload
-            : <Image src={SIDES[k].hero} alt="" fill
-                // Both heroes load up front so switching never shows a blank frame: the side shown first is preloaded
-                // in <head>, the other downloads straight away at low priority instead of waiting until it's shown
-                {...(k === firstSide ? { preload: true } : { loading: 'eager' as const, fetchPriority: 'low' as const })}
-                sizes="(min-width: 640px) 640px, 100vw"
-                className="object-cover" style={{ objectPosition: SIDES[k].position }} onError={() => setBroken(b => ({ ...b, [k]: true }))} />}
-        </div>
-      ))}
-      <div aria-hidden="true" className="absolute inset-0 -z-10 bg-scrim" />
+    <main className="relative isolate flex min-h-dvh flex-col items-center justify-center overflow-hidden bg-bg px-6 py-[max(32px,env(safe-area-inset-top))] text-ink">
+      {/* Faint frame lines around the form, fading out at the ends (the photo heroes are set aside for now) */}
+      <div aria-hidden="true" className="pointer-events-none absolute inset-0 -z-10 hidden sm:block">
+        <span className="absolute left-1/2 top-0 h-full w-px -translate-x-[240px] bg-gradient-to-b from-transparent via-surface to-transparent" />
+        <span className="absolute left-1/2 top-0 h-full w-px translate-x-[240px] bg-gradient-to-b from-transparent via-surface to-transparent" />
+        <span className="absolute left-0 top-[12%] h-px w-full bg-gradient-to-r from-transparent via-surface to-transparent" />
+        <span className="absolute bottom-[12%] left-0 h-px w-full bg-gradient-to-r from-transparent via-surface to-transparent" />
+      </div>
 
-      <div className="mx-auto flex w-full max-w-[430px] flex-1 flex-col px-6 pb-[max(24px,env(safe-area-inset-bottom))] pt-[max(18px,env(safe-area-inset-top))]">
-        <div className="flex-1" />
+      <div className="flex w-full max-w-[400px] flex-col items-center">
+        <Link href="https://www.theident.me/" aria-label="The Ident" className="flex items-center gap-2 font-display text-[22px] font-bold tracking-[-0.03em] text-forest">
+          <LogoMark className="size-5" />The Ident
+        </Link>
 
-        {/* Perform / Cast segmented toggle: the white pill slides, labels cross-fade */}
-        <div role="group" aria-label="I want to" className="relative grid w-fit grid-cols-2 rounded-full border border-white/25 bg-white/15 p-1 backdrop-blur-md">
-          <span aria-hidden="true" className={cx('absolute bottom-1 left-1 top-1 w-[calc(50%-4px)] rounded-full bg-white transition-transform', SLIDE, side === 'cast' && 'translate-x-full')} />
+        {/* Perform / Cast: the side carries through to Log in and Sign up */}
+        <div role="group" aria-label="I want to" className="relative mt-8 grid w-fit grid-cols-2 rounded-full bg-sand-2 p-1">
+          <span aria-hidden="true" className={cx('absolute bottom-1 left-1 top-1 w-[calc(50%-4px)] rounded-full bg-forest transition-transform', SLIDE, side === 'cast' && 'translate-x-full')} />
           {ORDER.map(k => (
             <button key={k} type="button" aria-pressed={side === k} onClick={() => setSide(k)}
-              className={cx('relative z-10 h-11 w-[124px] rounded-full text-[15px] font-medium transition-colors', SLIDE, side === k ? 'text-ink' : 'text-white')}>
+              className={cx('relative z-10 h-10 w-[120px] rounded-full text-[14px] font-semibold transition-colors', SLIDE, side === k ? 'text-bg' : 'text-muted-strong')}>
               {SIDES[k].label}
             </button>
           ))}
         </div>
 
-        {/* Headline + sub, cross-faded in one grid cell so the layout doesn't jump */}
-        <div className="mt-5 grid">
+        <div className="mt-6 grid w-full text-center">
           {ORDER.map(k => (
             <div key={k} aria-hidden={side !== k} className={cx('transition-opacity [grid-area:1/1]', FADE, side === k ? 'opacity-100' : 'opacity-0')}>
-              <h1 className="text-[32px] leading-[1.05] text-white">{SIDES[k].title[0]}<br />{SIDES[k].title[1]}</h1>
-              <p className="mt-3 text-[15px] font-light leading-[1.5] text-white/85">{SIDES[k].sub}</p>
+              <h1 className="font-display text-[34px] font-bold leading-[1.05] tracking-[-0.03em]">Welcome back</h1>
+              <p className="mx-auto mt-2 max-w-[320px] text-[13px] leading-[1.6] text-muted-strong">{SIDES[k].sub}</p>
             </div>
           ))}
         </div>
 
-        {/* Log in over the photo */}
-        <form onSubmit={logIn} className="mt-6 space-y-3">
-          <input type="email" autoComplete="email" required aria-label="Email" placeholder="Email" value={email} onChange={e => { setEmail(e.target.value); setError(null) }} className={glass} />
-          <div className="relative">
-            <input type={showPw ? 'text' : 'password'} autoComplete="current-password" required aria-label="Password" placeholder="Password" value={password} onChange={e => { setPassword(e.target.value); setError(null) }} className={cx(glass, 'pr-16')} />
-            <button type="button" onClick={() => setShowPw(v => !v)} className="absolute right-4 top-1/2 -translate-y-1/2 text-[13px] font-medium text-white/75">{showPw ? 'Hide' : 'Show'}</button>
+        {SOCIAL.length > 0 && (
+          <div className="mt-7 w-full space-y-2.5">
+            {SOCIAL.includes('google') && <button type="button" onClick={() => oauth('google')} disabled={busy !== null} className={outline}><Icon name="google" className="size-5" />Continue with Google</button>}
+            {SOCIAL.includes('apple') && <button type="button" onClick={() => oauth('apple')} disabled={busy !== null} className={outline}><Icon name="apple" className="size-5" />Continue with Apple</button>}
+            <div className="flex items-center gap-3 pt-2 text-[13px] text-muted"><span className="h-px flex-1 bg-line-strong" />or<span className="h-px flex-1 bg-line-strong" /></div>
           </div>
-          {error && <p role="alert" className="rounded-xl bg-blossom/95 px-3.5 py-2.5 text-[14px] text-ink">{error}{unconfirmed && <> <button type="button" onClick={resendConfirm} className="font-semibold underline">Resend the link</button></>}</p>}
-          <button type="submit" disabled={busy !== null || !email || !password} className="flex h-14 w-full items-center justify-center gap-2 rounded-[10px] bg-cta text-[17px] font-semibold text-ink shadow-cta transition active:scale-[0.99] disabled:opacity-70">
-            {busy === 'email' ? 'Logging in…' : <>Log in <Icon name="arrow-right" className="size-5" /></>}
+        )}
+
+        <form onSubmit={logIn} className={cx('w-full space-y-3', SOCIAL.length ? 'mt-4' : 'mt-7')}>
+          <input type="email" autoComplete="email" required aria-label="Email" placeholder="Email address" value={email} onChange={e => { setEmail(e.target.value); setError(null) }} className={field} />
+          <div className="relative">
+            <input type={showPw ? 'text' : 'password'} autoComplete="current-password" required aria-label="Password" placeholder="Password" value={password} onChange={e => { setPassword(e.target.value); setError(null) }} className={cx(field, 'pr-12')} />
+            <button type="button" onClick={() => setShowPw(v => !v)} aria-label={showPw ? 'Hide password' : 'Show password'} aria-pressed={showPw}
+              className={cx('absolute right-3 top-1/2 inline-flex size-8 -translate-y-1/2 items-center justify-center rounded-full transition-colors', showPw ? 'text-forest' : 'text-muted hover:text-ink')}>
+              <Icon name="eye" strokeWidth={2} className="size-[18px]" />
+            </button>
+          </div>
+          {error && <p role="alert" className="rounded-[12px] bg-blossom px-3.5 py-2.5 text-[13px] text-ink">{error}{unconfirmed && <> <button type="button" onClick={resendConfirm} className="font-semibold underline">Resend the link</button></>}</p>}
+          <button type="submit" disabled={busy !== null || !email || !password} className="mt-1 flex h-12 w-full items-center justify-center gap-2 rounded-full bg-forest text-[15px] font-semibold text-bg transition-colors hover:bg-lime hover:text-ink active:scale-[0.99] disabled:opacity-60">
+            {busy === 'email' ? 'Logging in…' : 'Log in'}
           </button>
         </form>
 
-        <div className="mt-3 flex items-center justify-between">
-          <Link href={'/forgot-password?side=' + side + (email ? '&email=' + encodeURIComponent(email.trim()) : '')} className="text-[13px] font-medium text-white/80">Forgot password?</Link>
-          {SOCIAL.length > 0 && (
-            <div className="flex items-center gap-2">
-              <span className="text-[13px] text-white/60">or</span>
-              {SOCIAL.includes('apple') && <button type="button" aria-label="Continue with Apple" onClick={() => oauth('apple')} disabled={busy !== null} className={round}><Icon name="apple" className="size-5" /></button>}
-              {SOCIAL.includes('google') && <button type="button" aria-label="Continue with Google" onClick={() => oauth('google')} disabled={busy !== null} className={round}><Icon name="google" className="size-5" /></button>}
-            </div>
-          )}
-        </div>
+        <Link href={'/forgot-password?side=' + side + (email ? '&email=' + encodeURIComponent(email.trim()) : '')}
+          className="mt-4 text-[13px] font-medium text-ink underline decoration-lime decoration-dotted decoration-2 underline-offset-4 hover:decoration-forest">Forgot password</Link>
 
-        <div className="mt-5 flex items-center gap-3 text-[12px] uppercase tracking-[0.12em] text-white/55"><span className="h-px flex-1 bg-white/25" />New here?<span className="h-px flex-1 bg-white/25" /></div>
-        <button type="button" onClick={() => signUp(s.role)} className="mt-3 flex h-14 w-full items-center justify-center rounded-[10px] border border-white/40 bg-white/10 text-[16px] font-semibold text-white backdrop-blur-md transition active:scale-[0.99]">
+        <div className="mt-8 flex w-full items-center gap-3 text-[12px] uppercase tracking-[0.12em] text-muted"><span className="h-px flex-1 bg-line-strong" />New here?<span className="h-px flex-1 bg-line-strong" /></div>
+        <button type="button" onClick={() => signUp(s.role)} className={cx(outline, 'mt-4')}>
           Create a {s.role === 'caster' ? 'casting' : 'performer'} account
         </button>
       </div>

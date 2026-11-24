@@ -63,19 +63,19 @@ const GENERAL_FAQ: [string, string][] = [
   ['Who posts these roles?', 'Casting directors, producers and companies post castings directly. Performers can post community roles too — each listing shows which it is.'],
 ]
 
-export default function AuditionLanding({ type, city, roles }: { type?: AuditionType; city?: City; roles: Job[] }) {
-  const title = landingTitle(type, city)
-  const path = landingPath(type, city)
+export default function AuditionLanding({ type, city, roles, heading, intro: introOverride, path: pathOverride }: { type?: AuditionType; city?: City; roles: Job[]; heading?: string; intro?: string; path?: string }) {
+  const title = heading ?? landingTitle(type, city)
+  const path = pathOverride ?? landingPath(type, city)
   const faq: [string, string][] = [...(type?.tips || []), ...GENERAL_FAQ]
   const crumbs: [string, string][] = [['The Ident', '/'], ['Auditions', '/auditions']]
   if (type) crumbs.push([type.name, '/auditions/' + type.slug])
   if (city) crumbs.push([city.name, path])
   if (!type && !city) crumbs.pop()
 
-  const intro = type
+  const intro = introOverride ?? (type
     ? type.blurb + (city ? ` Roles listed here are based in or around ${city.name}.` : '')
     : city ? `Auditions, castings and paid work in ${city.name} — theatre, TV and film, dance, commercials and more, with pay and closing dates up front.`
-    : 'Every open audition and casting on The Ident, by type and city — with pay, dates and closing dates up front.'
+    : 'Every open audition and casting on The Ident, by type and city — with pay, dates and closing dates up front.')
 
   // Sibling links: same type in other cities, or other types in this city
   const siblings: [string, string][] = type

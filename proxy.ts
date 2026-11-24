@@ -10,7 +10,7 @@ const WWW = 'https://www.theident.me'
 const APP = 'https://app.theident.me'
 
 // Pages that belong to the website
-const SITE = /^\/(performers|casting|pricing|contact|privacy|terms|people|jobs|auditions|blog)(\/|$)/
+const SITE = /^\/(performers|casting|pricing|contact|privacy|terms|people|jobs|auditions|blog|casting-calls|spotlight-alternative|mandy-alternative)(\/|$)/
 // Pages that belong to the app (signed-in screens, auth and onboarding)
 const APP_PATHS = /^\/(home|welcome|start|auth|login|forgot-password|reset-password|verify|find|castings|chats|me|talent|postings|settings|inbox|todo|blocks|diary|pay|tax|plan|menu|join|admin|classes|digs|whats-on)(\/|$)/
 
