@@ -132,6 +132,9 @@ button:not(:disabled), [role="button"]:not([aria-disabled="true"]), summary, lab
   .stack-mobile > :nth-child(2) { --si: 1 } .stack-mobile > :nth-child(3) { --si: 2 } .stack-mobile > :nth-child(4) { --si: 3 } .stack-mobile > :nth-child(n+5) { --si: 4 }
 }
 
+/* Desktop rail: the + panel slides out of the rail */
+@keyframes rail-out { from { opacity: 0; transform: translateX(-16px); } to { opacity: 1; transform: none; } }
+
 /* Section labels: a small dot before the text */
 .eyebrow { display: inline-flex; align-items: center; gap: .45em; }
 .eyebrow::before { content: ''; width: .5em; height: .5em; border-radius: 9999px; background: currentColor; flex: none; }
