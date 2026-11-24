@@ -115,17 +115,23 @@ const AUTOPLAY_MS = 6000
 
 export default function HowItWorks() {
   const [step, setStep] = useState(2)
-  // Calendly-style autoplay: the active tab's bar fills, then the next step plays.
-  // Pauses on hover/focus (CSS), stops for good once someone picks a tab, and is off for reduced motion.
+  // Calendly-style autoplay: stops for good once someone picks a tab; off for reduced motion.
   const [auto, setAuto] = useState(false)
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) setAuto(true)
   }, [])
+  // Advance on a timer (no visible bar); paused while the pointer or focus is inside
+  const [paused, setPaused] = useState(false)
+  useEffect(() => {
+    if (!auto || paused) return
+    const t = setTimeout(() => setStep(v => (v + 1) % STEPS.length), AUTOPLAY_MS)
+    return () => clearTimeout(t)
+  }, [auto, paused, step])
   const W = WIDGETS[step]
   const pick = (i: number) => { setAuto(false); setStep(i) }
   return (
-    <div className="hiw-root grid gap-6 rounded-[var(--radius-feature)] bg-sand p-3 md:p-4 lg:grid-cols-[minmax(280px,380px)_1fr]">
+    <div onMouseEnter={() => setPaused(true)} onMouseLeave={() => setPaused(false)} onFocus={() => setPaused(true)} onBlur={() => setPaused(false)} className="hiw-root grid gap-6 rounded-[var(--radius-feature)] bg-sand p-3 md:p-4 lg:grid-cols-[minmax(280px,380px)_1fr]">
       <div role="tablist" aria-label="How it works" className="hiw-tabs flex flex-col gap-2 p-1 md:p-2">
         {STEPS.map((s, i) => {
           const on = step === i
@@ -141,12 +147,6 @@ export default function HowItWorks() {
                   <span className="overflow-hidden"><span className="block pt-1.5 text-[13px] leading-[1.6] text-muted-strong">{s.body}</span></span>
                 </span>
               </span>
-              {on && auto && (
-                <span aria-hidden="true" className="absolute inset-x-5 bottom-2 h-[3px] overflow-hidden rounded-full bg-sand-2">
-                  <span key={step} className="hiw-bar block h-full rounded-full bg-forest" style={{ '--hiw-ms': AUTOPLAY_MS + 'ms' } as React.CSSProperties}
-                    onAnimationEnd={() => setStep(v => (v + 1) % STEPS.length)} />
-                </span>
-              )}
             </button>
           )
         })}
