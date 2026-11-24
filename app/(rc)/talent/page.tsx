@@ -5,7 +5,8 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import { isBoosted } from '@/lib/rc/boost'
 import Link from 'next/link'
 import Icon from '@/components/rc/Icon'
-import { Avatar, Chip, Empty, Field, PageHeader, PageLoading, SearchField, Segmented, Sheet, Button, toast } from '@/components/rc/ui'
+import { Avatar, Chip, Empty, Field, PageHeader, PageLoading, SearchField, Sheet, Button, TabChips, toast } from '@/components/rc/ui'
+import FindTabs from '@/components/rc/FindTabs'
 import { supabase } from '@/lib/supabase'
 import { useMe } from '@/lib/rc/me'
 import { useAsync } from '@/lib/rc/useAsync'
@@ -24,6 +25,7 @@ export default function TalentPage() {
   const [who, setWho] = useState<Who>(params.get('who') === 'casting' ? 'casting' : 'performers')
   const [nearMe, setNearMe] = useState(false)
   const [busy, setBusy] = useState<string | null>(null)
+  const isCaster = profile?.account_role === 'caster'
   const myTown = (profile?.location || '').split(',')[0].trim()
   const [q, setQ] = useState('')
   const [openOnly, setOpenOnly] = useState(false)
@@ -72,11 +74,12 @@ export default function TalentPage() {
 
   return (
     <>
-      <PageHeader title="People" right={who === 'performers' ? <Button size="sm" variant="outline" icon="sliders" onClick={() => setShowFilters(true)}>{extra ? 'Filters · ' + extra : 'Filters'}</Button> : undefined} />
-      <div className="px-4 pb-8">
-        <Segmented className="mb-3" value={who} onChange={v => { setWho(v); router.replace(v === 'casting' ? '/talent?who=casting' : '/talent') }} options={[{ value: 'performers', label: 'Performers' }, { value: 'casting', label: 'Casting' }]} />
-        <SearchField value={q} onChange={setQ} placeholder={who === 'casting' ? 'Search casting directors, companies…' : 'Search names, skills, schools…'} />
+      <PageHeader title={isCaster ? 'Talent' : 'Find'} />
+      <div className="px-4 pb-24">
+        {!isCaster && <FindTabs value="people" />}
+        <div className={isCaster ? '' : 'mt-4'}><SearchField value={q} onChange={setQ} placeholder={who === 'casting' ? 'Search casting directors, companies…' : 'Search names, skills, schools…'} /></div>
         <div className="scrollbar-none -mx-4 mt-3 flex gap-2 overflow-x-auto px-4">
+          {who === 'performers' && <Chip selected={extra > 0} onClick={() => setShowFilters(true)}><Icon name="sliders" className="size-4" /> More filters{extra ? ' · ' + extra : ''}</Chip>}
           {myTown && <Chip selected={nearMe} onClick={() => setNearMe(v => !v)}><Icon name="pin" className="size-4" /> Near {myTown}</Chip>}
           {who === 'performers' && <>
           <Chip selected={openOnly} tone="green" onClick={() => setOpenOnly(v => !v)}>Open to work</Chip>
@@ -85,7 +88,12 @@ export default function TalentPage() {
           </>}
         </div>
 
-        <p className="mb-3 mt-4 text-sm text-muted"><span className="font-medium text-ink">{shown.length}</span> {who === 'casting' ? 'casting teams' : 'performers'}</p>
+        <div className="mt-4">
+          <TabChips value={who} onChange={v => { setWho(v); router.replace(v === 'casting' ? '/talent?who=casting' : '/talent', { scroll: false }) }}
+            options={[{ value: 'performers', label: 'Performers' }, { value: 'casting', label: 'Casting teams' }]} />
+        </div>
+
+        <p className="mb-3 mt-3 text-sm text-muted"><span className="font-medium text-ink">{shown.length}</span> {who === 'casting' ? 'casting teams' : 'performers'}</p>
         {loading ? <PageLoading /> : shown.length === 0 ? <Empty icon="users" title="No one matches yet" sub="Try fewer filters or a broader search." /> : (
           <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3">
             {shown.map(t => (
