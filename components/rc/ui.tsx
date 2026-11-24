@@ -194,7 +194,7 @@ export function Segmented<T extends string>({ value, options, onChange, classNam
     <div role="tablist" className={cx('flex rounded-[10px] bg-chip p-1', className)}>
       {options.map(o => (
         <button key={o.value} type="button" role="tab" aria-selected={value === o.value} onClick={() => onChange(o.value)}
-          className={cx('h-10 flex-1 rounded-[11px] text-sm font-medium transition', value === o.value ? 'bg-dark text-white shadow-card' : 'text-muted')}>
+          className={cx('h-10 flex-1 rounded-[8px] text-sm font-medium transition', value === o.value ? 'bg-dark text-white shadow-card' : 'text-muted')}>
           {o.label}
         </button>
       ))}

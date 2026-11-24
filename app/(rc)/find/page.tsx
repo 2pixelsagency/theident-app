@@ -4,9 +4,10 @@ import { useMemo, useState } from 'react'
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Icon from '@/components/rc/Icon'
+import FindTabs from '@/components/rc/FindTabs'
 import JobCard from '@/components/rc/JobCard'
 import SwipeRow from '@/components/rc/SwipeRow'
-import { Button, Chip, Empty, Field, PageHeader, PageLoading, SearchField, Segmented, Sheet, TabChips, Toggle, toast } from '@/components/rc/ui'
+import { Button, Chip, Empty, Field, PageHeader, PageLoading, SearchField, Sheet, TabChips, Toggle, toast } from '@/components/rc/ui'
 import { supabase } from '@/lib/supabase'
 import { useMe } from '@/lib/rc/me'
 import { useAsync } from '@/lib/rc/useAsync'
@@ -105,7 +106,7 @@ export default function FindPage() {
     return { right, left }
   }
 
-  const setTab = (t: Tab) => { setFilters(NO_FILTERS); setSource(null); setView('all'); router.replace(t === 'side' ? '/find?tab=side' : '/find') }
+  const setTab = (t: Tab) => { setFilters(NO_FILTERS); setSource(null); setView('all'); router.replace(t === 'side' ? '/find?tab=side' : '/find', { scroll: false }) }
   const quick: { label: string; on: boolean; toggle: () => void }[] = [
     { label: 'From casting', on: source === 'casting', toggle: () => setSource(s => (s === 'casting' ? null : 'casting')) },
     { label: 'Community', on: source === 'community', toggle: () => setSource(s => (s === 'community' ? null : 'community')) },
@@ -117,9 +118,9 @@ export default function FindPage() {
 
   return (
     <>
-      <PageHeader title="Find jobs" />
+      <PageHeader title="Find" />
       <div className="px-4 pb-24">
-        <Segmented value={tab as Tab | 'people'} onChange={v => v === 'people' ? router.push('/talent') : setTab(v)} options={[{ value: 'roles', label: 'Roles' }, { value: 'side', label: 'Side hustles' }, { value: 'people', label: 'People' }]} />
+        <FindTabs value={tab} onChange={v => v === 'people' ? router.replace('/talent', { scroll: false }) : setTab(v)} />
         <div className="mt-4"><SearchField value={q} onChange={setQ} placeholder={tab === 'side' ? 'Teaching, promo, modelling, events…' : 'Search roles, skills, locations…'} /></div>
 
         <div className="scrollbar-none -mx-4 mt-3 flex gap-2 overflow-x-auto px-4">
