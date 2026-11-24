@@ -22,7 +22,7 @@ export default function SiteNav() {
   const pathname = usePathname()
   // The join button says who it's for: casting pages sign up casting teams; elsewhere people pick a side
   const casting = pathname.startsWith('/casting')
-  const join = casting ? { href: '/start?role=caster', label: 'Start casting' } : { href: '/welcome', label: 'Get started' }
+  const join = casting ? { href: '/start?role=caster', label: 'Start casting' } : { href: '/welcome?mode=signup', label: 'Get started' }
   const [scrolled, setScrolled] = useState(false)
   const [open, setOpen] = useState(false)
   const [signedIn, setSignedIn] = useState(false)

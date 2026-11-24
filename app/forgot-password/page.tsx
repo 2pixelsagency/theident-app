@@ -38,13 +38,13 @@ function ForgotPassword() {
 
   return (
     <>
-      <AuthBack href={'/welcome?side=' + side} />
       <AuthTitle title="Forgot your password?" sub="Enter the email you use for The Ident and we’ll send you a link to choose a new one." />
       <form onSubmit={send} noValidate className="mt-6 space-y-4">
         <Field label="Email" type="email" inputMode="email" autoComplete="email" autoFocus value={email} onChange={e => { setEmail(e.target.value); setError(null) }} placeholder="you@example.com" />
         {error && <FormMessage>{error}</FormMessage>}
         <Button type="submit" size="lg" full disabled={busy}>{busy ? 'Sending…' : 'Send reset link'}</Button>
       </form>
+      <div className="mt-5"><AuthBack href={'/welcome?side=' + side} /></div>
     </>
   )
 }

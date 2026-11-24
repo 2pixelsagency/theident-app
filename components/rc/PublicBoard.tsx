@@ -4,7 +4,6 @@ import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import Icon from '@/components/rc/Icon'
 import JobCard from '@/components/rc/JobCard'
-import Typewriter from '@/components/rc/Typewriter'
 import SiteNav from '@/components/site/Nav'
 import { Empty, PageLoading, SearchField, cx } from '@/components/rc/ui'
 import { supabase } from '@/lib/supabase'
@@ -70,18 +69,19 @@ export default function PublicBoard() {
     <div className="min-h-dvh bg-bg text-ink">
       <PublicTopBar />
       <section className="relative -mt-[68px] overflow-hidden bg-bg">
-        <div className="mx-auto max-w-[1180px] px-5 pb-10 pt-28 md:px-8 md:pt-36">
-          <p className="rise inline-flex items-center gap-2 rounded-full bg-surface/80 px-3 py-1 text-[13px] font-medium shadow-card">
-            <span className="size-2 rounded-full bg-lime ring-2 ring-forest/15" /> {loading ? 'Loading roles…' : jobs.length + ' live role' + (jobs.length === 1 ? '' : 's')}
+        {/* Same header treatment as the rest of the site: dot eyebrow, display heading, intro, then search */}
+        <div className="mx-auto max-w-[1248px] px-6 pb-10 pt-32 md:pt-40">
+          <p className="rise flex items-center gap-[5px] text-[11px] font-semibold uppercase tracking-[0.14em] text-forest">
+            <span aria-hidden="true" className="size-1.5 rounded-full bg-forest" />{loading ? 'Loading roles…' : jobs.length + ' live role' + (jobs.length === 1 ? '' : 's')}
           </p>
-          <h1 className="mt-4 min-h-[3.15em] max-w-[680px] sm:min-h-[2.1em] text-[38px] leading-[1.05] sm:text-[52px]"><Typewriter text="Castings, auditions & paid work for " words={['performers', 'actors', 'dancers', 'singers', 'musicians']} /></h1>
-          <p className="rise mt-3 max-w-[560px] text-[13px] leading-[1.6] text-muted" style={{ '--d': '900ms' } as React.CSSProperties}>Theatre, screen, commercials and dance — posted by casting directors and producers. Free to browse — join to apply.</p>
-          <div className="rise mt-6 max-w-[560px]" style={{ '--d': '1050ms' } as React.CSSProperties}><SearchField value={q} onChange={setQ} placeholder="Search roles, shows, places…" /></div>
+          <h1 className="rise mt-4 max-w-[760px] font-display text-[44px] font-bold leading-[1.02] tracking-[-0.03em] md:text-[64px]" style={{ '--d': '100ms' } as React.CSSProperties}>Browse roles</h1>
+          <p className="rise mt-4 max-w-[560px] text-[15px] leading-[1.6] text-muted-strong" style={{ '--d': '200ms' } as React.CSSProperties}>Castings, auditions and paid work for performers — theatre, screen, commercials and dance, posted by casting directors and producers. Free to browse — join to apply.</p>
+          <div className="rise mt-7 max-w-[560px]" style={{ '--d': '300ms' } as React.CSSProperties}><SearchField value={q} onChange={setQ} placeholder="Search roles, shows, places…" /></div>
         </div>
       </section>
 
       <div className="sticky top-[68px] z-30 border-b border-line/70 bg-bg/90 backdrop-blur">
-        <div className="scrollbar-none mx-auto flex max-w-[1180px] gap-2 overflow-x-auto px-5 py-3 md:px-8">
+        <div className="scrollbar-none mx-auto flex max-w-[1248px] gap-2 overflow-x-auto px-6 py-3">
           {chip('all', 'All roles')}
           {chip('casting', 'From casting')}
           {chip('community', 'Community')}
@@ -90,7 +90,7 @@ export default function PublicBoard() {
         </div>
       </div>
 
-      <main className="mx-auto max-w-[1180px] px-5 pb-16 md:px-8 lg:grid lg:grid-cols-[1fr_300px] lg:gap-8">
+      <main className="mx-auto max-w-[1248px] px-6 pb-16 lg:grid lg:grid-cols-[1fr_300px] lg:gap-8">
         <div>
           {loading ? <PageLoading /> : shown.length === 0 ? (
             <div className="pt-10"><Empty icon="search" title="No roles match" sub="Try a different search or category." /></div>

@@ -13,7 +13,7 @@ export default function StartSignup() {
   useEffect(() => {
     const q = new URLSearchParams(window.location.search).get('role')
     const role = isRole(q) ? q : readDraft()?.role
-    router.replace(role ? startSignup(role) : '/welcome')
+    router.replace(role ? startSignup(role) : '/welcome?mode=signup')
   }, [router])
 
   return <PageLoading />

@@ -9,6 +9,7 @@ import { cx } from '@/components/rc/ui'
 import { supabase } from '@/lib/supabase'
 import { dashboardFor, startSignup, type Role } from '@/lib/rc/onboarding'
 import { authRedirect } from '@/lib/rc/authRedirect'
+import { PLANS, TRIAL_DAYS, price } from '@/lib/rc/plans'
 
 type Side = 'perform' | 'cast'
 
@@ -46,7 +47,10 @@ const FADE = 'duration-[280ms] ease-out will-change-[opacity]'
 
 export default function EntryScreen() {
   const router = useRouter()
-  const [side, setSide] = useState<Side>(useSearchParams().get('side') === 'cast' ? 'cast' : 'perform')
+  const params = useSearchParams()
+  const [side, setSide] = useState<Side>(params.get('side') === 'cast' ? 'cast' : 'perform')
+  // ?mode=signup (Get started / Join): the same screen as a sign-up, so it isn't a duplicate of Log in
+  const [mode, setMode] = useState<'login' | 'signup'>(params.get('mode') === 'signup' ? 'signup' : 'login')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [showPw, setShowPw] = useState(false)
@@ -137,7 +141,7 @@ export default function EntryScreen() {
         <div className="mt-6 grid w-full text-center">
           {ORDER.map(k => (
             <div key={k} aria-hidden={side !== k} className={cx('transition-opacity [grid-area:1/1]', FADE, side === k ? 'opacity-100' : 'opacity-0')}>
-              <h1 className="font-display text-[34px] font-bold leading-[1.05] tracking-[-0.03em]">Welcome back</h1>
+              <h1 className="font-display text-[34px] font-bold leading-[1.05] tracking-[-0.03em]">{mode === 'signup' ? 'Create your account' : 'Welcome back'}</h1>
               <p className="mx-auto mt-2 max-w-[320px] text-[13px] leading-[1.6] text-muted-strong">{SIDES[k].sub}</p>
             </div>
           ))}
@@ -151,6 +155,17 @@ export default function EntryScreen() {
           </div>
         )}
 
+        {mode === 'signup' ? (
+          <>
+            <button type="button" onClick={() => signUp(s.role)} className="mt-7 flex h-12 w-full items-center justify-center gap-2 rounded-full bg-forest text-[15px] font-semibold text-bg transition-colors hover:bg-lime hover:text-ink active:scale-[0.99]">
+              Create a {s.role === 'caster' ? 'casting' : 'performer'} account <Icon name="arrow-right" strokeWidth={2} className="size-4" />
+            </button>
+            <p className="mt-3 text-center text-[12px] text-muted">{TRIAL_DAYS} days free, then {price(PLANS[s.role === 'caster' ? 'casting' : 'performer'].pence)} a month. Cancel anytime.</p>
+            <div className="mt-8 flex w-full items-center gap-3 text-[12px] uppercase tracking-[0.12em] text-muted"><span className="h-px flex-1 bg-line-strong" />Have an account?<span className="h-px flex-1 bg-line-strong" /></div>
+            <button type="button" onClick={() => setMode('login')} className={cx(outline, 'mt-4')}>Log in</button>
+          </>
+        ) : (
+          <>
         <form onSubmit={logIn} className={cx('w-full space-y-3', SOCIAL.length ? 'mt-4' : 'mt-7')}>
           <input type="email" autoComplete="email" required aria-label="Email" placeholder="Email address" value={email} onChange={e => { setEmail(e.target.value); setError(null) }} className={field} />
           <div className="relative">
@@ -170,9 +185,11 @@ export default function EntryScreen() {
           className="mt-4 text-[13px] font-medium text-ink underline decoration-lime decoration-dotted decoration-2 underline-offset-4 hover:decoration-forest">Forgot password</Link>
 
         <div className="mt-8 flex w-full items-center gap-3 text-[12px] uppercase tracking-[0.12em] text-muted"><span className="h-px flex-1 bg-line-strong" />New here?<span className="h-px flex-1 bg-line-strong" /></div>
-        <button type="button" onClick={() => signUp(s.role)} className={cx(outline, 'mt-4')}>
+        <button type="button" onClick={() => setMode('signup')} className={cx(outline, 'mt-4')}>
           Create a {s.role === 'caster' ? 'casting' : 'performer'} account
         </button>
+          </>
+        )}
       </div>
     </main>
   )

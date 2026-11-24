@@ -41,7 +41,7 @@ export function SiteFooter() {
         </div>
         {col('Product', [['/performers', 'For performers'], ['/casting', 'For casting directors'], ['/jobs', 'Browse roles'], ['/people', 'Browse talent'], ['/pricing', 'Pricing'], ['/blog', 'Blog']])}
         {col('Auditions', [['/casting-calls', 'Casting calls UK'], ['/auditions', 'All auditions'], ['/auditions/musical-theatre', 'Musical theatre'], ['/auditions/dance', 'Dance'], ['/auditions/tv-and-film', 'TV & film'], ['/auditions/london', 'London'], ['/auditions/manchester', 'Manchester']])}
-        {col('Company', [['/spotlight-alternative', 'Spotlight alternative'], ['/mandy-alternative', 'Mandy alternative'], ['/contact', 'Contact & help'], ['/welcome', 'Log in'], ['/start', 'Join']])}
+        {col('Company', [['/spotlight-alternative', 'Spotlight alternative'], ['/mandy-alternative', 'Mandy alternative'], ['/contact', 'Contact & help'], ['/welcome', 'Log in'], ['/welcome?mode=signup', 'Join']])}
         {col('Legal', [['/privacy', 'Privacy policy'], ['/terms', 'Terms of use']])}
       </div>
       <div className="mx-auto flex max-w-[1248px] flex-wrap items-center justify-between gap-3 border-t border-white/10 px-6 py-6 text-[13px] text-white/50">
