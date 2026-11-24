@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import LogoMark from '@/components/LogoMark'
 import Icon from '@/components/rc/Icon'
 import { cx } from './castings/parts'
 import ExpandCard from './ExpandCard'
@@ -22,7 +23,7 @@ export function SectionHeader({ eyebrow, title, sub, actions, light, level = 2, 
 }) {
   const H = level === 1 ? 'h1' : 'h2'
   if (center) return (
-    <div className="mx-auto mb-12 flex max-w-[820px] flex-col items-center gap-4 text-center md:mb-14">
+    <div className={cx('mx-auto mb-12 flex max-w-[820px] flex-col items-center gap-4 text-center md:mb-14', level === 1 && 'hero-in')}>
       <Eyebrow light={light}>{eyebrow}</Eyebrow>
       <H id={id} className={cx('font-display font-bold leading-[1.02] tracking-[-0.03em]', level === 1 ? 'text-[44px] md:text-[64px]' : 'text-[38px] md:text-[56px]', light && 'text-bg')}>{title}</H>
       {sub && <p className={cx('max-w-[560px] text-[15px] leading-[1.6]', light ? 'text-on-dark-muted' : 'text-muted-strong')}>{sub}</p>}
@@ -31,12 +32,12 @@ export function SectionHeader({ eyebrow, title, sub, actions, light, level = 2, 
   )
   return (
     <div className="mb-10 flex flex-wrap items-end justify-between gap-x-10 gap-y-6 md:mb-12">
-      <div className="flex min-w-0 max-w-[760px] flex-[1_1_560px] flex-col gap-4">
+      <div className={cx('flex min-w-0 max-w-[760px] flex-[1_1_560px] flex-col gap-4', level === 1 && 'hero-in')}>
         <Eyebrow light={light}>{eyebrow}</Eyebrow>
         <H id={id} className={cx('font-display font-bold leading-[1.02] tracking-[-0.03em]', level === 1 ? 'text-[44px] md:text-[64px]' : 'text-[38px] md:text-[56px]', light && 'text-bg')}>{title}</H>
         {sub && <p className={cx('max-w-[560px] text-[15px] leading-[1.6]', light ? 'text-on-dark-muted' : 'text-muted-strong')}>{sub}</p>}
       </div>
-      {actions && <div className="flex flex-wrap gap-3 md:justify-end">{actions}</div>}
+      {actions && <div className={cx('flex flex-wrap gap-3 md:justify-end', level === 1 && 'rise')} style={level === 1 ? { '--d': '320ms' } as React.CSSProperties : undefined}>{actions}</div>}
     </div>
   )
 }
@@ -77,11 +78,12 @@ export function IconCard({ icon, tone = 'bg-lime', title, body, points, dark }: 
   return <ExpandCard icon={icon} tone={tone} title={title} body={body} points={points ?? FEATURE_POINTS[title]} dark={dark} />
 }
 
-// Closing call-to-action band: Forest card with the lime stripe band
+// Closing call-to-action band: Forest card framed by two big brand marks bleeding off the left and right edges
 export function CtaBand({ title, sub, actions }: { title: React.ReactNode; sub?: string; actions: React.ReactNode }) {
   return (
-    <div data-reveal className="relative overflow-hidden rounded-[var(--radius-feature)] px-6 py-16 text-center text-bg md:px-12 md:py-20" style={{ backgroundImage: 'var(--panel-forest)' }}>
-      <div aria-hidden="true" className="stripe-drift absolute inset-x-0 top-[38%] h-[120px]" style={{ backgroundImage: 'var(--stripes-dark)' }} />
+    <div data-reveal className="group/cta relative overflow-hidden rounded-[var(--radius-feature)] px-6 pb-20 pt-16 text-center text-bg md:px-12 md:py-20" style={{ backgroundImage: 'var(--panel-forest)' }}>
+      <span aria-hidden="true" className="cta-mark absolute -bottom-10 -left-10 text-lime md:-bottom-24 md:-left-10"><LogoMark className="size-[96px] md:size-[300px]" /></span>
+      <span aria-hidden="true" className="cta-mark cta-mark-alt absolute -right-10 -top-10 text-bg/10 md:-right-10 md:-top-24"><LogoMark className="size-[96px] md:size-[280px]" /></span>
       <div className="relative">
         <h2 className="mx-auto max-w-[760px] font-display text-[36px] font-bold leading-[1.04] tracking-[-0.03em] md:text-[56px]">{title}</h2>
         {sub && <p className="mx-auto mt-4 max-w-[520px] text-[15px] leading-[1.6] text-on-dark-muted">{sub}</p>}

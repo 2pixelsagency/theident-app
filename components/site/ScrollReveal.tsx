@@ -6,8 +6,9 @@ import { usePathname } from 'next/navigation'
 // Subtle, premium scroll reveal for the marketing site: headings, cards and list rows fade up a few
 // pixels as they enter the viewport, lightly staggered among siblings. Skips the hero (it has its own
 // entrance), anything inside moving rows (marquee/carousel), and anyone who prefers reduced motion.
-const TARGETS = 'main section:not(:first-child) :is(h2, h3, p, dl, li, details, figure, img, [data-reveal])'
-const SKIP = '.cursor-grab, .snap-x, [data-no-reveal]'
+// Every page: anything below the fold (what's on screen at load is left to the hero entrance)
+const TARGETS = 'main :is(h2, h3, p, dl, li, details, figure, img, [data-reveal])'
+const SKIP = '.cursor-grab, .snap-x, [data-no-reveal], .hero-in, header, nav'
 
 export default function ScrollReveal() {
   const pathname = usePathname()

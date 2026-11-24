@@ -3,7 +3,7 @@ import { Eyebrow } from './Chrome'
 // Long-form legal page: readable column, numbered sections
 export function LegalPage({ title, updated, intro, sections }: { title: string; updated: string; intro: string; sections: { h: string; body: React.ReactNode }[] }) {
   return (
-    <article className="mx-auto max-w-[760px] px-5 pb-28 pt-32 md:px-8 md:pt-40">
+    <article className="hero-in mx-auto max-w-[760px] px-5 pb-28 pt-32 md:px-8 md:pt-40">
       <Eyebrow>Legal</Eyebrow>
       <h1 className="mt-4 font-display text-[42px] font-bold leading-[1.02] tracking-[-0.03em] md:text-[56px]">{title}</h1>
       <p className="mt-3 text-[14px] text-muted">Last updated {updated}</p>
