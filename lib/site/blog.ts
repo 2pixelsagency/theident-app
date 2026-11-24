@@ -80,7 +80,7 @@ export const POSTS: Post[] = [
         'Apply with your reel, headshots and CV in one tap.',
         'Every self-tape, recall and booking tracked on one board, with dates in your diary.',
         'Create your profile from your existing CV — upload a PDF or Word file and choose what to add.',
-        'Performers pay £1.99 a month after a 7-day free trial. No commission.',
+        'Performers pay £3.99 a month (£1.99 for recent graduates) after a 7-day free trial. No commission.',
       ] },
       { link: ['See how The Ident compares as a Spotlight alternative', '/spotlight-alternative'] },
     ],

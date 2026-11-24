@@ -1,7 +1,7 @@
 import Link from 'next/link'
 import { LegalPage } from '@/components/site/Legal'
 import { SUPPORT_EMAIL } from '@/lib/rc/profile'
-import { PLANS, TRIAL_DAYS, price } from '@/lib/rc/plans'
+import { GRADUATE_YEARS, PLANS, TRIAL_DAYS, price } from '@/lib/rc/plans'
 
 export const metadata = { alternates: { canonical: '/terms' }, title: 'Terms of use · The Ident', description: 'The terms for using The Ident — memberships, posting roles, your content and safety.' }
 
@@ -13,7 +13,7 @@ export default function TermsPage() {
       intro="These terms are the agreement between you and The Ident when you use our website and apps. Please read them — by creating an account you agree to them."
       sections={[
         { h: 'Your account', body: <><p>You must be 18 or over and give accurate information. Keep your password safe; you’re responsible for activity on your account. Each account is either a performer account or a casting account.</p></> },
-        { h: 'Membership and payment', body: <><p>Using the app needs a membership: Performer {price(PLANS.performer.pence)} a month or Casting {price(PLANS.casting.pence)} a month, after a {TRIAL_DAYS}-day free trial (one trial per member). Memberships renew monthly until cancelled. You can cancel any time in Settings → Membership; you keep access until the end of the period you’ve paid for. Prices include VAT where applicable. We’ll give you notice before any price change.</p><p>Browsing the public job board is free.</p></> },
+        { h: 'Membership and payment', body: <><p>Using the app needs a membership: Performer {price(PLANS.performer.pence)} a month (Graduate {price(PLANS.graduate.pence)} a month for performers who graduated in the last {GRADUATE_YEARS} years) or Casting {price(PLANS.casting.pence)} a month, after a {TRIAL_DAYS}-day free trial (one trial per member). Memberships renew monthly until cancelled. You can cancel any time in Settings → Membership; you keep access until the end of the period you’ve paid for. Prices include VAT where applicable. We’ll give you notice before any price change.</p><p>Browsing the public job board is free.</p></> },
         { h: 'Posting roles', body: <ul>
           <li>Roles must be real, lawful and accurately described, including pay. Don’t ask for payment from applicants.</li>
           <li>Follow equality law in how you describe and cast roles, and only collect what you need.</li>

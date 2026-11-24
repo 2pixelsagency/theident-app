@@ -1,16 +1,23 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import Icon from './Icon'
 import { Button, toast } from './ui'
 import { supabase } from '@/lib/supabase'
-import { PLANS, TRIAL_DAYS, planFor, price } from '@/lib/rc/plans'
+import { GRADUATE_YEARS, PLANS, TRIAL_DAYS, planForProfile, price } from '@/lib/rc/plans'
 import { isNativeApp } from '@/lib/rc/authRedirect'
 import { signOutAndReset } from '@/lib/rc/onboarding'
 
 // The membership screen: one plan per side, no free tier. Used at the end of sign-up and as the in-app gate.
 export default function PlanPaywall({ role, next = '/home', title, sub, firstTime }: { role: string | null | undefined; next?: string; title?: string; sub?: string; firstTime?: boolean }) {
-  const kind = planFor(role), plan = PLANS[kind]
+  // Recent graduates get the graduate price (the server applies the same rule at checkout)
+  const [grad, setGrad] = useState<{ is_graduate: boolean | null; graduate_year: number | null } | null>(null)
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session) supabase.from('profiles').select('is_graduate, graduate_year').eq('id', session.user.id).maybeSingle().then(({ data }) => setGrad(data))
+    })
+  }, [])
+  const kind = planForProfile(role, grad), plan = PLANS[kind]
   const [busy, setBusy] = useState(false)
   // Apple doesn't allow web checkout for digital memberships inside the iOS app — no price or buy button there
   const [native] = useState(() => isNativeApp())
@@ -42,6 +49,7 @@ export default function PlanPaywall({ role, next = '/home', title, sub, firstTim
           </ul>
         </div>
       </div>
+      {!native && kind === 'performer' && <p className="mt-3 text-center text-[13px] text-muted">Graduated in the last {GRADUATE_YEARS} years? Add your school and year in your profile for {price(PLANS.graduate.pence)} a month.</p>}
       {!native && <p className="mt-3 text-center text-[13px] text-muted">{TRIAL_DAYS > 0 ? `Free for ${TRIAL_DAYS} days, then ${price(plan.pence)} a month. ` : ''}Cancel any time in Settings.</p>}
 
       <div className="mt-auto space-y-3 pt-10">

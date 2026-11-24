@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
-import { PLANS, TRIAL_DAYS, planFor } from '@/lib/rc/plans'
+import { PLANS, TRIAL_DAYS, planForProfile } from '@/lib/rc/plans'
 
 export const runtime = 'nodejs'
 
-// Starts a Stripe Checkout subscription for the member's plan (performer £1.99 / casting £10.99 a month)
+// Starts a Stripe Checkout subscription for the member's plan (performer, graduate or casting — prices in lib/rc/plans.ts)
 export async function POST(req: NextRequest) {
   if (!process.env.STRIPE_SECRET_KEY) return NextResponse.json({ error: 'payments not configured' }, { status: 503 })
   const jwt = (req.headers.get('authorization') || '').replace('Bearer ', '').trim()
@@ -12,8 +12,8 @@ export async function POST(req: NextRequest) {
   const { data: { user } } = await anon.auth.getUser(jwt)
   if (!user) return NextResponse.json({ error: 'not signed in' }, { status: 401 })
   const admin = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!, { auth: { persistSession: false } })
-  const { data: p } = await admin.from('profiles').select('account_role, stripe_customer_id, plan_status').eq('id', user.id).maybeSingle()
-  const kind = planFor(p?.account_role), plan = PLANS[kind]
+  const { data: p } = await admin.from('profiles').select('account_role, stripe_customer_id, plan_status, is_graduate, graduate_year').eq('id', user.id).maybeSingle()
+  const kind = planForProfile(p?.account_role, p), plan = PLANS[kind]
   const origin = req.headers.get('origin') || 'https://app.theident.me'
   let next = '/home'
   try { const b = await req.json(); if (typeof b?.next === 'string' && b.next.startsWith('/') && !b.next.startsWith('//')) next = b.next } catch { /* */ }

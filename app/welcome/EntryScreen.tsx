@@ -152,7 +152,7 @@ export default function EntryScreen() {
             <button type="button" onClick={() => signUp(s.role)} className="mt-7 flex h-12 w-full items-center justify-center gap-2 rounded-full bg-forest text-[15px] font-semibold text-bg transition-colors hover:bg-lime hover:text-ink active:scale-[0.99]">
               Create a {s.role === 'caster' ? 'casting' : 'performer'} account <Icon name="arrow-right" strokeWidth={2} className="size-4" />
             </button>
-            <p className="mt-3 text-center text-[12px] text-muted">{TRIAL_DAYS} days free, then {price(PLANS[s.role === 'caster' ? 'casting' : 'performer'].pence)} a month. Cancel anytime.</p>
+            <p className="mt-3 text-center text-[12px] text-muted">{TRIAL_DAYS} days free, then {price(PLANS[s.role === 'caster' ? 'casting' : 'performer'].pence)} a month{s.role === 'caster' ? '' : ' (' + price(PLANS.graduate.pence) + ' for recent graduates)'}. Cancel anytime.</p>
             <div className="mt-8 flex w-full items-center gap-3 text-[12px] uppercase tracking-[0.12em] text-muted"><span className="h-px flex-1 bg-line-strong" />Have an account?<span className="h-px flex-1 bg-line-strong" /></div>
             <button type="button" onClick={() => setMode('login')} className={cx(outline, 'mt-4')}>Log in</button>
           </>

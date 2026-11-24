@@ -2,11 +2,11 @@ import Link from 'next/link'
 import { Container } from '@/components/site/Chrome'
 import { Eyebrow, SectionHeader } from '@/components/site/ds'
 import PlanCard, { PlanGrid } from '@/components/site/PlanCard'
-import { PLANS, TRIAL_DAYS, price } from '@/lib/rc/plans'
+import { GRADUATE_YEARS, PLANS, TRIAL_DAYS, price } from '@/lib/rc/plans'
 import JsonLd from '@/components/site/JsonLd'
 import Faq from '@/components/site/Faq'
 
-export const metadata = { alternates: { canonical: '/pricing' }, title: 'Pricing · The Ident', description: `Performers ${price(PLANS.performer.pence)}/month, casting ${price(PLANS.casting.pence)}/month. ${TRIAL_DAYS}-day free trial, cancel any time.` }
+export const metadata = { alternates: { canonical: '/pricing' }, title: 'Pricing · The Ident', description: `Performers ${price(PLANS.performer.pence)}/month (recent graduates ${price(PLANS.graduate.pence)}), casting ${price(PLANS.casting.pence)}/month. ${TRIAL_DAYS}-day free trial, cancel any time.` }
 
 const FAQ = [
   ['Is there a free trial?', `Yes — ${TRIAL_DAYS} days free on either plan. We’ll remind you before it ends, and you can cancel any time.`],
@@ -26,7 +26,7 @@ export default function PricingPage() {
         <div className="mx-auto max-w-[880px]">
           <PlanGrid>
             <PlanCard label="For actors, dancers and singers" name="Performer" line="Find roles, apply with your reel and track every casting." value={price(PLANS.performer.pence)} unit="/month"
-              small={`${TRIAL_DAYS} days free, then billed monthly`} cta={{ href: '/start?role=performer', label: 'Start free trial' }} note="Cancel anytime" included={PLANS.performer.features} />
+              small={`${TRIAL_DAYS} days free, then billed monthly · Graduated in the last ${GRADUATE_YEARS} years? ${price(PLANS.graduate.pence)}/month`} cta={{ href: '/start?role=performer', label: 'Start free trial' }} note="Cancel anytime" included={PLANS.performer.features} />
             <PlanCard dark badge={`${TRIAL_DAYS} days free`} label="For casting directors and producers" name="Casting" line="Post roles, watch tapes inline, recall and book your cast." value={price(PLANS.casting.pence)} unit="/month"
               small={`${TRIAL_DAYS} days free, then billed monthly`} cta={{ href: '/start?role=caster', label: 'Start casting' }} note="Cancel anytime" included={PLANS.casting.features} />
           </PlanGrid>

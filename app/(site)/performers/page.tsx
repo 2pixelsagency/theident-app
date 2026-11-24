@@ -11,7 +11,7 @@ export default function PerformersPage() {
       intro={`Actors, dancers, singers and musicians use The Ident to find work, apply with their materials and keep their career moving. ${TRIAL_DAYS} days free, then ${price(PLANS.performer.pence)} a month.`}
       cta={{ href: '/start?role=performer', label: 'Start free trial' }}
       plan={{ dark: true, badge: `${TRIAL_DAYS} days free`, label: 'For actors, dancers and singers', name: 'Performer membership', line: 'Everything you need to find, apply for and book work — and we never take a cut.',
-        value: price(PLANS.performer.pence), unit: '/month', small: `${TRIAL_DAYS} days free, then billed monthly · 0% commission`,
+        value: price(PLANS.performer.pence), unit: '/month', small: `${TRIAL_DAYS} days free, then billed monthly · 0% commission · Recent graduates ${price(PLANS.graduate.pence)}/month`,
         cta: { href: '/start?role=performer', label: 'Start free trial' }, note: 'Cancel anytime', included: [...PLANS.performer.features, 'Keep 100% of every fee you book'] }}
       testimonials={PERFORMER_TESTIMONIALS}
       groups={[

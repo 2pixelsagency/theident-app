@@ -9,7 +9,7 @@ import { useAsync } from '@/lib/rc/useAsync'
 import { loadCompleteness } from '@/lib/rc/completeness'
 import { fullName } from '@/lib/rc/format'
 import { craftTag } from '@/lib/rc/talent'
-import { PLANS, planFor } from '@/lib/rc/plans'
+import { PLANS, planForProfile } from '@/lib/rc/plans'
 import { profilePath } from '@/lib/rc/profile'
 
 const card = 'rounded-[10px] bg-surface p-6 shadow-card'
@@ -45,7 +45,7 @@ export default function HomeSidebar() {
   const open = data?.row?.availability_status === 'available'
   const plan = p?.is_demo ? 'Demo · full access'
     : p?.plan_status === 'trialing' ? 'Free trial until ' + endLabel(p.plan_period_end)
-    : p?.plan_status === 'active' ? PLANS[planFor(me.role)].name + ' · renews ' + endLabel(p.plan_period_end)
+    : p?.plan_status === 'active' ? PLANS[(p?.plan_kind && p.plan_kind in PLANS ? p.plan_kind : planForProfile(me.role, p)) as keyof typeof PLANS].name + ' · renews ' + endLabel(p.plan_period_end)
     : p?.plan_status === 'past_due' ? 'Payment failed — update card'
     : p?.plan_grace_until ? 'Free access until ' + endLabel(p.plan_grace_until) : 'Full access'
 
@@ -108,7 +108,7 @@ export default function HomeSidebar() {
 
       <Link href="/settings" className={card + ' flex items-center gap-3'}>
         <span className="flex size-10 items-center justify-center rounded-full bg-lime text-ink"><Icon name="star" className="size-5" /></span>
-        <span className="min-w-0 flex-1"><span className="block text-[15px] font-semibold">{PLANS[planFor(me.role)].name} membership</span><span className="block truncate text-[13px] text-muted">{plan}</span></span>
+        <span className="min-w-0 flex-1"><span className="block text-[15px] font-semibold">{PLANS[(p?.plan_kind && p.plan_kind in PLANS ? p.plan_kind : planForProfile(me.role, p)) as keyof typeof PLANS].name} membership</span><span className="block truncate text-[13px] text-muted">{plan}</span></span>
         <Icon name="chevron-right" className="size-4 text-faint" />
       </Link>
     </aside>
