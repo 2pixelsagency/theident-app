@@ -136,6 +136,41 @@ export default function ProfileView(props: ProfileViewProps) {
   return <PerformerProfile {...props} />
 }
 
+// genders table ids → labels (1 = prefer not to say: not shown)
+const GENDER_NAMES: Record<number, string> = { 2: 'Non-binary', 3: 'Trans woman', 4: 'Trans man', 5: 'Gender non-conforming', 6: 'Male', 7: 'Female' }
+
+// Credits as tabs by production type (All first), like Spotlight / Mandy CVs
+function CreditTabs({ groups }: { groups: Record<string, Credit[]> }) {
+  const names = Object.keys(groups)
+  const [tab, setTab] = useState('All')
+  const list = tab === 'All' ? names.flatMap(n => groups[n]) : groups[tab] || []
+  return (
+    <>
+      {names.length > 1 && (
+        <div role="tablist" aria-label="Credit types" className="scrollbar-none -mx-4 mb-3 flex gap-2 overflow-x-auto px-4">
+          {['All', ...names].map(n => (
+            <button key={n} type="button" role="tab" aria-selected={tab === n} onClick={() => setTab(n)}
+              className={cx('h-9 shrink-0 rounded-full px-4 text-[13px] font-semibold transition-colors', tab === n ? 'bg-forest text-bg' : 'bg-chip text-muted-strong hover:text-ink')}>
+              {n} <span className={tab === n ? 'text-bg/60' : 'text-faint'}>{n === 'All' ? names.reduce((a, k) => a + groups[k].length, 0) : groups[n].length}</span>
+            </button>
+          ))}
+        </div>
+      )}
+      <Card className="overflow-hidden">
+        {list.map((c, i) => (
+          <div key={c.id} className={cx('flex items-start gap-3 px-4 py-3', i > 0 && 'border-t border-line')}>
+            <div className="min-w-0 flex-1">
+              <p className="text-[15px] font-medium">{[c.title, c.role].filter(Boolean).join(' — ')}</p>
+              <p className="text-[13px] text-muted">{[tab === 'All' && (c.production_types?.name || 'Other'), c.production_company, c.director && 'dir. ' + c.director].filter(Boolean).join(' · ')}</p>
+            </div>
+            {c.year && <span className="text-sm text-faint">{c.year}</span>}
+          </div>
+        ))}
+      </Card>
+    </>
+  )
+}
+
 function PerformerProfile({ data, owner, onBack, onShare, topRight, actions, statusLine, below, signedIn }: ProfileViewProps) {
   const p = data.profile!
   const { reels, skills, credits, brands, testimonials, gallery, hair, eyes, connections } = data
@@ -146,8 +181,8 @@ function PerformerProfile({ data, owner, onBack, onShare, topRight, actions, sta
   const facts = [playingAge(p) && 'Playing age ' + playingAge(p), p.height, p.location?.split(',')[0]].filter(Boolean).join(' · ')
 
   const stats = caster ? [] : ([
-    ['Playing age', playingAge(p)], ['Height', p.height], ['Base', p.location?.split(',')[0]],
-    ['Eyes', eyes.find(e => e.id === p.eye_colour_id)?.name], ['Hair', hair.find(h => h.id === p.hair_colour_id)?.name],
+    ['Location', p.location], ['Gender', GENDER_NAMES[p.gender_id ?? 0]], ['Playing age', playingAge(p)], ['Height', p.height],
+    ['Eyes', eyes.find(e => e.id === p.eye_colour_id)?.name], ['Hair', hair.find(h => h.id === p.hair_colour_id)?.name], ['Vocal range', p.vocal_range],
   ] as const).filter(([, v]) => !!v)
 
   // Credits grouped by production type, as on Spotlight/Mandy
@@ -240,7 +275,11 @@ function PerformerProfile({ data, owner, onBack, onShare, topRight, actions, sta
         {stats.length > 0 && (
           <>
             <h2 className="mb-3 mt-7 text-[18px]">Stats</h2>
-            <div className="grid grid-cols-3 gap-2">{stats.map(([k, v]) => <Card key={k} className="p-3"><p className="text-xs text-muted">{k}</p><p className="mt-0.5 text-[15px] font-medium">{v}</p></Card>)}</div>
+            <Card className="p-4">
+              <dl className="grid gap-x-6 gap-y-3 sm:grid-cols-2">
+                {stats.map(([k, v]) => <div key={k} className="flex gap-3"><dt className="w-[96px] shrink-0 text-[14px] font-semibold">{k}</dt><dd className="min-w-0 flex-1 text-[14px] text-muted-strong">{v}</dd></div>)}
+              </dl>
+            </Card>
           </>
         )}
 
@@ -254,19 +293,7 @@ function PerformerProfile({ data, owner, onBack, onShare, topRight, actions, sta
         {(credits.length > 0 || (owner && !caster)) && (
           <>
             <Head title="Credits" owner={owner} edit="credits" count={credits.length} />
-            {credits.length ? <Card className="overflow-hidden">
-              {Object.entries(groups).map(([group, list]) => (
-                <div key={group}>
-                  <p className="bg-chip/50 px-4 py-2 text-[11px] font-medium uppercase tracking-[0.08em] text-muted">{group}</p>
-                  {list.map(c => (
-                    <div key={c.id} className="flex items-start gap-3 border-t border-line px-4 py-3">
-                      <div className="min-w-0 flex-1"><p className="text-[15px] font-medium">{[c.title, c.role].filter(Boolean).join(' — ')}</p><p className="text-[13px] text-muted">{[c.production_company, c.director && 'dir. ' + c.director].filter(Boolean).join(' · ')}</p></div>
-                      {c.year && <span className="text-sm text-faint">{c.year}</span>}
-                    </div>
-                  ))}
-                </div>
-              ))}
-            </Card> : <Ghost>Add the shows, films and commercials you’ve been in.</Ghost>}
+            {credits.length ? <CreditTabs groups={groups} /> : <Ghost>Add the shows, films and commercials you’ve been in.</Ghost>}
           </>
         )}
 

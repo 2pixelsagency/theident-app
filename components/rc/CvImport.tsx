@@ -10,18 +10,18 @@ import { supabase } from '@/lib/supabase'
 type Found = {
   first_name: string; last_name: string; what_i_do: string; location: string; bio: string; height: string
   playing_age_min: number; playing_age_max: number; agent_name: string; agent_email: string; agent_phone: string; website: string
-  drama_school: string; graduation_year: number
+  drama_school: string; graduation_year: number; vocal_range: string
   credits: { title: string; role: string; type: string; year: number; director: string; company: string }[]
-  skills: string[]; training: string[]
+  skills: { as_written: string; match: string; name: string; category: string }[]; training: string[]
 }
 type Current = { first_name: string | null; last_name: string | null; what_i_do: string | null; location: string | null; bio: string | null; height: string | null
-  minimum_age: number | null; maximum_age: number | null; agent_name: string | null; agent_email: string | null; agent_phone: string | null; website: string | null; graduate_school: string | null }
+  minimum_age: number | null; maximum_age: number | null; agent_name: string | null; agent_email: string | null; agent_phone: string | null; website: string | null; graduate_school: string | null; vocal_range?: string | null }
 
 const FIELDS: [keyof Found, string, keyof Current][] = [
   ['first_name', 'First name', 'first_name'], ['last_name', 'Last name', 'last_name'], ['what_i_do', 'What you do', 'what_i_do'],
   ['location', 'Location', 'location'], ['height', 'Height', 'height'], ['bio', 'Bio', 'bio'],
   ['agent_name', 'Agent', 'agent_name'], ['agent_email', 'Agent email', 'agent_email'], ['agent_phone', 'Agent phone', 'agent_phone'],
-  ['website', 'Website', 'website'], ['drama_school', 'Drama school', 'graduate_school'],
+  ['website', 'Website', 'website'], ['drama_school', 'Drama school', 'graduate_school'], ['vocal_range', 'Vocal range', 'vocal_range'],
 ]
 
 export default function CvImport({ uid, current, types, allSkills, mySkillIds, existingCredits }: {
@@ -56,8 +56,12 @@ export default function CvImport({ uid, current, types, allSkills, mySkillIds, e
     setPick(next); setFound(f)
   }
 
-  const skillMatches = found ? allSkills.filter(s => !mySkillIds.includes(s.id) && found.skills.some(x => x.trim().toLowerCase() === s.name.toLowerCase())) : []
-  const unmatched = found ? found.skills.filter(x => !allSkills.some(s => s.name.toLowerCase() === x.trim().toLowerCase())) : []
+  // Each CV skill → one we already have (Claude's match, or the same name), or a new skill to add to the list
+  const byName = new Map(allSkills.map(s => [s.name.toLowerCase(), s]))
+  const resolved = found ? found.skills.map(x => {
+    const hit = byName.get((x.match || '').trim().toLowerCase()) || byName.get((x.name || '').trim().toLowerCase()) || byName.get(x.as_written.trim().toLowerCase())
+    return { label: hit?.name || (x.name || x.as_written).trim(), id: hit?.id ?? null, category: x.category, isNew: !hit }
+  }).filter((x, i, a) => x.label && a.findIndex(y => y.label.toLowerCase() === x.label.toLowerCase()) === i && !(x.id && mySkillIds.includes(x.id))) : []
   const typeId = (t: string) => (types.find(x => x.name.toLowerCase() === t.toLowerCase()) || types.find(x => t.toLowerCase().includes(x.name.toLowerCase())) || types.find(x => x.name === 'Other'))?.id ?? null
   const toggle = (k: string) => setPick(p => ({ ...p, [k]: !p[k] }))
 
@@ -76,7 +80,15 @@ export default function CvImport({ uid, current, types, allSkills, mySkillIds, e
       profile_id: uid, title: c.title, role: c.role || null, year: c.year || null, director: c.director || null,
       production_company: c.company || null, production_type_id: typeId(c.type),
     }))
-    const skills = pick['skills'] ? skillMatches.map(s => ({ profile_id: uid, skill_id: s.id })) : []
+    let skillIds: number[] = []
+    if (pick['skills'] && resolved.length) {
+      const fresh = resolved.filter(r => r.isNew)
+      let cats: { id: number; name: string }[] = []
+      if (fresh.length) cats = ((await supabase.from('skills_categories').select('id, name')).data || []) as { id: number; name: string }[]
+      const created = await Promise.all(fresh.map(r => supabase.rpc('add_skill', { p_name: r.label, p_category_id: cats.find(c => c.name === r.category)?.id ?? null })))
+      skillIds = [...resolved.filter(r => r.id).map(r => r.id as number), ...created.map(c => c.data as number | null).filter((x): x is number => typeof x === 'number')]
+    }
+    const skills = [...new Set(skillIds)].map(skill_id => ({ profile_id: uid, skill_id }))
     const results = await Promise.all([
       Object.keys(upd).length ? supabase.from('profiles').update(upd).eq('id', uid) : Promise.resolve({ error: null }),
       credits.length ? supabase.from('credits').insert(credits) : Promise.resolve({ error: null }),
@@ -130,13 +142,15 @@ export default function CvImport({ uid, current, types, allSkills, mySkillIds, e
               </div>
             )}
 
-            {(skillMatches.length > 0 || unmatched.length > 0) && (
+            {resolved.length > 0 && (
               <div>
                 <button type="button" onClick={() => toggle('skills')} className="flex items-center gap-2 text-[13px] font-semibold">
-                  <Box on={!!pick['skills'] && skillMatches.length > 0} />Skills ({skillMatches.length})
+                  <Box on={!!pick['skills']} />Skills ({resolved.length})
                 </button>
-                <div className="mt-2 flex flex-wrap gap-1.5">{skillMatches.map(s => <span key={s.id} className="rounded-full bg-mint px-2.5 py-1 text-[12px] font-medium text-green-ink">{s.name}</span>)}</div>
-                {unmatched.length > 0 && <p className="mt-2 text-[12px] text-muted">Not in our skills list yet: {unmatched.join(', ')}. Add the closest match in Skills below.</p>}
+                <div className="mt-2 flex flex-wrap gap-1.5">{resolved.map(r => (
+                  <span key={r.label} className={cx('rounded-full px-2.5 py-1 text-[12px] font-medium', r.isNew ? 'bg-butter text-ink' : 'bg-mint text-green-ink')}>{r.label}{r.isNew && <span className="ml-1 text-[10px] font-semibold uppercase tracking-[0.06em] text-muted-strong">new</span>}</span>
+                ))}</div>
+                {resolved.some(r => r.isNew) && <p className="mt-2 text-[12px] text-muted">Skills marked new aren’t in our list yet — we’ll add them so casting can search for them too.</p>}
               </div>
             )}
 

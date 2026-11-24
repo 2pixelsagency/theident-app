@@ -4,7 +4,6 @@ import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { AuthBack, AuthState, AuthTitle, FormMessage, PasswordField, passwordIssues } from '@/components/rc/auth'
-import Icon from '@/components/rc/Icon'
 import { Button, Field } from '@/components/rc/ui'
 import { supabase } from '@/lib/supabase'
 import { authRedirect } from '@/lib/rc/authRedirect'
@@ -80,8 +79,8 @@ export default function CreateAccount() {
   return (
     <>
       <AuthBack href={'/welcome?side=' + side} />
-      <span className="mt-2 inline-flex w-fit items-center gap-1.5 rounded-full bg-lime px-3 py-1 text-[12px] font-semibold uppercase tracking-[0.06em] text-ink">
-        <Icon name={role === 'caster' ? 'megaphone' : 'sparkle'} className="size-3.5" />{role === 'caster' ? 'Casting' : 'Performer'}
+      <span className="mx-auto mt-2 inline-flex w-fit items-center rounded-full bg-lime px-3 py-1 text-[12px] font-semibold uppercase tracking-[0.06em] text-ink">
+        {role === 'caster' ? 'Casting' : 'Performer'}
       </span>
       <AuthTitle title={role === 'caster' ? 'Create your casting account' : 'Create your account'} sub="Then a few quick questions to set up your profile." />
 

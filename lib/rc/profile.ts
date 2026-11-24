@@ -6,7 +6,7 @@ export type FullProfile = {
   minimum_age: number | null; maximum_age: number | null; availability_status: string | null; show_talent: boolean | null
   hair_colour_id: number | null; eye_colour_id: number | null; is_graduate: boolean; graduate_school: string | null; graduate_year: number | null
   agent_name: string | null; agent_email: string | null; agent_phone: string | null; is_verified: boolean; account_role: string; company_name: string | null
-  cv_path: string | null; show_agent_contact: boolean; pronouns?: string | null; gender_id?: number | null; website?: string | null; specialisms?: string[] | null; boosted_until?: string | null
+  cv_path: string | null; show_agent_contact: boolean; pronouns?: string | null; gender_id?: number | null; vocal_range?: string | null; website?: string | null; specialisms?: string[] | null; boosted_until?: string | null
   email_alerts_enabled: boolean | null; notification_prefs: { matches?: boolean; applications?: boolean; messages?: boolean; marketing?: boolean } | null
 }
 
@@ -18,7 +18,7 @@ export type Lookup = { id: number; name: string }
 
 // Columns safe to show to other people. Agent email/phone are private: they come from
 // profile_contact(), which only returns them to the owner or when the owner chose to show them.
-export const PUBLIC_PROFILE_COLS = 'id, first_name, last_name, slug, picture_url, banner_url, location, what_i_do, bio, summary, height, minimum_age, maximum_age, availability_status, show_talent, hair_colour_id, eye_colour_id, is_graduate, graduate_school, graduate_year, agent_name, is_verified, account_role, company_name, cv_path, show_agent_contact, website, specialisms, boosted_until, pronouns, gender_id'
+export const PUBLIC_PROFILE_COLS = 'id, first_name, last_name, slug, picture_url, banner_url, location, what_i_do, bio, summary, height, minimum_age, maximum_age, availability_status, show_talent, hair_colour_id, eye_colour_id, is_graduate, graduate_school, graduate_year, agent_name, is_verified, account_role, company_name, cv_path, show_agent_contact, website, specialisms, boosted_until, pronouns, gender_id, vocal_range'
 // The owner also reads their own settings (never select('*') — profiles is granted per column)
 const OWNER_PROFILE_COLS = PUBLIC_PROFILE_COLS + ', email_alerts_enabled, notification_prefs'
 
