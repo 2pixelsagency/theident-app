@@ -59,6 +59,7 @@ export default async function BlogPost({ params }: Props) {
                   ))}
                 </ul>
               )}
+              {b.link && <Link href={b.link[1]} className="group inline-flex items-center gap-2 rounded-full bg-forest px-5 py-3 text-[14px] font-semibold text-bg transition-colors hover:bg-lime hover:text-ink">{b.link[0]} <span aria-hidden="true" className="cta-arrow">→</span></Link>}
             </section>
           ))}
         </div>
