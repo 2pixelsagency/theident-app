@@ -4,7 +4,7 @@ import { Fragment, useEffect, useState } from 'react'
 import { useParams, useRouter, useSearchParams } from 'next/navigation'
 import Icon from '@/components/rc/Icon'
 import { Bubble, Composer, DayDivider, dayLabel, useStickToBottom } from '@/components/rc/chat'
-import { BackArrow, Button, Empty, PageLoading, Sheet, cx, toast, useGoBack } from '@/components/rc/ui'
+import { Avatar, BackArrow, Button, Empty, PageLoading, Sheet, cx, toast, useGoBack } from '@/components/rc/ui'
 import { InviteSheet } from '@/components/rc/CastInvite'
 import { ReportSheet, SafetyNote, type ReportTarget } from '@/components/rc/Safety'
 import { supabase } from '@/lib/supabase'
@@ -13,9 +13,8 @@ import { useAsync } from '@/lib/rc/useAsync'
 import { fmtTime, fullName, initials } from '@/lib/rc/format'
 
 type Msg = { id: string; sender_id: string; channel: string; body: string; is_pinned: boolean; created_at: string }
-type Member = { profile_id: string; role: string; title: string | null; profiles: { first_name: string | null; last_name: string | null } | null }
+type Member = { profile_id: string; role: string; title: string | null; profiles: { first_name: string | null; last_name: string | null; picture_url: string | null } | null }
 
-const TILE = ['bg-purple-tint text-purple-ink', 'bg-green-tint text-green-ink', 'bg-pink-tint text-purple-ink', 'bg-amber-tint text-amber', 'bg-pencil-tint text-pencil']
 
 export default function CastChatPage() {
   const { id: chatId } = useParams<{ id: string }>()
@@ -30,7 +29,7 @@ export default function CastChatPage() {
   const { data, loading, mutate } = useAsync(async () => {
     const [{ data: chat }, { data: members }, { data: msgs }] = await Promise.all([
       supabase.from('cast_chats').select('id, name, production_name, channels, created_by, invite_code, invite_enabled').eq('id', chatId).maybeSingle(),
-      supabase.from('cast_chat_members').select('profile_id, role, title, profiles(first_name, last_name)').eq('chat_id', chatId),
+      supabase.from('cast_chat_members').select('profile_id, role, title, profiles(first_name, last_name, picture_url)').eq('chat_id', chatId),
       supabase.from('cast_chat_messages').select('id, sender_id, channel, body, is_pinned, created_at').eq('chat_id', chatId).order('created_at').limit(800),
     ])
     supabase.from('cast_chat_members').update({ last_read_at: new Date().toISOString() }).eq('chat_id', chatId).eq('profile_id', me).then(() => {})
@@ -57,7 +56,6 @@ export default function CastChatPage() {
   const memberById = new Map(members.map(m => [m.profile_id, m]))
   const isAdmin = memberById.get(me)?.role === 'admin'
   const pinned = [...messages].reverse().find(m => m.channel === channel && m.is_pinned)
-  const colourFor = (id: string) => TILE[Math.abs([...id].reduce((h, c) => h + c.charCodeAt(0), 0)) % TILE.length]
 
   const send = async (body: string) => {
     const { data: m, error } = await supabase.from('cast_chat_messages').insert({ chat_id: chatId, sender_id: me, channel, body }).select('id, sender_id, channel, body, is_pinned, created_at').single()
@@ -136,13 +134,16 @@ export default function CastChatPage() {
               {mine ? (
                 <button type="button" className="block w-full text-left" onClick={() => isAdmin && setSelected(m)}><Bubble mine body={m.body} at={m.created_at} /></button>
               ) : (
-                <button type="button" onClick={() => setSelected(m)} className="flex w-full gap-2.5 text-left">
-                  <span className={cx('flex size-9 shrink-0 items-center justify-center rounded-lg text-xs font-medium', colourFor(m.sender_id))}>{initials(name)}</span>
-                  <span className="min-w-0 flex-1">
+                <div className="flex w-full gap-2.5 text-left">
+                  {/* Their profile photo (tap to open their profile) */}
+                  <button type="button" aria-label={'View ' + (name || 'profile')} onClick={() => router.push('/talent/' + m.sender_id)} className="shrink-0 self-start rounded-full">
+                    <Avatar src={who?.profiles?.picture_url} name={name} size={36} />
+                  </button>
+                  <button type="button" onClick={() => setSelected(m)} className="min-w-0 flex-1 text-left">
                     <span className="mb-1 block text-xs text-muted">{[name.split(' ')[0] + (name.split(' ')[1] ? ' ' + name.split(' ')[1][0] : ''), who?.title, fmtTime(m.created_at)].filter(Boolean).join(' · ')}</span>
                     <Bubble mine={false} body={m.body} at={m.created_at} />
-                  </span>
-                </button>
+                  </button>
+                </div>
               )}
             </Fragment>
           )
@@ -165,7 +166,7 @@ export default function CastChatPage() {
           <ul className="divide-y divide-line">
             {members.map(m => (
               <li key={m.profile_id} className="flex items-center gap-3 py-2.5">
-                <span className={cx('flex size-9 shrink-0 items-center justify-center rounded-lg text-xs font-medium', colourFor(m.profile_id))}>{initials(fullName(m.profiles))}</span>
+                <button type="button" aria-label={'View ' + fullName(m.profiles)} onClick={() => router.push(m.profile_id === me ? '/me' : '/talent/' + m.profile_id)} className="shrink-0 rounded-full"><Avatar src={m.profiles?.picture_url} name={fullName(m.profiles)} size={36} /></button>
                 <span className="min-w-0 flex-1">
                   <span className="block truncate text-[15px] font-medium">{fullName(m.profiles)}{m.profile_id === me ? ' (you)' : ''}</span>
                   <span className="block text-xs text-muted">{[m.role === 'admin' ? 'Admin' : null, m.title].filter(Boolean).join(' · ') || 'Member'}</span>
