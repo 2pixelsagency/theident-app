@@ -107,7 +107,7 @@ button:not(:disabled), [role="button"]:not([aria-disabled="true"]), summary, lab
 .cta-arrow { transition: transform .35s cubic-bezier(.2,.8,.2,1); }
 
 /* Section labels: a small dot before the text */
-.eyebrow { display: inline-flex; align-items: center; gap: .6em; }
+.eyebrow { display: inline-flex; align-items: center; gap: .45em; }
 .eyebrow::before { content: ''; width: .5em; height: .5em; border-radius: 9999px; background: currentColor; flex: none; }
 
 /* Marketing site: marquee + reveal */

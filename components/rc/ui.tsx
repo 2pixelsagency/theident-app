@@ -160,7 +160,7 @@ export function SectionTitle({ title, action, href, className }: { title: string
 }
 
 export function Eyebrow({ children, className }: { children: React.ReactNode; className?: string }) {
-  return <p className={cx('mb-2 flex items-center gap-2 text-[12px] font-semibold uppercase tracking-[0.14em] text-forest', className)}><span aria-hidden="true" className="size-1.5 rounded-full bg-current" />{children}</p>
+  return <p className={cx('mb-2 flex items-center gap-[5px] text-[11px] font-semibold uppercase tracking-[0.14em] text-forest', className)}><span aria-hidden="true" className="size-1.5 rounded-full bg-current" />{children}</p>
 }
 
 /* ---------- Chips & pills ---------- */
