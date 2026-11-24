@@ -7,6 +7,7 @@ import { supabase } from '@/lib/supabase'
 import { heroRound } from '@/components/rc/ProfileView'
 import { useMe } from '@/lib/rc/me'
 import CompletenessCard from '@/components/rc/Completeness'
+import CvImport from '@/components/rc/CvImport'
 import { BrandsEditor, GalleryEditor, TestimonialsEditor } from '@/components/rc/ProfileExtras'
 import { completeness } from '@/lib/rc/completeness'
 import { useAsync } from '@/lib/rc/useAsync'
@@ -240,6 +241,11 @@ function Editor({ data, uid, caster, onRefresh, mutate }: { data: Data; uid: str
       </section>
 
       <div className="space-y-5 px-4 pb-12 pt-5">
+        {!caster && <CvImport uid={uid} types={data.types} allSkills={data.allSkills} mySkillIds={skillIds}
+          existingCredits={data.credits.map(c => ({ title: c.title, role: c.role }))}
+          current={{ first_name: p.first_name, last_name: p.last_name, what_i_do: p.what_i_do, location: p.location, bio: p.bio || p.summary, height: p.height,
+            minimum_age: p.minimum_age, maximum_age: p.maximum_age, agent_name: p.agent_name, agent_email: p.agent_email, agent_phone: p.agent_phone,
+            website: p.website ?? null, graduate_school: p.graduate_school ?? null }} />}
         {live && <CompletenessCard result={live} compact />}
         <div id="basics" className="scroll-mt-4 space-y-5">
         <Field label="Name" autoComplete="name" value={name} onChange={e => setName(e.target.value)} placeholder="First and last name" />

@@ -1,0 +1,175 @@
+'use client'
+
+import { useRef, useState } from 'react'
+import Icon from './Icon'
+import { Button, Sheet, cx, toast } from './ui'
+import { supabase } from '@/lib/supabase'
+
+// "Create my profile from my CV": upload a PDF/Word CV (e.g. the CV PDF from Spotlight or Mandy), Claude reads it
+// on the server, and the member reviews what was found and picks what to add. Nothing changes until they confirm.
+type Found = {
+  first_name: string; last_name: string; what_i_do: string; location: string; bio: string; height: string
+  playing_age_min: number; playing_age_max: number; agent_name: string; agent_email: string; agent_phone: string; website: string
+  drama_school: string; graduation_year: number
+  credits: { title: string; role: string; type: string; year: number; director: string; company: string }[]
+  skills: string[]; training: string[]
+}
+type Current = { first_name: string | null; last_name: string | null; what_i_do: string | null; location: string | null; bio: string | null; height: string | null
+  minimum_age: number | null; maximum_age: number | null; agent_name: string | null; agent_email: string | null; agent_phone: string | null; website: string | null; graduate_school: string | null }
+
+const FIELDS: [keyof Found, string, keyof Current][] = [
+  ['first_name', 'First name', 'first_name'], ['last_name', 'Last name', 'last_name'], ['what_i_do', 'What you do', 'what_i_do'],
+  ['location', 'Location', 'location'], ['height', 'Height', 'height'], ['bio', 'Bio', 'bio'],
+  ['agent_name', 'Agent', 'agent_name'], ['agent_email', 'Agent email', 'agent_email'], ['agent_phone', 'Agent phone', 'agent_phone'],
+  ['website', 'Website', 'website'], ['drama_school', 'Drama school', 'graduate_school'],
+]
+
+export default function CvImport({ uid, current, types, allSkills, mySkillIds, existingCredits }: {
+  uid: string; current: Current; types: { id: number; name: string }[]; allSkills: { id: number; name: string }[]
+  mySkillIds: number[]; existingCredits: { title: string | null; role: string | null }[]
+}) {
+  const fileRef = useRef<HTMLInputElement>(null)
+  const [busy, setBusy] = useState<'reading' | 'saving' | null>(null)
+  const [error, setError] = useState<string | null>(null)
+  const [found, setFound] = useState<Found | null>(null)
+  const [pick, setPick] = useState<Record<string, boolean>>({})
+
+  const read = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    e.target.value = ''
+    if (!file) return
+    setError(null); setBusy('reading')
+    const { data: { session } } = await supabase.auth.getSession()
+    const body = new FormData(); body.append('file', file)
+    const res = await fetch('/api/profile/import', { method: 'POST', headers: { Authorization: 'Bearer ' + (session?.access_token || '') }, body }).catch(() => null)
+    const json = res ? await res.json().catch(() => ({})) : {}
+    setBusy(null)
+    if (!res?.ok || !json.profile) { setError(json.error || 'We couldn’t read that CV. Please try again.'); return }
+    const f = json.profile as Found
+    // Default picks: fill empty fields, add new credits and matched skills; don't overwrite what's already there
+    const next: Record<string, boolean> = {}
+    for (const [k, , ck] of FIELDS) if (f[k]) next['f:' + k] = !current[ck]
+    if (f.playing_age_min || f.playing_age_max) next['f:ages'] = !current.minimum_age && !current.maximum_age
+    f.credits.forEach((c, i) => { next['c:' + i] = !existingCredits.some(x => (x.title || '').toLowerCase() === c.title.toLowerCase() && (x.role || '').toLowerCase() === c.role.toLowerCase()) })
+    next['skills'] = true
+    if (f.training.length) next['training'] = !current.bio
+    setPick(next); setFound(f)
+  }
+
+  const skillMatches = found ? allSkills.filter(s => !mySkillIds.includes(s.id) && found.skills.some(x => x.trim().toLowerCase() === s.name.toLowerCase())) : []
+  const unmatched = found ? found.skills.filter(x => !allSkills.some(s => s.name.toLowerCase() === x.trim().toLowerCase())) : []
+  const typeId = (t: string) => (types.find(x => x.name.toLowerCase() === t.toLowerCase()) || types.find(x => t.toLowerCase().includes(x.name.toLowerCase())) || types.find(x => x.name === 'Other'))?.id ?? null
+  const toggle = (k: string) => setPick(p => ({ ...p, [k]: !p[k] }))
+
+  const apply = async () => {
+    if (!found) return
+    setBusy('saving')
+    const upd: Record<string, unknown> = {}
+    for (const [k, , ck] of FIELDS) if (pick['f:' + k] && found[k]) upd[ck] = found[k]
+    if (pick['f:drama_school'] && found.drama_school) { upd.is_graduate = true; if (found.graduation_year) upd.graduate_year = found.graduation_year }
+    if (pick['f:ages']) { if (found.playing_age_min) upd.minimum_age = found.playing_age_min; if (found.playing_age_max) upd.maximum_age = found.playing_age_max }
+    if (pick['training'] && found.training.length) {
+      const base = (upd.bio as string) || current.bio || ''
+      upd.bio = (base ? base.trim() + '\n\n' : '') + 'Training: ' + found.training.join('; ') + '.'
+    }
+    const credits = found.credits.filter((_, i) => pick['c:' + i]).map(c => ({
+      profile_id: uid, title: c.title, role: c.role || null, year: c.year || null, director: c.director || null,
+      production_company: c.company || null, production_type_id: typeId(c.type),
+    }))
+    const skills = pick['skills'] ? skillMatches.map(s => ({ profile_id: uid, skill_id: s.id })) : []
+    const results = await Promise.all([
+      Object.keys(upd).length ? supabase.from('profiles').update(upd).eq('id', uid) : Promise.resolve({ error: null }),
+      credits.length ? supabase.from('credits').insert(credits) : Promise.resolve({ error: null }),
+      skills.length ? supabase.from('profile_skills').upsert(skills, { onConflict: 'profile_id,skill_id', ignoreDuplicates: true }) : Promise.resolve({ error: null }),
+    ])
+    const failed = results.find(r => r.error)
+    if (failed) { setBusy(null); toast('Some details couldn’t be saved — please try again'); return }
+    toast('Added to your profile')
+    // Reload so the editor's own draft picks up the new values instead of autosaving over them
+    window.location.reload()
+  }
+
+  const chosen = Object.values(pick).filter(Boolean).length
+
+  return (
+    <>
+      <div className="flex flex-wrap items-center gap-4 rounded-[var(--radius)] bg-sand p-4 sm:flex-nowrap">
+        <span className="flex size-11 shrink-0 items-center justify-center rounded-full bg-lime text-forest"><Icon name="file" strokeWidth={2} className="size-5" /></span>
+        <div className="min-w-0 flex-1">
+          <p className="text-[15px] font-semibold">Create your profile from your CV</p>
+          <p className="text-[13px] text-muted-strong">Upload a PDF or Word CV — including the one you download from Spotlight or Mandy. You choose what gets added.</p>
+          {error && <p role="alert" className="mt-1 text-[13px] font-medium text-red">{error}</p>}
+        </div>
+        <input ref={fileRef} type="file" accept=".pdf,.docx,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document" className="hidden" onChange={read} />
+        <Button size="sm" onClick={() => fileRef.current?.click()} disabled={busy !== null}>{busy === 'reading' ? 'Reading…' : 'Upload CV'}</Button>
+      </div>
+
+      <Sheet open={!!found} onClose={() => busy !== 'saving' && setFound(null)} title="What we found">
+        {found && (
+          <div className="space-y-5">
+            <p className="text-[13px] text-muted-strong">Tick what you’d like to add. Anything already on your profile is left alone unless you tick it.</p>
+            <ul className="divide-y divide-line-soft rounded-[14px] border border-line-soft bg-surface">
+              {FIELDS.filter(([k]) => found[k]).map(([k, label, ck]) => (
+                <PickRow key={k} on={!!pick['f:' + k]} onToggle={() => toggle('f:' + k)} label={label} value={String(found[k])} note={current[ck] ? 'Replaces what’s there' : undefined} />
+              ))}
+              {(found.playing_age_min > 0 || found.playing_age_max > 0) && (
+                <PickRow on={!!pick['f:ages']} onToggle={() => toggle('f:ages')} label="Playing age" value={[found.playing_age_min || '?', found.playing_age_max || '?'].join('–')} note={current.minimum_age || current.maximum_age ? 'Replaces what’s there' : undefined} />
+              )}
+              {found.training.length > 0 && <PickRow on={!!pick['training']} onToggle={() => toggle('training')} label="Training (added to your bio)" value={found.training.join('; ')} />}
+            </ul>
+
+            {found.credits.length > 0 && (
+              <div>
+                <p className="mb-2 text-[13px] font-semibold">Credits ({found.credits.length})</p>
+                <ul className="divide-y divide-line-soft rounded-[14px] border border-line-soft bg-surface">
+                  {found.credits.map((c, i) => (
+                    <PickRow key={i} on={!!pick['c:' + i]} onToggle={() => toggle('c:' + i)} label={[c.title, c.role].filter(Boolean).join(' — ')}
+                      value={[c.type, c.company, c.director && 'dir. ' + c.director, c.year || ''].filter(Boolean).join(' · ')} />
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            {(skillMatches.length > 0 || unmatched.length > 0) && (
+              <div>
+                <button type="button" onClick={() => toggle('skills')} className="flex items-center gap-2 text-[13px] font-semibold">
+                  <Box on={!!pick['skills'] && skillMatches.length > 0} />Skills ({skillMatches.length})
+                </button>
+                <div className="mt-2 flex flex-wrap gap-1.5">{skillMatches.map(s => <span key={s.id} className="rounded-full bg-mint px-2.5 py-1 text-[12px] font-medium text-green-ink">{s.name}</span>)}</div>
+                {unmatched.length > 0 && <p className="mt-2 text-[12px] text-muted">Not in our skills list yet: {unmatched.join(', ')}. Add the closest match in Skills below.</p>}
+              </div>
+            )}
+
+            <div className="flex gap-3 pt-1">
+              <Button variant="outline" full onClick={() => setFound(null)} disabled={busy === 'saving'}>Cancel</Button>
+              <Button full onClick={apply} disabled={busy === 'saving' || chosen === 0}>{busy === 'saving' ? 'Adding…' : 'Add to my profile'}</Button>
+            </div>
+          </div>
+        )}
+      </Sheet>
+    </>
+  )
+}
+
+function Box({ on }: { on: boolean }) {
+  return (
+    <span aria-hidden="true" className={cx('flex size-5 shrink-0 items-center justify-center rounded-[6px] border transition-colors', on ? 'border-forest bg-forest text-lime' : 'border-line-strong bg-surface')}>
+      {on && <Icon name="check" strokeWidth={3} className="size-3" />}
+    </span>
+  )
+}
+
+function PickRow({ on, onToggle, label, value, note }: { on: boolean; onToggle: () => void; label: string; value: string; note?: string }) {
+  return (
+    <li>
+      <button type="button" role="checkbox" aria-checked={on} onClick={onToggle} className="flex w-full items-start gap-3 px-3.5 py-3 text-left">
+        <Box on={on} />
+        <span className="min-w-0 flex-1">
+          <span className="block text-[14px] font-medium">{label}</span>
+          <span className="block whitespace-pre-line text-[13px] text-muted-strong [display:-webkit-box] [-webkit-box-orient:vertical] [-webkit-line-clamp:3] overflow-hidden">{value}</span>
+          {note && <span className="mt-0.5 block text-[11px] font-medium text-amber">{note}</span>}
+        </span>
+      </button>
+    </li>
+  )
+}
