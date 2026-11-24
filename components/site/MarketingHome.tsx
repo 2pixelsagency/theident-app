@@ -4,19 +4,15 @@ import RolesCarousel from './RolesCarousel'
 import HeroTalent from './HeroTalent'
 import WorkedWith from './WorkedWith'
 import { Container, Cta, Eyebrow, SECTION, SectionHead } from './Chrome'
-import { CtaBand, FeatureCard, FloatFrame, IconBadge, IconCard, Panel, Tag } from './ds'
+import { CtaBand, IconCard } from './ds'
 import { PLANS, TRIAL_DAYS, price } from '@/lib/rc/plans'
 import JsonLd from './JsonLd'
 import Faq from './Faq'
+import HowItWorks from './HowItWorks'
 import CastingsSection from './castings/CastingsSection'
 import { HOME_FAQ } from '@/lib/site/faq'
 import { SITE_URL } from '@/lib/supabaseServer'
 
-const STEPS = [
-  { n: '01', title: 'Build your Ident', body: 'Headshots, showreel, credits, skills and CV — one profile that casting can trust.', badge: 'bg-mint', panel: 'var(--panel-mint)', icon: 'user', chip: 'Profile 100% complete', chipSub: 'Ready for casting to see' },
-  { n: '02', title: 'Find and apply', body: 'Roles from casting directors and the community, filtered to what fits you. Apply in a tap.', badge: 'bg-butter', panel: 'var(--panel-butter)', icon: 'search', chip: '3 new roles match you', chipSub: 'Theatre · Manchester' },
-  { n: '03', title: 'Recall, pencil, book', body: 'Send self-tapes, join video-call recalls and sign your contract — all tracked for you.', badge: 'bg-lime', panel: 'var(--panel-lime)', icon: 'check', chip: 'You’re booked!', chipSub: 'Sign your contract' },
-]
 
 export default function MarketingHome() {
   return (
@@ -50,27 +46,11 @@ export default function MarketingHome() {
       {/* ───── Castings bento (approved design) ───── */}
       <CastingsSection />
 
-      {/* ───── How it works: three cards with a floating screen each ───── */}
+      {/* ───── How it works: Calendly-style step tabs + widget ───── */}
       <section className={SECTION}>
         <Container>
           <SectionHead eyebrow="How it works" title="Three steps to your next job" sub="Build your profile once, apply in a tap, and let The Ident track everything from self-tape to contract." />
-          <ol className="grid gap-6 [grid-template-columns:repeat(auto-fit,minmax(min(100%,320px),1fr))]">
-            {STEPS.map(s => (
-              <li key={s.n} className="flex">
-                <FeatureCard size="sm" title={s.title} body={s.body}
-                  header={<div className="flex items-center justify-between"><IconBadge tone={s.badge}><span className="font-display text-[15px] font-bold text-forest">{s.n}</span></IconBadge><Tag>Step {Number(s.n)}</Tag></div>}>
-                  <Panel size="sm" background={s.panel} stripes="light">
-                    <FloatFrame size="sm">
-                      <div className="flex items-center gap-3">
-                        <span className={'flex size-9 shrink-0 items-center justify-center rounded-[10px] ' + s.badge}><Icon name={s.icon} className="size-4 text-forest" /></span>
-                        <span className="min-w-0"><span className="block truncate text-[15px] font-semibold">{s.chip}</span><span className="block truncate text-[13px] text-muted">{s.chipSub}</span></span>
-                      </div>
-                    </FloatFrame>
-                  </Panel>
-                </FeatureCard>
-              </li>
-            ))}
-          </ol>
+          <HowItWorks />
         </Container>
       </section>
 
