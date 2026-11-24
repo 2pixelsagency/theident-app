@@ -64,10 +64,10 @@ export default async function PeoplePage({ searchParams }: Props) {
               const name = [p.first_name, p.last_name].filter(Boolean).join(' ')
               return (
                 <li key={p.slug}>
-                  <Link href={'/' + p.slug} className="group block rounded-[24px] bg-sand p-2 transition duration-300 hover:-translate-y-0.5 hover:shadow-[0_24px_48px_-32px_rgb(21_33_28/0.35)]">
+                  <Link href={'/' + p.slug} className="group block rounded-[24px] bg-sand p-2">
                     <span className="relative block aspect-[4/5] overflow-hidden rounded-[18px] bg-sand-2">
                       {/* eslint-disable-next-line @next/next/no-img-element */}
-                      {p.picture_url ? <img src={p.picture_url} alt={name + ' headshot'} loading="lazy" className="size-full object-cover transition duration-500 group-hover:scale-[1.03]" /> : <span className="flex size-full items-center justify-center font-display text-[40px] font-bold text-faint">{(p.first_name || '?')[0]}</span>}
+                      {p.picture_url ? <img src={p.picture_url} alt={name + ' headshot'} loading="lazy" className="size-full object-cover" /> : <span className="flex size-full items-center justify-center font-display text-[40px] font-bold text-faint">{(p.first_name || '?')[0]}</span>}
                       {p.availability_status === 'available' && <span className="absolute left-2.5 top-2.5 rounded-full bg-lime px-2.5 py-1 text-[11px] font-semibold text-ink">Open to work</span>}
                     </span>
                     <span className="block px-2.5 pb-2 pt-3">

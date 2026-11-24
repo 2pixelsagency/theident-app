@@ -4,6 +4,7 @@
    screen picks the brand up from here. */
 
 :root {
+  --font-inter: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif; /* loaded from Google Fonts in app/layout.tsx */
   /* surfaces & text */
   --bg: #f6f4ee;         /* Paper */
   --surface: #ffffff;    /* clean white cards on Paper */

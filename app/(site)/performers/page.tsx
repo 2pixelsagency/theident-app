@@ -8,7 +8,15 @@ export default function PerformersPage() {
     <FeaturePage eyebrow="For performers" title="Spend less time chasing castings and more time performing."
       intro={`Actors, dancers, singers and musicians use The Ident to find work, apply with their materials and keep their career moving. ${TRIAL_DAYS} days free, then ${price(PLANS.performer.pence)} a month.`}
       cta={{ href: '/start?role=performer', label: 'Start free trial' }}
-      facts={[[price(PLANS.performer.pence), 'a month, after your trial'], [TRIAL_DAYS + ' days', 'free to try everything'], ['0%', 'commission on work you book']]}
+      plans={[
+        { label: 'For performers', name: 'Membership', line: 'Everything you need to find, apply for and book work.', value: price(PLANS.performer.pence), unit: '/month', small: `After your ${TRIAL_DAYS}-day free trial`,
+          cta: { href: '/start?role=performer', label: 'Start free trial' }, note: 'Cancel anytime', included: PLANS.performer.features },
+        { label: 'Try it first', name: 'Free trial', line: 'Use every feature for a week before you pay anything.', value: TRIAL_DAYS + ' days', unit: 'free', small: 'We’ll remind you before it ends',
+          cta: { href: '/start?role=performer', label: 'Try everything free' }, note: 'Cancel any time in Settings', dark: true, badge: 'Start here',
+          included: ['Apply to every open role', 'Build your profile and showreel', 'Track self-tapes and recalls', 'Message casting and your cast'] },
+        { label: 'Your earnings', name: 'No commission', line: 'We never take a cut of work you book through The Ident.', value: '0%', unit: 'commission', small: 'On every job you book',
+          cta: { href: '/pricing', label: 'See pricing' }, included: ['Keep 100% of your fee', 'Log payments and send invoices', 'See what to put aside for tax'] },
+      ]}
       groups={[
         { title: 'Find and apply', features: [
           { icon: 'search', title: 'Every role, one board', body: 'Theatre, screen, commercials, dance and side hustles — from casting directors and the community.' },

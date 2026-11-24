@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import Icon from '@/components/rc/Icon'
 import { cx } from './castings/parts'
+import ExpandCard from './ExpandCard'
 
 // The website design system (from the Castings section, see DESIGN.md → "Website"). Server-safe.
 // Re-exports the card parts so every page builds from the same pieces.
@@ -63,30 +64,12 @@ export const ARROW_BOX = 'flex size-11 shrink-0 items-center justify-center roun
 
 // Plain sand (or Forest) card for text-led content
 export function SandCard({ children, dark, className, as: As = 'div' }: { children: React.ReactNode; dark?: boolean; className?: string; as?: 'div' | 'article' | 'li' }) {
-  return <As data-reveal className={cx('group/card rounded-[var(--radius-feature)] p-6 transition-[translate,box-shadow] duration-500 ease-[cubic-bezier(.2,.8,.2,1)] hover:-translate-y-1.5 hover:shadow-[0_32px_60px_-36px_rgb(21_33_28/0.45)] md:p-8', dark ? 'bg-forest text-bg' : 'bg-sand text-ink', className)}>{children}</As>
+  return <As data-reveal className={cx('rounded-[var(--radius-feature)] p-6 md:p-8', dark ? 'bg-forest text-bg' : 'bg-sand text-ink', className)}>{children}</As>
 }
 
-// Icon-led small card: badge + arrow on top, title, body
-export function IconCard({ icon, tone = 'bg-lime', title, body, href, label, dark }: { icon: string; tone?: string; title: string; body: string; href?: string; label?: string; dark?: boolean }) {
-  return (
-    <SandCard as="li" dark={dark} className="flex flex-col gap-3">
-      <div className="flex items-center justify-between">
-        <span className={cx('flex size-10 items-center justify-center rounded-full transition-transform duration-500 ease-[cubic-bezier(.2,.8,.2,1)] group-hover/card:-rotate-[8deg] group-hover/card:scale-110', tone)}><Icon strokeWidth={2} name={icon} className="size-5 text-forest" /></span>
-        {href && <ArrowLinkSmall href={href} label={label || title} dark={dark} />}
-      </div>
-      <h3 className="mt-1.5 font-display text-[22px] font-bold leading-[1.15] tracking-[-0.02em] md:text-[24px]">{title}</h3>
-      <p className={cx('text-[13px] leading-[1.6]', dark ? 'text-on-dark-muted' : 'text-muted-strong')}>{body}</p>
-    </SandCard>
-  )
-}
-
-function ArrowLinkSmall({ href, label, dark }: { href: string; label: string; dark?: boolean }) {
-  return (
-    <Link href={href} aria-label={label} className={cx('group flex size-11 shrink-0 items-center justify-center rounded-[14px] border transition-colors duration-300',
-      dark ? 'border-white/20 bg-white/[0.08] text-bg hover:bg-lime hover:text-ink' : 'border-line-strong bg-bg text-ink hover:border-forest hover:bg-forest hover:text-lime')}>
-      <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" className="transition-transform duration-300 group-hover:-translate-y-0.5 group-hover:translate-x-0.5"><path d="M7 17L17 7M8 7h9v9" /></svg>
-    </Link>
-  )
+// Icon-led small card: icon + title, the + expands the detail. (href/label kept for older call sites.)
+export function IconCard({ icon, tone = 'bg-lime', title, body, dark }: { icon: string; tone?: string; title: string; body: string; href?: string; label?: string; dark?: boolean }) {
+  return <ExpandCard icon={icon} tone={tone} title={title} body={body} dark={dark} />
 }
 
 // Closing call-to-action band: Forest card with the lime stripe band

@@ -27,10 +27,6 @@ export default function ContactPage() {
             <SandCard key={title} as="li" dark={i === TOPICS.length - 1} className="flex flex-col gap-3">
               <div className="flex items-center justify-between">
                 <IconBadge tone={['bg-lime', 'bg-butter', 'bg-mint', 'bg-lime'][i]}><Icon strokeWidth={2} name={ICONS[i]} className="size-5 text-forest" /></IconBadge>
-                <a href={'mailto:' + SUPPORT_EMAIL + '?subject=' + encodeURIComponent(title)} aria-label={'Email us about ' + title}
-                  className={'group flex size-11 items-center justify-center rounded-[14px] border transition-colors duration-300 ' + (i === TOPICS.length - 1 ? 'border-white/20 bg-white/[0.08] hover:bg-lime hover:text-ink' : 'border-line-strong bg-bg hover:border-forest hover:bg-forest hover:text-lime')}>
-                  <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" className="transition-transform duration-300 group-hover:-translate-y-0.5 group-hover:translate-x-0.5"><path d="M7 17L17 7M8 7h9v9" /></svg>
-                </a>
               </div>
               <h2 className="mt-1.5 font-display text-[24px] font-bold tracking-[-0.02em]">{title}</h2>
               <p className={'text-[13px] leading-[1.6] ' + (i === TOPICS.length - 1 ? 'text-on-dark-muted' : 'text-muted-strong')}>{body}</p>
