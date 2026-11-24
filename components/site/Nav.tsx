@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import Icon from '@/components/rc/Icon'
+import LogoMark from '@/components/LogoMark'
 import { cx } from '@/components/rc/ui'
 import { supabase } from '@/lib/supabase'
 
@@ -42,8 +43,8 @@ export default function SiteNav() {
     <header className="sticky top-0 z-50 px-3 pt-[max(12px,env(safe-area-inset-top))] md:px-6">
       <div className={cx('mx-auto flex h-14 max-w-[1180px] items-center gap-2 rounded-[14px] border pl-4 pr-2 transition-all duration-300',
         scrolled || open ? 'border-line/80 bg-surface/80 shadow-[0_10px_30px_-18px_rgb(18_49_39/0.45)] backdrop-blur-xl backdrop-saturate-150' : 'border-transparent bg-transparent')}>
-        <Link href={home} aria-label="The Ident home" className="mr-4 flex shrink-0 items-center whitespace-nowrap font-display text-[22px] font-bold tracking-[-0.03em] text-forest">
-          The Ident
+        <Link href={home} aria-label="The Ident home" className="mr-4 flex shrink-0 items-center gap-2.5 whitespace-nowrap font-display text-[22px] font-bold tracking-[-0.03em] text-forest">
+          <LogoMark className="size-7" />The Ident
         </Link>
         <nav className="hidden flex-1 items-center gap-1 md:flex">
           {NAV.map(n => {
