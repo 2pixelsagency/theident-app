@@ -13,9 +13,9 @@ export type PlanCardProps = {
 
 export default function PlanCard({ label, name, line, value, unit, small, cta, note, included, dark, badge }: PlanCardProps) {
   return (
-    <article data-reveal className={cx('group/card relative flex flex-col overflow-hidden rounded-[28px] p-2 transition-[translate,box-shadow] duration-500 ease-[cubic-bezier(.2,.8,.2,1)] hover:-translate-y-1.5',
-      dark ? 'bg-forest text-bg shadow-[0_40px_80px_-40px_rgb(18_49_39/0.7)] lg:-my-3' : 'border border-line-soft bg-surface text-ink shadow-[0_24px_48px_-36px_rgb(21_33_28/0.35)] hover:shadow-[0_36px_64px_-36px_rgb(21_33_28/0.4)]')}>
-      {dark && <span aria-hidden="true" className="pointer-events-none absolute -right-16 -top-24 size-72 rounded-full bg-lime/25 blur-3xl transition-transform duration-700 group-hover/card:scale-125" />}
+    <article data-reveal className={cx('relative flex flex-col overflow-hidden rounded-[28px] p-2',
+      dark ? 'bg-forest text-bg shadow-[0_40px_80px_-40px_rgb(18_49_39/0.7)] lg:-my-3' : 'border border-line-soft bg-surface text-ink shadow-[0_24px_48px_-36px_rgb(21_33_28/0.35)]')}>
+      {dark && <span aria-hidden="true" className="pointer-events-none absolute -right-16 -top-24 size-72 rounded-full bg-lime/25 blur-3xl" />}
 
       <div className={cx('relative rounded-[22px] p-6 md:p-7', dark ? 'bg-white/[0.06] ring-1 ring-white/10' : 'bg-sand')}>
         <div className="flex items-start justify-between gap-3">

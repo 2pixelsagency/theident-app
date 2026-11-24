@@ -1,5 +1,4 @@
 import type { Metadata, Viewport } from "next";
-import { Inter } from "next/font/google";
 import localFont from "next/font/local";
 import "./globals.css";
 import NativeAuthBridge from "@/components/NativeAuthBridge";
@@ -15,7 +14,7 @@ const bricolage = localFont({
   variable: "--font-bricolage",
   fallback: ["system-ui", "sans-serif"],
 });
-const inter = Inter({ subsets: ["latin"], weight: ["300", "400", "500", "600"], display: "swap", variable: "--font-inter" });
+// Inter loads from Google Fonts in the browser (see <head>), not at build time: the build-time fetch kept failing on Vercel.
 export const viewport: Viewport = { width: "device-width", initialScale: 1, viewportFit: "cover", themeColor: "#f6f4ee" };
 
 export const metadata: Metadata = {
@@ -43,10 +42,14 @@ export default function RootLayout({
   <meta name="apple-mobile-web-app-title" content="The Ident" />
   <link rel="apple-touch-icon" href="/icon-192.png" />
   <link rel="manifest" href="/manifest.json" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+  {/* eslint-disable-next-line @next/next/no-page-custom-font */}
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" />
 </head>
       <body
         style={{ margin: 0, padding: 0 }}
-        className={bricolage.variable + " " + inter.variable}
+        className={bricolage.variable}
       >
         {children}
         <NativeAuthBridge />

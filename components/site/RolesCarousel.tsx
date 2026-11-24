@@ -13,7 +13,8 @@ import { toISODate } from '@/lib/rc/format'
 
 // Full-bleed roles carousel for the homepage: Roles | Side hustles toggle, inviting cards with pay,
 // "N applied" and closing date, and it opens a couple of cards in so the row fills the screen edge to edge.
-const GUTTER = 'max(20px, calc((100vw - 1180px) / 2 + 32px))'
+// Lines up with Container (1248px max, 24px side padding) so cards start where the heading does
+const GUTTER = 'max(24px, calc((100% - 1248px) / 2 + 24px))'
 type Kind = 'roles' | 'side'
 
 // Soft colour per production type so the row has rhythm
@@ -28,7 +29,7 @@ function RoleCard({ j, poster, applied }: { j: Job; poster?: Poster; applied: nu
   const community = jobSource(j, poster) === 'community'
   return (
     <li>
-      <Link href={'/jobs/' + j.id} className="group flex h-full flex-col rounded-[24px] bg-sand p-6 transition duration-500 ease-[cubic-bezier(.2,.8,.2,1)] hover:-translate-y-1 hover:shadow-[0_28px_50px_-30px_rgb(18_49_39/0.45)]">
+      <Link href={'/jobs/' + j.id} className="group flex h-full flex-col rounded-[24px] bg-sand p-6">
         <div className="flex items-center justify-between gap-3">
           <span className={cx('rounded-[10px] px-3 py-1.5 text-[13px] font-semibold text-ink', toneOf(type))}>{type}</span>
           {closes && closes !== 'Closed' && <span className="text-[12px] font-medium text-muted">{closes}</span>}
@@ -98,11 +99,11 @@ export default function RolesCarousel({ limit = 12 }: { limit?: number }) {
 
   return (
     <div>
-      <div className="mx-auto mb-6 flex max-w-[1180px] px-5 md:px-8">
-        <div role="tablist" aria-label="Type of work" className="inline-flex rounded-full border border-line bg-surface p-1">
+      <div className="mx-auto mb-8 flex max-w-[1248px] px-6">
+        <div role="tablist" aria-label="Type of work" className="inline-flex rounded-full bg-sand-2 p-1">
           {([['roles', 'Casting roles'], ['side', 'Side hustles']] as const).map(([v, l]) => (
             <button key={v} type="button" role="tab" aria-selected={kind === v} onClick={() => setKind(v)}
-              className={cx('h-10 rounded-full px-5 text-[14px] font-semibold transition-colors duration-300', kind === v ? 'bg-forest text-white' : 'text-muted hover:text-ink')}>{l}</button>
+              className={cx('h-10 rounded-full px-5 text-[14px] font-semibold transition-colors duration-300', kind === v ? 'bg-forest text-bg' : 'text-muted-strong hover:text-ink')}>{l}</button>
           ))}
         </div>
       </div>
@@ -118,7 +119,7 @@ export default function RolesCarousel({ limit = 12 }: { limit?: number }) {
           </li>
         </> : Array.from({ length: 5 }).map((_, i) => <li key={i} className="h-[260px] animate-pulse rounded-[14px] bg-chip" />)}
       </ul>
-      <div className="mx-auto mt-2 flex max-w-[1180px] items-center gap-6 px-5 md:px-8">
+      <div className="mx-auto mt-4 flex max-w-[1248px] items-center gap-6 px-6">
         <div className="flex gap-3">{arrow(-1, pos.start)}{arrow(1, pos.end)}</div>
         <div className="relative h-[2px] flex-1 overflow-hidden rounded-full bg-ink/10" aria-hidden>
           <div className="absolute inset-y-0 left-0 rounded-full bg-forest transition-[width] duration-200" style={{ width: Math.max(8, pos.p * 100) + '%' }} />

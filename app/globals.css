@@ -133,6 +133,10 @@ button:not(:disabled), [role="button"]:not([aria-disabled="true"]), summary, lab
 .hiw-bar { transform-origin: left; animation: hiw-progress var(--hiw-ms, 6000ms) linear both; }
 .hiw-tabs:hover .hiw-bar, .hiw-tabs:focus-within .hiw-bar, .hiw-root:hover .hiw-bar { animation-play-state: paused; }
 .stripe-drift { animation: stripe-drift 9s linear infinite; }
+@keyframes hiw-pop { 0% { opacity: 0; transform: translateY(14px) scale(.85); } 60% { opacity: 1; transform: translateY(-3px) scale(1.03); } 100% { opacity: 1; transform: none; } }
+.hiw-pop { animation: hiw-pop .6s cubic-bezier(.2,.8,.2,1) .65s both; }
+@keyframes hiw-tile { from { opacity: 0; transform: scale(.9); } to { opacity: 1; transform: none; } }
+.hiw-tile { animation: hiw-tile .5s cubic-bezier(.2,.8,.2,1) both; animation-delay: calc(80ms + var(--i, 0) * 90ms); }
 
 @media (prefers-reduced-motion: reduce) { .stripe-drift, .hiw-ping { animation: none !important; } }
 @media (prefers-reduced-motion: reduce) { * { animation-duration: 1ms !important; transition-duration: 1ms !important; } }

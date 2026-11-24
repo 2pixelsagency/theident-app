@@ -12,14 +12,14 @@ const LOGOS: { name: string; src: string; h: number; covers: string[] }[] = [
 
 export default function WorkedWith() {
   return (
-    <section className="border-y border-line bg-surface">
-      <div className="mx-auto max-w-[1180px] px-5 py-12 text-center md:px-8 md:py-14">
+    <section>
+      <div className="mx-auto max-w-[1248px] px-6 py-20 text-center md:py-28">
         <p className="eyebrow text-[12px] font-semibold uppercase tracking-[0.14em] text-muted">Used by professionals around the world</p>
-        <ul className="scrollbar-none -mx-5 mt-8 flex items-center gap-x-12 overflow-x-auto px-5 md:mx-0 md:justify-center md:gap-x-16 md:overflow-visible md:px-0">
+        <ul className="scrollbar-none -mx-6 mt-10 flex items-center gap-x-12 overflow-x-auto px-6 md:mx-0 md:flex-wrap md:justify-center md:gap-x-16 md:gap-y-8 md:overflow-visible md:px-0 lg:gap-x-20">
           {LOGOS.map(l => (
             <li key={l.name} className="flex shrink-0 items-center">
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={l.src} alt={l.name} title={l.name} style={{ height: l.h }} className="w-auto" loading="lazy" />
+              <img src={l.src} alt={l.name} title={l.name} style={{ height: Math.round(l.h * 0.68) }} className="w-auto" loading="lazy" />
             </li>
           ))}
         </ul>
