@@ -1,6 +1,5 @@
 import Link from 'next/link'
 import Replay from '../Replay'
-import { PanelBars, PanelBase, toneFrom } from '../PanelArt'
 // Server-safe class joiner (the app's cx lives in a client module)
 export const cx = (...c: (string | false | null | undefined)[]) => c.filter(Boolean).join(' ')
 
@@ -38,13 +37,13 @@ export function FeatureCard({ size, dark, header, title, body, children }: {
   )
 }
 
-export function Panel({ size, background, children }: { size: 'lg' | 'sm'; background: string; stripes?: 'light' | 'dark'; children: React.ReactNode }) {
-  const tone = toneFrom(background)
+export function Panel({ size, background, stripes, children }: { size: 'lg' | 'sm'; background: string; stripes: 'light' | 'dark'; children: React.ReactNode }) {
   return (
     <div className={cx('relative isolate flex items-center justify-center overflow-hidden', size === 'lg' ? 'mt-[18px] h-[360px] rounded-[24px]' : 'mt-3 h-[280px] rounded-[22px]')}>
-      <PanelBase tone={tone} />
+      <div aria-hidden="true" className="absolute inset-0 -z-10" style={{ backgroundImage: background }} />
       <Replay>
-        <PanelBars tone={tone} count={size === 'lg' ? 9 : 7} />
+        <div aria-hidden="true" className={cx('hiw-stripes absolute inset-x-0', size === 'lg' ? 'top-[37%] h-[124px]' : 'top-[34%] h-[100px]')}
+          style={{ backgroundImage: stripes === 'dark' ? 'var(--stripes-dark)' : 'var(--stripes-light)' }} />
         {children}
       </Replay>
     </div>

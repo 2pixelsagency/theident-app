@@ -133,18 +133,12 @@ button:not(:disabled), [role="button"]:not([aria-disabled="true"]), summary, lab
 .hiw-bar { transform-origin: left; animation: hiw-progress var(--hiw-ms, 6000ms) linear both; }
 .hiw-tabs:hover .hiw-bar, .hiw-tabs:focus-within .hiw-bar, .hiw-root:hover .hiw-bar { animation-play-state: paused; }
 .stripe-drift { animation: stripe-drift 9s linear infinite; }
-/* Panel art: pill bars rise from the centre out; glows drift */
-@keyframes panel-bar { from { opacity: 0; transform: scaleY(.35); } to { opacity: 1; transform: none; } }
-.panel-bar { animation: panel-bar .7s cubic-bezier(.2,.8,.2,1) both; animation-delay: calc(var(--i, 0) * 55ms); }
-@keyframes panel-glow { from { transform: translate(0, 0) scale(1); } to { transform: translate(-6%, 8%) scale(1.12); } }
-.panel-glow { animation: panel-glow 9s ease-in-out infinite alternate; }
-.panel-glow-b { animation-duration: 12s; animation-direction: alternate-reverse; }
 @keyframes hiw-pop { 0% { opacity: 0; transform: translateY(14px) scale(.85); } 60% { opacity: 1; transform: translateY(-3px) scale(1.03); } 100% { opacity: 1; transform: none; } }
 .hiw-pop { animation: hiw-pop .6s cubic-bezier(.2,.8,.2,1) .65s both; }
 @keyframes hiw-tile { from { opacity: 0; transform: scale(.9); } to { opacity: 1; transform: none; } }
 .hiw-tile { animation: hiw-tile .5s cubic-bezier(.2,.8,.2,1) both; animation-delay: calc(80ms + var(--i, 0) * 90ms); }
 
-@media (prefers-reduced-motion: reduce) { .stripe-drift, .hiw-ping, .panel-glow { animation: none !important; } }
+@media (prefers-reduced-motion: reduce) { .stripe-drift, .hiw-ping { animation: none !important; } }
 @media (prefers-reduced-motion: reduce) { * { animation-duration: 1ms !important; transition-duration: 1ms !important; } }
 
 /* On dark panels (Forest cards, photo heroes) the green accent becomes Lime so it stays visible */
