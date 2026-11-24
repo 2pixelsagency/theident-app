@@ -182,7 +182,12 @@ function PerformerProfile({ data, owner, onBack, onShare, topRight, actions, sta
 
   const stats = caster ? [] : ([
     ['Location', p.location], ['Gender', GENDER_NAMES[p.gender_id ?? 0]], ['Playing age', playingAge(p)], ['Height', p.height],
-    ['Eyes', eyes.find(e => e.id === p.eye_colour_id)?.name], ['Hair', hair.find(h => h.id === p.hair_colour_id)?.name], ['Vocal range', p.vocal_range],
+    ['Eyes', eyes.find(e => e.id === p.eye_colour_id)?.name],
+    ['Hair', [hair.find(h => h.id === p.hair_colour_id)?.name, p.hair_length, p.hair_type].filter(Boolean).join(' · ')], ['Vocal range', p.vocal_range],
+    ['Also based in', p.extra_locations?.join(', ')], ['Can play', p.playing_genders?.join(', ')], ['Appearance', p.appearance?.join(', ')],
+    ['Nationality', p.nationalities?.join(', ')], ['Right to work', p.right_to_work?.join(', ')], ['Twin', p.multiple_birth],
+    ['Disability', data.access?.visible || owner ? [data.access?.disabilities?.join(', '), data.access?.access_notes].filter(Boolean).join(' — ') + (owner && data.access && !data.access.visible && data.access.disabilities?.length ? ' (only you can see this)' : '') : null],
+    ['Agent', [p.agency_name, p.agent_name && p.agent_name !== p.agency_name ? p.agent_name : null, p.agent_address].filter(Boolean).join(' · ')],
   ] as const).filter(([, v]) => !!v)
 
   // Credits grouped by production type, as on Spotlight/Mandy
