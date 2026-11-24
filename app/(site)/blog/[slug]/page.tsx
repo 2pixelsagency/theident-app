@@ -36,7 +36,7 @@ export default async function BlogPost({ params }: Props) {
           { '@type': 'ListItem', position: 2, name: 'Blog', item: SITE_URL + '/blog' },
           { '@type': 'ListItem', position: 3, name: post.title, item: SITE_URL + '/blog/' + post.slug }] },
       ] }} />
-      <article className="mx-auto max-w-[760px] px-6 pb-16 pt-32 md:pt-40">
+      <article className="hero-in mx-auto max-w-[760px] px-6 pb-16 pt-32 md:pt-40">
         <nav aria-label="Breadcrumb" className="mb-6 text-[13px] text-muted"><Link href="/blog" className="hover:text-ink">Blog</Link> <span aria-hidden="true">/</span> <span className="text-ink">{post.tag}</span></nav>
         <Eyebrow>{post.tag}</Eyebrow>
         <h1 className="mt-4 font-display text-[40px] font-bold leading-[1.04] tracking-[-0.03em] md:text-[56px]">{post.title}</h1>
@@ -59,6 +59,7 @@ export default async function BlogPost({ params }: Props) {
                   ))}
                 </ul>
               )}
+              {b.link && <Link href={b.link[1]} className="group inline-flex items-center gap-2 rounded-full bg-forest px-5 py-3 text-[14px] font-semibold text-bg transition-colors hover:bg-lime hover:text-ink">{b.link[0]} <span aria-hidden="true" className="cta-arrow">→</span></Link>}
             </section>
           ))}
         </div>

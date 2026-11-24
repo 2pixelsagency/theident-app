@@ -2,7 +2,7 @@ import { cx } from './castings/parts'
 
 // Geometric cover art for blog posts, in the language of the logo mark: angled blocks on a grid,
 // in brand colours. One composition per topic; purely decorative.
-type Variant = 'tape' | 'recall' | 'reel' | 'money'
+type Variant = 'tape' | 'recall' | 'reel' | 'money' | 'compare'
 const F = 'var(--forest)', L = 'var(--lime)', W = 'rgba(255,255,255,.7)', S = 'var(--sand-2)'
 
 function Art({ v }: { v: Variant }) {
@@ -26,6 +26,14 @@ function Art({ v }: { v: Variant }) {
         {Array.from({ length: 9 }, (_, i) => <rect key={'h' + i} x={44 + i * 38} y="78" width="14" height="6" rx="2" fill={S} />)}
         {Array.from({ length: 9 }, (_, i) => <rect key={'b' + i} x={44 + i * 38} y="156" width="14" height="6" rx="2" fill={S} />)}
         <path d="M290 40h60l-40 40h-60z" fill={L} />
+      </>
+    case 'compare': // two cards side by side, one picked with the angled lime tick
+      return <>
+        <rect x="60" y="56" width="128" height="140" rx="16" fill={W} />
+        <rect x="212" y="40" width="128" height="156" rx="16" fill={F} />
+        {[0, 1, 2].map(i => <rect key={i} x="80" y={84 + i * 30} width={88 - i * 18} height="12" rx="6" fill={S} />)}
+        {[0, 1, 2].map(i => <rect key={'r' + i} x="232" y={72 + i * 30} width={88 - i * 14} height="12" rx="6" fill={L} opacity={1 - i * 0.25} />)}
+        <path d="M300 176h40v-40l-20-20h-20l20 20v20h-20z" fill={L} />
       </>
     case 'money': // rising stepped blocks with an angled cap
       return <>

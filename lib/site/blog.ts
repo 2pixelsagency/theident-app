@@ -1,7 +1,7 @@
 // The Ident blog: practical guides for performers and casting teams. Written by The Ident team.
 // Keep posts accurate and general; no made-up stats, quotes or stories.
-export type Block = { h?: string; p?: string[]; list?: string[] }
-export type Post = { slug: string; title: string; description: string; date: string; readMins: number; tag: string; tone: string; art: 'tape' | 'recall' | 'reel' | 'money'; blocks: Block[] }
+export type Block = { h?: string; p?: string[]; list?: string[]; link?: [string, string] }
+export type Post = { slug: string; title: string; description: string; date: string; readMins: number; tag: string; tone: string; art: 'tape' | 'recall' | 'reel' | 'money' | 'compare'; blocks: Block[] }
 
 export const POSTS: Post[] = [
   {
@@ -58,6 +58,54 @@ export const POSTS: Post[] = [
       { h: 'Keep good records', list: ['Log every payment you receive, with the date and who paid.', 'Keep receipts for work costs.', 'Send invoices with clear dates and payment terms.'] },
       { h: 'Set money aside', p: ['Put a share of each payment aside as you go, so the tax bill isn’t a surprise. How much depends on your income — an accountant can help you work out the right amount.'] },
       { h: 'On The Ident', p: ['Pay & tax lets you log payments, send invoices and see a suggested amount to set aside — a helpful guide, not a replacement for professional advice.'] },
+    ],
+  },
+  {
+    slug: 'spotlight-alternatives-for-performers', art: 'compare',
+    title: 'Looking for a Spotlight alternative? What to look for in a casting platform',
+    description: 'How to choose where to find castings as a UK performer — and what The Ident offers alongside the services you already use.',
+    date: '2026-11-24', readMins: 5, tag: 'Getting work', tone: 'bg-mint',
+    blocks: [
+      { p: ['Spotlight is one of the best-known casting directories in the UK, and plenty of performers use it alongside other services. If you’re weighing up where else to be seen — or where to start — it helps to know what actually matters day to day.'] },
+      { h: 'What to look for', list: [
+        'Real roles you can apply to, with the pay and closing date shown before you click.',
+        'A profile casting can read fast: headshots, showreel, credits, skills and playing age.',
+        'Simple applications — ideally sending your reel and CV in a tap.',
+        'A clear view of where each application is: self-tape requested, recall, pencil, booked.',
+        'Fair, simple pricing with no commission taken from your work.',
+      ] },
+      { h: 'You don’t have to pick just one', p: ['Many performers keep more than one profile. What matters is that each one is up to date, with current headshots and a reel that starts strong. Check the terms of each service you use before you sign up.'] },
+      { h: 'What The Ident does', list: [
+        'Castings, auditions and paid work with the pay and closing date up front.',
+        'Apply with your reel, headshots and CV in one tap.',
+        'Every self-tape, recall and booking tracked on one board, with dates in your diary.',
+        'Create your profile from your existing CV — upload a PDF or Word file and choose what to add.',
+        'Performers pay £1.99 a month after a 7-day free trial. No commission.',
+      ] },
+      { link: ['See how The Ident compares as a Spotlight alternative', '/spotlight-alternative'] },
+    ],
+  },
+  {
+    slug: 'mandy-alternatives-for-actors-and-crew', art: 'compare',
+    title: 'Mandy alternatives: finding paid castings and auditions in the UK',
+    description: 'Where to look for paid acting, dance and presenting work — and how to make each application count.',
+    date: '2026-11-24', readMins: 4, tag: 'Getting work', tone: 'bg-butter',
+    blocks: [
+      { p: ['Mandy is a long-running jobs site for actors and crew, and many performers use it alongside other platforms. If you’re looking for more places to find paid work, here’s what to check — and how The Ident fits in.'] },
+      { h: 'Check every listing', list: [
+        'Is the pay stated, and is it fair for the days involved?',
+        'Who is casting — a casting director, a producer or a company you can look up?',
+        'When does it close, and when are the shoot or show dates?',
+        'Be wary of any listing that asks you to pay to audition.',
+      ] },
+      { h: 'Make each application count', list: [
+        'Lead with a recent headshot that looks like you now.',
+        'Keep your showreel short and start with your strongest clip.',
+        'Match your skills and playing age to the breakdown — honestly.',
+        'Follow the brief exactly when a self-tape is requested.',
+      ] },
+      { h: 'Where The Ident fits', p: ['The Ident lists castings and paid work for UK performers with the pay and closing date up front. You apply with your reel in a tap, and every self-tape, recall and booking is tracked in one place. You can even build your profile from the CV you already have.'] },
+      { link: ['See how The Ident compares as a Mandy alternative', '/mandy-alternative'] },
     ],
   },
 ]

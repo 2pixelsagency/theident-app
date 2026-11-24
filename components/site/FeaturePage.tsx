@@ -23,13 +23,13 @@ export default function FeaturePage({ eyebrow, title, intro, cta, plan, groups, 
       <Container className="pb-10 pt-32 md:pt-40">
         {/* Heading, intro and buttons on the left; the plan (cost) on the right */}
         <div className="grid items-center gap-12 lg:grid-cols-[minmax(0,1.15fr)_minmax(340px,440px)] lg:gap-16">
-          <div className="flex flex-col gap-5">
+          <div className="hero-in flex flex-col gap-5">
             <Eyebrow>{eyebrow}</Eyebrow>
             <h1 className="font-display text-[44px] font-bold leading-[1.02] tracking-[-0.03em] md:text-[60px]">{title}</h1>
             <p className="max-w-[560px] text-[15px] leading-[1.6] text-muted-strong">{intro}</p>
             <div className="mt-2 flex flex-wrap gap-3"><Cta href={cta.href} variant="dark">{cta.label}</Cta><Cta href="/pricing" variant="outline" arrow={false}>Pricing</Cta></div>
           </div>
-          <PlanCard {...plan} />
+          <div className="rise" style={{ '--d': '380ms' } as React.CSSProperties}><PlanCard {...plan} /></div>
         </div>
       </Container>
 
