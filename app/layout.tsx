@@ -1,9 +1,20 @@
 import type { Metadata, Viewport } from "next";
-import { Bricolage_Grotesque, Inter } from "next/font/google";
+import { Inter } from "next/font/google";
+import localFont from "next/font/local";
 import "./globals.css";
 import NativeAuthBridge from "@/components/NativeAuthBridge";
 // The Ident brand: Bricolage Grotesque for display, Inter for body/UI
-const bricolage = Bricolage_Grotesque({ subsets: ["latin"], weight: ["600", "700", "800"], display: "swap", variable: "--font-bricolage" });
+// Bricolage is self-hosted (OFL, app/fonts): fetching it from Google during the Vercel build was failing
+const bricolage = localFont({
+  src: [
+    { path: "./fonts/bricolage-grotesque-latin-600-normal.woff2", weight: "600", style: "normal" },
+    { path: "./fonts/bricolage-grotesque-latin-700-normal.woff2", weight: "700", style: "normal" },
+    { path: "./fonts/bricolage-grotesque-latin-800-normal.woff2", weight: "800", style: "normal" },
+  ],
+  display: "swap",
+  variable: "--font-bricolage",
+  fallback: ["system-ui", "sans-serif"],
+});
 const inter = Inter({ subsets: ["latin"], weight: ["300", "400", "500", "600"], display: "swap", variable: "--font-inter" });
 export const viewport: Viewport = { width: "device-width", initialScale: 1, viewportFit: "cover", themeColor: "#f6f4ee" };
 
