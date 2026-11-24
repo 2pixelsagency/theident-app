@@ -3,7 +3,7 @@ import { createClient } from '@supabase/supabase-js'
 import { docxToText } from '@/lib/rc/docx'
 
 export const runtime = 'nodejs'
-export const maxDuration = 120
+export const maxDuration = 300
 
 // "Create my profile from my CV": a performer uploads a CV (PDF or Word — e.g. the CV PDF they download
 // from Spotlight or Mandy). Claude reads it and returns the details as structured JSON. Nothing is saved
@@ -121,7 +121,7 @@ export async function POST(req: NextRequest) {
     },
     body: JSON.stringify({
       model: MODEL,
-      max_tokens: 16000,
+      max_tokens: 32000,
       fallbacks: 'default',
       output_config: { effort: 'low', format: { type: 'json_schema', schema: schemaFor(categories) } },
       messages: [{ role: 'user', content }],

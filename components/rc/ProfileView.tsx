@@ -8,7 +8,6 @@ import { Avatar, Button, Card, cx, toast } from './ui'
 import { fullName } from '@/lib/rc/format'
 import { ReportSheet, blockUser, type ReportTarget } from './Safety'
 import CastingProfile from './CastingProfile'
-import { isBoosted } from '@/lib/rc/boost'
 import { craftTag, graduateLabel, playingAge } from '@/lib/rc/talent'
 import type { Credit, FullProfileData } from '@/lib/rc/profile'
 
@@ -29,7 +28,8 @@ export type ProfileViewProps = {
   signedIn?: boolean // uploaded CV files are for signed-in members only
 }
 
-function CvButtons({ data, signedIn }: { data: FullProfileData; signedIn?: boolean }) {
+// Everyone can download the generated (unbranded) CV; the file a member uploaded themselves is only shown to them
+function CvButtons({ data, owner }: { data: FullProfileData; owner?: boolean }) {
   const [busy, setBusy] = useState<'pdf' | 'file' | null>(null)
   const path = data.profile?.cv_path
   const generate = async () => {
@@ -46,7 +46,7 @@ function CvButtons({ data, signedIn }: { data: FullProfileData; signedIn?: boole
   return (
     <div className="mt-5 flex gap-3">
       <Button variant="dark" className="flex-1" icon="download" onClick={generate} disabled={busy !== null}>{busy === 'pdf' ? 'Creating…' : 'Download CV'}</Button>
-      {path && signedIn && <Button variant="outline" className="flex-1" icon="file" onClick={openFile} disabled={busy !== null}>{busy === 'file' ? 'Opening…' : 'Uploaded CV'}</Button>}
+      {path && owner && <Button variant="outline" className="flex-1" icon="file" onClick={openFile} disabled={busy !== null}>{busy === 'file' ? 'Opening…' : 'Uploaded CV'}</Button>}
     </div>
   )
 }
@@ -213,7 +213,6 @@ function PerformerProfile({ data, owner, onBack, onShare, topRight, actions, sta
               ? <img src={p.picture_url} alt={name} className="size-[104px] shrink-0 rounded-[10px] object-cover ring-4 ring-dark" />
               : <span className="shrink-0 rounded-[10px] ring-4 ring-dark"><Avatar name={name} size={104} /></span>}
             <div className="flex min-w-0 flex-wrap gap-2 pb-1">
-              {!caster && isBoosted(p.boosted_until) && <span className="inline-flex items-center gap-1 rounded-full bg-white px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.08em] text-ink"><Icon name="star" className="size-3 fill-current" /> Featured</span>}
               {!caster && p.availability_status === 'available' && <span className="inline-flex items-center gap-1.5 rounded-full bg-lime px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.08em] text-ink"><span className="size-1.5 rounded-full bg-forest" /> Open to work</span>}
               {grad && <span className="inline-flex items-center gap-1 rounded-full bg-accent px-3 py-1.5 text-[11px] font-medium text-ink"><Icon name="graduation-cap" className="size-3.5" />{grad}</span>}
             </div>
@@ -230,7 +229,7 @@ function PerformerProfile({ data, owner, onBack, onShare, topRight, actions, sta
       </section>
 
       <div className="px-4 pb-10">
-        {!caster && <CvButtons data={data} signedIn={signedIn} />}
+        {!caster && <CvButtons data={data} owner={owner} />}
         {below}
 
         {(brands.length > 0 || owner) && (
@@ -274,7 +273,7 @@ function PerformerProfile({ data, owner, onBack, onShare, topRight, actions, sta
 
         {stats.length > 0 && (
           <>
-            <h2 className="mb-3 mt-7 text-[18px]">Stats</h2>
+            <h2 className="mb-3 mt-7 text-[18px]">Info</h2>
             <Card className="p-4">
               <dl className="grid gap-x-6 gap-y-3 sm:grid-cols-2">
                 {stats.map(([k, v]) => <div key={k} className="flex gap-3"><dt className="w-[96px] shrink-0 text-[14px] font-semibold">{k}</dt><dd className="min-w-0 flex-1 text-[14px] text-muted-strong">{v}</dd></div>)}

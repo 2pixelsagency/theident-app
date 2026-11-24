@@ -2,7 +2,6 @@
 
 import { useMemo, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { isBoosted } from '@/lib/rc/boost'
 import Link from 'next/link'
 import Icon from '@/components/rc/Icon'
 import { Avatar, Chip, Empty, Field, PageHeader, PageLoading, SearchField, Sheet, Button, TabChips, toast } from '@/components/rc/ui'
@@ -66,9 +65,7 @@ export default function TalentPage() {
       if (!q.toLowerCase().split(/\s+/).every(w => hay.includes(w))) return false
     }
     return true
-  })
-    // Boosted (Featured) performers first, then the usual order
-    .sort((a, b) => Number(isBoosted(b.boosted_until)) - Number(isBoosted(a.boosted_until))), [people, openOnly, gradOnly, gradYear, school, crafts, location, q, nearMe, myTown])
+  }), [people, openOnly, gradOnly, gradYear, school, crafts, location, q, nearMe, myTown])
 
   const extra = crafts.length + (location ? 1 : 0) + (gradYear ? 1 : 0) + (school ? 1 : 0)
 
@@ -106,7 +103,6 @@ export default function TalentPage() {
                       ? <img src={t.picture_url} alt={fullName(t) + ' headshot'} loading="lazy" className="size-full object-cover" />
                       : <span className="flex size-full items-center justify-center"><Avatar name={fullName(t)} size={72} /></span>}
                     <span className="absolute left-2 top-2 flex flex-col items-start gap-1">
-                      {isBoosted(t.boosted_until) && <span className="inline-flex items-center gap-1 rounded-full bg-lime px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-ink"><Icon name="star" className="size-3 fill-current" />Featured</span>}
                       {t.availability_status === 'available' && <span className="rounded-full bg-green px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-white">Open</span>}
                       {t.is_graduate && <span className="inline-flex items-center gap-1 rounded-full bg-accent px-2 py-0.5 text-[10px] font-medium text-ink"><Icon name="graduation-cap" className="size-3" />Grad{t.graduate_year ? ' ’' + String(t.graduate_year).slice(2) : ''}</span>}
                     </span>

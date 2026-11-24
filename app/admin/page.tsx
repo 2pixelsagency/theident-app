@@ -212,11 +212,10 @@ function Overview({ s, go }: { s: Stats | null; go: (t: Tab) => void }) {
   return (
     <div className="space-y-5">
       {/* KPI cards */}
-      <div className="grid grid-cols-2 gap-3 xl:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3 xl:grid-cols-3">
         <Kpi label="Members" value={s.members} icon="users" chip="forest" note={s.new_7d ? '+' + s.new_7d + ' this week' : undefined} onClick={() => go('members')} />
         <Kpi label="Live jobs" value={s.live_jobs} icon="briefcase" chip="lime" note={s.shared_jobs ? s.shared_jobs + ' shared castings' : undefined} onClick={() => go('jobs')} />
         <Kpi label="Applications (7d)" value={s.applications_7d} icon="send" chip="mint" />
-        <Kpi label="Boosted profiles" value={s.boosted} icon="star" chip="butter" />
       </div>
 
       {/* Needs you */}

@@ -4,15 +4,14 @@ import { PdfWriter, A4, downloadBytes, fileSafe } from './pdf'
 import { fullName } from './format'
 import { craftTag, playingAge } from './talent'
 import { supabase } from '@/lib/supabase'
-import { profilePath, type Credit, type FullProfileData } from './profile'
+import type { Credit, FullProfileData } from './profile'
 
 export async function buildCv(data: FullProfileData) {
   const p = data.profile!
   const w = await PdfWriter.create()
   const name = fullName(p) || 'The Ident member'
-  const link = p.slug ? window.location.host + profilePath(p) : window.location.host
 
-  // ---- Header: headshot left, name + facts right, green rule under ----
+  // ---- Header: headshot left, name + facts right, a rule under (neutral ink: the CV carries no Ident branding) ----
   const top = w.y
   const photo = await w.image(p.picture_url)
   const photoW = 118, photoH = 148
@@ -30,7 +29,7 @@ export async function buildCv(data: FullProfileData) {
   w.y = top + 4
   w.text(name, { font: w.display, size: 26, x: textX, maxWidth: colW, gap: 1.1 })
   const craft = p.account_role === 'caster' ? p.company_name : craftTag(p)
-  if (craft) { w.space(4); w.text(craft.toUpperCase(), { font: w.bold, size: 8.5, color: w.c.green, x: textX, maxWidth: colW }) }
+  if (craft) { w.space(4); w.text(craft.toUpperCase(), { font: w.bold, size: 8.5, color: w.c.ink, x: textX, maxWidth: colW }) }
   w.space(8)
   const eyes = data.eyes.find(e => e.id === p.eye_colour_id)?.name
   const hair = data.hair.find(h => h.id === p.hair_colour_id)?.name
@@ -49,7 +48,7 @@ export async function buildCv(data: FullProfileData) {
     if (contact) w.text(contact, { size: 9, color: w.c.muted, x: textX, maxWidth: colW })
   }
   w.y = Math.min(w.y, top - (photo ? photoH : 0)) - 18
-  w.rule(w.c.green, 2)
+  w.rule(w.c.ink, 2)
   w.space(6)
 
   const section = (title: string) => {
@@ -99,7 +98,7 @@ export async function buildCv(data: FullProfileData) {
     section('Showreels')
     for (const r of data.reels) {
       w.text(r.label || 'Showreel', { font: w.bold, size: 10 })
-      w.text(r.url, { size: 8.5, color: w.c.green })
+      w.text(r.url, { size: 8.5, color: w.c.ink })
       w.space(3)
     }
   }
@@ -109,7 +108,8 @@ export async function buildCv(data: FullProfileData) {
     w.text(data.brands.map(b => b.brand_name).join('  ·  '), { size: 10, gap: 1.5 })
   }
 
-  w.footer(name + '  ·  ' + link + '  ·  CV created with The Ident')
+  // Unbranded: a clean CV casting can file or forward as their own (no The Ident link or credit)
+  w.footer(name)
   return w.bytes()
 }
 

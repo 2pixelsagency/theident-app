@@ -69,14 +69,18 @@ export default function CvImport({ uid, current, types, allSkills, mySkillIds, e
     if (!found) return
     setBusy('saving')
     const upd: Record<string, unknown> = {}
-    for (const [k, , ck] of FIELDS) if (pick['f:' + k] && found[k]) upd[ck] = found[k]
-    if (pick['f:drama_school'] && found.drama_school) { upd.is_graduate = true; if (found.graduation_year) upd.graduate_year = found.graduation_year }
+    for (const [k, , ck] of FIELDS) if (pick['f:' + k] && found[k]) upd[ck] = String(found[k]).trim()
+    // Tidy values to what the profile accepts (a CV's "www.name.com" needs https://; keep lengths in range)
+    if (typeof upd.website === 'string') upd.website = /^https?:\/\//i.test(upd.website) ? upd.website : 'https://' + upd.website.replace(/^\/+/, '')
+    if (typeof upd.vocal_range === 'string') upd.vocal_range = upd.vocal_range.slice(0, 60)
+    if (pick['f:drama_school'] && found.drama_school) { upd.is_graduate = true; if (found.graduation_year >= 1950 && found.graduation_year <= 2100) upd.graduate_year = found.graduation_year }
     if (pick['f:ages']) { if (found.playing_age_min) upd.minimum_age = found.playing_age_min; if (found.playing_age_max) upd.maximum_age = found.playing_age_max }
     if (pick['training'] && found.training.length) {
       const base = (upd.bio as string) || current.bio || ''
       upd.bio = (base ? base.trim() + '\n\n' : '') + 'Training: ' + found.training.join('; ') + '.'
     }
-    const credits = found.credits.filter((_, i) => pick['c:' + i]).map(c => ({
+    const have = (c: { title: string; role: string }) => existingCredits.some(x => (x.title || '').toLowerCase() === c.title.toLowerCase() && (x.role || '').toLowerCase() === (c.role || '').toLowerCase())
+    const credits = found.credits.filter((c, i) => pick['c:' + i] && c.title?.trim() && !have(c) && found.credits.findIndex(x => x.title === c.title && x.role === c.role) === i).map(c => ({
       profile_id: uid, title: c.title, role: c.role || null, year: c.year || null, director: c.director || null,
       production_company: c.company || null, production_type_id: typeId(c.type),
     }))
@@ -89,13 +93,22 @@ export default function CvImport({ uid, current, types, allSkills, mySkillIds, e
       skillIds = [...resolved.filter(r => r.id).map(r => r.id as number), ...created.map(c => c.data as number | null).filter((x): x is number => typeof x === 'number')]
     }
     const skills = [...new Set(skillIds)].map(skill_id => ({ profile_id: uid, skill_id }))
-    const results = await Promise.all([
+    const [prof, cred, sk] = await Promise.all([
       Object.keys(upd).length ? supabase.from('profiles').update(upd).eq('id', uid) : Promise.resolve({ error: null }),
       credits.length ? supabase.from('credits').insert(credits) : Promise.resolve({ error: null }),
       skills.length ? supabase.from('profile_skills').upsert(skills, { onConflict: 'profile_id,skill_id', ignoreDuplicates: true }) : Promise.resolve({ error: null }),
     ])
-    const failed = results.find(r => r.error)
-    if (failed) { setBusy(null); toast('Some details couldn’t be saved — please try again'); return }
+    // If the details save fails, save them one by one so a single odd value doesn't lose the rest
+    const missed: string[] = []
+    if (prof.error) {
+      for (const [col, val] of Object.entries(upd)) {
+        const { error } = await supabase.from('profiles').update({ [col]: val }).eq('id', uid)
+        if (error) missed.push(FIELDS.find(f => f[2] === col)?.[1] || col.replace(/_/g, ' '))
+      }
+    }
+    if (cred.error) missed.push('credits')
+    if (sk.error) missed.push('skills')
+    if (missed.length) { setBusy(null); setFound(null); toast('Added — except ' + missed.join(', ') + '. You can fill ' + (missed.length > 1 ? 'those' : 'that') + ' in below.'); setTimeout(() => window.location.reload(), 2500); return }
     toast('Added to your profile')
     // Reload so the editor's own draft picks up the new values instead of autosaving over them
     window.location.reload()
