@@ -42,6 +42,8 @@ export default function TalentProfilePage() {
         apps = (a || []) as unknown as typeof apps
       }
     }
+    // Count the view (not your own)
+    if (talentId !== me.id) supabase.from('profile_views').insert({ profile_id: talentId, viewer_id: me.id }).then(() => {}, () => {})
     // My connection with this person (if any)
     const { data: conn } = await supabase.from('connections').select('id, status, requester_id')
       .or(`and(requester_id.eq.${me.id},receiver_id.eq.${talentId}),and(requester_id.eq.${talentId},receiver_id.eq.${me.id})`).maybeSingle()

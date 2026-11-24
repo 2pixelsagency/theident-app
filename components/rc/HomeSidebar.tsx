@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import Icon from './Icon'
-import { Avatar, Progress, Toggle, toast } from './ui'
+import { Avatar, Progress, Toggle, cx, toast } from './ui'
 import { supabase } from '@/lib/supabase'
 import { useMe } from '@/lib/rc/me'
 import { useAsync } from '@/lib/rc/useAsync'
@@ -10,6 +10,7 @@ import { loadCompleteness } from '@/lib/rc/completeness'
 import { fullName } from '@/lib/rc/format'
 import { craftTag } from '@/lib/rc/talent'
 import { PLANS, planFor } from '@/lib/rc/plans'
+import { profilePath } from '@/lib/rc/profile'
 
 const card = 'rounded-[10px] bg-surface p-6 shadow-card'
 const endLabel = (iso?: string | null) => (iso ? new Date(iso).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }) : '')
@@ -20,11 +21,18 @@ export default function HomeSidebar() {
   const p = me.profile
   const caster = me.role === 'caster'
   const { data, mutate } = useAsync(async () => {
-    const [{ data: row }, comp] = await Promise.all([
-      supabase.from('profiles').select('show_talent, availability_status').eq('id', me.id).maybeSingle(),
+    const week = new Date(Date.now() - 7 * 864e5).toISOString()
+    const [{ data: row }, comp, views, { data: shortlists }, conns] = await Promise.all([
+      supabase.from('profiles').select('show_talent, availability_status, slug, account_role').eq('id', me.id).maybeSingle(),
       loadCompleteness(me.id),
+      supabase.from('profile_views').select('id', { count: 'exact', head: true }).eq('profile_id', me.id).gte('created_at', week),
+      supabase.rpc('shortlist_count', { pid: me.id }),
+      supabase.from('connections').select('id', { count: 'exact', head: true }).eq('status', 'accepted').or(`requester_id.eq.${me.id},receiver_id.eq.${me.id}`),
     ])
-    return { row: row as { show_talent: boolean | null; availability_status: string | null } | null, comp }
+    return {
+      row: row as { show_talent: boolean | null; availability_status: string | null; slug: string | null; account_role: string | null } | null, comp,
+      stats: { views: views.count || 0, shortlists: (shortlists as number | null) ?? 0, connections: conns.count || 0 },
+    }
   }, [me.id])
 
   const set = async (patch: Record<string, unknown>, ok: string) => {
@@ -58,11 +66,32 @@ export default function HomeSidebar() {
           <span className="font-medium">Profile visibility</span>
           <span className={visible ? 'font-semibold text-green-ink' : 'font-semibold text-muted'}>{visible ? 'Public' : 'Hidden'}</span>
         </div>
-        <Link href="/me/edit" className="mt-4 block text-[14px] font-semibold text-green-ink">{score >= 100 ? 'Edit your profile' : 'Complete your profile'}</Link>
-        <div className="mt-2 flex items-center gap-3">
-          <Progress value={score} className="flex-1" />
-          <span className="text-[13px] font-medium">{data ? score + '%' : '–'}</span>
-        </div>
+        {data && score >= 100 ? (
+          // Complete: show how the profile is doing this week, and the link to share
+          <>
+            <dl className={cx('mt-4 grid gap-2 text-center', caster ? 'grid-cols-2' : 'grid-cols-3')}>
+              {(caster ? [['Views', data.stats.views], ['Connections', data.stats.connections]] : [['Views', data.stats.views], ['Shortlists', data.stats.shortlists], ['Connections', data.stats.connections]] as [string, number][]).map(([k, v]) => (
+                  <div key={k} className="rounded-[14px] bg-sand px-2 py-3"><dd className="font-display text-[22px] font-bold leading-none">{v}</dd><dt className="mt-1 text-[11px] text-muted">{k}</dt></div>
+                ))}
+            </dl>
+            <p className="mt-2 text-[12px] text-muted">{caster ? 'This week' : 'This week · shortlists by casting'}</p>
+            <div className="mt-4 flex items-center justify-between gap-3">
+              <Link href="/me/edit" className="text-[14px] font-semibold text-green-ink">Edit profile</Link>
+              {data.row?.slug && <button type="button" onClick={async () => {
+                const url = window.location.origin + profilePath({ slug: data.row!.slug, account_role: data.row!.account_role })
+                try { await navigator.clipboard.writeText(url); toast('Profile link copied') } catch { toast(url) }
+              }} className="inline-flex items-center gap-1.5 text-[14px] font-semibold text-green-ink"><Icon name="link" className="size-4" />Copy profile link</button>}
+            </div>
+          </>
+        ) : (
+          <>
+            <Link href="/me/edit" className="mt-4 block text-[14px] font-semibold text-green-ink">Complete your profile</Link>
+            <div className="mt-2 flex items-center gap-3">
+              <Progress value={score} className="flex-1" />
+              <span className="text-[13px] font-medium">{data ? score + '%' : '–'}</span>
+            </div>
+          </>
+        )}
       </div>
 
       <div className={card}>
