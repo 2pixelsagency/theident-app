@@ -4,7 +4,6 @@ import { useState } from 'react'
 import Link from 'next/link'
 import Icon from '@/components/rc/Icon'
 import CompletenessCard from '@/components/rc/Completeness'
-import BoostCard from '@/components/rc/BoostCard'
 import ProfileView, { heroPrimary, heroSecondary } from '@/components/rc/ProfileView'
 import { PageLoading, toast, useGoBack } from '@/components/rc/ui'
 import { useMe } from '@/lib/rc/me'
@@ -79,7 +78,6 @@ export default function MyProfilePage() {
       statusLine={<>{data.connections} connection{data.connections === 1 ? '' : 's'}</>}
       below={<>
         {result && <CompletenessCard result={result} className="mt-5" />}
-        {!caster && <BoostCard uid={p.id} until={p.boosted_until} />}
         {!caster && (
           <div className="mt-4 grid grid-cols-2 gap-2">
             <button type="button" onClick={() => { setPreview(true); window.scrollTo(0, 0) }} className="flex h-11 items-center justify-center gap-2 rounded-full border border-line bg-surface text-sm font-semibold"><Icon name="eye" className="size-4" /> Preview as casting</button>
