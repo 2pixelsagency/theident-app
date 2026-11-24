@@ -54,7 +54,7 @@ function Headshots() {
     const { data: real } = await supabase.from('profiles').select('id, slug, first_name, last_name, picture_url, what_i_do, location')
       .eq('account_role', 'performer').eq('feature_on_site', true).eq('is_demo', false).not('picture_url', 'is', null).not('slug', 'is', null).limit(30)
     const members: Card[] = ((real || []) as Face[]).map(f => ({
-      key: f.id, src: f.picture_url, href: '/' + f.slug, name: [f.first_name, f.last_name].filter(Boolean).join(' '),
+      key: f.id, src: f.picture_url, href: '/performers/' + f.slug, name: [f.first_name, f.last_name].filter(Boolean).join(' '),
       sub: [(f.what_i_do || '').split(',')[0], f.location?.split(',')[0]].filter(Boolean).join(' · '),
     }))
     // Interleave so named members are spread through the row

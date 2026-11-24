@@ -10,7 +10,7 @@ import { PageLoading, toast, useGoBack } from '@/components/rc/ui'
 import { useMe } from '@/lib/rc/me'
 import { useAsync } from '@/lib/rc/useAsync'
 import { fullName } from '@/lib/rc/format'
-import { loadFullProfile } from '@/lib/rc/profile'
+import { loadFullProfile, profilePath } from '@/lib/rc/profile'
 import { completenessOf } from '@/lib/rc/completeness'
 
 // The owner's view of their profile: the same immersive layout everyone else sees, with Edit/Share,
@@ -24,7 +24,7 @@ export default function MyProfilePage() {
   if (loading || !data?.profile) return <PageLoading />
   const p = data.profile
   const caster = p.account_role === 'caster'
-  const publicUrl = p.slug ? window.location.origin + '/' + p.slug : null
+  const publicUrl = p.slug ? window.location.origin + profilePath(p) : null
   const result = completenessOf(data)
 
   const share = async () => {

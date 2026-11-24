@@ -14,7 +14,7 @@ type Full = Awaited<ReturnType<typeof loadFullProfile>>
 
 // Interactive layer of the public profile. The page itself is server-rendered so search engines see it.
 // Signed-in visitors are sent to the in-app version (owners edit, members message/invite).
-export default function PublicProfileClient({ full }: { full: Full }) {
+export default function PublicProfileClient({ full, inSite = false }: { full: Full; inSite?: boolean }) {
   const router = useRouter()
   const p = full.profile!
   useEffect(() => {
@@ -29,8 +29,9 @@ export default function PublicProfileClient({ full }: { full: Full }) {
     try { if (navigator.share) await navigator.share({ title: fullName(p), url: window.location.href }); else { await navigator.clipboard.writeText(window.location.href); toast('Link copied') } } catch { /* dismissed */ }
   }
   return (
-    <div className="min-h-dvh bg-bg text-ink">
-      <div className="mx-auto w-full max-w-[480px] md:max-w-[640px] lg:max-w-[720px]">
+    // On the website (/performers/<slug>) it sits under the site nav as an inset, rounded card
+    <div className={inSite ? 'bg-bg px-3 pb-16 pt-[84px] text-ink md:px-6 md:pt-[100px]' : 'min-h-dvh bg-bg text-ink'}>
+      <div className={inSite ? 'mx-auto w-full max-w-[760px] [&>section:first-child]:overflow-hidden [&>section:first-child]:rounded-[28px]' : 'mx-auto w-full max-w-[480px] md:max-w-[640px] lg:max-w-[720px]'}>
         <ProfileView
           data={full}
           onBack={() => (window.history.length > 1 ? router.back() : router.push('/people'))}

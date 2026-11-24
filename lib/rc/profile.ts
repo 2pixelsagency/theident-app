@@ -10,6 +10,10 @@ export type FullProfile = {
   email_alerts_enabled: boolean | null; notification_prefs: { matches?: boolean; applications?: boolean; messages?: boolean; marketing?: boolean } | null
 }
 
+// Public link to a profile: performers at /performers/<slug>, casting pages at /<slug>
+export const profilePath = (p: { slug: string | null; account_role?: string | null }) =>
+  p.slug ? (p.account_role === 'caster' ? '/' : '/performers/') + p.slug : null
+
 export type Reel = { id: string; label: string | null; url: string; sort_order: number | null; poster_url?: string | null; duration_s?: number | null }
 export type Credit = { id: string; title: string | null; role: string | null; year: number | null; production_company: string | null; director: string | null; production_type_id: number | null; production_types?: { name: string } | null }
 export type Brand = { id: string; brand_name: string; logo_url: string | null }
