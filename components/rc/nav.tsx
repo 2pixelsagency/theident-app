@@ -130,6 +130,8 @@ export function SideNav() {
         <ul className="flex flex-col items-center gap-1">{MORE[role].map(n => link(n))}</ul>
       </nav>
       <ul className="mt-4 flex flex-col items-center gap-1">
+        {/* Always visible, even when the list above is cut off on short screens */}
+        {link({ href: '/menu', label: 'More — Pay, Tax, Digs, Classes…', icon: 'menu' })}
         {link({ href: '/settings', label: 'Settings', icon: 'settings' })}
         {link({ href: '/help', label: 'Help & support', icon: 'help' })}
         <li>
