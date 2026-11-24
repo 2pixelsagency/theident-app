@@ -38,7 +38,7 @@ export function TrackerCard({ castings, href = '/performers' }: { castings: Cast
             </ul>
           </div>
         </FloatFrame>
-        <div className="absolute bottom-[22px] right-[22px] hidden items-center gap-2.5 rounded-[18px] bg-surface py-2.5 pl-2.5 pr-4 text-ink shadow-[0_16px_32px_-12px_rgb(0_0_0/0.45)] sm:flex">
+        <div className="absolute bottom-[22px] right-[22px] hidden items-center gap-2.5 rounded-[18px] bg-surface py-2.5 pl-2.5 pr-4 text-ink shadow-[0_16px_32px_-12px_rgb(0_0_0/0.45)] sm:flex transition-[translate,rotate] duration-700 ease-[cubic-bezier(.2,.8,.2,1)] group-hover/card:-translate-y-3 group-hover/card:rotate-[2deg]">
           <span className="flex size-8 items-center justify-center rounded-[10px] bg-lime"><svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" style={{ stroke: 'var(--forest)' }} strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12l5 5L20 7" /></svg></span>
           <span className="text-[14px] font-semibold">You’re booked!</span>
         </div>
@@ -153,7 +153,7 @@ export function StatsCard({ stats, href = '/performers' }: { stats: Stat[]; href
       </div>}>
       <dl className="mt-3 grid h-[280px] grid-cols-2 gap-2.5">
         {stats.map(s => (
-          <div key={s.label} className={cx('flex flex-col-reverse justify-between rounded-[18px] p-[18px]', STAT_TONE[s.tone])}>
+          <div key={s.label} className={cx('flex flex-col-reverse justify-between rounded-[18px] p-[18px] transition-transform duration-500 ease-[cubic-bezier(.2,.8,.2,1)] hover:-translate-y-1 hover:scale-[1.03]', STAT_TONE[s.tone])}>
             <dt className="text-[15px] font-medium">{s.label}</dt>
             <dd className="font-display text-[44px] font-extrabold leading-none">{s.value}</dd>
           </div>

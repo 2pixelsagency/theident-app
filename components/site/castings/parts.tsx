@@ -18,14 +18,14 @@ export function ArrowLink({ href, label, size = 48, dark }: { href: string; labe
 }
 
 export function IconBadge({ tone, children }: { tone: string; children: React.ReactNode }) {
-  return <span className={cx('flex size-10 shrink-0 items-center justify-center rounded-full', tone)}>{children}</span>
+  return <span className={cx('flex size-10 shrink-0 items-center justify-center rounded-full transition-transform duration-500 ease-[cubic-bezier(.2,.8,.2,1)] group-hover/card:-rotate-[8deg] group-hover/card:scale-110', tone)}>{children}</span>
 }
 
 export function FeatureCard({ size, dark, header, title, body, children }: {
   size: 'lg' | 'sm'; dark?: boolean; header: React.ReactNode; title: string; body: string; children: React.ReactNode
 }) {
   return (
-    <article data-reveal className={cx('flex flex-col rounded-[var(--radius-feature)]',
+    <article data-reveal className={cx('group/card flex flex-col rounded-[var(--radius-feature)] transition-[translate,box-shadow] duration-500 ease-[cubic-bezier(.2,.8,.2,1)] hover:-translate-y-1.5 hover:shadow-[0_36px_64px_-36px_rgb(21_33_28/0.45)]',
       size === 'lg' ? 'gap-3.5 p-6 shadow-[0_1px_0_rgb(21_33_28/0.04),0_24px_48px_-32px_rgb(21_33_28/0.25)] md:p-8' : 'gap-3 p-6 md:p-7',
       dark ? 'bg-forest text-bg' : 'bg-sand text-ink')}>
       {header}
@@ -38,9 +38,10 @@ export function FeatureCard({ size, dark, header, title, body, children }: {
 
 export function Panel({ size, background, stripes, children }: { size: 'lg' | 'sm'; background: string; stripes: 'light' | 'dark'; children: React.ReactNode }) {
   return (
-    <div className={cx('relative flex items-center justify-center overflow-hidden', size === 'lg' ? 'mt-[18px] h-[360px] rounded-[24px]' : 'mt-3 h-[280px] rounded-[22px]')}
-      style={{ backgroundImage: background }}>
-      <div aria-hidden="true" className={cx('absolute inset-x-0', size === 'lg' ? 'top-[37%] h-[124px]' : 'top-[34%] h-[100px]')}
+    <div className={cx('relative isolate flex items-center justify-center overflow-hidden', size === 'lg' ? 'mt-[18px] h-[360px] rounded-[24px]' : 'mt-3 h-[280px] rounded-[22px]')}>
+      {/* background zooms gently and the stripe band shimmers when the card is hovered */}
+      <div aria-hidden="true" className="absolute inset-0 -z-10 transition-transform duration-[900ms] ease-[cubic-bezier(.2,.8,.2,1)] group-hover/card:scale-[1.06]" style={{ backgroundImage: background }} />
+      <div aria-hidden="true" className={cx('absolute inset-x-0 transition-[background-position] duration-[900ms] ease-[cubic-bezier(.2,.8,.2,1)] group-hover/card:[background-position:0_18px]', size === 'lg' ? 'top-[37%] h-[124px]' : 'top-[34%] h-[100px]')}
         style={{ backgroundImage: stripes === 'dark' ? 'var(--stripes-dark)' : 'var(--stripes-light)' }} />
       {children}
     </div>
@@ -50,7 +51,7 @@ export function Panel({ size, background, stripes, children }: { size: 'lg' | 's
 // Translucent outer border (8px padding) around the inner white card
 export function FloatFrame({ size, onDark, children }: { size: 'lg' | 'sm'; onDark?: boolean; children: React.ReactNode }) {
   return (
-    <div className={cx('relative border', size === 'lg' ? 'w-[94%] max-w-[440px] rounded-[26px] p-2 sm:w-[82%]' : 'w-[88%] rounded-[22px] p-[7px] sm:w-[84%]',
+    <div className={cx('relative border transition-[translate,rotate,box-shadow] duration-700 ease-[cubic-bezier(.2,.8,.2,1)] group-hover/card:-translate-y-2 group-hover/card:-rotate-[0.8deg] group-hover/card:shadow-[0_30px_50px_-30px_rgb(0_0_0/0.35)]', size === 'lg' ? 'w-[94%] max-w-[440px] rounded-[26px] p-2 sm:w-[82%]' : 'w-[88%] rounded-[22px] p-[7px] sm:w-[84%]',
       onDark ? 'border-white/[0.22] bg-white/[0.14]' : size === 'lg' ? 'border-white/70 bg-white/45' : 'border-white/80 bg-white/50')}>
       <div className={cx('bg-surface text-ink', size === 'lg' ? 'rounded-[20px]' : 'rounded-[16px] p-[18px]')}>{children}</div>
     </div>
