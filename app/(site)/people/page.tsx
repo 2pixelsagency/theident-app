@@ -54,7 +54,7 @@ export default async function PeoplePage({ searchParams }: Props) {
   return (
     <>
       <JsonLd data={{ '@context': 'https://schema.org', '@type': 'ItemList', name: (craft ? plural(craft) : 'Performers') + ' on The Ident',
-        itemListElement: people.slice(0, 50).map((p, i) => ({ '@type': 'ListItem', position: i + 1, url: SITE_URL + '/' + p.slug, name: [p.first_name, p.last_name].filter(Boolean).join(' ') })) }} />
+        itemListElement: people.slice(0, 50).map((p, i) => ({ '@type': 'ListItem', position: i + 1, url: SITE_URL + '/performers/' + p.slug, name: [p.first_name, p.last_name].filter(Boolean).join(' ') })) }} />
       <section className="bg-bg">
         <Container className="pb-4 pt-32 md:pt-40">
           <SectionHeader level={1} eyebrow="Talent" title={<>{craft ? plural(craft) : 'Performers'} on The Ident</>}
@@ -104,7 +104,7 @@ export default async function PeoplePage({ searchParams }: Props) {
               const name = [p.first_name, p.last_name].filter(Boolean).join(' ')
               return (
                 <li key={p.slug}>
-                  <Link href={'/' + p.slug} className="group block rounded-[24px] bg-sand p-2">
+                  <Link href={'/performers/' + p.slug} className="group block rounded-[24px] bg-sand p-2">
                     <span className="relative block aspect-[4/5] overflow-hidden rounded-[18px] bg-sand-2">
                       {/* eslint-disable-next-line @next/next/no-img-element */}
                       {p.picture_url ? <img src={p.picture_url} alt={name + ' headshot'} loading="lazy" className="size-full object-cover" /> : <span className="flex size-full items-center justify-center font-display text-[40px] font-bold text-faint">{(p.first_name || '?')[0]}</span>}

@@ -4,13 +4,13 @@ import { PdfWriter, A4, downloadBytes, fileSafe } from './pdf'
 import { fullName } from './format'
 import { craftTag, playingAge } from './talent'
 import { supabase } from '@/lib/supabase'
-import type { Credit, FullProfileData } from './profile'
+import { profilePath, type Credit, type FullProfileData } from './profile'
 
 export async function buildCv(data: FullProfileData) {
   const p = data.profile!
   const w = await PdfWriter.create()
   const name = fullName(p) || 'The Ident member'
-  const link = p.slug ? window.location.host + '/' + p.slug : window.location.host
+  const link = p.slug ? window.location.host + profilePath(p) : window.location.host
 
   // ---- Header: headshot left, name + facts right, green rule under ----
   const top = w.y

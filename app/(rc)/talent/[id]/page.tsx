@@ -13,7 +13,7 @@ import { useAsync } from '@/lib/rc/useAsync'
 import { fullName } from '@/lib/rc/format'
 import { CASTER_APP_SELECT, casterStage, nextStep, setStage, stageNote, type CasterApp } from '@/lib/rc/casting'
 import { messageOrConnect } from '@/lib/rc/talent'
-import { loadFullProfile } from '@/lib/rc/profile'
+import { loadFullProfile, profilePath } from '@/lib/rc/profile'
 import { jobTitle } from '@/lib/rc/pipeline'
 
 export default function TalentProfilePage() {
@@ -42,13 +42,16 @@ export default function TalentProfilePage() {
         apps = (a || []) as unknown as typeof apps
       }
     }
-    return { full, shortlists: (count as number | null) ?? 0, apps, postings }
+    // My connection with this person (if any)
+    const { data: conn } = await supabase.from('connections').select('id, status, requester_id')
+      .or(`and(requester_id.eq.${me.id},receiver_id.eq.${talentId}),and(requester_id.eq.${talentId},receiver_id.eq.${me.id})`).maybeSingle()
+    return { full, shortlists: (count as number | null) ?? 0, apps, postings, conn: conn as { id: string; status: string; requester_id: string } | null }
   }, [talentId, me.id])
 
   if (loading) return <PageLoading />
   if (!data?.full.profile) return <div className="pt-16"><Empty icon="user" title="Profile not found" /></div>
 
-  const { full, shortlists, apps, postings } = data
+  const { full, shortlists, apps, postings, conn } = data
   const t = full.profile!
   const app = apps.find(a => a.id === appParam) || apps.find(a => !a.outcome) || null
   const step = nextStep(app)
@@ -65,6 +68,25 @@ export default function TalentProfilePage() {
     else toast('Couldn’t start a chat')
   }
 
+  // Connect → Requested (tap to cancel) · Accept when they asked first · Connected
+  const connState = !conn ? 'none' : conn.status === 'accepted' ? 'connected' : conn.requester_id === me.id ? 'requested' : 'incoming'
+  const connect = async () => {
+    setBusy(true)
+    if (connState === 'none') {
+      const { data: row, error } = await supabase.from('connections').insert({ requester_id: me.id, receiver_id: t.id, status: 'pending' }).select('id, status, requester_id').single()
+      if (error || !row) toast('Couldn’t send the request'); else { mutate(d => d && { ...d, conn: row }); toast('Request sent to ' + (t.first_name || 'them')) }
+    } else if (connState === 'incoming') {
+      const { error } = await supabase.from('connections').update({ status: 'accepted' }).eq('id', conn!.id)
+      if (error) toast('Couldn’t accept'); else { mutate(d => d && d.conn ? { ...d, conn: { ...d.conn, status: 'accepted' } } : d); toast('You’re now connected') }
+    } else if (connState === 'requested' && confirm('Cancel your connection request?')) {
+      const { error } = await supabase.from('connections').delete().eq('id', conn!.id)
+      if (error) toast('Couldn’t cancel'); else mutate(d => d && { ...d, conn: null })
+    }
+    setBusy(false)
+  }
+  const connLabel = { none: 'Connect', requested: 'Requested', incoming: 'Accept', connected: 'Connected' }[connState]
+  const connIcon = { none: 'user-plus', requested: 'clock', incoming: 'check', connected: 'check' }[connState]
+
   const toggleShortlist = async () => {
     if (!app) { setSheet(true); return }
     const on = !app.shortlisted
@@ -75,7 +97,7 @@ export default function TalentProfilePage() {
   }
 
   const share = async () => {
-    const url = t.slug ? window.location.origin + '/' + t.slug : window.location.href
+    const url = t.slug ? window.location.origin + profilePath(t) : window.location.href
     try { if (navigator.share) await navigator.share({ title: name, url }); else { await navigator.clipboard.writeText(url); toast('Link copied') } } catch { /* dismissed */ }
   }
 
@@ -91,7 +113,7 @@ export default function TalentProfilePage() {
         owner={isMe}
         onBack={goBack}
         onShare={share}
-        topRight={isCaster && !isMe && (
+        topRight={isCaster && !isMe && t.account_role !== 'caster' && (
           <button type="button" aria-label={app?.shortlisted ? 'Remove from shortlist' : 'Add to shortlist'} aria-pressed={!!app?.shortlisted} onClick={toggleShortlist} className={cx(heroRound, app?.shortlisted && 'text-pink')}>
             <Icon name="star" className={cx('size-5', app?.shortlisted && 'fill-current')} />
           </button>
@@ -99,12 +121,21 @@ export default function TalentProfilePage() {
         actions={isMe
           ? <Link href="/me/edit" className={heroPrimary}><Icon name="pen" className="size-[18px]" /> Edit profile</Link>
           : <>
-              {isCaster && t.account_role !== 'caster' && (
+              {isCaster && t.account_role !== 'caster' ? (
                 <button type="button" onClick={() => !step.done && setSheet(true)} disabled={step.done} className={heroPrimary}>
                   <Icon name={step.icon} className="size-[18px]" /> {step.label}
                 </button>
+              ) : (
+                <button type="button" onClick={connect} disabled={busy || connState === 'connected'} className={connState === 'none' || connState === 'incoming' ? heroPrimary : heroSecondary}>
+                  <Icon name={connIcon} className="size-[18px]" /> {connLabel}
+                </button>
               )}
               <button type="button" onClick={message} disabled={busy} className={heroSecondary}><Icon name="chat" className="size-[18px]" /> Message</button>
+              {isCaster && t.account_role !== 'caster' && (
+                <button type="button" onClick={connect} disabled={busy || connState === 'connected'} aria-label={connLabel} title={connLabel} className={cx(heroSecondary, '!w-auto !flex-none px-4')}>
+                  <Icon name={connIcon} className="size-[18px]" />
+                </button>
+              )}
             </>}
         statusLine={status}
       />

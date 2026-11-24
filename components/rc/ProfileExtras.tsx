@@ -59,9 +59,21 @@ export function TestimonialsEditor({ uid, testimonials, onChange }: { uid: strin
   const [author, setAuthor] = useState('')
   const [title, setTitle] = useState('')
   const [busy, setBusy] = useState(false)
+  const [editing, setEditing] = useState<Testimonial | null>(null)
+  const openNew = () => { setEditing(null); setQuote(''); setAuthor(''); setTitle(''); setOpen(true) }
+  const openEdit = (t: Testimonial) => { setEditing(t); setQuote(t.quote); setAuthor(t.author_name || ''); setTitle(t.author_title || ''); setOpen(true) }
   const save = async () => {
     if (!quote.trim() || !author.trim()) { toast('Add the quote and who said it'); return }
     setBusy(true)
+    if (editing) {
+      const row = { quote: quote.trim(), author_name: author.trim(), author_title: title.trim() || null }
+      const { error } = await supabase.from('testimonials').update(row).eq('id', editing.id)
+      setBusy(false)
+      if (error) { toast('Couldn’t save your changes'); return }
+      onChange(testimonials.map(x => x.id === editing.id ? { ...x, ...row } : x))
+      setOpen(false); setEditing(null)
+      return
+    }
     const { data, error } = await supabase.from('testimonials').insert({ profile_id: uid, quote: quote.trim(), author_name: author.trim(), author_title: title.trim() || null, sort_order: testimonials.length }).select('id, quote, author_name, author_title').single()
     setBusy(false)
     if (error || !data) { toast('Couldn’t add the testimonial'); return }
@@ -76,23 +88,24 @@ export function TestimonialsEditor({ uid, testimonials, onChange }: { uid: strin
   }
   return (
     <section id="testimonials" className="scroll-mt-4">
-      <div className="mb-3 flex items-center justify-between"><h2 className="text-[18px]">Testimonials</h2><button type="button" onClick={() => setOpen(true)} className="text-sm font-semibold text-green-ink">+ Add</button></div>
+      <div className="mb-3 flex items-center justify-between"><h2 className="text-[18px]">Testimonials</h2><button type="button" onClick={openNew} className="text-sm font-semibold text-green-ink">+ Add</button></div>
       {testimonials.length === 0 ? <p className="text-sm text-muted">Add a line from a director, choreographer or teacher.</p> : (
         <div className="space-y-2">
           {testimonials.map(t => (
             <Card key={t.id} className="flex items-start gap-3 p-4">
-              <div className="min-w-0 flex-1"><p className="text-[14px] leading-relaxed">“{t.quote}”</p><p className="mt-1.5 text-[13px] text-muted">{[t.author_name, t.author_title].filter(Boolean).join(' · ')}</p></div>
+              <button type="button" onClick={() => openEdit(t)} aria-label="Edit testimonial" className="min-w-0 flex-1 text-left"><p className="text-[14px] leading-relaxed">“{t.quote}”</p><p className="mt-1.5 text-[13px] text-muted">{[t.author_name, t.author_title].filter(Boolean).join(' · ')}</p></button>
+              <button type="button" aria-label="Edit testimonial" onClick={() => openEdit(t)} className="inline-flex size-8 shrink-0 items-center justify-center rounded-full text-muted hover:bg-chip"><Icon name="pen" className="size-4" /></button>
               <button type="button" aria-label="Remove testimonial" onClick={() => remove(t)} className="inline-flex size-8 shrink-0 items-center justify-center rounded-full text-muted hover:bg-chip"><Icon name="x" className="size-4" /></button>
             </Card>
           ))}
         </div>
       )}
-      <Sheet open={open} onClose={() => setOpen(false)} title="Add a testimonial">
+      <Sheet open={open} onClose={() => setOpen(false)} title={editing ? 'Edit testimonial' : 'Add a testimonial'}>
         <div className="space-y-4">
           <TextArea label="What they said" value={quote} onChange={e => setQuote(e.target.value)} placeholder="“A rare triple-threat…”" />
           <Field label="Who said it" value={author} onChange={e => setAuthor(e.target.value)} placeholder="Name" />
           <Field label="Their role (optional)" value={title} onChange={e => setTitle(e.target.value)} placeholder="e.g. Director · National tour" />
-          <Button full size="lg" onClick={save} disabled={busy}>{busy ? 'Saving…' : 'Add testimonial'}</Button>
+          <Button full size="lg" onClick={save} disabled={busy}>{busy ? 'Saving…' : editing ? 'Save changes' : 'Add testimonial'}</Button>
         </div>
       </Sheet>
     </section>
