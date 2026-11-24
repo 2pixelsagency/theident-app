@@ -7,6 +7,7 @@ import JsonLd from '@/components/site/JsonLd'
 import { supabaseServer, SITE_URL } from '@/lib/supabaseServer'
 import { JOB_SELECT, type Job } from '@/lib/rc/jobs'
 import { payLabel } from '@/lib/rc/pay'
+import { PLANS, price } from '@/lib/rc/plans'
 import { daysUntil } from '@/lib/rc/format'
 import { TYPES, CITIES, matchesType, matchesCity, type AuditionType, type City } from '@/lib/site/auditions'
 
@@ -58,7 +59,7 @@ function RoleRow({ j }: { j: Job }) {
 }
 
 const GENERAL_FAQ: [string, string][] = [
-  ['Is The Ident free for performers?', 'Performers get 7 days free, then it is £1.99 a month. That covers applying to every role, your profile with headshots and reels, and tracking every self-tape and recall.'],
+  ['Is The Ident free for performers?', 'Performers get 7 days free, then it is ' + price(PLANS.performer.pence) + ' a month (' + price(PLANS.graduate.pence) + ' for recent graduates). That covers applying to every role, your profile with headshots and reels, and tracking every self-tape and recall.'],
   ['How is this different from Spotlight or Mandy?', 'The Ident shows the pay and closing date up front, lets you apply in a tap with your reel, and tracks each application — self-tape requested, recall, booked — in one place. Performers can also post community roles and side hustles.'],
   ['Who posts these roles?', 'Casting directors, producers and companies post castings directly. Performers can post community roles too — each listing shows which it is.'],
 ]

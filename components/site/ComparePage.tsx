@@ -20,7 +20,7 @@ const FEATURES: [string, string, string][] = [
 export default function ComparePage({ name, slug, keyword, intro }: { name: string; slug: string; keyword: string; intro: string }) {
   const faq: [string, string][] = [
     [`Can I use The Ident alongside ${name}?`, `Yes. Many performers use more than one platform. The Ident works on its own, so you can use it alongside ${name} or instead of it.`],
-    ['How much does The Ident cost?', `Performers pay ${price(PLANS.performer.pence)} a month after a ${TRIAL_DAYS}-day free trial. Casting teams pay ${price(PLANS.casting.pence)} a month. Browsing roles is free, and we never take commission.`],
+    ['How much does The Ident cost?', `Performers pay ${price(PLANS.performer.pence)} a month (recent graduates ${price(PLANS.graduate.pence)}) after a ${TRIAL_DAYS}-day free trial. Casting teams pay ${price(PLANS.casting.pence)} a month. Browsing roles is free, and we never take commission.`],
     ['Who posts roles on The Ident?', 'Casting directors, producers and companies post castings directly, and performers can post community roles and side hustles. Each listing shows which it is.'],
     ['Is it only for actors?', 'No — actors, dancers, singers, musical theatre performers, voice artists and presenters all use The Ident.'],
   ]

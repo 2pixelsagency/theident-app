@@ -5,7 +5,7 @@ import { BackHeader, Card, ListRow, PageLoading, Toggle, toast } from '@/compone
 import { supabase } from '@/lib/supabase'
 import { useMe } from '@/lib/rc/me'
 import { useAsync } from '@/lib/rc/useAsync'
-import { PLANS, planFor, price } from '@/lib/rc/plans'
+import { PLANS, planForProfile, price } from '@/lib/rc/plans'
 import { isNativeApp } from '@/lib/rc/authRedirect'
 import { signOutAndReset } from '@/lib/rc/onboarding'
 import { fullName } from '@/lib/rc/format'
@@ -41,11 +41,12 @@ export default function SettingsPage() {
     if (j.url) window.location.assign(j.url); else toast('Couldn’t open billing. Please try again.')
   }
   const native = isNativeApp()
-  const kindName = PLANS[planFor(me.role)].name
+  const myPlan = PLANS[(p?.plan_kind as keyof typeof PLANS) in PLANS ? p!.plan_kind as keyof typeof PLANS : planForProfile(me.role, p)]
+  const kindName = myPlan.name
   const membership: { sub: string; action?: string; onClick?: () => void; href?: string } =
     p?.is_demo ? { sub: 'Demo account · full access' }
     : p?.plan_status === 'trialing' ? { sub: kindName + ' · free trial until ' + endLabel(p.plan_period_end), action: native ? undefined : 'Manage', onClick: native ? undefined : portal }
-    : p?.plan_status === 'active' ? { sub: kindName + ' · ' + price(PLANS[planFor(me.role)].pence) + '/month' + (p.plan_period_end ? ' · renews ' + endLabel(p.plan_period_end) : ''), action: native ? undefined : 'Manage', onClick: native ? undefined : portal }
+    : p?.plan_status === 'active' ? { sub: kindName + ' · ' + price(myPlan.pence) + '/month' + (p.plan_period_end ? ' · renews ' + endLabel(p.plan_period_end) : ''), action: native ? undefined : 'Manage', onClick: native ? undefined : portal }
     : p?.plan_status === 'past_due' ? { sub: 'Payment failed — update your card to keep access', action: native ? undefined : 'Fix', onClick: native ? undefined : portal }
     : p?.plan_grace_until && new Date(p.plan_grace_until) > new Date() ? { sub: 'Free access until ' + endLabel(p.plan_grace_until), action: native ? undefined : 'Subscribe', href: native ? undefined : '/plan' }
     : { sub: me.hasPlan ? 'Full access' : 'No active membership', action: native || me.hasPlan ? undefined : 'Subscribe', href: native || me.hasPlan ? undefined : '/plan' }
