@@ -5,6 +5,7 @@ import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import Icon from './Icon'
+import LogoMark from '@/components/LogoMark'
 import { Avatar, IconButton, cx } from './ui'
 import { useMe } from '@/lib/rc/me'
 import { fmtDate } from '@/lib/rc/format'
@@ -118,7 +119,7 @@ export function SideNav() {
   }
   return (
     <aside aria-label="Main" className="fixed inset-y-0 left-0 z-40 hidden w-[76px] flex-col items-center border-r border-line-soft bg-sand py-5 lg:flex">
-      <Link href="/home" aria-label="The Ident home" className="flex size-11 items-center justify-center rounded-full bg-forest font-display text-[17px] font-bold tracking-[-0.04em] text-lime">Id</Link>
+      <Link href="/home" aria-label="The Ident home" className="flex size-11 items-center justify-center rounded-full bg-forest text-lime"><LogoMark className="size-5" /></Link>
       <Link href="/me" aria-label="Your profile" className="mt-5 rounded-full ring-2 ring-transparent transition hover:ring-line"><Avatar src={profile?.picture_url} name={name} size={40} /></Link>
       <nav className="scrollbar-none mt-6 flex w-full flex-1 flex-col items-center overflow-y-auto">
         <ul className="flex flex-col items-center gap-1">{NAV[role].filter(n => n.href !== '/me').map(n => link(n, n.href === '/chats' ? unreadMessages : undefined))}
