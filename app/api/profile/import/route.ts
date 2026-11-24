@@ -18,10 +18,10 @@ const MAX_BYTES = 8 * 1024 * 1024
 const DAILY_LIMIT = 5
 
 const str = { type: 'string' }
-const SCHEMA = {
+const schemaFor = (categories: string[]) => ({
   type: 'object',
   additionalProperties: false,
-  required: ['first_name', 'last_name', 'what_i_do', 'location', 'bio', 'height', 'playing_age_min', 'playing_age_max', 'agent_name', 'agent_email', 'agent_phone', 'website', 'drama_school', 'graduation_year', 'credits', 'skills', 'training'],
+  required: ['first_name', 'last_name', 'what_i_do', 'location', 'bio', 'height', 'playing_age_min', 'playing_age_max', 'agent_name', 'agent_email', 'agent_phone', 'website', 'drama_school', 'graduation_year', 'vocal_range', 'credits', 'skills', 'training'],
   properties: {
     first_name: str, last_name: str,
     what_i_do: { type: 'string', description: 'Short craft line, e.g. "Actor & Singer". Empty if unclear.' },
@@ -31,6 +31,7 @@ const SCHEMA = {
     agent_name: str, agent_email: str, agent_phone: str, website: str,
     drama_school: { type: 'string', description: 'Main drama school / training institution if the CV names one.' },
     graduation_year: { type: 'integer', description: '0 if not stated' },
+    vocal_range: { type: 'string', description: 'Singing range exactly as written, e.g. "F2 to D3 (belt to F2)". Empty if absent. Not repeated in skills.' },
     credits: {
       type: 'array',
       items: {
@@ -43,10 +44,22 @@ const SCHEMA = {
         },
       },
     },
-    skills: { type: 'array', items: str, description: 'Skills exactly as listed: accents, dance styles, singing range, instruments, sports, licences, languages.' },
+    skills: {
+      type: 'array',
+      description: 'Every skill on the CV: accents, dance styles, voice type, instruments, sports, licences, languages, stage combat… (not vocal range).',
+      items: {
+        type: 'object', additionalProperties: false, required: ['as_written', 'match', 'name', 'category'],
+        properties: {
+          as_written: { type: 'string', description: 'The skill as written on the CV' },
+          match: { type: 'string', description: 'The name from <skills_list> that means the same thing (e.g. "Jazz Dancing" → "Jazz Dance", "American-Standard" accent → "American General Accent"), copied exactly. Empty if none is the same skill.' },
+          name: { type: 'string', description: 'If match is empty: a short, clean name for a new skill in the style of the list, e.g. "Pas de Deux", "Dance Captain", "Songwriting". Otherwise the match.' },
+          category: { type: 'string', enum: categories },
+        },
+      },
+    },
     training: { type: 'array', items: str, description: 'Training lines, e.g. "BA Acting, Mountview (2021)".' },
   },
-}
+})
 
 const PROMPT = `You are filling in a performer's profile on The Ident, a UK casting app, from their CV.
 Extract only what the CV actually says. Never guess, embellish or invent credits, dates, schools or skills.
@@ -86,6 +99,16 @@ export async function POST(req: NextRequest) {
     content = [{ type: 'text', text: '<cv>\n' + text.slice(0, 200_000) + '\n</cv>\n\n' + PROMPT }]
   }
 
+  // Our skills list, so Claude can match each CV skill to one we have (or file a new one under a category)
+  const [{ data: skillRows }, { data: catRows }] = await Promise.all([
+    admin.from('skills').select('name, skills_categories(name)').order('name'),
+    admin.from('skills_categories').select('name').order('name'),
+  ])
+  const categories = (catRows || []).map(c => c.name as string)
+  if (!categories.length) categories.push('Miscellaneous')
+  const list = (skillRows || []).map(r => r.name + ' (' + ((r.skills_categories as unknown as { name: string } | null)?.name || 'Miscellaneous') + ')').join('\n')
+  content.push({ type: 'text', text: '<skills_list>\n' + list + '\n</skills_list>' })
+
   const { data: row } = await admin.from('cv_imports').insert({ profile_id: user.id }).select('id').single()
   const res = await fetch('https://api.anthropic.com/v1/messages', {
     method: 'POST',
@@ -100,7 +123,7 @@ export async function POST(req: NextRequest) {
       model: MODEL,
       max_tokens: 16000,
       fallbacks: 'default',
-      output_config: { effort: 'low', format: { type: 'json_schema', schema: SCHEMA } },
+      output_config: { effort: 'low', format: { type: 'json_schema', schema: schemaFor(categories) } },
       messages: [{ role: 'user', content }],
     }),
   }).catch(() => null)

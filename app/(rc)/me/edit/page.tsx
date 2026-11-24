@@ -21,7 +21,7 @@ import { moveItem, saveOrder } from '@/components/rc/ProfileExtras'
 const GENDER_OPTIONS = [{ id: 7, name: 'Female' }, { id: 6, name: 'Male' }, { id: 2, name: 'Non-binary' }, { id: 3, name: 'Trans woman' }, { id: 4, name: 'Trans man' }, { id: 5, name: 'Gender non-conforming' }, { id: 1, name: 'Prefer not to say' }]
 const stamp = () => Date.now().toString(36)
 type Draft = Pick<FullProfile, 'first_name' | 'last_name' | 'what_i_do' | 'location' | 'bio' | 'height' | 'agent_name' | 'agent_email' | 'agent_phone' | 'company_name' | 'graduate_school'> & {
-  minAge: string; maxAge: string; hair: number | null; eyes: number | null; isPublic: boolean; openToWork: boolean; isGraduate: boolean; gradYear: string; showContact: boolean; website: string; specialisms: string[]; pronouns: string; gender: number | null
+  minAge: string; maxAge: string; hair: number | null; eyes: number | null; isPublic: boolean; openToWork: boolean; isGraduate: boolean; gradYear: string; showContact: boolean; website: string; specialisms: string[]; pronouns: string; gender: number | null; vocal: string
 }
 
 export default function EditProfilePage() {
@@ -50,7 +50,7 @@ function Editor({ data, uid, caster, onRefresh, mutate }: { data: Data; uid: str
     agent_name: p.agent_name, agent_email: p.agent_email, agent_phone: p.agent_phone, company_name: p.company_name, graduate_school: p.graduate_school,
     minAge: p.minimum_age ? String(p.minimum_age) : '', maxAge: p.maximum_age ? String(p.maximum_age) : '', hair: p.hair_colour_id, eyes: p.eye_colour_id,
     isPublic: p.show_talent !== false, openToWork: p.availability_status === 'available', isGraduate: p.is_graduate, gradYear: p.graduate_year ? String(p.graduate_year) : '', showContact: p.show_agent_contact,
-    website: p.website || '', specialisms: p.specialisms || [], pronouns: p.pronouns || '', gender: p.gender_id ?? null,
+    website: p.website || '', specialisms: p.specialisms || [], pronouns: p.pronouns || '', gender: p.gender_id ?? null, vocal: p.vocal_range || '',
   })
   const [skillIds, setSkillIds] = useState<number[]>(data.skills.map(s => s.id))
   const [skillQuery, setSkillQuery] = useState('')
@@ -97,7 +97,7 @@ function Editor({ data, uid, caster, onRefresh, mutate }: { data: Data; uid: str
       is_graduate: d.isGraduate, graduate_school: d.isGraduate ? d.graduate_school?.trim() || null : null, graduate_year: d.isGraduate && year ? year : null,
       agent_name: d.agent_name?.trim() || null, agent_email: d.agent_email?.trim() || null, agent_phone: d.agent_phone?.trim() || null,
       show_agent_contact: d.showContact, company_name: d.company_name?.trim() || null,
-      ...(caster ? {} : { pronouns: d.pronouns.trim().slice(0, 40) || null, gender_id: d.gender }),
+      ...(caster ? {} : { pronouns: d.pronouns.trim().slice(0, 40) || null, gender_id: d.gender, vocal_range: d.vocal.trim().slice(0, 60) || null }),
       ...(caster ? {
         // only save a website that looks like one; add https:// if they typed a bare domain
         website: d.website.trim() ? (/^https?:\/\//i.test(d.website.trim()) ? d.website.trim() : 'https://' + d.website.trim()) : null,
@@ -248,7 +248,7 @@ function Editor({ data, uid, caster, onRefresh, mutate }: { data: Data; uid: str
           existingCredits={data.credits.map(c => ({ title: c.title, role: c.role }))}
           current={{ first_name: p.first_name, last_name: p.last_name, what_i_do: p.what_i_do, location: p.location, bio: p.bio || p.summary, height: p.height,
             minimum_age: p.minimum_age, maximum_age: p.maximum_age, agent_name: p.agent_name, agent_email: p.agent_email, agent_phone: p.agent_phone,
-            website: p.website ?? null, graduate_school: p.graduate_school ?? null }} />}
+            website: p.website ?? null, graduate_school: p.graduate_school ?? null, vocal_range: p.vocal_range ?? null }} />}
         {live && <CompletenessCard result={live} compact />}
         <div id="basics" className="scroll-mt-4 space-y-5">
         <Field label="Name" autoComplete="name" value={name} onChange={e => setName(e.target.value)} placeholder="First and last name" />
@@ -300,6 +300,10 @@ function Editor({ data, uid, caster, onRefresh, mutate }: { data: Data; uid: str
                 <div className="flex items-center gap-3 px-4 py-2.5">
                   <span className="flex-1 text-[15px] text-muted">Pronouns</span>
                   <input aria-label="Pronouns" maxLength={40} value={d.pronouns} onChange={e => set('pronouns', e.target.value)} placeholder="they/them" className="w-32 rounded-lg bg-transparent px-2 py-1.5 text-right text-[15px] font-medium outline-none focus:bg-field" />
+                </div>
+                <div className="flex items-center gap-3 px-4 py-2.5">
+                  <span className="flex-1 text-[15px] text-muted">Vocal range</span>
+                  <input aria-label="Vocal range" maxLength={60} value={d.vocal} onChange={e => set('vocal', e.target.value)} placeholder="e.g. G2 to A4" className="w-40 rounded-lg bg-transparent px-2 py-1.5 text-right text-[15px] font-medium outline-none focus:bg-field" />
                 </div>
                 <SelectRow label="Hair" value={d.hair} options={data.hair} onChange={v => set('hair', v)} />
                 <SelectRow label="Eyes" value={d.eyes} options={data.eyes} onChange={v => set('eyes', v)} />

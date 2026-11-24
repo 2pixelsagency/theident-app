@@ -9,7 +9,7 @@ import LogoMark from '@/components/LogoMark'
 import { Avatar, IconButton, cx } from './ui'
 import { useMe } from '@/lib/rc/me'
 import { fmtDate } from '@/lib/rc/format'
-import type { Role } from '@/lib/rc/onboarding'
+import { signOutAndReset, type Role } from '@/lib/rc/onboarding'
 
 // Role-aware bottom nav, chosen at onboarding (profiles.account_role)
 export const NAV: Record<Role, { href: string; label: string; icon: string }[]> = {
@@ -131,6 +131,13 @@ export function SideNav() {
       <ul className="mt-4 flex flex-col items-center gap-1">
         {link({ href: '/settings', label: 'Settings', icon: 'settings' })}
         {link({ href: '/help', label: 'Help & support', icon: 'help' })}
+        <li>
+          <button type="button" onClick={() => signOutAndReset()} aria-label="Log out"
+            className="group relative flex size-11 items-center justify-center rounded-[14px] text-muted transition-colors duration-300 hover:bg-sand hover:text-red">
+            <Icon name="logout" className="size-[22px]" strokeWidth={1.6} />
+            <span className="pointer-events-none absolute left-full top-1/2 z-50 ml-3 -translate-y-1/2 whitespace-nowrap rounded-lg bg-dark px-2.5 py-1.5 text-[13px] font-medium text-white opacity-0 shadow-card transition group-hover:opacity-100">Log out</span>
+          </button>
+        </li>
       </ul>
     </aside>
   )

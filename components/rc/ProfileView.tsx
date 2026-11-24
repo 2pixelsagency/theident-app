@@ -147,7 +147,7 @@ function PerformerProfile({ data, owner, onBack, onShare, topRight, actions, sta
 
   const stats = caster ? [] : ([
     ['Playing age', playingAge(p)], ['Height', p.height], ['Base', p.location?.split(',')[0]],
-    ['Eyes', eyes.find(e => e.id === p.eye_colour_id)?.name], ['Hair', hair.find(h => h.id === p.hair_colour_id)?.name],
+    ['Eyes', eyes.find(e => e.id === p.eye_colour_id)?.name], ['Hair', hair.find(h => h.id === p.hair_colour_id)?.name], ['Vocal range', p.vocal_range],
   ] as const).filter(([, v]) => !!v)
 
   // Credits grouped by production type, as on Spotlight/Mandy
