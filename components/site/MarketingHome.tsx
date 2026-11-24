@@ -3,9 +3,9 @@ import Icon from '@/components/rc/Icon'
 import RolesCarousel from './RolesCarousel'
 import HeroTalent from './HeroTalent'
 import WorkedWith from './WorkedWith'
-import { Container, Cta, Eyebrow, SECTION, SectionHead } from './Chrome'
-import { CtaBand, IconCard } from './ds'
-import { PLANS, TRIAL_DAYS, price } from '@/lib/rc/plans'
+import { Container, Eyebrow, SECTION, SectionHead } from './Chrome'
+import { IconCard } from './ds'
+import { PLANS } from '@/lib/rc/plans'
 import JsonLd from './JsonLd'
 import Faq from './Faq'
 import HowItWorks from './HowItWorks'
@@ -57,8 +57,7 @@ export default function MarketingHome() {
       {/* ───── For casting teams ───── */}
       <section className={SECTION}>
         <Container>
-          <SectionHead eyebrow="For casting teams" title="Cast faster, with every tape in one place." sub="Post a role, watch self-tapes inline, recall by tape, video call or in person — and book, without a single email chain."
-            action={<><Cta href="/start?role=caster" variant="dark">Start casting</Cta><Cta href="/casting" variant="outline" arrow={false}>How it works</Cta></>} />
+          <SectionHead eyebrow="For casting teams" title="Cast faster, with every tape in one place." sub="Post a role, watch self-tapes inline, recall by tape, video call or in person — and book, without a single email chain." />
           <ul className="grid items-start gap-8 lg:gap-10 [grid-template-columns:repeat(auto-fit,minmax(min(100%,260px),1fr))]">
             <IconCard icon="megaphone" tone="bg-lime" title="Post in minutes" body="Ask for exactly the materials you need, add an NDA, set a closing date." href="/casting" label="How posting a role works" />
             <IconCard icon="play" tone="bg-butter" title="Tapes inline" body="Watch reels and self-tapes, rate, shortlist and swipe through applicants." href="/casting" label="How reviewing tapes works" />
@@ -79,13 +78,6 @@ export default function MarketingHome() {
         </Container>
       </section>
 
-      {/* ───── Final CTA ───── */}
-      <section className={SECTION}>
-        <Container>
-          <CtaBand title="Your next role is already on The Ident." sub={`Try everything free for ${TRIAL_DAYS} days. ${price(PLANS.performer.pence)} a month after that — less than a coffee.`}
-            actions={<><Cta href="/start?role=performer" variant="lime">Start free trial</Cta><Cta href="/pricing" variant="ghost-light" arrow={false}>See pricing</Cta></>} />
-        </Container>
-      </section>
     </>
   )
 }

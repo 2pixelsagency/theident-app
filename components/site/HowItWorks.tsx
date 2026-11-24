@@ -3,16 +3,15 @@
 import { useEffect, useState } from 'react'
 import Icon from '@/components/rc/Icon'
 import { cx } from './castings/parts'
-import { PanelBars, PanelBase, type PanelTone } from './PanelArt'
 
 // "Three steps to your next job" as a Calendly-style scheduling component: step tabs on the left,
 // a booking-widget card on the right. Step 3 shows the recall casting has set, in calendar form.
 // Demo content only (fictional show names).
 
 const STEPS = [
-  { n: '01', title: 'Build your Ident', body: 'Headshots, showreel, credits, skills and CV — one profile that casting can trust.', badge: 'bg-mint', tone: 'mint' as PanelTone },
-  { n: '02', title: 'Find and apply', body: 'Roles from casting directors and the community, filtered to what fits you. Apply in a tap.', badge: 'bg-butter', tone: 'butter' as PanelTone },
-  { n: '03', title: 'Recall, pencil, book', body: 'Your recall lands in your diary with the time, the video link and what to prepare.', badge: 'bg-lime', tone: 'lime' as PanelTone },
+  { n: '01', title: 'Build your Ident', body: 'Headshots, showreel, credits, skills and CV — one profile that casting can trust.', badge: 'bg-mint', panel: 'var(--panel-mint)' },
+  { n: '02', title: 'Find and apply', body: 'Roles from casting directors and the community, filtered to what fits you. Apply in a tap.', badge: 'bg-butter', panel: 'var(--panel-butter)' },
+  { n: '03', title: 'Recall, pencil, book', body: 'Your recall lands in your diary with the time, the video link and what to prepare.', badge: 'bg-lime', panel: 'var(--panel-lime)' },
 ]
 
 const MONTH = 'December 2026'
@@ -155,11 +154,10 @@ export default function HowItWorks() {
       <div id="hiw-panel" role="tabpanel" aria-labelledby={'hiw-tab-' + step} className="relative isolate flex min-h-[420px] items-center justify-center overflow-hidden rounded-[24px] p-4 sm:p-8">
         {/* each step's colour is its own layer, so changing tab cross-fades rather than jumps */}
         {STEPS.map((s, i) => (
-          <div key={s.n} aria-hidden="true" className={cx('absolute inset-0 -z-10 transition-[opacity,scale] duration-700 ease-[cubic-bezier(.2,.8,.2,1)]', step === i ? 'scale-100 opacity-100' : 'scale-110 opacity-0')}>
-            <PanelBase tone={s.tone} />
-          </div>
+          <div key={s.n} aria-hidden="true" className={cx('absolute inset-0 -z-10 transition-[opacity,scale] duration-700 ease-[cubic-bezier(.2,.8,.2,1)]', step === i ? 'scale-100 opacity-100' : 'scale-110 opacity-0')}
+            style={{ backgroundImage: s.panel }} />
         ))}
-        <PanelBars key={'bars' + step} tone={STEPS[step].tone} count={11} />
+        <div key={'stripes' + step} aria-hidden="true" className="hiw-stripes absolute inset-x-0 top-[38%] h-[124px]" style={{ backgroundImage: 'var(--stripes-light)' }} />
         <div key={step} className="hiw-frame relative w-full max-w-[680px] rounded-[26px] border border-white/70 bg-white/45 p-2 shadow-[0_30px_60px_-36px_rgb(21_33_28/0.45)]">
           <W />
         </div>
