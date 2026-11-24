@@ -8,7 +8,15 @@ export default function CastingPage() {
     <FeaturePage eyebrow="For casting teams" title="From breakdown to booked, without the email chains."
       intro={`Casting directors, producers and companies use The Ident to find and book performers. ${TRIAL_DAYS} days free, then ${price(PLANS.casting.pence)} a month.`}
       cta={{ href: '/start?role=caster', label: 'Start casting' }}
-      facts={[[price(PLANS.casting.pence), 'a month, after your trial'], [TRIAL_DAYS + ' days', 'free to post and review'], ['3 ways', 'to recall: tape, call or in person']]}
+      plans={[
+        { label: 'For casting teams', name: 'Casting membership', line: 'Post roles, review tapes and book your cast in one place.', value: price(PLANS.casting.pence), unit: '/month', small: `After your ${TRIAL_DAYS}-day free trial`,
+          cta: { href: '/start?role=caster', label: 'Start casting' }, note: 'Cancel anytime', included: PLANS.casting.features },
+        { label: 'Try it first', name: 'Free trial', line: 'Post a role and review real applicants before you pay.', value: TRIAL_DAYS + ' days', unit: 'free', small: 'We’ll remind you before it ends',
+          cta: { href: '/start?role=caster', label: 'Post your first role' }, note: 'Cancel any time in Settings', dark: true, badge: 'Start here',
+          included: ['Post roles with an NDA if you need one', 'Watch reels and self-tapes inline', 'Shortlist and recall', 'Message applicants'] },
+        { label: 'Recalls', name: 'Recall your way', line: 'Ask for another tape, send a video-call link, or meet in person.', value: '3 ways', unit: 'to recall',
+          cta: { href: '/pricing', label: 'See pricing' }, included: ['Another self-tape', 'Video call with a join link', 'In person, with time and place'] },
+      ]}
       groups={[
         { title: 'Post and review', features: [
           { icon: 'megaphone', title: 'Post a role in minutes', body: 'Choose the materials you need — reel, self-tape, headshots, CV — and a closing date.' },
