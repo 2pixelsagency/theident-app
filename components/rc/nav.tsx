@@ -18,6 +18,7 @@ export const NAV: Record<Role, { href: string; label: string; icon: string }[]> 
     { href: '/find', label: 'Find', icon: 'search' },
     { href: '/castings', label: 'Castings', icon: 'briefcase' },
     { href: '/chats', label: 'Chats', icon: 'chat' },
+    { href: '/menu', label: 'More', icon: 'menu' },
     { href: '/me', label: 'Profile', icon: 'user' },
   ],
   caster: [
@@ -25,6 +26,7 @@ export const NAV: Record<Role, { href: string; label: string; icon: string }[]> 
     { href: '/talent', label: 'Talent', icon: 'users' },
     { href: '/postings', label: 'Postings', icon: 'megaphone' },
     { href: '/chats', label: 'Chats', icon: 'chat' },
+    { href: '/menu', label: 'More', icon: 'menu' },
     { href: '/me', label: 'Profile', icon: 'user' },
   ],
 }
@@ -84,7 +86,6 @@ const MORE: Record<Role, { href: string; label: string; icon: string }[]> = {
   performer: [
     { href: '/diary', label: 'Diary', icon: 'calendar' },
     { href: '/blocks', label: 'Goals', icon: 'target' },
-    { href: '/talent', label: 'People', icon: 'users' },
     { href: '/postings', label: 'Your postings', icon: 'megaphone' },
     { href: '/whats-on', label: 'What’s on', icon: 'ticket' },
     { href: '/classes', label: 'Classes', icon: 'sparkle' },
@@ -122,7 +123,7 @@ export function SideNav() {
       <Link href="/home" aria-label="The Ident home" className="flex size-11 items-center justify-center rounded-full bg-forest text-lime"><LogoMark className="size-5" /></Link>
       <Link href="/me" aria-label="Your profile" className="mt-5 rounded-full ring-2 ring-transparent transition hover:ring-line"><Avatar src={profile?.picture_url} name={name} size={40} /></Link>
       <nav className="scrollbar-none mt-6 flex w-full flex-1 flex-col items-center overflow-y-auto">
-        <ul className="flex flex-col items-center gap-1">{NAV[role].filter(n => n.href !== '/me').map(n => link(n, n.href === '/chats' ? unreadMessages : undefined))}
+        <ul className="flex flex-col items-center gap-1">{NAV[role].filter(n => n.href !== '/me' && n.href !== '/menu').map(n => link(n, n.href === '/chats' ? unreadMessages : undefined))}
           {link({ href: '/inbox', label: 'Notifications', icon: 'bell' }, unreadNotifications)}
         </ul>
         <span className="my-4 h-px w-8 bg-line" />

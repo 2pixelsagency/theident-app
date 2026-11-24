@@ -1,8 +1,8 @@
 'use client'
 
 import Link from 'next/link'
-import Icon from '@/components/rc/Icon'
-import { Avatar, Card, ListRow, Pill, useGoBack } from '@/components/rc/ui'
+import { Avatar, Card, ListRow, Pill } from '@/components/rc/ui'
+import { startTour } from '@/components/rc/Tour'
 import { useMe } from '@/lib/rc/me'
 import { signOutAndReset } from '@/lib/rc/onboarding'
 import { fullName } from '@/lib/rc/format'
@@ -10,7 +10,6 @@ import { craftTag } from '@/lib/rc/talent'
 
 // App hub linking everything that isn't in the bottom nav
 export default function MenuPage() {
-  const goBack = useGoBack('/home')
   const { profile, role } = useMe()
   const caster = role === 'caster'
 
@@ -19,8 +18,7 @@ export default function MenuPage() {
   return (
     <div className="px-4 pb-10 pt-[max(16px,env(safe-area-inset-top))]">
       <div className="flex items-center justify-between">
-        <h1 className="text-[20px]">Menu</h1>
-        <button type="button" aria-label="Close menu" onClick={goBack} className="inline-flex size-10 items-center justify-center rounded-full hover:bg-chip"><Icon name="x" className="size-6" /></button>
+        <h1 className="text-[20px]">More</h1>
       </div>
 
       <Link href="/me" className="mt-4 flex items-center gap-3 rounded-[var(--radius)] bg-dark p-4 text-white">
@@ -61,6 +59,7 @@ export default function MenuPage() {
       <Card className="divide-y divide-line overflow-hidden">
         <ListRow icon="shield-check" title="ID verification" right={profile?.is_verified ? <Pill tone="green">Verified</Pill> : <span className="text-sm text-muted">Get verified</span>} href={profile?.is_verified ? undefined : '/help'} />
         <ListRow icon="settings" title="Settings" href="/settings" />
+        <ListRow icon="sparkle" title="Take the tour" sub="A 30-second look at everything in the app" onClick={startTour} />
         <ListRow icon="help" title="Help & support" href="/help" />
       </Card>
 
