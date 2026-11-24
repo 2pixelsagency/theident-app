@@ -19,7 +19,7 @@ export default function FeaturePage({ eyebrow, title, intro, cta, facts, groups,
           {facts.map(([big, small], i) => (
             <SandCard key={small} dark={i === 0} className="flex min-h-[150px] flex-col justify-between">
               <dt className="font-display text-[44px] font-extrabold leading-none tracking-[-0.03em]">{big}</dt>
-              <dd className={'mt-4 text-[15px] font-medium ' + (i === 0 ? 'text-on-dark-muted' : 'text-muted-strong')}>{small}</dd>
+              <dd className={'mt-4 text-[13px] font-medium ' + (i === 0 ? 'text-on-dark-muted' : 'text-muted-strong')}>{small}</dd>
             </SandCard>
           ))}
         </dl>

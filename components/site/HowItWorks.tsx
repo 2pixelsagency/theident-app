@@ -27,8 +27,8 @@ function Calendar() {
       <div className="flex items-center justify-between">
         <p className="whitespace-nowrap text-[15px] font-semibold">{MONTH}</p>
         <div className="flex gap-1.5" aria-hidden="true">
-          <span className="flex size-8 items-center justify-center rounded-full bg-bg text-muted"><Icon name="chevron-left" className="size-4" /></span>
-          <span className="flex size-8 items-center justify-center rounded-full bg-mint text-forest"><Icon name="chevron-right" className="size-4" /></span>
+          <span className="flex size-8 items-center justify-center rounded-full bg-bg text-muted"><Icon strokeWidth={2} name="chevron-left" className="size-4" /></span>
+          <span className="flex size-8 items-center justify-center rounded-full bg-mint text-forest"><Icon strokeWidth={2} name="chevron-right" className="size-4" /></span>
         </div>
       </div>
       <div className="mt-3 grid grid-cols-7 gap-1 text-center text-[11px] font-semibold uppercase tracking-wide text-muted" aria-hidden="true">
@@ -56,9 +56,9 @@ function RecallWidget() {
         <span className="flex size-10 items-center justify-center rounded-full bg-blossom text-[12px] font-bold">JK</span>
         <div><p className="text-[13px] text-muted">Jo Kendrick, Casting</p><p className="mt-1 font-display text-[22px] font-bold leading-tight tracking-[-0.02em]">Recall — Harbour Lights</p></div>
         <ul className="flex flex-col gap-2.5 text-[14px] text-muted-strong">
-          <li className="flex items-center gap-2.5"><Icon name="clock" className="size-4 text-forest" />15 min</li>
-          <li className="flex items-center gap-2.5"><Icon name="video" className="size-4 text-forest" />Video call</li>
-          <li className="flex items-center gap-2.5"><Icon name="file" className="size-4 text-forest" />Sides attached</li>
+          <li className="flex items-center gap-2.5"><Icon strokeWidth={2} name="clock" className="size-4 text-forest" />15 min</li>
+          <li className="flex items-center gap-2.5"><Icon strokeWidth={2} name="video" className="size-4 text-forest" />Video call</li>
+          <li className="flex items-center gap-2.5"><Icon strokeWidth={2} name="file" className="size-4 text-forest" />Sides attached</li>
         </ul>
       </div>
       <div className="grid gap-5 p-5 sm:grid-cols-[1fr_150px] md:p-6">
@@ -67,8 +67,8 @@ function RecallWidget() {
           <p className="text-[13px] font-semibold">Tue 8 Dec</p>
           <p className="text-[12px] text-muted">Time set by casting</p>
           <span className="flex h-11 items-center justify-center rounded-[12px] bg-forest text-[14px] font-semibold text-bg">14:00</span>
-          <span className="mt-1 flex h-11 items-center justify-center gap-1.5 rounded-[12px] bg-lime text-[14px] font-semibold"><Icon name="video" className="size-4" />Join call</span>
-          <span className="flex items-center gap-1.5 text-[12px] text-muted"><Icon name="check" className="size-3.5 text-forest" />In your diary</span>
+          <span className="mt-1 flex h-11 items-center justify-center gap-1.5 rounded-[12px] bg-lime text-[14px] font-semibold"><Icon strokeWidth={2} name="video" className="size-4" />Join call</span>
+          <span className="flex items-center gap-1.5 text-[12px] text-muted"><Icon strokeWidth={2} name="check" className="size-3.5 text-forest" />In your diary</span>
         </div>
       </div>
     </div>
@@ -86,7 +86,7 @@ function ProfileWidget() {
       <div className="mt-5"><div className="flex justify-between text-[13px]"><span className="font-medium">Profile complete</span><span className="text-muted">100%</span></div><div className="mt-1.5 h-2 rounded-full bg-line-soft"><div className="h-2 w-full rounded-full bg-forest" /></div></div>
       <ul className="mt-5 grid gap-2 sm:grid-cols-2">
         {[['image', 'Headshots · 4'], ['play', 'Showreel · 1:42'], ['file', 'CV & credits'], ['star', 'Skills · 12']].map(([icon, l]) => (
-          <li key={l} className="flex items-center gap-2.5 rounded-[12px] bg-bg px-3.5 py-3 text-[14px] font-medium"><Icon name={icon} className="size-4 text-forest" />{l}</li>
+          <li key={l} className="flex items-center gap-2.5 rounded-[12px] bg-bg px-3.5 py-3 text-[14px] font-medium"><Icon strokeWidth={2} name={icon} className="size-4 text-forest" />{l}</li>
         ))}
       </ul>
     </div>
@@ -126,7 +126,7 @@ export default function HowItWorks() {
               <span className="min-w-0">
                 <span className="block font-display text-[20px] font-bold leading-tight tracking-[-0.02em]">{s.title}</span>
                 <span className={cx('grid transition-[grid-template-rows] duration-500', on ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]')}>
-                  <span className="overflow-hidden"><span className="block pt-1.5 text-[15px] leading-[1.5] text-muted-strong">{s.body}</span></span>
+                  <span className="overflow-hidden"><span className="block pt-1.5 text-[13px] leading-[1.6] text-muted-strong">{s.body}</span></span>
                 </span>
               </span>
             </button>

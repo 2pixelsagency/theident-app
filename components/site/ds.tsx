@@ -8,8 +8,8 @@ export { cx, ArrowLink, IconBadge, FeatureCard, Panel, FloatFrame } from './cast
 
 export function Eyebrow({ children, light }: { children: React.ReactNode; light?: boolean }) {
   return (
-    <p className={cx('flex items-center gap-2.5 text-[14px] font-semibold uppercase tracking-[0.14em]', light ? 'text-lime' : 'text-forest')}>
-      <span aria-hidden="true" className={cx('size-2 rounded-full', light ? 'bg-lime' : 'bg-forest')} />{children}
+    <p className={cx('flex items-center gap-2 text-[12px] font-semibold uppercase tracking-[0.14em]', light ? 'text-lime' : 'text-forest')}>
+      <span aria-hidden="true" className={cx('size-1.5 rounded-full', light ? 'bg-lime' : 'bg-forest')} />{children}
     </p>
   )
 }
@@ -27,7 +27,7 @@ export function SectionHeader({ eyebrow, title, sub, actions, light, level = 2, 
       </div>
       {(sub || actions) && (
         <div className="flex max-w-[400px] flex-[1_1_320px] flex-col gap-5">
-          {sub && <p className={cx('text-[18px] leading-[1.55]', light ? 'text-on-dark-muted' : 'text-muted-strong')}>{sub}</p>}
+          {sub && <p className={cx('text-[15px] leading-[1.6]', light ? 'text-on-dark-muted' : 'text-muted-strong')}>{sub}</p>}
           {actions && <div className="flex flex-wrap gap-3">{actions}</div>}
         </div>
       )}
@@ -45,7 +45,7 @@ const PILL: Record<PillVariant, string> = {
 export function Pill({ href, variant = 'forest', arrow, children, className }: { href: string; variant?: PillVariant; arrow?: boolean; children: React.ReactNode; className?: string }) {
   return (
     <Link href={href} className={cx('group inline-flex min-h-12 cursor-pointer items-center justify-center gap-2 rounded-full px-6 text-[16px] font-semibold transition-colors duration-300 active:scale-[.98]', PILL[variant], className)}>
-      {children}{arrow && <Icon name="arrow-right" className="cta-arrow size-4" />}
+      {children}{arrow && <Icon strokeWidth={2} name="arrow-right" className="cta-arrow size-4" />}
     </Link>
   )
 }
@@ -53,6 +53,13 @@ export function Pill({ href, variant = 'forest', arrow, children, className }: {
 export function Tag({ children, light }: { children: React.ReactNode; light?: boolean }) {
   return <span className={cx('rounded-[10px] px-3 py-1.5 text-[14px] font-medium', light ? 'bg-white/10 text-on-dark-muted' : 'bg-sand-2 text-muted-strong')}>{children}</span>
 }
+
+// The design's link arrow (↗) — used in every arrow box on the site
+export function ArrowGlyph({ size = 16, className }: { size?: number; className?: string }) {
+  return <svg aria-hidden="true" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" className={cx('transition-transform duration-300 group-hover:-translate-y-0.5 group-hover:translate-x-0.5', className)}><path d="M7 17L17 7M8 7h9v9" /></svg>
+}
+// Square arrow box (for use inside an existing link/card, where ArrowLink can't nest)
+export const ARROW_BOX = 'flex size-11 shrink-0 items-center justify-center rounded-[14px] border border-line-strong bg-bg text-ink transition-colors duration-300 group-hover:border-forest group-hover:bg-forest group-hover:text-lime'
 
 // Plain sand (or Forest) card for text-led content
 export function SandCard({ children, dark, className, as: As = 'div' }: { children: React.ReactNode; dark?: boolean; className?: string; as?: 'div' | 'article' | 'li' }) {
@@ -64,11 +71,11 @@ export function IconCard({ icon, tone = 'bg-lime', title, body, href, label, dar
   return (
     <SandCard as="li" dark={dark} className="flex flex-col gap-3">
       <div className="flex items-center justify-between">
-        <span className={cx('flex size-10 items-center justify-center rounded-full', tone)}><Icon name={icon} className="size-5 text-forest" /></span>
+        <span className={cx('flex size-10 items-center justify-center rounded-full', tone)}><Icon strokeWidth={2} name={icon} className="size-5 text-forest" /></span>
         {href && <ArrowLinkSmall href={href} label={label || title} dark={dark} />}
       </div>
       <h3 className="mt-1.5 font-display text-[22px] font-bold leading-[1.15] tracking-[-0.02em] md:text-[24px]">{title}</h3>
-      <p className={cx('text-[16px] leading-[1.5]', dark ? 'text-on-dark-muted' : 'text-muted-strong')}>{body}</p>
+      <p className={cx('text-[13px] leading-[1.6]', dark ? 'text-on-dark-muted' : 'text-muted-strong')}>{body}</p>
     </SandCard>
   )
 }
@@ -89,7 +96,7 @@ export function CtaBand({ title, sub, actions }: { title: React.ReactNode; sub?:
       <div aria-hidden="true" className="absolute inset-x-0 top-[38%] h-[120px]" style={{ backgroundImage: 'var(--stripes-dark)' }} />
       <div className="relative">
         <h2 className="mx-auto max-w-[760px] font-display text-[36px] font-bold leading-[1.04] tracking-[-0.03em] md:text-[56px]">{title}</h2>
-        {sub && <p className="mx-auto mt-4 max-w-[520px] text-[18px] leading-[1.55] text-on-dark-muted">{sub}</p>}
+        {sub && <p className="mx-auto mt-4 max-w-[520px] text-[15px] leading-[1.6] text-on-dark-muted">{sub}</p>}
         <div className="mt-9 flex flex-wrap justify-center gap-3">{actions}</div>
       </div>
     </div>

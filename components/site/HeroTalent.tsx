@@ -34,10 +34,10 @@ function TypedSearch() {
   return (
     <form onSubmit={e => { e.preventDefault(); router.push('/people' + (q.trim() ? '?q=' + encodeURIComponent(q.trim()) : '')) }}
       className="rise mx-auto flex h-[60px] w-full max-w-[560px] items-center gap-2 rounded-[14px] border border-line bg-surface pl-5 pr-2 shadow-[0_18px_40px_-28px_rgb(18_49_39/0.5)] focus-within:border-green" style={{ '--d': '450ms' } as React.CSSProperties}>
-      <Icon name="search" className="size-5 shrink-0 text-muted" />
+      <Icon strokeWidth={2} name="search" className="size-5 shrink-0 text-muted" />
       <input value={q} onChange={e => setQ(e.target.value)} aria-label="Search talent" placeholder={ph}
         className="h-full min-w-0 flex-1 bg-transparent text-[16px] outline-none placeholder:text-ink/70" />
-      <button type="submit" className="group inline-flex h-11 shrink-0 items-center gap-1.5 rounded-[10px] bg-forest px-5 text-[15px] font-semibold text-white transition-colors duration-300 hover:bg-lime hover:text-ink active:scale-[.98]">Search now <Icon name="arrow-right" className="cta-arrow size-4" /></button>
+      <button type="submit" className="group inline-flex h-11 shrink-0 items-center gap-1.5 rounded-[10px] bg-forest px-5 text-[15px] font-semibold text-white transition-colors duration-300 hover:bg-lime hover:text-ink active:scale-[.98]">Search now <Icon strokeWidth={2} name="arrow-right" className="cta-arrow size-4" /></button>
     </form>
   )
 }
@@ -82,7 +82,7 @@ function Headshots() {
             <span className="absolute inset-x-0 bottom-0 translate-y-3 bg-gradient-to-t from-dark/85 via-dark/40 to-transparent p-3.5 pt-14 text-left text-white opacity-0 transition-all duration-500 ease-out group-hover:translate-y-0 group-hover:opacity-100">
               <span className="block truncate text-[16px] font-semibold">{c.name}</span>
               {c.sub && <span className="block truncate text-[12px] text-white/75">{c.sub}</span>}
-              <span className="mt-2.5 inline-flex items-center gap-1 rounded-full bg-lime px-3 py-1 text-[11px] font-semibold text-ink">View profile <Icon name="arrow-right" className="size-3 transition group-hover:translate-x-0.5" /></span>
+              <span className="mt-2.5 inline-flex items-center gap-1 rounded-full bg-lime px-3 py-1 text-[11px] font-semibold text-ink">View profile <Icon strokeWidth={2} name="arrow-right" className="size-3 transition group-hover:translate-x-0.5" /></span>
             </span>
           )}
         </span>
@@ -103,7 +103,7 @@ export default function HeroTalent() {
           <span className="sm:whitespace-nowrap">Find the role. Get the recall.</span><br />
           <span className="inline-block -skew-x-6 text-green-ink">Book the job.</span>
         </h1>
-        <p className="rise mx-auto mt-5 max-w-[540px] text-[15px] leading-relaxed text-muted [text-wrap:balance] md:text-[17px]" style={{ '--d': '260ms' } as React.CSSProperties}>
+        <p className="rise mx-auto mt-5 max-w-[500px] text-[13px] leading-[1.6] text-muted [text-wrap:balance] md:text-[14px]" style={{ '--d': '260ms' } as React.CSSProperties}>
           Castings, auditions and paid work in one app. Apply with your reel, track every self-tape and recall, and get found by casting directors.
         </p>
         <div className="mt-10"><TypedSearch /></div>
