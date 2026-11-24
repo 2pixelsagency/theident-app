@@ -28,7 +28,7 @@ export default function Faq({ items }: { items: [string, string][] }) {
             </h3>
             <div id={id} role="region" className={cx('grid transition-[grid-template-rows] duration-500 ease-[cubic-bezier(.2,.8,.2,1)]', on ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]')}>
               <div className="overflow-hidden">
-                <p className={cx('max-w-[640px] pb-7 text-[13px] leading-[1.65] text-muted transition-all duration-500 ease-out', on ? 'translate-y-0 opacity-100' : '-translate-y-2 opacity-0')}>{a}</p>
+                <p className={cx('max-w-[640px] pb-7 text-[13px] leading-[1.6] text-muted-strong transition-all duration-500 ease-out', on ? 'translate-y-0 opacity-100' : '-translate-y-2 opacity-0')}>{a}</p>
               </div>
             </div>
           </div>

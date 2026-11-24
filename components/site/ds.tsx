@@ -2,6 +2,7 @@ import Link from 'next/link'
 import Icon from '@/components/rc/Icon'
 import { cx } from './castings/parts'
 import ExpandCard from './ExpandCard'
+import { FEATURE_POINTS } from '@/lib/site/featurePoints'
 
 // The website design system (from the Castings section, see DESIGN.md → "Website"). Server-safe.
 // Re-exports the card parts so every page builds from the same pieces.
@@ -39,7 +40,7 @@ export function SectionHeader({ eyebrow, title, sub, actions, light, level = 2, 
 type PillVariant = 'forest' | 'outline' | 'lime' | 'outline-light'
 const PILL: Record<PillVariant, string> = {
   forest: 'bg-forest text-bg hover:bg-lime hover:text-ink',
-  outline: 'border-[1.5px] border-forest text-forest hover:bg-forest hover:text-bg',
+  outline: 'border border-line-strong bg-bg text-ink hover:border-forest hover:bg-forest hover:text-lime',
   lime: 'bg-lime text-ink hover:bg-bg',
   'outline-light': 'border-[1.5px] border-white/40 text-bg hover:border-lime hover:bg-lime hover:text-ink',
 }
@@ -68,8 +69,8 @@ export function SandCard({ children, dark, className, as: As = 'div' }: { childr
 }
 
 // Icon-led small card: icon + title, the + expands the detail. (href/label kept for older call sites.)
-export function IconCard({ icon, tone = 'bg-lime', title, body, dark }: { icon: string; tone?: string; title: string; body: string; href?: string; label?: string; dark?: boolean }) {
-  return <ExpandCard icon={icon} tone={tone} title={title} body={body} dark={dark} />
+export function IconCard({ icon, tone = 'bg-lime', title, body, points, dark }: { icon: string; tone?: string; title: string; body: string; points?: readonly string[]; href?: string; label?: string; dark?: boolean }) {
+  return <ExpandCard icon={icon} tone={tone} title={title} body={body} points={points ?? FEATURE_POINTS[title]} dark={dark} />
 }
 
 // Closing call-to-action band: Forest card with the lime stripe band

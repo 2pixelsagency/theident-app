@@ -70,7 +70,7 @@ export function Cta({ href, children, variant = 'lime', arrow = true }: { href: 
   // Pill buttons (website design system): Forest filled, outline, Lime, outline-on-dark
   const cls = variant === 'lime' ? 'bg-lime text-ink hover:bg-forest hover:text-lime'
     : variant === 'dark' ? 'bg-forest text-bg hover:bg-lime hover:text-ink'
-    : variant === 'outline' ? 'border-[1.5px] border-forest text-forest hover:bg-forest hover:text-bg'
+    : variant === 'outline' ? 'border border-line-strong bg-bg text-ink hover:border-forest hover:bg-forest hover:text-lime'
     : 'border-[1.5px] border-white/40 text-bg hover:border-lime hover:bg-lime hover:text-ink'
   return (
     <Link href={href} className={'group inline-flex min-h-12 cursor-pointer items-center justify-center gap-2 rounded-full px-6 text-[16px] font-semibold transition-[background-color,color,border-color,transform] duration-300 ease-out active:scale-[.98] ' + cls}>

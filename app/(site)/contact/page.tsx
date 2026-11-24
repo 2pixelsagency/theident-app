@@ -22,7 +22,7 @@ export default function ContactPage() {
           actions={<Pill href={'mailto:' + SUPPORT_EMAIL} arrow>{SUPPORT_EMAIL}</Pill>} />
       </Container>
       <Container className="pb-28">
-        <ul className="grid gap-6 [grid-template-columns:repeat(auto-fit,minmax(min(100%,280px),1fr))]">
+        <ul className="grid gap-8 lg:gap-10 [grid-template-columns:repeat(auto-fit,minmax(min(100%,280px),1fr))]">
           {TOPICS.map(([title, body], i) => (
             <SandCard key={title} as="li" dark={i === TOPICS.length - 1} className="flex flex-col gap-3">
               <div className="flex items-center justify-between">

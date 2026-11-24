@@ -22,7 +22,7 @@ export default function FeaturePage({ eyebrow, title, intro, cta, plans, groups,
       {groups.map((g, gi) => (
         <Container key={g.title} className="py-16 md:py-20">
           <SectionHeader eyebrow={String(gi + 1).padStart(2, '0') + ' · ' + eyebrow} title={g.title} />
-          <ul className="grid items-start gap-6 [grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr))]">
+          <ul className="grid items-start gap-8 lg:gap-10 [grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr))]">
             {g.features.map((f, i) => <IconCard key={f.title} icon={f.icon} tone={TONES[(i + gi) % TONES.length]} title={f.title} body={f.body} />)}
           </ul>
         </Container>
