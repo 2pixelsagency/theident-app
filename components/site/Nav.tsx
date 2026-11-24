@@ -10,7 +10,8 @@ import { supabase } from '@/lib/supabase'
 
 const NAV = [
   { href: '/performers', label: 'Performers' },
-  { href: '/casting', label: 'Casting' },
+  { href: '/casting', label: 'Casting directors' },
+  { href: '/jobs', label: 'Browse roles' },
   { href: '/people', label: 'Browse talent' },
   { href: '/pricing', label: 'Pricing' },
   { href: '/blog', label: 'Blog' },

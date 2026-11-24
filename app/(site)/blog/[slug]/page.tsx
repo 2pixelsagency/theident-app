@@ -4,6 +4,7 @@ import { notFound } from 'next/navigation'
 import { Container, Cta } from '@/components/site/Chrome'
 import { CtaBand, Eyebrow, cx } from '@/components/site/ds'
 import JsonLd from '@/components/site/JsonLd'
+import BlogArt from '@/components/site/BlogArt'
 import { POSTS, postBySlug } from '@/lib/site/blog'
 import { SITE_URL } from '@/lib/supabaseServer'
 
@@ -41,8 +42,8 @@ export default async function BlogPost({ params }: Props) {
         <h1 className="mt-4 font-display text-[40px] font-bold leading-[1.04] tracking-[-0.03em] md:text-[56px]">{post.title}</h1>
         <p className="mt-4 text-[15px] leading-[1.6] text-muted-strong">{post.description}</p>
         <p className="mt-4 text-[12px] font-medium text-muted">By The Ident team · {fmt(post.date)} · {post.readMins} min read</p>
-        <div className={cx('relative mt-8 h-[180px] overflow-hidden rounded-[var(--radius-feature)] md:h-[240px]', post.tone)}>
-          <div aria-hidden="true" className="absolute inset-x-0 top-[36%] h-[90px]" style={{ backgroundImage: 'var(--stripes-light)' }} />
+        <div className={cx('relative mt-8 h-[220px] overflow-hidden rounded-[var(--radius-feature)] md:h-[300px]', post.tone)}>
+          <BlogArt variant={post.art} />
         </div>
         <div className="mt-10 space-y-8">
           {post.blocks.map((b, i) => (

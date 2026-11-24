@@ -3,6 +3,7 @@ import Link from 'next/link'
 import { Container } from '@/components/site/Chrome'
 import { SectionHeader, cx } from '@/components/site/ds'
 import JsonLd from '@/components/site/JsonLd'
+import BlogArt from '@/components/site/BlogArt'
 import { POSTS } from '@/lib/site/blog'
 import { SITE_URL } from '@/lib/supabaseServer'
 
@@ -24,7 +25,7 @@ export default function BlogIndex() {
         <SectionHeader level={1} eyebrow="Blog" title="Guides for working performers" sub="Self-tapes, recalls, showreels and money — practical advice from The Ident team." />
         <Link href={'/blog/' + lead.slug} className="group grid overflow-hidden rounded-[var(--radius-feature)] bg-sand md:grid-cols-[1.1fr_1fr]">
           <div className={cx('relative min-h-[220px] md:min-h-[340px]', lead.tone)}>
-            <div aria-hidden="true" className="absolute inset-x-0 top-[38%] h-[120px]" style={{ backgroundImage: 'var(--stripes-light)' }} />
+            <BlogArt variant={lead.art} />
             <span className="absolute left-7 top-7 rounded-[10px] bg-surface px-3 py-1.5 text-[13px] font-semibold">{lead.tag}</span>
           </div>
           <div className="flex flex-col justify-center gap-3 p-7 md:p-10">
@@ -37,8 +38,8 @@ export default function BlogIndex() {
           {rest.map(p => (
             <li key={p.slug}>
               <Link href={'/blog/' + p.slug} className="group flex h-full flex-col overflow-hidden rounded-[var(--radius-feature)] bg-sand">
-                <div className={cx('relative h-[160px]', p.tone)}>
-                  <div aria-hidden="true" className="absolute inset-x-0 top-[34%] h-[64px]" style={{ backgroundImage: 'var(--stripes-light)' }} />
+                <div className={cx('relative h-[180px]', p.tone)}>
+                  <BlogArt variant={p.art} />
                   <span className="absolute left-6 top-6 rounded-[10px] bg-surface px-3 py-1.5 text-[13px] font-semibold">{p.tag}</span>
                 </div>
                 <div className="flex flex-1 flex-col gap-2 p-6 md:p-7">
