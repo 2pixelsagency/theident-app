@@ -75,7 +75,7 @@ export default function PublicBoard() {
             <span className="size-2 rounded-full bg-lime ring-2 ring-forest/15" /> {loading ? 'Loading roles…' : jobs.length + ' live role' + (jobs.length === 1 ? '' : 's')}
           </p>
           <h1 className="mt-4 min-h-[3.15em] max-w-[680px] sm:min-h-[2.1em] text-[38px] leading-[1.05] sm:text-[52px]"><Typewriter text="Castings, auditions & paid work for " words={['performers', 'actors', 'dancers', 'singers', 'musicians']} /></h1>
-          <p className="rise mt-3 max-w-[560px] text-[16px] text-muted" style={{ '--d': '900ms' } as React.CSSProperties}>Theatre, screen, commercials and dance — posted by casting directors and producers. Free to browse — join to apply.</p>
+          <p className="rise mt-3 max-w-[560px] text-[13px] leading-[1.6] text-muted" style={{ '--d': '900ms' } as React.CSSProperties}>Theatre, screen, commercials and dance — posted by casting directors and producers. Free to browse — join to apply.</p>
           <div className="rise mt-6 max-w-[560px]" style={{ '--d': '1050ms' } as React.CSSProperties}><SearchField value={q} onChange={setQ} placeholder="Search roles, shows, places…" /></div>
         </div>
       </section>
@@ -113,7 +113,7 @@ export default function PublicBoard() {
             </div>
           )}
           <div className="rounded-[24px] bg-sand p-6">
-            <p className="flex items-center gap-2 text-[15px] font-semibold"><Icon name="megaphone" className="size-5 text-green-ink" /> Casting a show?</p>
+            <p className="flex items-center gap-2 text-[15px] font-semibold"><Icon strokeWidth={2} name="megaphone" className="size-5 text-green-ink" /> Casting a show?</p>
             <p className="mt-1.5 text-sm text-muted">Post a role, review reels and self-tapes, and book your cast in one place.</p>
             <Link href={signedIn ? '/postings/new' : '/welcome?side=cast'} className="mt-3 inline-flex text-sm font-semibold text-green-ink">Post a casting →</Link>
           </div>

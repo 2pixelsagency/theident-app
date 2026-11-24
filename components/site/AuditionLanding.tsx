@@ -1,7 +1,7 @@
 import Link from 'next/link'
 import Icon from '@/components/rc/Icon'
 import { Container, Cta, Eyebrow, SECTION } from '@/components/site/Chrome'
-import { SectionHeader } from '@/components/site/ds'
+import { ARROW_BOX, ArrowGlyph, SectionHeader } from '@/components/site/ds'
 import Faq from '@/components/site/Faq'
 import JsonLd from '@/components/site/JsonLd'
 import { supabaseServer, SITE_URL } from '@/lib/supabaseServer'
@@ -51,9 +51,7 @@ function RoleRow({ j }: { j: Job }) {
             {days != null && <span>{days <= 0 ? 'Closes today' : `Closes in ${days} day${days === 1 ? '' : 's'}`}</span>}
           </p>
         </div>
-        <span className="flex size-11 shrink-0 items-center justify-center rounded-full border border-line transition-all duration-300 group-hover:border-forest group-hover:bg-forest group-hover:text-lime">
-          <Icon name="arrow-right" className="size-4 transition-transform duration-300 group-hover:translate-x-0.5" />
-        </span>
+        <span className={ARROW_BOX}><ArrowGlyph /></span>
       </Link>
     </li>
   )
@@ -102,7 +100,7 @@ export default function AuditionLanding({ type, city, roles }: { type?: Audition
           <nav aria-label="Breadcrumb" className="mb-6 flex flex-wrap items-center gap-2 text-[14px] text-muted">
             {crumbs.map(([name, href], i) => (
               <span key={href} className="flex items-center gap-2">
-                {i > 0 && <Icon name="chevron-right" className="size-3.5" />}
+                {i > 0 && <Icon strokeWidth={2} name="chevron-right" className="size-3.5" />}
                 {i === crumbs.length - 1 ? <span className="text-ink">{name}</span> : <Link href={href} className="hover:text-ink">{name}</Link>}
               </span>
             ))}
@@ -118,7 +116,7 @@ export default function AuditionLanding({ type, city, roles }: { type?: Audition
         ) : (
           <div className="rounded-[var(--radius-feature)] bg-sand p-8 md:p-10">
             <h2 className="font-display text-[26px] font-bold tracking-[-0.02em]">No open {type ? type.plural : 'roles'}{city ? ' in ' + city.name : ''} this minute</h2>
-            <p className="mt-2 max-w-[560px] text-[16px] text-muted-strong">New castings are added every day. Join The Ident and get notified the moment one matches you — or browse every open role now.</p>
+            <p className="mt-2 max-w-[560px] text-[13px] leading-[1.6] text-muted-strong">New castings are added every day. Join The Ident and get notified the moment one matches you — or browse every open role now.</p>
             <div className="mt-6 flex flex-wrap gap-3"><Cta href="/jobs" variant="dark">Browse all roles</Cta><Cta href="/start?role=performer" variant="outline" arrow={false}>Join free for 7 days</Cta></div>
           </div>
         )}

@@ -23,14 +23,14 @@ export default function PricingPage() {
     return (
       <SandCard as="article" dark={dark} className="flex flex-col gap-3 shadow-[0_1px_0_rgb(21_33_28/0.04),0_24px_48px_-32px_rgb(21_33_28/0.25)]">
         <div className="flex flex-wrap items-center gap-2.5">
-          <IconBadge tone={dark ? 'bg-lime' : 'bg-forest'}><Icon name={kind === 'casting' ? 'megaphone' : 'user'} className={'size-5 ' + (dark ? 'text-forest' : 'text-lime')} /></IconBadge>
+          <IconBadge tone={dark ? 'bg-lime' : 'bg-forest'}><Icon strokeWidth={2} name={kind === 'casting' ? 'megaphone' : 'user'} className={'size-5 ' + (dark ? 'text-forest' : 'text-lime')} /></IconBadge>
           <span className="font-display text-[20px] font-bold">{p.name}</span>
           <Tag light={dark}>{kind === 'casting' ? 'Casting teams' : 'Performers'}</Tag>
         </div>
         <p className="mt-6 flex items-start gap-1"><span className="mt-3 text-[22px] font-semibold">£</span><span className="font-display text-[80px] font-extrabold leading-none tracking-[-0.04em] md:text-[88px]">{(p.pence / 100).toFixed(2)}</span></p>
-        <p className={'text-[16px] ' + (dark ? 'text-on-dark-muted' : 'text-muted-strong')}>per month · {TRIAL_DAYS} days free · cancel any time</p>
+        <p className={'text-[13px] ' + (dark ? 'text-on-dark-muted' : 'text-muted-strong')}>per month · {TRIAL_DAYS} days free · cancel any time</p>
         <ul className={'mt-6 flex-1 rounded-[20px] p-5 ' + (dark ? 'bg-forest-raised' : 'bg-surface')}>
-          {p.features.map(f => <li key={f} className={'flex items-start gap-3 border-b py-3 text-[15px] last:border-0 ' + (dark ? 'border-white/10' : 'border-line-soft')}><Icon name="check" className={'mt-1 size-4 shrink-0 ' + (dark ? 'text-lime' : 'text-forest')} />{f}</li>)}
+          {p.features.map(f => <li key={f} className={'flex items-start gap-3 border-b py-3 text-[13px] last:border-0 ' + (dark ? 'border-white/10' : 'border-line-soft')}><Icon strokeWidth={2} name="check" className={'mt-1 size-4 shrink-0 ' + (dark ? 'text-lime' : 'text-forest')} />{f}</li>)}
         </ul>
         <Pill href={href} variant={dark ? 'lime' : 'forest'} arrow className="mt-6 w-full">{cta}</Pill>
       </SandCard>
@@ -50,7 +50,7 @@ export default function PricingPage() {
         <div className="flex flex-col gap-4 md:sticky md:top-28 md:self-start">
           <Eyebrow>FAQ</Eyebrow>
           <h2 className="font-display text-[38px] font-bold leading-[1.02] tracking-[-0.03em] md:text-[56px]">Questions, answered</h2>
-          <p className="text-muted-strong">Something else? <Link href="/contact" className="font-semibold text-forest underline">Get in touch</Link>.</p>
+          <p className="text-[13px] text-muted-strong">Something else? <Link href="/contact" className="font-semibold text-forest underline">Get in touch</Link>.</p>
         </div>
         <Faq items={FAQ as [string, string][]} />
       </Container>

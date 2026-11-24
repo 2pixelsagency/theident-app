@@ -34,7 +34,7 @@ function RoleCard({ j, poster, applied }: { j: Job; poster?: Poster; applied: nu
           {closes && closes !== 'Closed' && <span className="text-[12px] font-medium text-muted">{closes}</span>}
         </div>
         <p className="mt-4 font-display text-[22px] font-bold leading-[1.15] tracking-[-0.01em] [display:-webkit-box] [-webkit-box-orient:vertical] [-webkit-line-clamp:2] overflow-hidden">{jobTitle(j)}</p>
-        <p className="mt-1.5 flex items-center gap-1.5 text-[14px] text-muted"><Icon name="pin" className="size-3.5 shrink-0" /><span className="truncate">{j.location || 'Location TBC'}</span></p>
+        <p className="mt-1.5 flex items-center gap-1.5 text-[14px] text-muted"><Icon strokeWidth={2} name="pin" className="size-3.5 shrink-0" /><span className="truncate">{j.location || 'Location TBC'}</span></p>
         <div className="mt-5 flex items-end justify-between gap-3 rounded-[16px] bg-surface p-4">
           <div>
             <p className="font-display text-[24px] font-bold leading-none tracking-[-0.02em]">{pay || 'Unpaid / TBC'}</p>
@@ -47,7 +47,7 @@ function RoleCard({ j, poster, applied }: { j: Job; poster?: Poster; applied: nu
         <div className="mt-auto flex items-center gap-2.5 pt-5">
           <Avatar src={poster?.picture_url} name={who} size={28} />
           <span className="min-w-0 flex-1 truncate text-[13px] text-muted">{community ? 'Community · ' : ''}{who}</span>
-          <span className="inline-flex items-center gap-1 text-[13px] font-semibold text-green-ink opacity-0 transition duration-300 group-hover:opacity-100">View role <Icon name="arrow-right" className="cta-arrow size-3.5" /></span>
+          <span className="inline-flex items-center gap-1 text-[13px] font-semibold text-green-ink opacity-0 transition duration-300 group-hover:opacity-100">View role <Icon strokeWidth={2} name="arrow-right" className="cta-arrow size-3.5" /></span>
         </div>
       </Link>
     </li>
@@ -91,8 +91,8 @@ export default function RolesCarousel({ limit = 12 }: { limit?: number }) {
   const go = (dir: number) => track.current?.scrollBy({ left: dir * Math.min(track.current.clientWidth * 0.8, 760), behavior: 'smooth' })
   const arrow = (dir: number, disabled: boolean) => (
     <button type="button" aria-label={dir < 0 ? 'Previous roles' : 'Next roles'} onClick={() => go(dir)} disabled={disabled}
-      className="group inline-flex size-14 items-center justify-center rounded-full border border-ink/15 bg-surface text-ink shadow-[0_10px_24px_-16px_rgb(18_49_39/0.5)] transition duration-300 hover:scale-105 hover:border-forest hover:bg-forest hover:text-lime disabled:pointer-events-none disabled:opacity-35">
-      <Icon name={dir < 0 ? 'arrow-left' : 'arrow-right'} className="size-5" />
+      className="group inline-flex size-12 items-center justify-center rounded-[14px] border border-line-strong bg-bg text-ink transition-colors duration-300 hover:border-forest hover:bg-forest hover:text-lime disabled:pointer-events-none disabled:opacity-35">
+      <Icon strokeWidth={2} name={dir < 0 ? 'arrow-left' : 'arrow-right'} className="size-5" />
     </button>
   )
 
@@ -113,7 +113,7 @@ export default function RolesCarousel({ limit = 12 }: { limit?: number }) {
           <li>
             <Link href={kind === 'side' ? '/jobs' : '/jobs'} className="group flex h-full min-h-[260px] flex-col justify-between rounded-[14px] bg-forest p-6 text-white">
               <span className="text-[24px] font-semibold leading-tight">See every<br />live {kind === 'side' ? 'side hustle' : 'role'}</span>
-              <span className="inline-flex items-center gap-2 text-[14px] font-semibold text-lime">Browse the board <Icon name="arrow-right" className="cta-arrow size-4" /></span>
+              <span className="inline-flex items-center gap-2 text-[14px] font-semibold text-lime">Browse the board <Icon strokeWidth={2} name="arrow-right" className="cta-arrow size-4" /></span>
             </Link>
           </li>
         </> : Array.from({ length: 5 }).map((_, i) => <li key={i} className="h-[260px] animate-pulse rounded-[14px] bg-chip" />)}

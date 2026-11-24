@@ -38,7 +38,7 @@ export default function MarketingHome() {
       <section className={'overflow-x-clip ' + SECTION}>
         <Container>
           <SectionHead eyebrow="Live now" title="Roles casting this week" sub="Real castings from casting directors, producers and the community — updated as they’re posted."
-            action={<Link href="/jobs" className="inline-flex items-center gap-1.5 text-[15px] font-semibold text-green-ink">All roles <Icon name="arrow-right" className="size-4" /></Link>} />
+            action={<Link href="/jobs" className="inline-flex items-center gap-1.5 text-[15px] font-semibold text-green-ink">All roles <Icon strokeWidth={2} name="arrow-right" className="size-4" /></Link>} />
         </Container>
         <RolesCarousel />
       </section>

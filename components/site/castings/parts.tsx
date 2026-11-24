@@ -30,7 +30,7 @@ export function FeatureCard({ size, dark, header, title, body, children }: {
       dark ? 'bg-forest text-bg' : 'bg-sand text-ink')}>
       {header}
       <h3 className={cx('font-display font-bold tracking-[-0.02em]', size === 'lg' ? 'mt-1 text-[28px] leading-[1.1] md:text-[32px]' : 'mt-1.5 text-[26px] leading-[1.15]')}>{title}</h3>
-      <p className={cx('leading-[1.55]', size === 'lg' ? 'text-[17px]' : 'text-[16px] leading-[1.5]', dark ? 'text-on-dark-muted' : 'text-muted-strong')}>{body}</p>
+      <p className={cx('leading-[1.6]', size === 'lg' ? 'text-[14px]' : 'text-[13px]', dark ? 'text-on-dark-muted' : 'text-muted-strong')}>{body}</p>
       {children}
     </article>
   )
