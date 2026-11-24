@@ -9,7 +9,7 @@ export { cx, ArrowLink, IconBadge, FeatureCard, Panel, FloatFrame } from './cast
 
 export function Eyebrow({ children, light }: { children: React.ReactNode; light?: boolean }) {
   return (
-    <p className={cx('flex items-center gap-2 text-[12px] font-semibold uppercase tracking-[0.14em]', light ? 'text-lime' : 'text-forest')}>
+    <p className={cx('flex items-center gap-[5px] text-[11px] font-semibold uppercase tracking-[0.14em]', light ? 'text-lime' : 'text-forest')}>
       <span aria-hidden="true" className={cx('size-1.5 rounded-full', light ? 'bg-lime' : 'bg-forest')} />{children}
     </p>
   )

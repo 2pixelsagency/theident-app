@@ -14,7 +14,7 @@ export default function WorkedWith() {
   return (
     <section>
       <div className="mx-auto max-w-[1248px] px-6 py-20 text-center md:py-28">
-        <p className="eyebrow text-[12px] font-semibold uppercase tracking-[0.14em] text-muted">Used by professionals around the world</p>
+        <p className="eyebrow text-[11px] font-semibold uppercase tracking-[0.14em] text-muted">Used by professionals around the world</p>
         <ul className="scrollbar-none -mx-6 mt-10 flex items-center gap-x-12 overflow-x-auto px-6 md:mx-0 md:flex-wrap md:justify-center md:gap-x-16 md:gap-y-8 md:overflow-visible md:px-0 lg:gap-x-20">
           {LOGOS.map(l => (
             <li key={l.name} className="flex shrink-0 items-center">
