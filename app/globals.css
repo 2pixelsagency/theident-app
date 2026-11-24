@@ -125,6 +125,13 @@ button:not(:disabled), [role="button"]:not([aria-disabled="true"]), summary, lab
 .group\/cta:hover .logo-mark .lm-2 { transform: translate(-.3px, .3px); }
 @media (prefers-reduced-motion: reduce) { .cta-mark { animation: none; } }
 
+/* Phones: cards stack as you scroll — each sticks just under the nav, slightly lower than the last */
+@media (max-width: 767px) {
+  .stack-mobile > *, .stack-item { position: sticky; top: calc(84px + var(--si, 0) * 12px); }
+  .stack-mobile > *, .stack-item > * { box-shadow: 0 -14px 30px -22px rgb(18 49 39 / .45); }
+  .stack-mobile > :nth-child(2) { --si: 1 } .stack-mobile > :nth-child(3) { --si: 2 } .stack-mobile > :nth-child(4) { --si: 3 } .stack-mobile > :nth-child(n+5) { --si: 4 }
+}
+
 /* Section labels: a small dot before the text */
 .eyebrow { display: inline-flex; align-items: center; gap: .45em; }
 .eyebrow::before { content: ''; width: .5em; height: .5em; border-radius: 9999px; background: currentColor; flex: none; }

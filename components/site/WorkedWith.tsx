@@ -15,7 +15,18 @@ export default function WorkedWith() {
     <section>
       <div className="mx-auto max-w-[1248px] px-6 pb-20 pt-2 text-center md:pb-28">
         <p className="eyebrow text-[11px] font-semibold uppercase tracking-[0.14em] text-muted">Used by professionals around the world</p>
-        <ul className="scrollbar-none -mx-6 mt-10 flex items-center gap-x-12 overflow-x-auto px-6 md:mx-0 md:flex-wrap md:justify-center md:gap-x-16 md:gap-y-8 md:overflow-visible md:px-0 lg:gap-x-20">
+        {/* Mobile: an endless, non-scrollable marquee (the list twice, so the loop is seamless) */}
+        <div data-no-reveal className="marquee-fade -mx-6 mt-10 overflow-hidden md:hidden" aria-hidden="true">
+          <ul className="marquee items-center" style={{ '--speed': '28s' } as React.CSSProperties}>
+            {[...LOGOS, ...LOGOS].map((l, i) => (
+              <li key={i} className="flex shrink-0 items-center px-6">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={l.src} alt="" style={{ height: Math.round(l.h * 0.6) }} className="w-auto max-w-none" loading="lazy" />
+              </li>
+            ))}
+          </ul>
+        </div>
+        <ul className="mt-10 hidden items-center md:flex md:flex-wrap md:justify-center md:gap-x-16 md:gap-y-8 lg:gap-x-20">
           {LOGOS.map(l => (
             <li key={l.name} className="flex shrink-0 items-center">
               {/* eslint-disable-next-line @next/next/no-img-element */}

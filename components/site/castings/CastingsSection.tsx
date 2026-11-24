@@ -17,15 +17,18 @@ export default function CastingsSection({ castings = DEMO.castings, application 
           <p className="max-w-[560px] text-[15px] leading-[1.6] text-muted-strong">Apply with your reel in a tap, track every self-tape and recall, and see your next booking before your agent calls.</p>
         </div>
 
-        <div className="grid gap-8 lg:gap-10 [grid-template-columns:repeat(auto-fit,minmax(min(100%,480px),1fr))]">
-          <TrackerCard castings={castings} />
-          <QuickApplyCard application={application} />
+        {/* On phones the five cards stack: each one sticks under the nav and the next slides up over it */}
+        <div className="flex flex-col gap-8 lg:gap-10">
+        <div className="grid gap-8 max-md:contents lg:gap-10 [grid-template-columns:repeat(auto-fit,minmax(min(100%,480px),1fr))]">
+          <div className="stack-item grid" style={{ '--si': 0 } as React.CSSProperties}><TrackerCard castings={castings} /></div>
+          <div className="stack-item grid" style={{ '--si': 1 } as React.CSSProperties}><QuickApplyCard application={application} /></div>
         </div>
 
-        <div className="grid gap-8 lg:gap-10 [grid-template-columns:repeat(auto-fit,minmax(min(100%,320px),1fr))]">
-          <GoalsCard goals={goals} />
-          <DiaryCard diary={diary} />
-          <StatsCard stats={stats} />
+        <div className="grid gap-8 max-md:contents lg:gap-10 [grid-template-columns:repeat(auto-fit,minmax(min(100%,320px),1fr))]">
+          <div className="stack-item grid" style={{ '--si': 2 } as React.CSSProperties}><GoalsCard goals={goals} /></div>
+          <div className="stack-item grid" style={{ '--si': 3 } as React.CSSProperties}><DiaryCard diary={diary} /></div>
+          <div className="stack-item grid" style={{ '--si': 4 } as React.CSSProperties}><StatsCard stats={stats} /></div>
+        </div>
         </div>
       </div>
     </section>
