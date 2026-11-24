@@ -1,5 +1,4 @@
 import Link from 'next/link'
-import Replay from '../Replay'
 // Server-safe class joiner (the app's cx lives in a client module)
 export const cx = (...c: (string | false | null | undefined)[]) => c.filter(Boolean).join(' ')
 
@@ -26,7 +25,7 @@ export function FeatureCard({ size, dark, header, title, body, children }: {
   size: 'lg' | 'sm'; dark?: boolean; header: React.ReactNode; title: string; body: string; children: React.ReactNode
 }) {
   return (
-    <article data-reveal data-card className={cx('flex flex-col rounded-[var(--radius-feature)]',
+    <article data-reveal className={cx('group/card flex flex-col rounded-[var(--radius-feature)]',
       size === 'lg' ? 'gap-3.5 p-6 md:p-8' : 'gap-3 p-6 md:p-7',
       dark ? 'bg-forest text-bg' : 'bg-sand text-ink')}>
       {header}
@@ -41,11 +40,9 @@ export function Panel({ size, background, stripes, children }: { size: 'lg' | 's
   return (
     <div className={cx('relative isolate flex items-center justify-center overflow-hidden', size === 'lg' ? 'mt-[18px] h-[360px] rounded-[24px]' : 'mt-3 h-[280px] rounded-[22px]')}>
       <div aria-hidden="true" className="absolute inset-0 -z-10" style={{ backgroundImage: background }} />
-      <Replay>
-        <div aria-hidden="true" className={cx('hiw-stripes absolute inset-x-0', size === 'lg' ? 'top-[37%] h-[124px]' : 'top-[34%] h-[100px]')}
+      <div aria-hidden="true" className={cx('absolute inset-x-0', size === 'lg' ? 'top-[37%] h-[124px]' : 'top-[34%] h-[100px]')}
           style={{ backgroundImage: stripes === 'dark' ? 'var(--stripes-dark)' : 'var(--stripes-light)' }} />
-        {children}
-      </Replay>
+      {children}
     </div>
   )
 }
@@ -53,7 +50,7 @@ export function Panel({ size, background, stripes, children }: { size: 'lg' | 's
 // Translucent outer border (8px padding) around the inner white card
 export function FloatFrame({ size, onDark, children }: { size: 'lg' | 'sm'; onDark?: boolean; children: React.ReactNode }) {
   return (
-    <div className={cx('hiw-frame relative border', size === 'lg' ? 'w-[94%] max-w-[440px] rounded-[26px] p-2 sm:w-[82%]' : 'w-[88%] rounded-[22px] p-[7px] sm:w-[84%]',
+    <div className={cx('relative border', size === 'lg' ? 'w-[94%] max-w-[440px] rounded-[26px] p-2 sm:w-[82%]' : 'w-[88%] rounded-[22px] p-[7px] sm:w-[84%]',
       onDark ? 'border-white/[0.22] bg-white/[0.14]' : size === 'lg' ? 'border-white/70 bg-white/45' : 'border-white/80 bg-white/50')}>
       <div className={cx('bg-surface text-ink', size === 'lg' ? 'rounded-[20px]' : 'rounded-[16px] p-[18px]')}>{children}</div>
     </div>

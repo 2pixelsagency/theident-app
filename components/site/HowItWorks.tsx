@@ -1,6 +1,4 @@
-'use client'
-
-import { useEffect, useState } from 'react'
+import TabShowcase from './TabShowcase'
 import Icon from '@/components/rc/Icon'
 import { cx } from './castings/parts'
 
@@ -109,59 +107,9 @@ function ApplyWidget() {
   )
 }
 
-const WIDGETS = [ProfileWidget, ApplyWidget, RecallWidget]
 
-const AUTOPLAY_MS = 6000
-
+// The homepage "Three steps" uses the shared tab showcase; it opens on the recall step
 export default function HowItWorks() {
-  const [step, setStep] = useState(2)
-  // Calendly-style autoplay: stops for good once someone picks a tab; off for reduced motion.
-  const [auto, setAuto] = useState(false)
-  useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) setAuto(true)
-  }, [])
-  // Advance on a timer (no visible bar); paused while the pointer or focus is inside
-  const [paused, setPaused] = useState(false)
-  useEffect(() => {
-    if (!auto || paused) return
-    const t = setTimeout(() => setStep(v => (v + 1) % STEPS.length), AUTOPLAY_MS)
-    return () => clearTimeout(t)
-  }, [auto, paused, step])
-  const W = WIDGETS[step]
-  const pick = (i: number) => { setAuto(false); setStep(i) }
-  return (
-    <div onMouseEnter={() => setPaused(true)} onMouseLeave={() => setPaused(false)} onFocus={() => setPaused(true)} onBlur={() => setPaused(false)} className="hiw-root grid gap-6 rounded-[var(--radius-feature)] bg-sand p-3 md:p-4 lg:grid-cols-[minmax(280px,380px)_1fr]">
-      <div role="tablist" aria-label="How it works" className="hiw-tabs flex flex-col gap-2 p-1 md:p-2">
-        {STEPS.map((s, i) => {
-          const on = step === i
-          return (
-            <button key={s.n} type="button" role="tab" id={'hiw-tab-' + i} aria-selected={on} aria-controls="hiw-panel" onClick={() => pick(i)}
-              className={cx('group/tab relative flex gap-4 overflow-hidden rounded-[22px] p-4 text-left transition-[background-color,box-shadow,translate] duration-500 ease-[cubic-bezier(.2,.8,.2,1)] md:p-5',
-                on ? 'bg-surface shadow-[0_16px_32px_-24px_rgb(21_33_28/0.35)]' : 'hover:translate-x-1 hover:bg-white/50')}>
-              <span className={cx('flex size-10 shrink-0 items-center justify-center rounded-full font-display text-[15px] font-bold transition-[background-color,color,rotate,scale] duration-500',
-                on ? s.badge + ' scale-110' : 'bg-sand-2 text-muted-strong group-hover/tab:-rotate-[8deg]')}>{s.n}</span>
-              <span className="min-w-0">
-                <span className="block font-display text-[20px] font-bold leading-tight tracking-[-0.02em]">{s.title}</span>
-                <span className={cx('grid transition-[grid-template-rows] duration-500', on ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]')}>
-                  <span className="overflow-hidden"><span className="block pt-1.5 text-[13px] leading-[1.6] text-muted-strong">{s.body}</span></span>
-                </span>
-              </span>
-            </button>
-          )
-        })}
-      </div>
-      <div id="hiw-panel" role="tabpanel" aria-labelledby={'hiw-tab-' + step} className="relative isolate flex min-h-[420px] items-center justify-center overflow-hidden rounded-[24px] p-4 sm:p-8">
-        {/* each step's colour is its own layer, so changing tab cross-fades rather than jumps */}
-        {STEPS.map((s, i) => (
-          <div key={s.n} aria-hidden="true" className={cx('absolute inset-0 -z-10 transition-[opacity,scale] duration-700 ease-[cubic-bezier(.2,.8,.2,1)]', step === i ? 'scale-100 opacity-100' : 'scale-110 opacity-0')}
-            style={{ backgroundImage: s.panel }} />
-        ))}
-        <div key={'stripes' + step} aria-hidden="true" className="hiw-stripes absolute inset-x-0 top-[38%] h-[124px]" style={{ backgroundImage: 'var(--stripes-light)' }} />
-        <div key={step} className="hiw-frame relative w-full max-w-[680px] rounded-[26px] border border-white/70 bg-white/45 p-2 shadow-[0_30px_60px_-36px_rgb(21_33_28/0.45)]">
-          <W />
-        </div>
-      </div>
-    </div>
-  )
+  return <TabShowcase label="How it works" start={2}
+    steps={STEPS.map((st, i) => ({ title: st.title, body: st.body, badge: st.badge, panel: st.panel, widget: [<ProfileWidget key="p" />, <ApplyWidget key="a" />, <RecallWidget key="r" />][i] }))} />
 }

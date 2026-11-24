@@ -21,7 +21,7 @@ export default function ExpandCard({ icon, tone = 'bg-lime', title, body, points
         )}
       </div>
       <h3 className="mt-5 font-display text-[22px] font-bold leading-[1.15] tracking-[-0.02em] md:text-[24px]">{title}</h3>
-      <p className={cx('mt-2 text-[13px] leading-[1.6]', dark ? 'text-on-dark-muted' : 'text-muted-strong')}>{body}</p>
+      <p className={cx('mt-2 min-h-[calc(1.6em*3)] text-[13px] leading-[1.6]', dark ? 'text-on-dark-muted' : 'text-muted-strong')}>{body}</p>
       {points.length > 0 && (
         <div id={id} role="region" aria-label={'What’s included: ' + title} className={cx('grid transition-[grid-template-rows] duration-500 ease-[cubic-bezier(.2,.8,.2,1)]', open ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]')}>
           <div className="overflow-hidden">

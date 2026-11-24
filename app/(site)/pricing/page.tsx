@@ -22,7 +22,7 @@ export default function PricingPage() {
     <>
       <JsonLd data={{ '@context': 'https://schema.org', '@type': 'FAQPage', mainEntity: FAQ.map(([q, a]) => ({ '@type': 'Question', name: q, acceptedAnswer: { '@type': 'Answer', text: a } })) }} />
       <Container className="pb-4 pt-32 md:pt-40">
-        <SectionHeader level={1} eyebrow="Pricing" title={<>Two plans.<br />No commission. Ever.</>} sub={`One plan for performers, one for casting teams. Try either free for ${TRIAL_DAYS} days — browsing roles is always free.`} />
+        <SectionHeader center level={1} eyebrow="Pricing" title={<>Two plans.<br />No commission. Ever.</>} sub={`One plan for performers, one for casting teams. Try either free for ${TRIAL_DAYS} days — browsing roles is always free.`} />
         <div className="mx-auto max-w-[880px]">
           <PlanGrid>
             <PlanCard label="For actors, dancers and singers" name="Performer" line="Find roles, apply with your reel and track every casting." value={price(PLANS.performer.pence)} unit="/month"
