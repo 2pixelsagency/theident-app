@@ -114,14 +114,6 @@ export default function EntryScreen() {
 
   return (
     <main className="relative isolate flex min-h-dvh flex-col items-center justify-center overflow-hidden bg-bg px-6 py-[max(32px,env(safe-area-inset-top))] text-ink">
-      {/* Faint frame lines around the form, fading out at the ends (the photo heroes are set aside for now) */}
-      <div aria-hidden="true" className="pointer-events-none absolute inset-0 -z-10 hidden sm:block">
-        <span className="absolute left-1/2 top-0 h-full w-px -translate-x-[240px] bg-gradient-to-b from-transparent via-surface to-transparent" />
-        <span className="absolute left-1/2 top-0 h-full w-px translate-x-[240px] bg-gradient-to-b from-transparent via-surface to-transparent" />
-        <span className="absolute left-0 top-[12%] h-px w-full bg-gradient-to-r from-transparent via-surface to-transparent" />
-        <span className="absolute bottom-[12%] left-0 h-px w-full bg-gradient-to-r from-transparent via-surface to-transparent" />
-      </div>
-
       <div className="flex w-full max-w-[400px] flex-col items-center">
         <Link href="https://www.theident.me/" aria-label="The Ident" className="flex items-center gap-2 font-display text-[22px] font-bold tracking-[-0.03em] text-forest">
           <LogoMark className="size-5" />The Ident

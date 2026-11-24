@@ -13,6 +13,13 @@ export type OnboardingDraft = {
   location: string
   skillIds: number[]
   reelUrl: string
+  reelPoster: string | null // set when the reel was uploaded (not a link)
+  reelDuration: number | null
+  genderId: number | null
+  pronouns: string
+  dateOfBirth: string // yyyy-mm-dd, private — never shown on the profile
+  minAge: string
+  maxAge: string
   openToWork: boolean
   isGraduate: boolean
   graduateSchool: string
@@ -24,7 +31,7 @@ export type OnboardingDraft = {
 const KEY = 'rc:onboarding'
 
 export const emptyDraft = (role: Role = 'performer'): OnboardingDraft => ({
-  role, firstName: '', lastName: '', crafts: [], location: '', skillIds: [], reelUrl: '',
+  role, firstName: '', lastName: '', crafts: [], location: '', skillIds: [], reelUrl: '', reelPoster: null, reelDuration: null, genderId: null, pronouns: '', dateOfBirth: '', minAge: '', maxAge: '',
   openToWork: true, isGraduate: false, graduateSchool: '', graduateYear: '', companyName: '', photo: null,
 })
 
@@ -103,6 +110,14 @@ export async function applyDraft(uid: string): Promise<{ ok: boolean; error?: st
     graduate_school: d.isGraduate ? d.graduateSchool.trim() || null : null,
     graduate_year: d.isGraduate && year ? year : null,
   }
+  if (d.role === 'performer') {
+    const min = parseInt(d.minAge, 10), max = parseInt(d.maxAge, 10)
+    if (d.genderId) update.gender_id = d.genderId
+    if (d.pronouns?.trim()) update.pronouns = d.pronouns.trim().slice(0, 40)
+    if (/^\d{4}-\d{2}-\d{2}$/.test(d.dateOfBirth || '')) update.date_of_birth = d.dateOfBirth
+    if (min) update.minimum_age = min
+    if (max) update.maximum_age = max
+  }
   if (picture_url) update.picture_url = picture_url
   if (d.firstName.trim()) update.slug = await uniqueSlug(d.firstName, d.lastName, uid)
 
@@ -113,7 +128,7 @@ export async function applyDraft(uid: string): Promise<{ ok: boolean; error?: st
     await supabase.from('profile_skills').upsert(d.skillIds.map(skill_id => ({ profile_id: uid, skill_id })), { onConflict: 'profile_id,skill_id', ignoreDuplicates: true })
   }
   if (d.reelUrl.trim()) {
-    await supabase.from('reels').insert({ profile_id: uid, label: 'Showreel', url: d.reelUrl.trim(), sort_order: 0 })
+    await supabase.from('reels').insert({ profile_id: uid, label: 'Showreel', url: d.reelUrl.trim(), sort_order: 0, poster_url: d.reelPoster ?? null, duration_s: d.reelDuration ?? null })
   }
 
   clearDraft()
@@ -127,6 +142,7 @@ export function safeNext(raw: string | null | undefined, fallback = '/home') {
 
 // Sign up = create the account (/start/account), then this many one-at-a-time questions (/start/profile)
 export const SIGNUP_QUESTIONS = 4
+export const PERFORMER_QUESTIONS = 5
 
 // Both sides start on Home (casting Home is the live job board; postings have their own tab)
 // eslint-disable-next-line @typescript-eslint/no-unused-vars -- kept so callers can pass the role

@@ -5,13 +5,18 @@ import { useRouter } from 'next/navigation'
 import Icon from '@/components/rc/Icon'
 import { Button, Chip, Field, Steps, Toggle, toast } from '@/components/rc/ui'
 import { supabase } from '@/lib/supabase'
-import { SIGNUP_QUESTIONS, applyDraft, emptyDraft, readDraft, shrinkImage, writeDraft, type OnboardingDraft } from '@/lib/rc/onboarding'
+import VideoEditor from '@/components/rc/VideoEditor'
+import { PERFORMER_QUESTIONS, SIGNUP_QUESTIONS, applyDraft, emptyDraft, readDraft, shrinkImage, writeDraft, type OnboardingDraft } from '@/lib/rc/onboarding'
 
 const CRAFTS = ['Actor', 'Dancer', 'Singer', 'Musical theatre', 'Presenter', 'Model', 'Voiceover']
 const CASTER_FOCUS = ['Theatre', 'Musical theatre', 'TV & film', 'Commercial', 'Dance', 'Voiceover', 'Events']
 const SUGGESTED_SKILLS = ['Contemporary Dance', 'Stage Combat', 'Singing', 'RP Accent', 'Car Licence', 'Screen Acting', 'Improvisation', 'Commercial Dance']
 
 type Skill = { id: number; name: string }
+// ids from the genders table; casting filters by these
+const GENDERS: [number, string][] = [[7, 'Female'], [6, 'Male'], [2, 'Non-binary']]
+const MORE_GENDERS: [number, string][] = [[3, 'Trans woman'], [4, 'Trans man'], [5, 'Gender non-conforming'], [1, 'Prefer not to say']]
+const PRONOUNS = ['she/her', 'he/him', 'they/them', 'she/they', 'he/they']
 
 
 export default function CreateProfile() {
@@ -21,12 +26,17 @@ export default function CreateProfile() {
   const [skills, setSkills] = useState<Skill[]>([])
   const [skillQuery, setSkillQuery] = useState('')
   const [showSkillSearch, setShowSkillSearch] = useState(false)
-  const [showReel, setShowReel] = useState(() => !!d.reelUrl)
+  const [showReel, setShowReel] = useState(() => !!d.reelUrl && !d.reelPoster)
+  const [uid, setUid] = useState<string | null>(null)
+  const [video, setVideo] = useState<File | null>(null)
+  const videoRef = useRef<HTMLInputElement>(null)
+  const [moreGenders, setMoreGenders] = useState(() => MORE_GENDERS.some(([id]) => id === d.genderId))
+  const [customPronouns, setCustomPronouns] = useState(() => !!d.pronouns && !PRONOUNS.includes(d.pronouns))
 
   useEffect(() => {
     if (!readDraft()) { router.replace('/welcome'); return }
     // The account comes first; the answers are saved to it when the last question is done
-    supabase.auth.getSession().then(({ data: { session } }) => { if (!session) router.replace('/start/account') })
+    supabase.auth.getSession().then(({ data: { session } }) => { if (!session) router.replace('/start/account'); else setUid(session.user.id) })
     supabase.from('skills').select('id, name').order('name').then(({ data }) => setSkills(data || []))
   }, [router])
 
@@ -67,18 +77,20 @@ export default function CreateProfile() {
 
   // One question per screen, always starting at the first (index 0 → "1 of 4")
   const [q, setQ] = useState(0)
-  const total = SIGNUP_QUESTIONS
+  const total = isCaster ? SIGNUP_QUESTIONS : PERFORMER_QUESTIONS
   const last = total - 1
   const [saving, setSaving] = useState(false)
   const step = Math.min(q, last)
 
+  const minN = parseInt(d.minAge, 10), maxN = parseInt(d.maxAge, 10)
+  const ageOk = !(minN && maxN && minN > maxN) && !(d.dateOfBirth && !/^\d{4}-\d{2}-\d{2}$/.test(d.dateOfBirth))
   const valid = isCaster
     ? [d.firstName.trim().length > 0, d.companyName.trim().length > 0, true, true][step]
-    : [d.firstName.trim().length > 0, d.crafts.length > 0, true, true][step]
+    : [d.firstName.trim().length > 0, d.crafts.length > 0, ageOk, true, true][step]
 
   const go = (to: number) => { setQ(to); window.scrollTo(0, 0) }
   const next = () => {
-    if (!valid) { toast(step === 0 ? 'Add your name' : isCaster ? 'Add your company or production' : 'Pick at least one'); return }
+    if (!valid) { toast(step === 0 ? 'Add your name' : isCaster ? 'Add your company or production' : step === 2 ? 'Check your playing age — the first number should be the lower one' : 'Pick at least one'); return }
     if (step < last) go(step + 1)
     else finish()
   }
@@ -96,7 +108,15 @@ export default function CreateProfile() {
   }
   const optional = step >= 2 // later questions can be filled in from Edit profile
 
-  const soon = () => toast('Autofill is coming soon — add the basics below for now')
+  const pickVideo = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const f = e.target.files?.[0]
+    e.target.value = ''
+    if (!f) return
+    if (f.size > 2 * 1024 * 1024 * 1024) { toast('That file is over 2GB — export a shorter clip'); return }
+    if (!uid) { toast('One moment — still signing you in'); return }
+    setShowReel(false)
+    setVideo(f)
+  }
 
   const title = (t: string, sub: string) => (
     <>
@@ -133,6 +153,30 @@ export default function CreateProfile() {
       </div>
     </>,
     <>
+      {title('A bit about you', 'Casting directors search by these. Your date of birth stays private.')}
+      <p className="mb-2 mt-6 text-[13px] font-medium">Gender</p>
+      <div className="flex flex-wrap gap-2">
+        {[...GENDERS, ...(moreGenders ? MORE_GENDERS : [])].map(([id, label]) => (
+          <Chip key={id} selected={d.genderId === id} onClick={() => update({ genderId: d.genderId === id ? null : id })}>{label}{d.genderId === id && ' ✓'}</Chip>
+        ))}
+        {!moreGenders && <Chip onClick={() => setMoreGenders(true)}>+ More</Chip>}
+      </div>
+
+      <p className="mb-2 mt-6 text-[13px] font-medium">Pronouns <span className="font-normal text-faint">shown next to your name</span></p>
+      <div className="flex flex-wrap gap-2">
+        {PRONOUNS.map(p => <Chip key={p} selected={!customPronouns && d.pronouns === p} onClick={() => { setCustomPronouns(false); update({ pronouns: d.pronouns === p ? '' : p }) }}>{p}</Chip>)}
+        <Chip selected={customPronouns} onClick={() => { setCustomPronouns(v => !v); update({ pronouns: '' }) }}>Other</Chip>
+      </div>
+      {customPronouns && <Field className="mt-3" value={d.pronouns} maxLength={40} onChange={e => update({ pronouns: e.target.value })} placeholder="e.g. xe/xem" autoFocus />}
+
+      <div className="mt-6 flex gap-3">
+        <Field className="flex-1" label="Playing age from" inputMode="numeric" maxLength={2} value={d.minAge} onChange={e => update({ minAge: e.target.value.replace(/\D/g, '') })} placeholder="20" />
+        <Field className="flex-1" label="to" inputMode="numeric" maxLength={2} value={d.maxAge} onChange={e => update({ maxAge: e.target.value.replace(/\D/g, '') })} placeholder="28" />
+      </div>
+      <Field className="mt-4" label="Date of birth" type="date" value={d.dateOfBirth} max={new Date().toISOString().slice(0, 10)} min="1920-01-01" onChange={e => update({ dateOfBirth: e.target.value })} />
+      <p className="mt-1.5 text-[12px] text-muted">Private — never shown on your profile. Helps us keep under-18s safe.</p>
+    </>,
+    <>
       {title('Where are you based, and what are your skills?', 'Helps us match you with roles nearby. Add as many skills as you like.')}
       {locationField}
       <p className="mb-2 mt-6 text-[13px] font-medium">Skills <span className="font-normal text-faint">tap to add</span></p>
@@ -156,17 +200,34 @@ export default function CreateProfile() {
     </>,
     <>
       {title('Show your work', 'Add a reel and let casting know you’re available. You can do all of this later too.')}
-      <div className="upload mt-6 px-4 py-3.5">
-        <div className="flex items-center gap-3">
-          <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-purple-tint text-purple-ink"><Icon name="video" /></span>
-          <span className="flex-1">
-            <span className="block text-[15px] font-medium">Add your showreel</span>
-            <span className="block text-[13px] text-muted">Paste a Vimeo / YouTube link</span>
-          </span>
-          <button type="button" onClick={() => setShowReel(v => !v)} className="text-sm font-medium text-purple-ink">{showReel ? 'Hide' : 'Add'}</button>
+      {video && uid ? (
+        <div className="mt-6">
+          <VideoEditor key={video.name + video.size} uid={uid} source={video} onCancel={() => setVideo(null)}
+            onDone={v => { update({ reelUrl: v.url || '', reelPoster: v.poster_url, reelDuration: v.duration_s }); setVideo(null); toast('Showreel added') }} />
         </div>
-        {showReel && <Field className="mt-3" type="url" inputMode="url" value={d.reelUrl} onChange={e => update({ reelUrl: e.target.value })} placeholder="https://vimeo.com/…" />}
-      </div>
+      ) : (
+        <div className="upload mt-6 px-4 py-3.5">
+          <div className="flex items-center gap-3">
+            {d.reelPoster
+              // eslint-disable-next-line @next/next/no-img-element
+              ? <img src={d.reelPoster} alt="" className="h-10 w-16 shrink-0 rounded-lg object-cover" />
+              : <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-purple-tint text-purple-ink"><Icon name="video" /></span>}
+            <span className="min-w-0 flex-1">
+              <span className="block text-[15px] font-medium">{d.reelUrl ? 'Showreel added' : 'Add your showreel'}</span>
+              <span className="block truncate text-[13px] text-muted">{d.reelPoster ? 'Uploaded video' + (d.reelDuration ? ' · ' + Math.floor(d.reelDuration / 60) + ':' + String(Math.round(d.reelDuration % 60)).padStart(2, '0') : '') : d.reelUrl || 'Upload a video or paste a Vimeo / YouTube link'}</span>
+            </span>
+            {d.reelUrl && <button type="button" onClick={() => { update({ reelUrl: '', reelPoster: null, reelDuration: null }); setShowReel(false) }} className="text-sm font-medium text-muted">Remove</button>}
+          </div>
+          {!d.reelPoster && (
+            <div className="mt-3 flex gap-2">
+              <button type="button" onClick={() => videoRef.current?.click()} className="flex h-10 flex-1 items-center justify-center gap-2 rounded-xl bg-surface text-sm font-medium shadow-card"><Icon name="upload" className="size-4" />Upload video</button>
+              <button type="button" onClick={() => setShowReel(v => !v)} className="flex h-10 flex-1 items-center justify-center gap-2 rounded-xl bg-surface text-sm font-medium shadow-card"><Icon name="link" className="size-4" />{showReel ? 'Hide link' : 'Paste link'}</button>
+            </div>
+          )}
+          {showReel && !d.reelPoster && <Field className="mt-3" type="url" inputMode="url" value={d.reelUrl} onChange={e => update({ reelUrl: e.target.value })} placeholder="https://vimeo.com/…" autoFocus />}
+          <input ref={videoRef} type="file" accept="video/*" className="hidden" onChange={pickVideo} />
+        </div>
+      )}
 
       <div className="mt-4 divide-y divide-line rounded-[var(--radius)] border border-line bg-surface shadow-card">
         <div className="flex items-center gap-3 px-4 py-3.5">
@@ -193,18 +254,9 @@ export default function CreateProfile() {
         </div>
       </div>
 
-      <div className="mt-5 rounded-[10px] bg-hero p-5 text-white">
-        <p className="flex items-center gap-2 text-[17px] font-medium"><Icon name="sparkle" className="size-5 text-green" /> Autofill the rest</p>
-        <p className="mt-1 text-[13px] text-white/70">Import once and we’ll fill your credits, skills and photos.</p>
-        <div className="mt-4 space-y-2">
-          {[['file', 'Upload your CV'], ['download', 'Import from Spotlight or Mandy'], ['link', 'Paste a profile link']].map(([icon, label]) => (
-            <button key={label} type="button" onClick={soon} className="flex w-full items-center gap-3 rounded-xl border border-white/10 bg-white/5 px-3 py-3 text-left text-[15px] transition hover:bg-white/10">
-              <span className="flex size-8 items-center justify-center rounded-lg bg-white/10"><Icon name={icon} className="size-[18px]" /></span>
-              <span className="flex-1">{label}</span>
-              <Icon name="chevron-right" className="size-4 text-white/50" />
-            </button>
-          ))}
-        </div>
+      <div className="mt-5 flex items-start gap-3 rounded-[var(--radius)] bg-sand p-4">
+        <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-lime text-forest"><Icon name="file" strokeWidth={2} className="size-[18px]" /></span>
+        <p className="text-[13px] text-muted-strong"><span className="block text-[15px] font-semibold text-ink">Got a CV?</span>Once you’re in, upload it in Customise profile and we’ll fill in your credits, skills and training — including the CV from Spotlight or Mandy.</p>
       </div>
     </>,
   ]
