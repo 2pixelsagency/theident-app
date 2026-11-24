@@ -8,22 +8,10 @@ import { Button, ClientOnly, Field, Toaster, cx } from './ui'
 
 // Shared pieces for the auth screens (forgot / set new / change password, verify email, callback).
 
-// Same clean frame as the log-in screen: Paper with faint frame lines and the logo above a centred column
-export function Backdrop() {
-  return (
-    <div aria-hidden="true" className="pointer-events-none fixed inset-0 -z-10 hidden sm:block">
-      <span className="absolute left-1/2 top-0 h-full w-px -translate-x-[240px] bg-gradient-to-b from-transparent via-surface to-transparent" />
-      <span className="absolute left-1/2 top-0 h-full w-px translate-x-[240px] bg-gradient-to-b from-transparent via-surface to-transparent" />
-      <span className="absolute left-0 top-[12%] h-px w-full bg-gradient-to-r from-transparent via-surface to-transparent" />
-      <span className="absolute bottom-[12%] left-0 h-px w-full bg-gradient-to-r from-transparent via-surface to-transparent" />
-    </div>
-  )
-}
-
+// Same clean frame as the log-in screen: plain Paper with the logo above a centred column
 export function AuthShell({ children }: { children: React.ReactNode }) {
   return (
     <div className="relative isolate min-h-dvh bg-bg text-ink">
-      <Backdrop />
       {/* min-h-dvh + bottom safe-area keeps forms usable with the on-screen keyboard open */}
       <div className="mx-auto flex min-h-dvh w-full max-w-[400px] flex-col px-6 pb-[max(24px,env(safe-area-inset-bottom))] pt-[max(24px,env(safe-area-inset-top))] sm:justify-center">
         <Link href="https://www.theident.me/" aria-label="The Ident" className="mx-auto mb-6 flex items-center gap-2 font-display text-[22px] font-bold tracking-[-0.03em] text-forest">

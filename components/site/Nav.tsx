@@ -6,7 +6,7 @@ import { usePathname } from 'next/navigation'
 import Icon from '@/components/rc/Icon'
 import LogoMark from '@/components/LogoMark'
 import { cx } from '@/components/rc/ui'
-import { supabase } from '@/lib/supabase'
+import { hasSignedInCookie, supabase } from '@/lib/supabase'
 
 const NAV = [
   { href: '/performers', label: 'Performers' },
@@ -30,7 +30,14 @@ export default function SiteNav() {
   const [home, setHome] = useState('/')
   // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => { if (window.location.hostname.startsWith('app.')) setHome('https://www.theident.me/') }, [])
-  useEffect(() => { let live = true; supabase.auth.getSession().then(({ data: { session } }) => live && setSignedIn(!!session)); return () => { live = false } }, [])
+  // Signed in on this host (session) or on the app host (shared theident.me flag) → Dashboard
+  useEffect(() => {
+    let live = true
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    if (hasSignedInCookie()) setSignedIn(true)
+    supabase.auth.getSession().then(({ data: { session } }) => { if (live && session) setSignedIn(true) })
+    return () => { live = false }
+  }, [])
   useEffect(() => {
     const on = () => setScrolled(window.scrollY > 12)
     on(); window.addEventListener('scroll', on, { passive: true })
@@ -57,7 +64,7 @@ export default function SiteNav() {
         <span className="flex-1 md:hidden" />
         {signedIn ? (
           <Link href="/home" className="hidden h-10 items-center gap-1.5 whitespace-nowrap group rounded-full bg-forest px-5 text-[14px] font-semibold text-white transition-colors duration-300 hover:bg-lime hover:text-ink sm:inline-flex">
-            Open app <Icon strokeWidth={2} name="arrow-right" className="cta-arrow size-4" />
+            Dashboard <Icon strokeWidth={2} name="arrow-right" className="cta-arrow size-4" />
           </Link>
         ) : (<>
         <Link href="/welcome" className="hidden rounded-full px-4 py-2 text-[14px] font-semibold hover:bg-sand sm:inline-flex">Log in</Link>
@@ -73,7 +80,7 @@ export default function SiteNav() {
         <div className="fixed inset-x-3 top-[calc(max(12px,env(safe-area-inset-top))+64px)] z-50 rounded-[14px] border border-line bg-surface p-3 shadow-card md:hidden">
           {NAV.map(n => <Link key={n.href} href={n.href} className="flex items-center justify-between rounded-[10px] px-3 py-3.5 text-[17px] font-medium hover:bg-chip">{n.label}<Icon strokeWidth={2} name="chevron-right" className="size-4 text-faint" /></Link>)}
           <div className="mt-2 grid grid-cols-2 gap-2 border-t border-line pt-3">
-            {signedIn ? <Link href="/home" className="col-span-2 inline-flex h-12 items-center justify-center rounded-full bg-forest text-[15px] font-semibold text-white">Open app</Link> : (<>
+            {signedIn ? <Link href="/home" className="col-span-2 inline-flex h-12 items-center justify-center rounded-full bg-forest text-[15px] font-semibold text-white">Dashboard</Link> : (<>
               <Link href="/welcome" className="inline-flex h-12 items-center justify-center rounded-full border border-line text-[15px] font-semibold">Log in</Link>
               <Link href={join.href} className="inline-flex h-12 items-center justify-center rounded-full bg-lime text-[15px] font-semibold text-ink">{join.label}</Link>
             </>)}

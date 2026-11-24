@@ -183,7 +183,7 @@ function PerformerProfile({ data, owner, onBack, onShare, topRight, actions, sta
               {grad && <span className="inline-flex items-center gap-1 rounded-full bg-accent px-3 py-1.5 text-[11px] font-medium text-ink"><Icon name="graduation-cap" className="size-3.5" />{grad}</span>}
             </div>
           </div>
-          <h1 className="mt-4 flex items-center gap-2 text-[32px] leading-tight text-white">{name}{p.is_verified && <VerifiedTick />}</h1>
+          <h1 className="mt-4 flex items-center gap-2 text-[32px] leading-tight text-white">{name}{p.is_verified && <VerifiedTick />}{!caster && p.pronouns && <span className="self-end pb-1.5 text-[14px] font-normal text-white/70">{p.pronouns}</span>}</h1>
           {craft && <p className="mt-1 text-[15px] font-medium text-lime">{craft}</p>}
           {facts && <p className="mt-1 text-sm text-white/75">{facts}</p>}
           {actions && <div className="mt-5 flex gap-3">{actions}</div>}
