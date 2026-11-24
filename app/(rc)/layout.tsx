@@ -25,15 +25,17 @@ function Shell({ children }: { children: React.ReactNode }) {
   const showNav = isTabRoot(pathname, role) && !(profile && !hasPlan)
   // Soft gate: browsing is open, but applying and posting wait for a verified email (also enforced by RLS)
   // No free tier: without a membership (trial, paid, grace, demo or admin) only these pages open
-  const paywalled = profile && !hasPlan && !/^\/(plan|settings|help|verify)(\/|$)/.test(pathname)
+  const noPlan = !!profile && !hasPlan
+  const paywalled = noPlan && !/^\/(plan|settings|help|verify)(\/|$)/.test(pathname)
   const gated = profile && !profile.email_verified
     ? /^\/find\/[^/]+\/apply$/.test(pathname) ? 'apply' : pathname === '/postings/new' ? 'post' : null
     : null
   return (
     <>
-      <SideNav />
+      {/* No membership: no app navigation either — just the membership screen (and Settings/Help/Verify) */}
+      {!noPlan && <SideNav />}
       {/* Phone: single column. Desktop: beside the slim rail — boards and Home go wide, detail screens stay readable. */}
-      <div className="lg:pl-[76px]">
+      <div className={noPlan ? '' : 'lg:pl-[76px]'}>
         <div className={cx('mx-auto min-h-dvh w-full max-w-[480px] md:max-w-[640px] lg:pb-12', WIDE.test(pathname) ? 'lg:max-w-[1180px] lg:px-6' : 'lg:max-w-[760px]', showNav && 'pb-32 lg:pb-12')}><Suspense fallback={<PageLoading />}>{paywalled ? <div className="flex min-h-dvh flex-col px-6 pb-8"><PlanPaywall role={role} next={pathname} /></div> : gated ? <VerifyGate action={gated} />
           : desktop && ASIDE.test(pathname) ? (
             <div className="grid grid-cols-[minmax(0,1fr)_340px] gap-6 pt-6">
