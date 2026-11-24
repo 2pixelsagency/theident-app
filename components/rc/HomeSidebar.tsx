@@ -49,7 +49,7 @@ export default function HomeSidebar() {
         <Link href="/me" className="flex items-center gap-4">
           <span className="relative">
             <Avatar src={p?.picture_url} name={me.name} size={64} />
-            {open && <span className="absolute bottom-0.5 right-0.5 size-3.5 rounded-full bg-green ring-2 ring-surface" />}
+            {open && <span title="Open to work" className="absolute bottom-0.5 right-0.5 size-3.5 rounded-full bg-lime ring-2 ring-surface" />}
           </span>
           <span className="min-w-0">
             <span className="block truncate text-[18px] font-semibold">{fullName(p) || me.name}</span>
