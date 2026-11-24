@@ -12,7 +12,8 @@ export const maxDuration = 120
 // Uses the Messages API over HTTP (fetch): package installs are not available in this repo's build
 // environment, so the official @anthropic-ai/sdk isn't a dependency yet. Swap to the SDK when it is.
 
-const MODEL = 'claude-opus-5-5'
+// Sonnet: CV reading is straightforward extraction, at about half Opus's price per import
+const MODEL = 'claude-sonnet-5-5'
 const MAX_BYTES = 8 * 1024 * 1024
 const DAILY_LIMIT = 5
 
