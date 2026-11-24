@@ -38,9 +38,9 @@ export function SiteFooter() {
           <p className="font-display text-[26px] font-bold tracking-[-0.03em]">The Ident</p>
           <p className="mt-2 max-w-[320px] text-[13px] leading-[1.6] text-white/70">Castings, auditions and paid work for performers — and one place for casting teams to find them.</p>
         </div>
-        {col('Product', [['/performers', 'For performers'], ['/casting', 'For casting'], ['/jobs', 'Browse roles'], ['/people', 'Browse talent'], ['/pricing', 'Pricing']])}
+        {col('Product', [['/performers', 'For performers'], ['/casting', 'For casting'], ['/jobs', 'Browse roles'], ['/people', 'Browse talent'], ['/pricing', 'Pricing'], ['/blog', 'Blog']])}
         {col('Auditions', [['/auditions', 'All auditions'], ['/auditions/musical-theatre', 'Musical theatre'], ['/auditions/dance', 'Dance'], ['/auditions/tv-and-film', 'TV & film'], ['/auditions/london', 'London'], ['/auditions/manchester', 'Manchester']])}
-        {col('Company', [['/contact', 'Contact & help'], ['/welcome', 'Log in'], ['/start?role=performer', 'Join']])}
+        {col('Company', [['/contact', 'Contact & help'], ['/welcome', 'Log in'], ['/start', 'Join']])}
         {col('Legal', [['/privacy', 'Privacy policy'], ['/terms', 'Terms of use']])}
       </div>
       <div className="mx-auto flex max-w-[1248px] flex-wrap items-center justify-between gap-3 border-t border-white/10 px-6 py-6 text-[13px] text-white/50">

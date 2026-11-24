@@ -10,14 +10,17 @@ import { supabase } from '@/lib/supabase'
 const NAV = [
   { href: '/performers', label: 'Performers' },
   { href: '/casting', label: 'Casting' },
-  { href: '/jobs', label: 'Roles' },
   { href: '/people', label: 'Talent' },
   { href: '/pricing', label: 'Pricing' },
+  { href: '/blog', label: 'Blog' },
 ]
 
 // Floating glass nav: a pill that tightens and gains a shadow on scroll; full-screen sheet on mobile
 export default function SiteNav() {
   const pathname = usePathname()
+  // The join button says who it's for: casting pages sign up casting teams; elsewhere people pick a side
+  const casting = pathname.startsWith('/casting')
+  const join = casting ? { href: '/start?role=caster', label: 'Start casting' } : { href: '/welcome', label: 'Get started' }
   const [scrolled, setScrolled] = useState(false)
   const [open, setOpen] = useState(false)
   const [signedIn, setSignedIn] = useState(false)
@@ -56,8 +59,8 @@ export default function SiteNav() {
           </Link>
         ) : (<>
         <Link href="/welcome" className="hidden rounded-full px-4 py-2 text-[14px] font-semibold hover:bg-sand sm:inline-flex">Log in</Link>
-        <Link href="/start?role=performer" className="hidden h-10 items-center gap-1.5 whitespace-nowrap rounded-full group bg-forest sm:inline-flex px-5 text-[14px] font-semibold text-white transition-colors duration-300 hover:bg-lime hover:text-ink">
-          Start free trial <Icon strokeWidth={2} name="arrow-right" className="cta-arrow size-4" />
+        <Link href={join.href} className="hidden h-10 items-center gap-1.5 whitespace-nowrap rounded-full group bg-forest sm:inline-flex px-5 text-[14px] font-semibold text-white transition-colors duration-300 hover:bg-lime hover:text-ink">
+          {join.label} <Icon strokeWidth={2} name="arrow-right" className="cta-arrow size-4" />
         </Link>
         </>)}
         <button type="button" aria-label={open ? 'Close menu' : 'Open menu'} aria-expanded={open} onClick={() => setOpen(o => !o)}
@@ -70,7 +73,7 @@ export default function SiteNav() {
           <div className="mt-2 grid grid-cols-2 gap-2 border-t border-line pt-3">
             {signedIn ? <Link href="/home" className="col-span-2 inline-flex h-12 items-center justify-center rounded-full bg-forest text-[15px] font-semibold text-white">Open app</Link> : (<>
               <Link href="/welcome" className="inline-flex h-12 items-center justify-center rounded-full border border-line text-[15px] font-semibold">Log in</Link>
-              <Link href="/start?role=performer" className="inline-flex h-12 items-center justify-center rounded-full bg-lime text-[15px] font-semibold text-ink">Join</Link>
+              <Link href={join.href} className="inline-flex h-12 items-center justify-center rounded-full bg-lime text-[15px] font-semibold text-ink">{join.label}</Link>
             </>)}
           </div>
         </div>

@@ -2,6 +2,7 @@ import type { MetadataRoute } from 'next'
 import { supabaseServer, SITE_URL } from '@/lib/supabaseServer'
 import { openRoles, filterRoles, landingPath } from '@/components/site/AuditionLanding'
 import { TYPES, CITIES } from '@/lib/site/auditions'
+import { POSTS } from '@/lib/site/blog'
 
 export const revalidate = 3600
 
@@ -22,6 +23,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   return [
     page('', 1, 'daily'), page('/jobs', 0.9, 'daily'), page('/people', 0.9, 'daily'),
     ...landings.map(l => page(l, l === '/auditions' ? 0.9 : 0.8, 'daily')),
+    page('/blog', 0.7, 'weekly'), ...POSTS.map(p => ({ url: SITE_URL + '/blog/' + p.slug, lastModified: new Date(p.date), changeFrequency: 'monthly' as const, priority: 0.6 })),
     page('/performers', 0.7), page('/casting', 0.7), page('/pricing', 0.6), page('/contact', 0.4, 'monthly'), page('/privacy', 0.2, 'monthly'), page('/terms', 0.2, 'monthly'),
     ...((people || []) as { slug: string; updated_at: string | null }[]).map(p => ({ url: `${SITE_URL}/${p.slug}`, lastModified: p.updated_at ? new Date(p.updated_at) : now, changeFrequency: 'weekly' as const, priority: 0.6 })),
     ...((jobs || []) as { id: string; created_at: string }[]).map(j => ({ url: `${SITE_URL}/jobs/${j.id}`, lastModified: new Date(j.created_at), changeFrequency: 'daily' as const, priority: 0.7 })),
