@@ -7,7 +7,7 @@ import { Container, Cta, SECTION, SectionHead } from './Chrome'
 import { PLANS, TRIAL_DAYS, price } from '@/lib/rc/plans'
 import JsonLd from './JsonLd'
 import Faq from './Faq'
-import FeatureRows, { FeatureGrid } from './FeatureRows'
+import CastingsSection from './castings/CastingsSection'
 import { HOME_FAQ } from '@/lib/site/faq'
 import { SITE_URL } from '@/lib/supabaseServer'
 
@@ -46,15 +46,8 @@ export default function MarketingHome() {
         <RolesCarousel />
       </section>
 
-      {/* ───── Features (alternating rows) ───── */}
-      <section className={SECTION}>
-        <Container>
-          <SectionHead center eyebrow="For performers" title={<>Everything between “I saw a casting” and <span className="text-green-ink">“I’m booked”.</span></>} />
-          <FeatureRows />
-          <div className="mt-24 md:mt-32"><FeatureGrid /></div>
-          <div className="mt-10 flex justify-center"><Cta href="/performers" variant="dark">Everything for performers</Cta></div>
-        </Container>
-      </section>
+      {/* ───── Castings bento (approved design) ───── */}
+      <CastingsSection />
 
       {/* ───── Stacking cards ───── */}
       <section className={SECTION}>

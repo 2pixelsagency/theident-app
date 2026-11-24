@@ -41,6 +41,13 @@
   --color-mint: var(--mint);
   --color-dark: var(--dark);
   --color-dark-2: var(--dark-2);
+  --color-sand: var(--sand);
+  --color-sand-2: var(--sand-2);
+  --color-line-strong: var(--line-strong);
+  --color-line-soft: var(--line-soft);
+  --color-muted-strong: var(--muted-strong);
+  --color-forest-raised: var(--forest-raised);
+  --color-on-dark-muted: var(--on-dark-muted);
 }
 *, *::before, *::after {
   box-sizing: border-box;
