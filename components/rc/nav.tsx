@@ -105,6 +105,15 @@ const MORE: Record<Role, { href: string; label: string; icon: string }[]> = {
 export function SideNav() {
   const pathname = usePathname()
   const { role, unreadMessages, unreadNotifications, profile, name } = useMe()
+  // The + opens a labelled panel that slides out of the rail with everything that isn't a main tab
+  const [more, setMore] = useState(false)
+  const moreActive = MORE[role].some(n => pathname === n.href || pathname.startsWith(n.href + '/'))
+  useEffect(() => {
+    if (!more) return
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') setMore(false) }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [more])
   const link = (item: { href: string; label: string; icon: string }, badge?: number) => {
     const active = pathname === item.href || pathname.startsWith(item.href + '/')
     return (
@@ -127,8 +136,30 @@ export function SideNav() {
           {link({ href: '/inbox', label: 'Notifications', icon: 'bell' }, unreadNotifications)}
         </ul>
         <span className="my-4 h-px w-8 bg-line" />
-        <ul className="flex flex-col items-center gap-1">{MORE[role].map(n => link(n))}</ul>
+        <button type="button" onClick={() => setMore(m => !m)} aria-expanded={more} aria-controls="rail-more" aria-label={more ? 'Close more' : 'More: diary, pay, tax, digs…'}
+          className={cx('group relative flex size-11 items-center justify-center rounded-[14px] transition-colors duration-300', more || moreActive ? 'bg-forest text-lime' : 'text-muted hover:bg-sand hover:text-ink')}>
+          <Icon name="plus" className={cx('size-[22px] transition-transform duration-300', more && 'rotate-45')} strokeWidth={2} />
+        </button>
       </nav>
+      {more && <>
+        <button type="button" aria-label="Close" onClick={() => setMore(false)} className="fixed inset-0 left-[76px] z-30 cursor-default bg-ink/10" />
+        <div id="rail-more" className="fixed left-[76px] top-0 z-40 flex h-dvh w-[260px] animate-[rail-out_220ms_cubic-bezier(.2,.8,.2,1)] flex-col border-r border-line-soft bg-sand px-3 py-5 shadow-[20px_0_40px_-30px_rgb(18_49_39/0.5)]">
+          <p className="px-3 pb-3 text-[11px] font-semibold uppercase tracking-[0.12em] text-muted">More</p>
+          <ul className="space-y-0.5">
+            {MORE[role].map(n => {
+              const active = pathname === n.href || pathname.startsWith(n.href + '/')
+              return (
+                <li key={n.href}>
+                  <Link href={n.href} onClick={() => setMore(false)} aria-current={active ? 'page' : undefined}
+                    className={cx('flex items-center gap-3 rounded-[12px] px-3 py-2.5 text-[15px] font-medium transition-colors', active ? 'bg-forest text-lime' : 'text-ink hover:bg-surface')}>
+                    <Icon name={n.icon} className="size-5" strokeWidth={active ? 2 : 1.6} />{n.label}
+                  </Link>
+                </li>
+              )
+            })}
+          </ul>
+        </div>
+      </>}
       <ul className="mt-4 flex flex-col items-center gap-1">
         {link({ href: '/settings', label: 'Settings', icon: 'settings' })}
         {link({ href: '/help', label: 'Help & support', icon: 'help' })}
