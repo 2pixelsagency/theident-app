@@ -150,11 +150,11 @@ export default function CastingReviewPage() {
           <input value={q} onChange={e => setQ(e.target.value)} placeholder="Search applicants" aria-label="Search applicants"
             className="h-11 min-w-0 flex-1 rounded-xl border border-line bg-field px-4 text-[15px] outline-none focus:border-green focus:bg-surface" />
           <button type="button" onClick={() => setShowFilters(v => !v)} aria-pressed={showFilters || filtering} aria-label="Filters"
-            className={cx('relative inline-flex size-11 shrink-0 items-center justify-center rounded-xl border', showFilters || filtering ? 'border-forest bg-forest text-white' : 'border-line bg-surface')}>
+            className={cx('relative inline-flex size-11 shrink-0 items-center justify-center rounded-full border', showFilters || filtering ? 'border-forest bg-forest text-white' : 'border-line bg-surface')}>
             <Icon name="filter" className="size-[18px]" />
           </button>
           <button type="button" onClick={() => setView(v => (v === 'grid' ? 'deck' : 'grid'))} aria-label={view === 'grid' ? 'Swipe through one by one' : 'Show as grid'}
-            className="inline-flex size-11 shrink-0 items-center justify-center rounded-xl border border-line bg-surface">
+            className="inline-flex size-11 shrink-0 items-center justify-center rounded-full border border-line bg-surface">
             <Icon name={view === 'grid' ? 'layers' : 'grid'} className="size-[18px]" />
           </button>
         </div>

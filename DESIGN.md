@@ -5,7 +5,7 @@ The look is carried over from the website and defined in code by `tokens.css` (c
 ## Foundations
 - **Fonts:** **Bricolage Grotesque** for display/headings (bold, tight: weight 700, `letter-spacing -0.03em`), **Inter** for body/UI (300–600). Both loaded with `next/font` in `app/layout.tsx`.
 - **Palette:** Paper `#F6F4EE` (background) · Ink `#15211C` (text) · **Forest `#123127`** (primary buttons, dark panels) · **Lime `#CBF24C`** (the single punchy accent) · pastels Blossom `#F9D9E6`, Butter `#F4E79A`, Mint `#CDEBD6` for soft fills.
-- **Backgrounds:** soft gradients with a fine grain, never flat blobs. Light screens use `bg-glow` (Lime haze → white); dark panels use `bg-hero` (teal-green → deep Forest). Clean white cards on top, a tight radius (`--radius` 12px; inputs and buttons 10px, sheets 14px). No squiggles.
+- **Backgrounds:** soft gradients with a fine grain, never flat blobs. Light screens use `bg-glow` (Lime haze → white); dark panels use `bg-hero` (teal-green → deep Forest). Clean white cards on top, `--radius` 20px; buttons are pills, inputs 14px, sheets 32px. No squiggles.
 - Class names stay stable (`bg-green` = Forest action colour, `bg-dark` = Forest panel, `bg-green-tint` = Mint…); new utilities `bg-forest`, `bg-lime`, `bg-blossom`, `bg-butter`, `bg-mint`.
 
 ## Website design system (www.theident.me)
@@ -16,7 +16,15 @@ The marketing site follows the **Castings section** (approved design, `component
 - **Panels with a floating screen:** inside a feature card, a 24px-radius panel uses one of `--panel-forest`, `--panel-lime`, `--panel-butter`, `--panel-mint`, with a stripe band (`--stripes-light` / `--stripes-dark`) behind a white card in a translucent frame (`FloatFrame`: 8px padding, 26px outer / 20px inner radius). Use real-looking app UI, not illustrations.
 - **Grids:** `repeat(auto-fit, minmax(min(100%, 480px), 1fr))` for large cards, `320px` (or 260–300px) for small ones; 24px gaps; 1200px column.
 - **Closing CTA:** `CtaBand` (Forest panel + lime stripes, centred H2, Lime pill + outline-light pill).
-- These website panel gradients are allowed in addition to the app's `bg-glow` / `bg-hero`. The app keeps its tighter 12px radius.
+- These website panel gradients are allowed in addition to the app's `bg-glow` / `bg-hero`.
+
+## App (app.theident.me) follows the same system
+Applied through the shared primitives in `components/rc/ui.tsx`, so screens inherit it:
+- Cards: white on Paper, `--radius` 20px, soft shadow, `--line-soft` border. `DarkCard` = Forest panel + lime stripe band.
+- Buttons, segmented tabs, search fields and chips are pills; inputs 14px radius with a Forest focus + Lime ring.
+- Headings in Bricolage bold (`PageHeader` 24→36px, `SectionTitle` 20px); eyebrows are 12px dot labels in Forest.
+- Switches: Forest track with a Lime knob. Progress bars fill Forest. Icon tiles and empty states use round badges.
+- Nav: the active tab is a Forest pill with a Lime icon; the desktop rail sits on Sand.
 
 ## Hard rules
 - **Text on Lime is always Ink**, never white. Lime is the accent, not a body-text colour on Paper (too little contrast).

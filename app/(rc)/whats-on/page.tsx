@@ -130,7 +130,7 @@ export default function WhatsOnPage() {
             )}
 
             <Link href="/whats-on/new" className="mt-6 flex items-center gap-3 rounded-[var(--radius)] bg-dark p-4 text-white">
-              <span className="flex size-12 items-center justify-center rounded-xl bg-green"><Icon name="plus" className="size-6" /></span>
+              <span className="flex size-12 items-center justify-center rounded-full bg-green"><Icon name="plus" className="size-6" /></span>
               <span className="flex-1"><span className="block text-[16px] font-medium">Host an event</span><span className="block text-[13px] text-white/65">List an audition, workshop or premiere · reach local talent</span></span>
               <Icon name="chevron-right" className="size-4 text-white/60" />
             </Link>

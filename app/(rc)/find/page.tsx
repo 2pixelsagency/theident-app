@@ -130,7 +130,7 @@ export default function FindPage() {
 
         {tab === 'side' && view === 'all' && (
           <Link href="/postings/new?type=side" className="mt-4 flex items-center gap-3 rounded-[var(--radius)] bg-accent p-4 text-ink">
-            <span className="flex size-11 items-center justify-center rounded-xl bg-surface/50"><Icon name="plus" className="size-5" /></span>
+            <span className="flex size-11 items-center justify-center rounded-full bg-surface/50"><Icon name="plus" className="size-5" /></span>
             <span className="flex-1">
               <span className="block text-[16px] font-medium">Post a side hustle</span>
               <span className="block text-[13px] text-ink/75">Hiring a teacher, dancer or helper? List it free.</span>

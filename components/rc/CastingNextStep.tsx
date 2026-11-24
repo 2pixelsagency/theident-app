@@ -54,7 +54,7 @@ export default function CastingNextStep({ app, onChange }: { app: PipelineApp; o
         </>
       )}
       {call && !lockedByNda && (
-        <a href={app.meeting_url!} target="_blank" rel="noopener noreferrer" className="flex h-12 items-center justify-center gap-2 rounded-[10px] bg-forest text-[15px] font-semibold text-white">
+        <a href={app.meeting_url!} target="_blank" rel="noopener noreferrer" className="flex h-12 items-center justify-center gap-2 rounded-full bg-forest text-[15px] font-semibold text-white">
           <Icon name="video" className="size-[18px]" /> Join video call
         </a>
       )}

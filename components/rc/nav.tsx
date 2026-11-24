@@ -63,7 +63,7 @@ export function BottomNav() {
             <li key={item.href} className="flex flex-1 justify-center">
               <Link href={item.href} aria-label={item.label} aria-current={active ? 'page' : undefined}
                 className={cx('relative flex items-center justify-center rounded-full text-ink transition-all duration-300',
-                  active ? 'bg-ink/[0.07] ring-1 ring-white/70' : 'text-ink/75',
+                  active ? (isProfile ? 'ring-2 ring-lime' : 'bg-forest text-lime') : 'text-ink/75 hover:text-ink',
                   compact ? 'size-10' : 'size-12')}>
                 {isProfile
                   ? <Avatar src={profile?.picture_url} name={name} size={compact ? 26 : 30} />
@@ -108,7 +108,7 @@ export function SideNav() {
     return (
       <li key={item.href}>
         <Link href={item.href} aria-label={item.label} aria-current={active ? 'page' : undefined}
-          className={cx('group relative flex size-11 items-center justify-center rounded-xl transition hover:bg-chip', active ? 'bg-chip text-ink' : 'text-muted hover:text-ink')}>
+          className={cx('group relative flex size-11 items-center justify-center rounded-[14px] transition-colors duration-300', active ? 'bg-forest text-lime' : 'text-muted hover:bg-sand hover:text-ink')}>
           <Icon name={item.icon} className="size-[22px]" strokeWidth={active ? 2 : 1.6} />
           {!!badge && <span className="absolute right-1.5 top-1.5 size-2 rounded-full bg-red ring-2 ring-surface" />}
           <span className="pointer-events-none absolute left-full top-1/2 z-50 ml-3 -translate-y-1/2 whitespace-nowrap rounded-lg bg-dark px-2.5 py-1.5 text-[13px] font-medium text-white opacity-0 shadow-card transition group-hover:opacity-100">{item.label}</span>
@@ -117,7 +117,7 @@ export function SideNav() {
     )
   }
   return (
-    <aside aria-label="Main" className="fixed inset-y-0 left-0 z-40 hidden w-[76px] flex-col items-center border-r border-line bg-surface py-5 lg:flex">
+    <aside aria-label="Main" className="fixed inset-y-0 left-0 z-40 hidden w-[76px] flex-col items-center border-r border-line-soft bg-sand py-5 lg:flex">
       <Link href="/home" aria-label="The Ident home" className="flex size-11 items-center justify-center rounded-full bg-forest font-display text-[17px] font-bold tracking-[-0.04em] text-lime">Id</Link>
       <Link href="/me" aria-label="Your profile" className="mt-5 rounded-full ring-2 ring-transparent transition hover:ring-line"><Avatar src={profile?.picture_url} name={name} size={40} /></Link>
       <nav className="scrollbar-none mt-6 flex w-full flex-1 flex-col items-center overflow-y-auto">
@@ -151,7 +151,7 @@ export function HomeHeader({ subline }: { subline?: string }) {
         <IconButton icon="inbox" label={role === 'caster' ? 'Submissions' : 'Castings'} href={role === 'caster' ? '/postings' : '/castings'} />
         <IconButton icon="bell" label="Notifications" href="/inbox" dot={unreadNotifications > 0} />
       </div>
-      <h1 className="mt-4 min-h-[1.2em] text-[26px]"><Typewriter key={name} text={'Hi, ' + name} once="home-greeting" /></h1>
+      <h1 className="mt-4 min-h-[1.2em] font-display text-[30px] font-bold tracking-[-0.03em]"><Typewriter key={name} text={'Hi, ' + name} once="home-greeting" /></h1>
       <p className="rise mt-1 text-sm text-muted" style={{ '--d': '350ms' } as React.CSSProperties}>{subline ?? fmtDate(new Date(), { weekday: 'long', day: 'numeric', month: 'long' })}</p>
     </header>
   )

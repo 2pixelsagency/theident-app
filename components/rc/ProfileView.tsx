@@ -14,8 +14,8 @@ import type { Credit, FullProfileData } from '@/lib/rc/profile'
 
 // Button styles for controls floated over the headshot
 export const heroRound = 'inline-flex size-10 items-center justify-center rounded-full bg-dark/45 text-white backdrop-blur-md transition active:scale-95'
-export const heroPrimary = 'flex h-14 flex-[1.4] items-center justify-center gap-2 rounded-[10px] bg-bg text-[15px] font-medium text-ink transition active:scale-[0.98] disabled:opacity-60'
-export const heroSecondary = 'flex h-14 flex-1 items-center justify-center gap-2 rounded-[10px] border border-white/25 bg-white/10 text-[15px] font-medium text-white backdrop-blur-md transition active:scale-[0.98] disabled:opacity-60'
+export const heroPrimary = 'flex h-14 flex-[1.4] items-center justify-center gap-2 rounded-full bg-bg text-[15px] font-medium text-ink transition active:scale-[0.98] disabled:opacity-60'
+export const heroSecondary = 'flex h-14 flex-1 items-center justify-center gap-2 rounded-full border border-white/25 bg-white/10 text-[15px] font-medium text-white backdrop-blur-md transition active:scale-[0.98] disabled:opacity-60'
 
 export type ProfileViewProps = {
   data: FullProfileData
@@ -298,7 +298,7 @@ function PerformerProfile({ data, owner, onBack, onShare, topRight, actions, sta
           <>
             <h2 className="mb-3 mt-6 text-[18px]">Representation</h2>
             <Card className="flex items-center gap-3 p-4">
-              <span className="flex size-11 items-center justify-center rounded-xl bg-dark text-sm font-medium text-green">{p.agent_name.slice(0, 1)}</span>
+              <span className="flex size-11 items-center justify-center rounded-full bg-dark text-sm font-medium text-green">{p.agent_name.slice(0, 1)}</span>
               <span className="min-w-0 flex-1"><span className="block text-[15px] font-medium">Represented by {p.agent_name}</span><span className="block truncate text-[13px] text-muted">{p.agent_email || p.agent_phone || 'Agent'}</span></span>
               {p.agent_email && <a href={'mailto:' + p.agent_email} aria-label="Email agent" className="inline-flex size-10 items-center justify-center rounded-full bg-chip"><Icon name="mail" className="size-5" /></a>}
             </Card>

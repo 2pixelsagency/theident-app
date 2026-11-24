@@ -86,7 +86,7 @@ export default function HomeSidebar() {
       </div>
 
       <Link href="/settings" className={card + ' flex items-center gap-3'}>
-        <span className="flex size-10 items-center justify-center rounded-xl bg-lime text-ink"><Icon name="star" className="size-5" /></span>
+        <span className="flex size-10 items-center justify-center rounded-full bg-lime text-ink"><Icon name="star" className="size-5" /></span>
         <span className="min-w-0 flex-1"><span className="block text-[15px] font-semibold">{PLANS[planFor(me.role)].name} membership</span><span className="block truncate text-[13px] text-muted">{plan}</span></span>
         <Icon name="chevron-right" className="size-4 text-faint" />
       </Link>

@@ -27,7 +27,7 @@ export default function PushPrompt({ caster }: { caster?: boolean }) {
 
   return (
     <div className="relative mx-4 mt-4 flex items-start gap-3 rounded-[var(--radius)] bg-forest p-4 text-white">
-      <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-lime text-ink"><Icon name="bell" className="size-5" /></span>
+      <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-lime text-ink"><Icon name="bell" className="size-5" /></span>
       <div className="min-w-0 flex-1 pr-6">
         <p className="text-[15px] font-semibold">Don’t miss a recall</p>
         <p className="mt-0.5 text-[13px] text-white/75">

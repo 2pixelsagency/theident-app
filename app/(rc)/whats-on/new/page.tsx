@@ -131,7 +131,7 @@ export default function HostEventPage() {
           <p className={cx(label, 'mb-2')}>Promote</p>
           <div className={cx('overflow-hidden rounded-[var(--radius)] border-2 bg-surface', feature ? 'border-purple' : 'border-line')}>
             <div className="flex items-start gap-3 bg-accent p-4 text-ink">
-              <span className="flex size-11 items-center justify-center rounded-xl bg-surface/60"><Icon name="zap" /></span>
+              <span className="flex size-11 items-center justify-center rounded-full bg-surface/60"><Icon name="zap" /></span>
               <span><span className="block text-[16px] font-medium">Feature this event</span><span className="block text-[13px] text-ink/75">Top of What’s on for 7 days + a push to matching talent</span></span>
             </div>
             <div className="flex items-center justify-between p-4">

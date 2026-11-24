@@ -30,12 +30,12 @@ export default function AppliedPage() {
 
         <Card className="mt-8 w-full divide-y divide-line overflow-hidden text-left">
           <Link href="/castings" className="flex items-center gap-3 px-4 py-4">
-            <span className="flex size-10 items-center justify-center rounded-xl bg-green-tint text-green-ink"><Icon name="briefcase" /></span>
+            <span className="flex size-10 items-center justify-center rounded-full bg-green-tint text-green-ink"><Icon name="briefcase" /></span>
             <span className="flex-1"><span className="block text-[15px] font-medium">Track it in Castings</span><span className="block text-[13px] text-muted">Applied → Self-tape → Recall → Booked</span></span>
             <Icon name="chevron-right" className="size-4 text-faint" />
           </Link>
           <Link href="/me/edit" className="flex items-center gap-3 px-4 py-4">
-            <span className="flex size-10 items-center justify-center rounded-xl bg-purple-tint text-purple-ink"><Icon name="user" /></span>
+            <span className="flex size-10 items-center justify-center rounded-full bg-purple-tint text-purple-ink"><Icon name="user" /></span>
             <span className="flex-1"><span className="block text-[15px] font-medium">Keep your profile sharp</span><span className="block text-[13px] text-muted">Panels look here before they reply</span></span>
             <Icon name="chevron-right" className="size-4 text-faint" />
           </Link>

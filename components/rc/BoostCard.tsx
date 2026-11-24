@@ -63,7 +63,7 @@ export default function BoostCard({ uid, until: initial }: { uid: string; until:
           ))}
         </div>
         <button type="button" onClick={buy} disabled={!!busy || waiting}
-          className="mt-4 h-12 w-full rounded-[10px] bg-lime text-[15px] font-semibold text-ink shadow-cta disabled:opacity-60">
+          className="mt-4 h-12 w-full rounded-full bg-lime text-[15px] font-semibold text-ink shadow-cta disabled:opacity-60">
           {busy ? 'Opening checkout…' : (active ? 'Extend' : 'Boost') + ' for ' + gbp(BOOST_PLANS.find(p => p.id === plan)!.pence)}
         </button>
         <p className="mt-2 text-center text-[11px] text-white/55">Secure payment by Stripe · Apple Pay & Google Pay · one-off, no subscription</p>

@@ -296,7 +296,7 @@ function Editor({ data, uid, caster, onRefresh, mutate }: { data: Data; uid: str
               <h2 className="mb-3 text-[18px]">Graduate</h2>
               <Card className="p-4">
                 <div className="flex items-center gap-3">
-                  <span className="flex size-10 items-center justify-center rounded-xl bg-accent text-ink"><Icon name="graduation-cap" /></span>
+                  <span className="flex size-10 items-center justify-center rounded-full bg-accent text-ink"><Icon name="graduation-cap" /></span>
                   <div className="flex-1"><p className="text-[15px] font-medium">Recent graduate</p><p className="text-[13px] text-muted">Shows a graduate badge; casters can filter by it</p></div>
                   <Toggle checked={d.isGraduate} onChange={v => set('isGraduate', v)} label="Recent graduate" />
                 </div>
@@ -562,7 +562,7 @@ function CvUpload({ uid, path, onChange }: { uid: string; path: string | null; o
       <p className="mb-3 text-[13px] text-muted">Optional. Casting teams can download it from your profile. We also create a branded CV from your profile automatically.</p>
       {path ? (
         <Card className="flex items-center gap-3 p-3">
-          <span className="flex size-10 items-center justify-center rounded-xl bg-green-tint text-green-ink"><Icon name="file" className="size-5" /></span>
+          <span className="flex size-10 items-center justify-center rounded-full bg-green-tint text-green-ink"><Icon name="file" className="size-5" /></span>
           <span className="min-w-0 flex-1 truncate text-[15px] font-medium">{name || 'CV'}</span>
           <button type="button" onClick={() => ref.current?.click()} disabled={busy} className="text-sm font-medium text-green-ink">Replace</button>
           <button type="button" onClick={remove} disabled={busy} className="text-sm font-medium text-red">Remove</button>
