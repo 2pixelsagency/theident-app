@@ -15,13 +15,14 @@ import { fullName } from '@/lib/rc/format'
 import { loadFullProfile, type Credit, type FullProfile, type Reel } from '@/lib/rc/profile'
 import { compressImage, fileExt } from '@/lib/rc/media'
 import VideoEditor, { type SavedVideo } from '@/components/rc/VideoEditor'
+import ProfileDetails from '@/components/rc/ProfileDetails'
 import { moveItem, saveOrder } from '@/components/rc/ProfileExtras'
 
 // ids from the genders table (same labels as sign-up)
 const GENDER_OPTIONS = [{ id: 7, name: 'Female' }, { id: 6, name: 'Male' }, { id: 2, name: 'Non-binary' }, { id: 3, name: 'Trans woman' }, { id: 4, name: 'Trans man' }, { id: 5, name: 'Gender non-conforming' }, { id: 1, name: 'Prefer not to say' }]
 const stamp = () => Date.now().toString(36)
 type Draft = Pick<FullProfile, 'first_name' | 'last_name' | 'what_i_do' | 'location' | 'bio' | 'height' | 'agent_name' | 'agent_email' | 'agent_phone' | 'company_name' | 'graduate_school'> & {
-  minAge: string; maxAge: string; hair: number | null; eyes: number | null; isPublic: boolean; openToWork: boolean; isGraduate: boolean; gradYear: string; showContact: boolean; website: string; specialisms: string[]; pronouns: string; gender: number | null; vocal: string
+  minAge: string; maxAge: string; hair: number | null; eyes: number | null; isPublic: boolean; openToWork: boolean; isGraduate: boolean; gradYear: string; showContact: boolean; website: string; specialisms: string[]; pronouns: string; gender: number | null; vocal: string; agency: string; agentAddress: string
 }
 
 export default function EditProfilePage() {
@@ -50,7 +51,7 @@ function Editor({ data, uid, caster, onRefresh, mutate }: { data: Data; uid: str
     agent_name: p.agent_name, agent_email: p.agent_email, agent_phone: p.agent_phone, company_name: p.company_name, graduate_school: p.graduate_school,
     minAge: p.minimum_age ? String(p.minimum_age) : '', maxAge: p.maximum_age ? String(p.maximum_age) : '', hair: p.hair_colour_id, eyes: p.eye_colour_id,
     isPublic: p.show_talent !== false, openToWork: p.availability_status === 'available', isGraduate: p.is_graduate, gradYear: p.graduate_year ? String(p.graduate_year) : '', showContact: p.show_agent_contact,
-    website: p.website || '', specialisms: p.specialisms || [], pronouns: p.pronouns || '', gender: p.gender_id ?? null, vocal: p.vocal_range || '',
+    website: p.website || '', specialisms: p.specialisms || [], pronouns: p.pronouns || '', gender: p.gender_id ?? null, vocal: p.vocal_range || '', agency: p.agency_name || '', agentAddress: p.agent_address || '',
   })
   const [skillIds, setSkillIds] = useState<number[]>(data.skills.map(s => s.id))
   const [skillQuery, setSkillQuery] = useState('')
@@ -97,7 +98,7 @@ function Editor({ data, uid, caster, onRefresh, mutate }: { data: Data; uid: str
       is_graduate: d.isGraduate, graduate_school: d.isGraduate ? d.graduate_school?.trim() || null : null, graduate_year: d.isGraduate && year ? year : null,
       agent_name: d.agent_name?.trim() || null, agent_email: d.agent_email?.trim() || null, agent_phone: d.agent_phone?.trim() || null,
       show_agent_contact: d.showContact, company_name: d.company_name?.trim() || null,
-      ...(caster ? {} : { pronouns: d.pronouns.trim().slice(0, 40) || null, gender_id: d.gender, vocal_range: d.vocal.trim().slice(0, 60) || null }),
+      ...(caster ? {} : { pronouns: d.pronouns.trim().slice(0, 40) || null, gender_id: d.gender, vocal_range: d.vocal.trim().slice(0, 60) || null, agency_name: d.agency.trim().slice(0, 120) || null, agent_address: d.agentAddress.trim().slice(0, 300) || null }),
       ...(caster ? {
         // only save a website that looks like one; add https:// if they typed a bare domain
         website: d.website.trim() ? (/^https?:\/\//i.test(d.website.trim()) ? d.website.trim() : 'https://' + d.website.trim()) : null,
@@ -310,6 +311,8 @@ function Editor({ data, uid, caster, onRefresh, mutate }: { data: Data; uid: str
               </Card>
             </section>
 
+            <ProfileDetails uid={uid} profile={p} access={data.access} />
+
             <section>
               <h2 className="mb-3 text-[18px]">Graduate</h2>
               <Card className="p-4">
@@ -389,7 +392,11 @@ function Editor({ data, uid, caster, onRefresh, mutate }: { data: Data; uid: str
             <section id="representation" className="scroll-mt-4">
               <h2 className="mb-3 text-[18px]">Representation</h2>
               <div className="space-y-3">
-                <Field label="Agent" value={d.agent_name || ''} onChange={e => set('agent_name', e.target.value)} placeholder="Agency name" />
+                <div className="flex gap-3">
+                  <Field className="flex-1" label="Agency" value={d.agency} onChange={e => set('agency', e.target.value)} placeholder="Agency name" />
+                  <Field className="flex-1" label="Your agent" value={d.agent_name || ''} onChange={e => set('agent_name', e.target.value)} placeholder="Agent’s name" />
+                </div>
+                <Field label="Agency address" value={d.agentAddress} onChange={e => set('agentAddress', e.target.value)} placeholder="Street, town, postcode" />
                 <div className="flex gap-3">
                   <Field className="flex-1" label="Agent email" type="email" value={d.agent_email || ''} onChange={e => set('agent_email', e.target.value)} />
                   <Field className="flex-1" label="Agent phone" type="tel" value={d.agent_phone || ''} onChange={e => set('agent_phone', e.target.value)} />
