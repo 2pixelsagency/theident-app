@@ -63,7 +63,7 @@ export const ARROW_BOX = 'flex size-11 shrink-0 items-center justify-center roun
 
 // Plain sand (or Forest) card for text-led content
 export function SandCard({ children, dark, className, as: As = 'div' }: { children: React.ReactNode; dark?: boolean; className?: string; as?: 'div' | 'article' | 'li' }) {
-  return <As data-reveal className={cx('rounded-[var(--radius-feature)] p-6 md:p-8', dark ? 'bg-forest text-bg' : 'bg-sand text-ink', className)}>{children}</As>
+  return <As data-reveal className={cx('group/card rounded-[var(--radius-feature)] p-6 transition-[translate,box-shadow] duration-500 ease-[cubic-bezier(.2,.8,.2,1)] hover:-translate-y-1.5 hover:shadow-[0_32px_60px_-36px_rgb(21_33_28/0.45)] md:p-8', dark ? 'bg-forest text-bg' : 'bg-sand text-ink', className)}>{children}</As>
 }
 
 // Icon-led small card: badge + arrow on top, title, body
@@ -71,7 +71,7 @@ export function IconCard({ icon, tone = 'bg-lime', title, body, href, label, dar
   return (
     <SandCard as="li" dark={dark} className="flex flex-col gap-3">
       <div className="flex items-center justify-between">
-        <span className={cx('flex size-10 items-center justify-center rounded-full', tone)}><Icon strokeWidth={2} name={icon} className="size-5 text-forest" /></span>
+        <span className={cx('flex size-10 items-center justify-center rounded-full transition-transform duration-500 ease-[cubic-bezier(.2,.8,.2,1)] group-hover/card:-rotate-[8deg] group-hover/card:scale-110', tone)}><Icon strokeWidth={2} name={icon} className="size-5 text-forest" /></span>
         {href && <ArrowLinkSmall href={href} label={label || title} dark={dark} />}
       </div>
       <h3 className="mt-1.5 font-display text-[22px] font-bold leading-[1.15] tracking-[-0.02em] md:text-[24px]">{title}</h3>
@@ -93,7 +93,7 @@ function ArrowLinkSmall({ href, label, dark }: { href: string; label: string; da
 export function CtaBand({ title, sub, actions }: { title: React.ReactNode; sub?: string; actions: React.ReactNode }) {
   return (
     <div data-reveal className="relative overflow-hidden rounded-[var(--radius-feature)] px-6 py-16 text-center text-bg md:px-12 md:py-20" style={{ backgroundImage: 'var(--panel-forest)' }}>
-      <div aria-hidden="true" className="absolute inset-x-0 top-[38%] h-[120px]" style={{ backgroundImage: 'var(--stripes-dark)' }} />
+      <div aria-hidden="true" className="stripe-drift absolute inset-x-0 top-[38%] h-[120px]" style={{ backgroundImage: 'var(--stripes-dark)' }} />
       <div className="relative">
         <h2 className="mx-auto max-w-[760px] font-display text-[36px] font-bold leading-[1.04] tracking-[-0.03em] md:text-[56px]">{title}</h2>
         {sub && <p className="mx-auto mt-4 max-w-[520px] text-[15px] leading-[1.6] text-on-dark-muted">{sub}</p>}
