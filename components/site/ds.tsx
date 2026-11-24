@@ -16,23 +16,19 @@ export function Eyebrow({ children, light }: { children: React.ReactNode; light?
   )
 }
 
-// Title left, supporting copy + actions right (stacks on phones)
+// Eyebrow, title and supporting copy stacked on the left; actions (links/buttons) on the right
 export function SectionHeader({ eyebrow, title, sub, actions, light, level = 2, id }: {
   eyebrow: string; title: React.ReactNode; sub?: React.ReactNode; actions?: React.ReactNode; light?: boolean; level?: 1 | 2; id?: string
 }) {
   const H = level === 1 ? 'h1' : 'h2'
   return (
-    <div className="mb-10 flex flex-wrap items-end justify-between gap-8 md:mb-12">
-      <div className="flex min-w-0 flex-[1_1_560px] flex-col gap-4">
+    <div className="mb-10 flex flex-wrap items-end justify-between gap-x-10 gap-y-6 md:mb-12">
+      <div className="flex min-w-0 max-w-[760px] flex-[1_1_560px] flex-col gap-4">
         <Eyebrow light={light}>{eyebrow}</Eyebrow>
-        <H id={id} className={cx('max-w-[760px] font-display font-bold leading-[1.02] tracking-[-0.03em]', level === 1 ? 'text-[44px] md:text-[64px]' : 'text-[38px] md:text-[56px]', light && 'text-bg')}>{title}</H>
+        <H id={id} className={cx('font-display font-bold leading-[1.02] tracking-[-0.03em]', level === 1 ? 'text-[44px] md:text-[64px]' : 'text-[38px] md:text-[56px]', light && 'text-bg')}>{title}</H>
+        {sub && <p className={cx('max-w-[560px] text-[15px] leading-[1.6]', light ? 'text-on-dark-muted' : 'text-muted-strong')}>{sub}</p>}
       </div>
-      {(sub || actions) && (
-        <div className="flex max-w-[400px] flex-[1_1_320px] flex-col gap-5">
-          {sub && <p className={cx('text-[15px] leading-[1.6]', light ? 'text-on-dark-muted' : 'text-muted-strong')}>{sub}</p>}
-          {actions && <div className="flex flex-wrap gap-3">{actions}</div>}
-        </div>
-      )}
+      {actions && <div className="flex flex-wrap gap-3 md:justify-end">{actions}</div>}
     </div>
   )
 }

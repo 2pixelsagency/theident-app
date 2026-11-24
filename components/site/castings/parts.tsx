@@ -28,7 +28,7 @@ export function FeatureCard({ size, dark, header, title, body, children }: {
 }) {
   return (
     <article data-reveal data-card className={cx('flex flex-col rounded-[var(--radius-feature)]',
-      size === 'lg' ? 'gap-3.5 p-6 shadow-[0_1px_0_rgb(21_33_28/0.04),0_24px_48px_-32px_rgb(21_33_28/0.25)] md:p-8' : 'gap-3 p-6 md:p-7',
+      size === 'lg' ? 'gap-3.5 p-6 md:p-8' : 'gap-3 p-6 md:p-7',
       dark ? 'bg-forest text-bg' : 'bg-sand text-ink')}>
       {header}
       <h3 className={cx('font-display font-bold tracking-[-0.02em]', size === 'lg' ? 'mt-1 text-[28px] leading-[1.1] md:text-[32px]' : 'mt-1.5 text-[26px] leading-[1.15]')}>{title}</h3>

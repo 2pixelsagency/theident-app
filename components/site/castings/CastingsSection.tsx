@@ -9,16 +9,12 @@ export default function CastingsSection({ castings = DEMO.castings, application 
   return (
     <section aria-labelledby="castings-heading" className="bg-bg px-6 py-24 text-ink">
       <div className="mx-auto flex max-w-[1200px] flex-col gap-8 lg:gap-10">
-        <div className="mb-8 flex flex-wrap items-end justify-between gap-8">
-          <div className="flex min-w-0 flex-[1_1_560px] flex-col gap-4">
-            <p className="flex items-center gap-[5px] text-[11px] font-semibold uppercase tracking-[0.14em] text-forest">
-              <span aria-hidden="true" className="size-1.5 rounded-full bg-forest" />Castings
-            </p>
-            <h2 id="castings-heading" className="max-w-[720px] font-display text-[40px] font-bold leading-[1.02] tracking-[-0.03em] md:text-[56px]">Every casting, from applied to booked, in one view.</h2>
-          </div>
-          <div className="flex max-w-[400px] flex-[1_1_320px] flex-col gap-5">
-            <p className="text-[15px] leading-[1.6] text-muted-strong">Apply with your reel in a tap, track every self-tape and recall, and see your next booking before your agent calls.</p>
-          </div>
+        <div className="mb-4 flex max-w-[760px] flex-col gap-4">
+          <p className="flex items-center gap-[5px] text-[11px] font-semibold uppercase tracking-[0.14em] text-forest">
+            <span aria-hidden="true" className="size-1.5 rounded-full bg-forest" />Castings
+          </p>
+          <h2 id="castings-heading" className="font-display text-[40px] font-bold leading-[1.02] tracking-[-0.03em] md:text-[56px]">Every casting, from applied to booked, in one view.</h2>
+          <p className="max-w-[560px] text-[15px] leading-[1.6] text-muted-strong">Apply with your reel in a tap, track every self-tape and recall, and see your next booking before your agent calls.</p>
         </div>
 
         <div className="grid gap-8 lg:gap-10 [grid-template-columns:repeat(auto-fit,minmax(min(100%,480px),1fr))]">
