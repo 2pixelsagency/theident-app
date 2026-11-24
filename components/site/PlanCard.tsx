@@ -15,7 +15,6 @@ export default function PlanCard({ label, name, line, value, unit, small, cta, n
   return (
     <article data-reveal className={cx('relative flex flex-col overflow-hidden rounded-[28px] p-2',
       dark ? 'bg-forest text-bg shadow-[0_40px_80px_-40px_rgb(18_49_39/0.7)] lg:-my-3' : 'border border-line-soft bg-surface text-ink shadow-[0_24px_48px_-36px_rgb(21_33_28/0.35)]')}>
-      {dark && <span aria-hidden="true" className="pointer-events-none absolute -right-16 -top-24 size-72 rounded-full bg-lime/25 blur-3xl" />}
 
       <div className={cx('relative rounded-[22px] p-6 md:p-7', dark ? 'bg-white/[0.06] ring-1 ring-white/10' : 'bg-sand')}>
         <div className="flex items-start justify-between gap-3">
