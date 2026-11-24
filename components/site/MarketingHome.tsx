@@ -59,7 +59,7 @@ export default function MarketingHome() {
         <Container>
           <SectionHead eyebrow="For casting teams" title="Cast faster, with every tape in one place." sub="Post a role, watch self-tapes inline, recall by tape, video call or in person — and book, without a single email chain."
             action={<><Cta href="/start?role=caster" variant="dark">Start casting</Cta><Cta href="/casting" variant="outline" arrow={false}>How it works</Cta></>} />
-          <ul className="grid items-start gap-6 [grid-template-columns:repeat(auto-fit,minmax(min(100%,260px),1fr))]">
+          <ul className="grid items-start gap-8 lg:gap-10 [grid-template-columns:repeat(auto-fit,minmax(min(100%,260px),1fr))]">
             <IconCard icon="megaphone" tone="bg-lime" title="Post in minutes" body="Ask for exactly the materials you need, add an NDA, set a closing date." href="/casting" label="How posting a role works" />
             <IconCard icon="play" tone="bg-butter" title="Tapes inline" body="Watch reels and self-tapes, rate, shortlist and swipe through applicants." href="/casting" label="How reviewing tapes works" />
             <IconCard icon="video" tone="bg-mint" title="Recall your way" body="Another tape, a Zoom link, or in person — your call." href="/casting" label="How recalls work" />

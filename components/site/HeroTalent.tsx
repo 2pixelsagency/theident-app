@@ -109,7 +109,7 @@ export default function HeroTalent() {
         <div className="mt-10"><TypedSearch /></div>
       </div>
       <Headshots />
-      <div className="rise flex flex-wrap justify-center gap-3 px-5 pb-20 md:pb-28" style={{ '--d': '600ms' } as React.CSSProperties}>
+      <div className="rise flex flex-wrap justify-center gap-3 px-5 pb-10 md:pb-12" style={{ '--d': '600ms' } as React.CSSProperties}>
         <Cta href="/people" variant="dark">Browse talent</Cta>
         <Cta href="/start?role=performer">Start 7-day free trial</Cta>
         <Cta href="/performers" variant="outline" arrow={false}>Features</Cta>

@@ -13,7 +13,7 @@ const LOGOS: { name: string; src: string; h: number; covers: string[] }[] = [
 export default function WorkedWith() {
   return (
     <section>
-      <div className="mx-auto max-w-[1248px] px-6 py-20 text-center md:py-28">
+      <div className="mx-auto max-w-[1248px] px-6 pb-20 pt-2 text-center md:pb-28">
         <p className="eyebrow text-[11px] font-semibold uppercase tracking-[0.14em] text-muted">Used by professionals around the world</p>
         <ul className="scrollbar-none -mx-6 mt-10 flex items-center gap-x-12 overflow-x-auto px-6 md:mx-0 md:flex-wrap md:justify-center md:gap-x-16 md:gap-y-8 md:overflow-visible md:px-0 lg:gap-x-20">
           {LOGOS.map(l => (

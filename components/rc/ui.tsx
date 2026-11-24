@@ -15,7 +15,7 @@ type Variant = 'primary' | 'dark' | 'outline' | 'accent' | 'ghost' | 'light'
 const VARIANTS: Record<Variant, string> = {
   primary: 'bg-green text-white hover:bg-lime hover:text-ink', // Forest pill → Lime on hover
   dark: 'bg-dark text-white hover:bg-lime hover:text-ink',
-  outline: 'border-[1.5px] border-forest bg-transparent text-forest hover:bg-forest hover:text-white',
+  outline: 'border border-line-strong bg-bg text-ink hover:border-forest hover:bg-forest hover:text-lime',
   accent: 'bg-accent text-ink hover:bg-forest hover:text-lime', // Ink text on Lime, always
   ghost: 'text-green-ink hover:bg-green-tint',
   light: 'bg-surface text-ink hover:bg-lime',

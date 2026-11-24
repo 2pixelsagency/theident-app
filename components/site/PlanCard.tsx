@@ -57,5 +57,5 @@ export default function PlanCard({ label, name, line, value, unit, small, cta, n
 }
 
 export function PlanGrid({ children }: { children: React.ReactNode }) {
-  return <div className="grid items-start gap-5 [grid-template-columns:repeat(auto-fit,minmax(min(100%,320px),1fr))] lg:gap-6">{children}</div>
+  return <div className="grid items-start gap-8 [grid-template-columns:repeat(auto-fit,minmax(min(100%,320px),1fr))] lg:gap-10">{children}</div>
 }
