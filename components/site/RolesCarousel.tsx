@@ -28,14 +28,14 @@ function RoleCard({ j, poster, applied }: { j: Job; poster?: Poster; applied: nu
   const community = jobSource(j, poster) === 'community'
   return (
     <li>
-      <Link href={'/jobs/' + j.id} className="group flex h-full flex-col rounded-[14px] border border-line bg-surface p-5 shadow-card transition duration-500 ease-[cubic-bezier(.2,.8,.2,1)] hover:-translate-y-1 hover:border-forest/30 hover:shadow-[0_28px_50px_-30px_rgb(18_49_39/0.55)]">
+      <Link href={'/jobs/' + j.id} className="group flex h-full flex-col rounded-[24px] bg-sand p-6 transition duration-500 ease-[cubic-bezier(.2,.8,.2,1)] hover:-translate-y-1 hover:shadow-[0_28px_50px_-30px_rgb(18_49_39/0.45)]">
         <div className="flex items-center justify-between gap-3">
-          <span className={cx('rounded-full px-3 py-1 text-[12px] font-semibold text-ink', toneOf(type))}>{type}</span>
+          <span className={cx('rounded-[10px] px-3 py-1.5 text-[13px] font-semibold text-ink', toneOf(type))}>{type}</span>
           {closes && closes !== 'Closed' && <span className="text-[12px] font-medium text-muted">{closes}</span>}
         </div>
-        <p className="mt-4 text-[19px] font-semibold leading-snug tracking-[-0.01em] [display:-webkit-box] [-webkit-box-orient:vertical] [-webkit-line-clamp:2] overflow-hidden">{jobTitle(j)}</p>
+        <p className="mt-4 font-display text-[22px] font-bold leading-[1.15] tracking-[-0.01em] [display:-webkit-box] [-webkit-box-orient:vertical] [-webkit-line-clamp:2] overflow-hidden">{jobTitle(j)}</p>
         <p className="mt-1.5 flex items-center gap-1.5 text-[14px] text-muted"><Icon name="pin" className="size-3.5 shrink-0" /><span className="truncate">{j.location || 'Location TBC'}</span></p>
-        <div className="mt-5 flex items-end justify-between gap-3">
+        <div className="mt-5 flex items-end justify-between gap-3 rounded-[16px] bg-surface p-4">
           <div>
             <p className="font-display text-[24px] font-bold leading-none tracking-[-0.02em]">{pay || 'Unpaid / TBC'}</p>
             <p className="mt-2 inline-flex items-center gap-1.5 text-[13px] font-medium text-green-ink">
@@ -44,7 +44,7 @@ function RoleCard({ j, poster, applied }: { j: Job; poster?: Poster; applied: nu
             </p>
           </div>
         </div>
-        <div className="mt-5 flex items-center gap-2.5 border-t border-line pt-4">
+        <div className="mt-auto flex items-center gap-2.5 pt-5">
           <Avatar src={poster?.picture_url} name={who} size={28} />
           <span className="min-w-0 flex-1 truncate text-[13px] text-muted">{community ? 'Community · ' : ''}{who}</span>
           <span className="inline-flex items-center gap-1 text-[13px] font-semibold text-green-ink opacity-0 transition duration-300 group-hover:opacity-100">View role <Icon name="arrow-right" className="cta-arrow size-3.5" /></span>

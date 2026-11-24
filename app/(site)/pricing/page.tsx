@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import Icon from '@/components/rc/Icon'
 import { Container } from '@/components/site/Chrome'
+import { Eyebrow, IconBadge, Pill, SandCard, SectionHeader, Tag } from '@/components/site/ds'
 import { PLANS, TRIAL_DAYS, price } from '@/lib/rc/plans'
 import JsonLd from '@/components/site/JsonLd'
 import Faq from '@/components/site/Faq'
@@ -20,42 +21,36 @@ export default function PricingPage() {
   const plan = (kind: 'performer' | 'casting', href: string, cta: string, dark?: boolean) => {
     const p = PLANS[kind]
     return (
-      <div className={'flex flex-col p-8 md:p-12 ' + (dark ? 'bg-forest text-white' : 'bg-surface')}>
-        <div className="flex items-center justify-between">
-          <p className={'eyebrow text-[13px] font-semibold uppercase tracking-[0.12em] ' + (dark ? 'text-lime' : 'text-green-ink')}>{p.name}</p>
-          <p className={'text-[13px] ' + (dark ? 'text-white/60' : 'text-muted')}>{kind === 'casting' ? 'Casting directors & producers' : 'Actors, dancers, singers'}</p>
+      <SandCard as="article" dark={dark} className="flex flex-col gap-3 shadow-[0_1px_0_rgb(21_33_28/0.04),0_24px_48px_-32px_rgb(21_33_28/0.25)]">
+        <div className="flex flex-wrap items-center gap-2.5">
+          <IconBadge tone={dark ? 'bg-lime' : 'bg-forest'}><Icon name={kind === 'casting' ? 'megaphone' : 'user'} className={'size-5 ' + (dark ? 'text-forest' : 'text-lime')} /></IconBadge>
+          <span className="font-display text-[20px] font-bold">{p.name}</span>
+          <Tag light={dark}>{kind === 'casting' ? 'Casting teams' : 'Performers'}</Tag>
         </div>
-        <p className="mt-10 flex items-start gap-1"><span className="mt-3 text-[22px] font-semibold">£</span><span className="font-display text-[88px] font-bold leading-none tracking-[-0.04em]">{(p.pence / 100).toFixed(2)}</span></p>
-        <p className={'mt-3 text-[15px] ' + (dark ? 'text-white/70' : 'text-muted')}>per month · {TRIAL_DAYS} days free · cancel any time</p>
-        <ul className={'mt-10 flex-1 divide-y border-t ' + (dark ? 'divide-white/10 border-white/10' : 'divide-line border-line')}>
-          {p.features.map(f => <li key={f} className="flex items-start gap-3 py-3.5 text-[16px]"><Icon name="check" className={'mt-1 size-4 shrink-0 ' + (dark ? 'text-lime' : 'text-green')} />{f}</li>)}
+        <p className="mt-6 flex items-start gap-1"><span className="mt-3 text-[22px] font-semibold">£</span><span className="font-display text-[80px] font-extrabold leading-none tracking-[-0.04em] md:text-[88px]">{(p.pence / 100).toFixed(2)}</span></p>
+        <p className={'text-[16px] ' + (dark ? 'text-on-dark-muted' : 'text-muted-strong')}>per month · {TRIAL_DAYS} days free · cancel any time</p>
+        <ul className={'mt-6 flex-1 rounded-[20px] p-5 ' + (dark ? 'bg-forest-raised' : 'bg-surface')}>
+          {p.features.map(f => <li key={f} className={'flex items-start gap-3 border-b py-3 text-[15px] last:border-0 ' + (dark ? 'border-white/10' : 'border-line-soft')}><Icon name="check" className={'mt-1 size-4 shrink-0 ' + (dark ? 'text-lime' : 'text-forest')} />{f}</li>)}
         </ul>
-        <Link href={href} className={'group mt-10 inline-flex h-14 items-center justify-between rounded-full pl-7 pr-2 text-[16px] font-semibold ' + (dark ? 'bg-lime text-ink' : 'bg-forest text-white')}>
-          {cta}<span className={'flex size-10 items-center justify-center rounded-full transition group-hover:translate-x-0.5 ' + (dark ? 'bg-forest text-lime' : 'bg-lime text-ink')}><Icon name="arrow-right" className="size-5" /></span>
-        </Link>
-      </div>
+        <Pill href={href} variant={dark ? 'lime' : 'forest'} arrow className="mt-6 w-full">{cta}</Pill>
+      </SandCard>
     )
   }
   return (
     <>
       <JsonLd data={{ '@context': 'https://schema.org', '@type': 'FAQPage', mainEntity: FAQ.map(([q, a]) => ({ '@type': 'Question', name: q, acceptedAnswer: { '@type': 'Answer', text: a } })) }} />
-      <Container className="pb-14 pt-32 md:pt-44">
-        <p className="rise eyebrow text-[13px] font-semibold uppercase tracking-[0.12em] text-green-ink">Pricing</p>
-        <div className="mt-5 grid gap-6 md:grid-cols-[1.4fr_1fr] md:items-end">
-          <h1 className="rise text-[44px] leading-[1.02] tracking-[-0.035em] md:text-[72px]" style={{ '--d': '100ms' } as React.CSSProperties}>Two plans.<br />No commission. Ever.</h1>
-          <p className="rise text-[18px] leading-relaxed text-muted" style={{ '--d': '200ms' } as React.CSSProperties}>One plan for performers, one for casting teams. Try either free for {TRIAL_DAYS} days — browsing roles is always free.</p>
-        </div>
-      </Container>
-      <Container>
-        <div className="rise grid overflow-hidden rounded-[16px] border border-line shadow-[0_30px_70px_-40px_rgb(18_49_39/0.5)] md:grid-cols-2" style={{ '--d': '300ms' } as React.CSSProperties}>
+      <Container className="pb-4 pt-32 md:pt-40">
+        <SectionHeader level={1} eyebrow="Pricing" title={<>Two plans.<br />No commission. Ever.</>} sub={`One plan for performers, one for casting teams. Try either free for ${TRIAL_DAYS} days — browsing roles is always free.`} />
+        <div className="grid gap-6 [grid-template-columns:repeat(auto-fit,minmax(min(100%,420px),1fr))]">
           {plan('performer', '/start?role=performer', 'Start free trial')}
           {plan('casting', '/start?role=caster', 'Start casting', true)}
         </div>
       </Container>
-      <Container className="grid gap-10 py-24 md:grid-cols-[minmax(240px,340px)_1fr] md:gap-16 md:py-32">
-        <div className="md:sticky md:top-28 md:self-start">
-          <h2 className="text-[34px] leading-[1.05] tracking-[-0.025em] md:text-[44px]">Questions,<br />answered</h2>
-          <p className="mt-4 text-muted">Something else? <Link href="/contact" className="font-semibold text-green-ink underline">Get in touch</Link>.</p>
+      <Container className="grid gap-10 py-24 md:grid-cols-[minmax(240px,380px)_1fr] md:gap-16">
+        <div className="flex flex-col gap-4 md:sticky md:top-28 md:self-start">
+          <Eyebrow>FAQ</Eyebrow>
+          <h2 className="font-display text-[38px] font-bold leading-[1.02] tracking-[-0.03em] md:text-[56px]">Questions, answered</h2>
+          <p className="text-muted-strong">Something else? <Link href="/contact" className="font-semibold text-forest underline">Get in touch</Link>.</p>
         </div>
         <Faq items={FAQ as [string, string][]} />
       </Container>

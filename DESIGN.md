@@ -8,11 +8,21 @@ The look is carried over from the website and defined in code by `tokens.css` (c
 - **Backgrounds:** soft gradients with a fine grain, never flat blobs. Light screens use `bg-glow` (Lime haze → white); dark panels use `bg-hero` (teal-green → deep Forest). Clean white cards on top, a tight radius (`--radius` 12px; inputs and buttons 10px, sheets 14px). No squiggles.
 - Class names stay stable (`bg-green` = Forest action colour, `bg-dark` = Forest panel, `bg-green-tint` = Mint…); new utilities `bg-forest`, `bg-lime`, `bg-blossom`, `bg-butter`, `bg-mint`.
 
+## Website design system (www.theident.me)
+The marketing site follows the **Castings section** (approved design, `components/site/castings/`). Build every website page from `components/site/ds.tsx`; don't invent new card styles.
+- **Section header:** dot eyebrow (14px, caps, `tracking 0.14em`, Forest) + display H2 (38px → 56px, weight 700, `-0.03em`) on the left; supporting copy (18px, `--muted-strong`) and pill buttons on the right. Stacks on phones. `SectionHeader` / `SectionHead`.
+- **Buttons are pills:** `rounded-full`, min height 48px. Forest filled (primary), 1.5px Forest outline (secondary), Lime on dark panels. `Cta` / `Pill`.
+- **Feature cards:** Sand `--sand` (#EFECE4) with `--radius-feature` (32px), 28–32px padding. Header = round icon badge + name + Live/New `Tag` + a 44–48px arrow link top-right (`ArrowLink`). One card per row/grid may be Forest for contrast.
+- **Panels with a floating screen:** inside a feature card, a 24px-radius panel uses one of `--panel-forest`, `--panel-lime`, `--panel-butter`, `--panel-mint`, with a stripe band (`--stripes-light` / `--stripes-dark`) behind a white card in a translucent frame (`FloatFrame`: 8px padding, 26px outer / 20px inner radius). Use real-looking app UI, not illustrations.
+- **Grids:** `repeat(auto-fit, minmax(min(100%, 480px), 1fr))` for large cards, `320px` (or 260–300px) for small ones; 24px gaps; 1200px column.
+- **Closing CTA:** `CtaBand` (Forest panel + lime stripes, centred H2, Lime pill + outline-light pill).
+- These website panel gradients are allowed in addition to the app's `bg-glow` / `bg-hero`. The app keeps its tighter 12px radius.
+
 ## Hard rules
 - **Text on Lime is always Ink**, never white. Lime is the accent, not a body-text colour on Paper (too little contrast).
 - **On dark panels** (Forest, photo heroes) the green accent automatically becomes Lime (`globals.css`), so icons and rings stay visible.
 - **Primary button:** Forest + white text with a neutral shadow — never a coloured glow. Over photos the main button is Lime + Ink.
-- **Gradients only with grain:** `bg-glow`, `bg-hero` and the dark photo scrim. Everything else is a solid colour.
+- **Gradients:** in the app only `bg-glow`, `bg-hero` and the dark photo scrim. On the website, also the four `--panel-*` gradients and stripe bands (see Website design system). Everything else is a solid colour.
 - **Uploads** use a dashed outline (`.upload`), not a filled block.
 - **Icons:** one consistent set of thin, rounded outline icons. No emojis in the UI.
 - **Focus:** every interactive element shows a visible focus ring (Lime on dark, Forest on light).

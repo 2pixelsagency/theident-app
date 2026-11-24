@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import Icon from '@/components/rc/Icon'
-import { Container, Cta, SECTION } from '@/components/site/Chrome'
+import { Container, Cta, Eyebrow, SECTION } from '@/components/site/Chrome'
+import { SectionHeader } from '@/components/site/ds'
 import Faq from '@/components/site/Faq'
 import JsonLd from '@/components/site/JsonLd'
 import { supabaseServer, SITE_URL } from '@/lib/supabaseServer'
@@ -40,7 +41,7 @@ function RoleRow({ j }: { j: Job }) {
   const title = j.project_role || j.job_title || 'Role'
   return (
     <li>
-      <Link href={'/jobs/' + j.id} className="group flex items-center gap-5 border-b border-line py-6 transition-colors hover:bg-surface md:px-4">
+      <Link href={'/jobs/' + j.id} className="group flex items-center gap-5 rounded-[22px] px-4 py-5 transition-colors hover:bg-surface md:px-6">
         <div className="min-w-0 flex-1">
           <p className="text-[13px] font-semibold uppercase tracking-[0.08em] text-green-ink">{j.production_types?.name || 'Role'}{j.location ? ' · ' + j.location : ''}</p>
           <h3 className="mt-1.5 text-[20px] font-semibold leading-snug md:text-[22px]">{title}{j.project_in ? <span className="text-muted"> — {j.project_in}</span> : null}</h3>
@@ -97,7 +98,7 @@ export default function AuditionLanding({ type, city, roles }: { type?: Audition
       ] }} />
 
       <section className="bg-bg">
-        <Container className="pb-14 pt-32 md:pb-20 md:pt-40">
+        <Container className="pb-4 pt-32 md:pt-40">
           <nav aria-label="Breadcrumb" className="mb-6 flex flex-wrap items-center gap-2 text-[14px] text-muted">
             {crumbs.map(([name, href], i) => (
               <span key={href} className="flex items-center gap-2">
@@ -106,33 +107,29 @@ export default function AuditionLanding({ type, city, roles }: { type?: Audition
               </span>
             ))}
           </nav>
-          <h1 className="max-w-[860px] text-[38px] leading-[1.04] tracking-[-0.03em] md:text-[58px]">{title}</h1>
-          <p className="mt-5 max-w-[620px] text-[17px] leading-relaxed text-muted md:text-[18px]">{intro}</p>
-          <div className="mt-8 flex flex-wrap items-center gap-4">
-            <Cta href="/start?role=performer">Get these roles · 7 days free</Cta>
-            <span className="text-[15px] text-muted"><b className="text-ink">{roles.length}</b> open {roles.length === 1 ? 'role' : 'roles'} right now</span>
-          </div>
+          <SectionHeader level={1} eyebrow={roles.length + ' open ' + (roles.length === 1 ? 'role' : 'roles') + ' right now'} title={title} sub={intro}
+            actions={<Cta href="/start?role=performer" variant="dark">Get these roles · 7 days free</Cta>} />
         </Container>
       </section>
 
-      <Container className="py-14 md:py-20">
+      <Container className="py-10 md:py-14">
         {roles.length ? (
-          <ul className="border-t border-line">{roles.slice(0, 40).map(j => <RoleRow key={j.id} j={j} />)}</ul>
+          <ul className="rounded-[var(--radius-feature)] bg-sand p-2 md:p-3">{roles.slice(0, 40).map(j => <RoleRow key={j.id} j={j} />)}</ul>
         ) : (
-          <div className="rounded-[var(--radius)] border border-line bg-surface p-8 md:p-10">
-            <h2 className="text-[24px] font-semibold">No open {type ? type.plural : 'roles'}{city ? ' in ' + city.name : ''} this minute</h2>
-            <p className="mt-2 max-w-[560px] text-[16px] text-muted">New castings are added every day. Join The Ident and get notified the moment one matches you — or browse every open role now.</p>
-            <div className="mt-6 flex flex-wrap gap-3"><Cta href="/jobs" variant="dark">Browse all roles</Cta><Cta href="/start?role=performer" variant="outline">Join free for 7 days</Cta></div>
+          <div className="rounded-[var(--radius-feature)] bg-sand p-8 md:p-10">
+            <h2 className="font-display text-[26px] font-bold tracking-[-0.02em]">No open {type ? type.plural : 'roles'}{city ? ' in ' + city.name : ''} this minute</h2>
+            <p className="mt-2 max-w-[560px] text-[16px] text-muted-strong">New castings are added every day. Join The Ident and get notified the moment one matches you — or browse every open role now.</p>
+            <div className="mt-6 flex flex-wrap gap-3"><Cta href="/jobs" variant="dark">Browse all roles</Cta><Cta href="/start?role=performer" variant="outline" arrow={false}>Join free for 7 days</Cta></div>
           </div>
         )}
         {roles.length > 40 && <div className="mt-8"><Cta href="/jobs" variant="outline">See all {roles.length} roles</Cta></div>}
       </Container>
 
-      <section className={'border-t border-line bg-surface ' + SECTION}>
+      <section className={SECTION}>
         <Container className="grid gap-14 md:grid-cols-[1fr_1.4fr]">
           <div>
-            <p className="eyebrow text-[13px] font-semibold uppercase tracking-[0.12em] text-green-ink">Good to know</p>
-            <h2 className="mt-3 text-[32px] leading-[1.06] tracking-[-0.02em] md:text-[42px]">{type ? type.name + ' auditions' : 'Auditions'}, answered</h2>
+            <Eyebrow>Good to know</Eyebrow>
+            <h2 className="mt-4 font-display text-[34px] font-bold leading-[1.04] tracking-[-0.03em] md:text-[48px]">{type ? type.name + ' auditions' : 'Auditions'}, answered</h2>
           </div>
           <Faq items={faq} />
         </Container>
@@ -141,8 +138,8 @@ export default function AuditionLanding({ type, city, roles }: { type?: Audition
       <section className={SECTION}>
         <Container className="grid gap-12 md:grid-cols-2">
           {[['Browse by ' + (type ? 'city' : 'type'), siblings], ['More searches', more]].map(([h, links]) => (
-            <div key={h as string}>
-              <h2 className="text-[13px] font-semibold uppercase tracking-[0.12em] text-green-ink">{h as string}</h2>
+            <div key={h as string} className="rounded-[var(--radius-feature)] bg-sand p-6 md:p-8">
+              <h2 className="font-display text-[22px] font-bold tracking-[-0.02em]">{h as string}</h2>
               <ul className="mt-5 grid gap-x-6 gap-y-3 sm:grid-cols-2">
                 {(links as [string, string][]).map(([label, href]) => <li key={href}><Link href={href} className="text-[15px] text-ink underline-offset-4 hover:text-green-ink hover:underline">{label}</Link></li>)}
               </ul>
