@@ -49,8 +49,8 @@ export default function SiteNav() {
 
   return (
     <header className="sticky top-0 z-50 px-3 pt-[max(12px,env(safe-area-inset-top))] md:px-6">
-      <div className={cx('mx-auto flex h-14 max-w-[1180px] items-center gap-2 rounded-[14px] border pl-4 pr-2 transition-all duration-300',
-        scrolled || open ? 'border-line/80 bg-surface/80 shadow-[0_10px_30px_-18px_rgb(18_49_39/0.45)] backdrop-blur-xl backdrop-saturate-150' : 'border-transparent bg-transparent')}>
+      <div className={cx('relative z-50 mx-auto flex h-14 max-w-[1180px] items-center gap-2 rounded-[14px] border pl-4 pr-2 transition-all duration-300',
+        open ? 'border-transparent bg-transparent' : scrolled ? 'border-line/80 bg-surface/80 shadow-[0_10px_30px_-18px_rgb(18_49_39/0.45)] backdrop-blur-xl backdrop-saturate-150' : 'border-transparent bg-transparent')}>
         <Link href={home} aria-label="The Ident home" className="group mr-4 flex shrink-0 items-center gap-2 whitespace-nowrap font-display text-[26px] font-bold tracking-[-0.03em] text-forest">
           <LogoMark className="size-5" />The Ident
         </Link>
@@ -77,12 +77,20 @@ export default function SiteNav() {
       </div>
 
       {open && (
-        <div className="fixed inset-x-3 top-[calc(max(12px,env(safe-area-inset-top))+64px)] z-50 rounded-[14px] border border-line bg-surface p-3 shadow-card md:hidden">
-          {NAV.map(n => <Link key={n.href} href={n.href} className="flex items-center justify-between rounded-[10px] px-3 py-3.5 text-[17px] font-medium hover:bg-chip">{n.label}<Icon strokeWidth={2} name="chevron-right" className="size-4 text-faint" /></Link>)}
-          <div className="mt-2 grid grid-cols-2 gap-2 border-t border-line pt-3">
-            {signedIn ? <Link href="/home" className="col-span-2 inline-flex h-12 items-center justify-center rounded-full bg-forest text-[15px] font-semibold text-white">Dashboard</Link> : (<>
-              <Link href="/welcome" className="inline-flex h-12 items-center justify-center rounded-full border border-line text-[15px] font-semibold">Log in</Link>
-              <Link href={join.href} className="inline-flex h-12 items-center justify-center rounded-full bg-lime text-[15px] font-semibold text-ink">{join.label}</Link>
+        // Full-screen menu on mobile: big type, staggered in, actions pinned to the bottom
+        <div className="fixed inset-0 z-40 flex flex-col bg-bg px-6 pb-[max(24px,env(safe-area-inset-bottom))] pt-[calc(max(12px,env(safe-area-inset-top))+84px)] md:hidden">
+          <nav aria-label="Menu" className="hero-in flex flex-col">
+            {NAV.map(n => (
+              <Link key={n.href} href={n.href} aria-current={pathname.startsWith(n.href) ? 'page' : undefined}
+                className="group flex items-center justify-between border-b border-line py-4 font-display text-[30px] font-bold tracking-[-0.03em] aria-[current=page]:text-green-ink">
+                {n.label}<Icon strokeWidth={2} name="arrow-right" className="cta-arrow size-6 text-faint" />
+              </Link>
+            ))}
+          </nav>
+          <div className="rise mt-auto grid grid-cols-2 gap-3 pt-6" style={{ '--d': '420ms' } as React.CSSProperties}>
+            {signedIn ? <Link href="/home" className="col-span-2 inline-flex h-14 items-center justify-center rounded-full bg-forest text-[16px] font-semibold text-white">Dashboard</Link> : (<>
+              <Link href="/welcome" className="inline-flex h-14 items-center justify-center rounded-full border border-line-strong text-[16px] font-semibold">Log in</Link>
+              <Link href={join.href} className="inline-flex h-14 items-center justify-center rounded-full bg-lime text-[16px] font-semibold text-ink">{join.label}</Link>
             </>)}
           </div>
         </div>

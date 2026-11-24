@@ -21,6 +21,52 @@ type Kind = 'roles' | 'side'
 const TONES = ['bg-mint', 'bg-butter', 'bg-blossom', 'bg-chip']
 const toneOf = (s: string) => TONES[[...s].reduce((a, c) => a + c.charCodeAt(0), 0) % TONES.length]
 
+// Example listings fill the row until there are enough real ones. Each is tagged "Example", shows no
+// applicant count and links to the live board, so nobody mistakes one for a real casting.
+type Example = { type: string; title: string; place: string; pay: string; closes: string; who: string }
+const EXAMPLES: Record<Kind, Example[]> = {
+  roles: [
+    { type: 'Theatre', title: 'UK tour of a new musical — Swing (female)', place: 'Manchester, then touring', pay: '£650/week', closes: 'Closes in 9 days', who: 'Example listing' },
+    { type: 'TV', title: 'Returning drama series — Paramedic (featured)', place: 'Cardiff', pay: '£180/day', closes: 'Closes in 4 days', who: 'Example listing' },
+    { type: 'Commercial', title: 'Supermarket Christmas ad — Family of four', place: 'London', pay: '£1,200 + buyout', closes: 'Closes in 3 days', who: 'Example listing' },
+    { type: 'Dance', title: 'Arena tour — Commercial dancers (all genders)', place: 'London rehearsals', pay: '£900/week', closes: 'Closes in 12 days', who: 'Example listing' },
+    { type: 'Film', title: 'Feature film — Lead, playing age 25–35', place: 'Glasgow', pay: 'Equity rates', closes: 'Closes in 8 days', who: 'Example listing' },
+    { type: 'Voiceover', title: 'Animated series — Narrator, warm Northern voice', place: 'Remote', pay: '£350/session', closes: 'Closes in 5 days', who: 'Example listing' },
+    { type: 'Theatre', title: 'Panto 2026 — Principal boy', place: 'Bristol', pay: '£550/week', closes: 'Closes in 6 days', who: 'Example listing' },
+  ],
+  side: [
+    { type: 'Side hustle', title: 'Front of house — evening shifts', place: 'West End, London', pay: '£13.50/hour', closes: 'Closes in 7 days', who: 'Example listing' },
+    { type: 'Side hustle', title: 'Kids’ drama club leader — Saturdays', place: 'Leeds', pay: '£25/hour', closes: 'Closes in 10 days', who: 'Example listing' },
+    { type: 'Side hustle', title: 'Role-play actor for medical training', place: 'Birmingham', pay: '£180/day', closes: 'Closes in 5 days', who: 'Example listing' },
+    { type: 'Side hustle', title: 'Party performer — princess & superhero parties', place: 'Surrey', pay: '£90/party', closes: 'Closes in 14 days', who: 'Example listing' },
+    { type: 'Side hustle', title: 'Brand ambassador at a festival', place: 'Brighton', pay: '£140/day', closes: 'Closes in 6 days', who: 'Example listing' },
+    { type: 'Side hustle', title: 'Voice-over for e-learning modules', place: 'Remote', pay: '£200/module', closes: 'Closes in 9 days', who: 'Example listing' },
+  ],
+}
+
+function ExampleCard({ e }: { e: Example }) {
+  return (
+    <li>
+      <Link href="/jobs" className="group relative flex h-full flex-col rounded-[24px] bg-sand p-6">
+        <div className="flex items-center justify-between gap-3">
+          <span className={cx('rounded-[10px] px-3 py-1.5 text-[13px] font-semibold text-ink', toneOf(e.type))}>{e.type}</span>
+          <span className="text-[12px] font-medium text-muted">{e.closes}</span>
+        </div>
+        <p className="mt-4 font-display text-[22px] font-bold leading-[1.15] tracking-[-0.01em] [display:-webkit-box] [-webkit-box-orient:vertical] [-webkit-line-clamp:2] overflow-hidden">{e.title}</p>
+        <p className="mt-1.5 flex items-center gap-1.5 text-[14px] text-muted"><Icon strokeWidth={2} name="pin" className="size-3.5 shrink-0" /><span className="truncate">{e.place}</span></p>
+        <div className="mt-5 rounded-[16px] bg-surface p-4">
+          <p className="font-display text-[24px] font-bold leading-none tracking-[-0.02em]">{e.pay}</p>
+          <p className="mt-2 text-[13px] font-medium text-muted">Example of a role on The Ident</p>
+        </div>
+        <div className="mt-auto flex items-center gap-2.5 pt-5">
+          <span className="rounded-full border border-line-strong px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.08em] text-muted">Example</span>
+          <span className="ml-auto inline-flex items-center gap-1 text-[13px] font-semibold text-green-ink opacity-0 transition duration-300 group-hover:opacity-100">See real roles <Icon strokeWidth={2} name="arrow-right" className="cta-arrow size-3.5" /></span>
+        </div>
+      </Link>
+    </li>
+  )
+}
+
 function RoleCard({ j, poster, applied }: { j: Job; poster?: Poster; applied: number }) {
   const pay = payLabel(j)
   const closes = closesLabel(j)
@@ -75,10 +121,10 @@ export default function RolesCarousel({ limit = 12 }: { limit?: number }) {
   // Open a couple of cards in, so cards fill the left of the screen as well as the right
   useLayoutEffect(() => {
     const t = track.current
-    if (!t || !data?.jobs.length) return
+    if (!t || !data) return
     const cards = t.children
     const target = cards[Math.min(2, cards.length - 1)] as HTMLElement | undefined
-    if (target && data.jobs.length > 3) t.scrollLeft = target.offsetLeft - (cards[0] as HTMLElement).offsetLeft
+    if (target && data.jobs.length > 3 && window.innerWidth >= 768) t.scrollLeft = target.offsetLeft - (cards[0] as HTMLElement).offsetLeft
     else t.scrollLeft = 0
   }, [data])
 
@@ -111,6 +157,7 @@ export default function RolesCarousel({ limit = 12 }: { limit?: number }) {
         className="scrollbar-none flex snap-x snap-mandatory gap-5 overflow-x-auto pb-8 pt-2 [&>li]:w-[82vw] [&>li]:shrink-0 [&>li]:snap-start sm:[&>li]:w-[360px]">
         {data ? <>
           {data.jobs.map(j => <RoleCard key={j.id} j={j} poster={data.posters.get(j.created_by || '')} applied={data.applied.get(j.id) || 0} />)}
+          {EXAMPLES[kind].slice(0, Math.max(0, 7 - data.jobs.length)).map(e => <ExampleCard key={e.title} e={e} />)}
           <li>
             <Link href={kind === 'side' ? '/jobs' : '/jobs'} className="group flex h-full min-h-[260px] flex-col justify-between rounded-[14px] bg-forest p-6 text-white">
               <span className="text-[24px] font-semibold leading-tight">See every<br />live {kind === 'side' ? 'side hustle' : 'role'}</span>

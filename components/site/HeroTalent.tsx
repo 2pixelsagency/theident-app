@@ -37,7 +37,7 @@ function TypedSearch() {
       <Icon strokeWidth={2} name="search" className="size-5 shrink-0 text-muted" />
       <input value={q} onChange={e => setQ(e.target.value)} aria-label="Search talent" placeholder={ph}
         className="h-full min-w-0 flex-1 bg-transparent text-[16px] outline-none placeholder:text-ink/70" />
-      <button type="submit" className="group inline-flex h-11 shrink-0 items-center gap-1.5 rounded-[10px] bg-forest px-5 text-[15px] font-semibold text-white transition-colors duration-300 hover:bg-lime hover:text-ink active:scale-[.98]">Search now <Icon strokeWidth={2} name="arrow-right" className="cta-arrow size-4" /></button>
+      <button type="submit" className="group inline-flex h-11 shrink-0 items-center gap-1.5 rounded-[10px] bg-forest px-5 text-[15px] font-semibold text-white transition-colors duration-300 hover:bg-lime hover:text-ink active:scale-[.98]"><span className="sm:hidden">Search</span><span className="hidden sm:inline">Search now</span> <Icon strokeWidth={2} name="arrow-right" className="cta-arrow size-4" /></button>
     </form>
   )
 }
