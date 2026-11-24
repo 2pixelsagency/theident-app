@@ -79,7 +79,7 @@ export default function SchedulePage() {
 
         {nextWeek?.location && (
           <Link href="/digs" className="mt-4 flex items-center gap-3 rounded-[var(--radius)] border border-line bg-surface p-4 shadow-card">
-            <span className="flex size-10 items-center justify-center rounded-xl bg-purple-tint text-purple-ink"><Icon name="pin" /></span>
+            <span className="flex size-10 items-center justify-center rounded-full bg-purple-tint text-purple-ink"><Icon name="pin" /></span>
             <span className="flex-1"><span className="block text-[15px] font-medium">Next week · {nextWeek.location}</span><span className="block text-[13px] text-muted">Book your digs early</span></span>
             <Icon name="chevron-right" className="size-4 text-faint" />
           </Link>

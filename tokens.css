@@ -76,8 +76,8 @@
   --stripes-dark: repeating-linear-gradient(to bottom, rgba(203, 242, 76, 0.10) 0 9px, transparent 9px 18px);
   --radius-feature: 32px;   /* castings feature cards */
 
-  --radius: 12px;        /* tight, Upwork-like */
-  --shadow: 0 6px 20px rgba(21, 33, 28, 0.05);
+  --radius: 20px;        /* app cards (website design system: soft, rounded) */
+  --shadow: 0 1px 0 rgba(21, 33, 28, 0.03), 0 16px 32px -24px rgba(21, 33, 28, 0.28);
 }
 
 body {

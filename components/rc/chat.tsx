@@ -44,7 +44,7 @@ export function Composer({ placeholder, onSend, disabled }: { placeholder: strin
     <div className="sticky bottom-0 z-20 flex items-end gap-2 border-t border-line bg-surface px-3 pb-[max(12px,env(safe-area-inset-bottom))] pt-3">
       <textarea value={body} onChange={e => setBody(e.target.value)} rows={1} placeholder={placeholder} disabled={disabled} aria-label="Message"
         onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send() } }}
-        className="max-h-32 min-h-11 flex-1 resize-none rounded-[10px] bg-chip/70 px-4 py-2.5 text-[15px] outline-none placeholder:text-faint" />
+        className="max-h-32 min-h-11 flex-1 resize-none rounded-full bg-chip/70 px-4 py-2.5 text-[15px] outline-none placeholder:text-faint" />
       <button type="button" onClick={send} disabled={!body.trim() || sending || disabled} aria-label="Send"
         className="flex size-11 shrink-0 items-center justify-center rounded-full bg-green text-white transition disabled:opacity-40">
         <Icon name="send" className="size-5" />

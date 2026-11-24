@@ -143,14 +143,14 @@ export default function DigsPage() {
           <p className="mb-3 text-[13px] text-muted">Opens their site with your town{data.from ? ' and contract dates' : ''} filled in.</p>
           <div className="grid grid-cols-2 gap-2">
             {elsewhere(town, data.from, data.to).map(s => (
-              <a key={s.name} href={s.href} target="_blank" rel="noopener noreferrer" className="flex h-12 items-center justify-between rounded-[10px] border border-line bg-surface px-4 text-sm font-semibold">
+              <a key={s.name} href={s.href} target="_blank" rel="noopener noreferrer" className="flex h-12 items-center justify-between rounded-full border border-line bg-surface px-4 text-sm font-semibold">
                 {s.name}<Icon name="arrow-right" className="size-4 -rotate-45 text-muted" />
               </a>
             ))}
           </div>
 
           <button type="button" onClick={() => { setTab('mine'); setEditing({}) }} className="mt-8 flex w-full items-center gap-3 rounded-[var(--radius)] bg-forest p-4 text-left text-white">
-            <span className="flex size-12 items-center justify-center rounded-xl bg-lime text-ink"><Icon name="plus" className="size-6" /></span>
+            <span className="flex size-12 items-center justify-center rounded-full bg-lime text-ink"><Icon name="plus" className="size-6" /></span>
             <span className="flex-1"><span className="block text-[16px] font-semibold">List your place</span><span className="block text-[13px] text-white/70">A spare room near a theatre? Host touring performers.</span></span>
           </button>
         </>) : (

@@ -117,7 +117,7 @@ export default function TalentPage() {
                   </span>
                 </Link>
                 <div className="-mt-1 px-3 pb-3">
-                  <button type="button" onClick={() => message(t)} disabled={busy === t.id} className="inline-flex h-9 w-full items-center justify-center gap-1.5 rounded-[10px] border border-line text-[13px] font-semibold transition hover:bg-chip disabled:opacity-50"><Icon name="chat" className="size-4" />{busy === t.id ? 'Opening…' : 'Message'}</button>
+                  <button type="button" onClick={() => message(t)} disabled={busy === t.id} className="inline-flex h-9 w-full items-center justify-center gap-1.5 rounded-full border border-line text-[13px] font-semibold transition hover:bg-chip disabled:opacity-50"><Icon name="chat" className="size-4" />{busy === t.id ? 'Opening…' : 'Message'}</button>
                 </div>
                 </div>
               </li>

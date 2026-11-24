@@ -197,7 +197,7 @@ export default function ApplyPage() {
             {picture
               // eslint-disable-next-line @next/next/no-img-element
               ? <img src={picture} alt="" className="size-10 rounded-xl object-cover" />
-              : <span className="flex size-10 items-center justify-center rounded-xl bg-chip text-muted"><Icon name="image" /></span>}
+              : <span className="flex size-10 items-center justify-center rounded-full bg-chip text-muted"><Icon name="image" /></span>}
             <div className="flex-1"><p className="text-[15px] font-medium">Headshots</p><p className="text-[13px] text-muted">{picture ? 'From your profile' : 'Add a headshot to your profile'}</p></div>
             {picture && <button type="button" onClick={() => setWithHeadshot(v => !v)} className={cx('flex items-center gap-1 text-sm font-medium', withHeadshot ? 'text-green-ink' : 'text-muted')}>{withHeadshot ? <><Icon name="check" className="size-4" /> Attached</> : 'Attach'}</button>}
           </div>
@@ -213,7 +213,7 @@ export default function ApplyPage() {
         <h2 className="mb-3 mt-6 text-[18px]">{j.requires_nda ? 'Sign the NDA to apply' : 'Consent'}</h2>
         <Card className="p-4">
           <div className="flex items-start gap-3">
-            <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-green-tint text-green-ink"><Icon name={j.requires_nda ? 'lock' : 'shield-check'} /></span>
+            <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-green-tint text-green-ink"><Icon name={j.requires_nda ? 'lock' : 'shield-check'} /></span>
             <div className="flex-1">
               <p className="text-[15px] font-medium">{j.requires_nda ? 'Non-disclosure agreement' : 'Self-tape usage & consent'}</p>
               <p className="text-[13px] text-muted">{j.requires_nda ? 'Read the terms, then sign below.' : 'Your materials are used for this casting only and deleted if you withdraw.'}</p>
@@ -249,7 +249,7 @@ export default function ApplyPage() {
 function MaterialRow({ icon, tone, title, sub, done, busy, onAdd }: { icon: string; tone: string; title: string; sub: string; done: boolean; busy: boolean; onAdd: () => void }) {
   return (
     <div className="flex items-center gap-3 px-4 py-3.5">
-      <span className={cx('flex size-10 shrink-0 items-center justify-center rounded-xl', tone)}><Icon name={icon} /></span>
+      <span className={cx('flex size-10 shrink-0 items-center justify-center rounded-full', tone)}><Icon name={icon} /></span>
       <div className="min-w-0 flex-1"><p className="text-[15px] font-medium">{title}</p><p className="truncate text-[13px] text-muted">{sub}</p></div>
       {done ? <button type="button" onClick={onAdd} className="flex items-center gap-1 text-sm font-medium text-green-ink"><Icon name="check" className="size-4" /> Attached</button>
         : <Button size="sm" variant="dark" onClick={onAdd} disabled={busy}>{busy ? '…' : 'Add'}</Button>}

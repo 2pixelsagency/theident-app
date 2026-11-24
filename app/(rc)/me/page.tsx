@@ -82,8 +82,8 @@ export default function MyProfilePage() {
         {!caster && <BoostCard uid={p.id} until={p.boosted_until} />}
         {!caster && (
           <div className="mt-4 grid grid-cols-2 gap-2">
-            <button type="button" onClick={() => { setPreview(true); window.scrollTo(0, 0) }} className="flex h-11 items-center justify-center gap-2 rounded-[10px] border border-line bg-surface text-sm font-semibold"><Icon name="eye" className="size-4" /> Preview as casting</button>
-            <button type="button" onClick={requestTestimonial} className="flex h-11 items-center justify-center gap-2 rounded-[10px] border border-line bg-surface text-sm font-semibold"><Icon name="send" className="size-4" /> Ask for a testimonial</button>
+            <button type="button" onClick={() => { setPreview(true); window.scrollTo(0, 0) }} className="flex h-11 items-center justify-center gap-2 rounded-full border border-line bg-surface text-sm font-semibold"><Icon name="eye" className="size-4" /> Preview as casting</button>
+            <button type="button" onClick={requestTestimonial} className="flex h-11 items-center justify-center gap-2 rounded-full border border-line bg-surface text-sm font-semibold"><Icon name="send" className="size-4" /> Ask for a testimonial</button>
           </div>
         )}
       </>}

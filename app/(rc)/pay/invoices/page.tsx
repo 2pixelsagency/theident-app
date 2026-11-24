@@ -61,7 +61,7 @@ export default function InvoicesPage() {
               const late = isOverdue(i)
               return (
                 <Link key={i.id} href={'/pay/invoices/' + i.id} className="flex items-center gap-3 px-4 py-3.5">
-                  <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-chip"><Icon name="receipt" className="size-5" /></span>
+                  <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-chip"><Icon name="receipt" className="size-5" /></span>
                   <span className="min-w-0 flex-1">
                     <span className="block truncate text-[15px] font-medium">{i.client_name || 'No client yet'}</span>
                     <span className="block text-[13px] text-muted">{i.number} · {i.due_date ? 'Due ' + fmtDate(i.due_date, { day: 'numeric', month: 'short' }) : fmtDate(i.issue_date, { day: 'numeric', month: 'short' })}</span>

@@ -13,12 +13,13 @@ export function cx(...parts: (string | false | null | undefined)[]) {
 
 type Variant = 'primary' | 'dark' | 'outline' | 'accent' | 'ghost' | 'light'
 const VARIANTS: Record<Variant, string> = {
-  primary: 'bg-green text-white shadow-cta hover:bg-lime hover:text-ink', // Forest → Lime on hover
+  primary: 'bg-green text-white hover:bg-lime hover:text-ink', // Forest pill → Lime on hover
   dark: 'bg-dark text-white hover:bg-lime hover:text-ink',
-  outline: 'border border-line bg-surface text-ink hover:border-forest hover:bg-forest hover:text-white',
+  outline: 'border-[1.5px] border-forest bg-transparent text-forest hover:bg-forest hover:text-white',
   accent: 'bg-accent text-ink hover:bg-forest hover:text-lime', // Ink text on Lime, always
   ghost: 'text-green-ink hover:bg-green-tint',
   light: 'bg-surface text-ink hover:bg-lime',
+
 }
 
 type ButtonProps = {
@@ -35,8 +36,8 @@ type ButtonProps = {
 export function Button({ variant = 'primary', size = 'md', href, icon, trailingIcon, full, className, children, ...rest }: ButtonProps) {
   const cls = cx(
     'group inline-flex cursor-pointer items-center justify-center gap-2 font-semibold transition-[background-color,color,border-color,transform,box-shadow] duration-300 ease-out active:scale-[.98] disabled:opacity-50 disabled:pointer-events-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-lime',
-    size === 'lg' && 'h-14 rounded-[10px] text-base px-6',
-    size === 'md' && 'h-12 rounded-[10px] text-[15px] px-5',
+    size === 'lg' && 'h-14 rounded-full text-base px-7',
+    size === 'md' && 'h-12 rounded-full text-[15px] px-6',
     size === 'sm' && 'h-9 rounded-full text-[13px] px-4',
     full && 'w-full',
     VARIANTS[variant],
@@ -57,11 +58,17 @@ export function IconButton({ icon, label, onClick, href, className, dot }: { ico
 /* ---------- Surfaces ---------- */
 
 export function Card({ className, children, as: As = 'div', ...rest }: { className?: string; children: React.ReactNode; as?: 'div' | 'section' | 'li' } & React.HTMLAttributes<HTMLElement>) {
-  return <As className={cx('rounded-[var(--radius)] border border-line bg-surface shadow-card', className)} {...rest}>{children}</As>
+  return <As className={cx('rounded-[var(--radius)] border border-line-soft bg-surface shadow-card', className)} {...rest}>{children}</As>
 }
 
 export function DarkCard({ className, children }: { className?: string; children: React.ReactNode }) {
-  return <div className={cx('rounded-[var(--radius)] bg-dark p-5 text-white', className)}>{children}</div>
+  // Forest panel with the lime stripe band (website design system)
+  return (
+    <div className={cx('relative isolate overflow-hidden rounded-[var(--radius)] p-5 text-white', className)} style={{ backgroundImage: 'var(--panel-forest)' }}>
+      <span aria-hidden="true" className="absolute inset-x-0 top-[40%] -z-10 h-20" style={{ backgroundImage: 'var(--stripes-dark)' }} />
+      {children}
+    </div>
+  )
 }
 
 /* ---------- Headers ---------- */
@@ -122,7 +129,7 @@ export function BackHeader({ title, right, back, onBack }: { title: string; righ
     <header className={headerCls}>
       <div className="flex items-center gap-1.5">
         <BackArrow back={back} onBack={onBack} />
-        <h1 className="flex-1 truncate text-[20px] leading-tight lg:text-[28px]">{title}</h1>
+        <h1 className="flex-1 truncate font-display text-[24px] font-bold leading-tight tracking-[-0.03em] lg:text-[36px]">{title}</h1>
         {right}
       </div>
     </header>
@@ -135,7 +142,7 @@ export function PageHeader({ title, right, sub, back = '/home' }: { title: strin
     <header className={headerCls}>
       <div className="flex items-center gap-1.5">
         <BackArrow back={back} />
-        <h1 className="flex-1 truncate text-[20px] leading-tight lg:text-[28px]">{title}</h1>
+        <h1 className="flex-1 truncate font-display text-[24px] font-bold leading-tight tracking-[-0.03em] lg:text-[36px]">{title}</h1>
         {right}
       </div>
       {sub && <p className="mt-1 text-sm text-muted">{sub}</p>}
@@ -146,14 +153,14 @@ export function PageHeader({ title, right, sub, back = '/home' }: { title: strin
 export function SectionTitle({ title, action, href, className }: { title: string; action?: string; href?: string; className?: string }) {
   return (
     <div className={cx('mb-3 mt-6 flex items-center justify-between', className)}>
-      <h2 className="text-[18px]">{title}</h2>
-      {action && href && <Link href={href} className="text-sm font-medium text-green-ink">{action} ›</Link>}
+      <h2 className="font-display text-[20px] font-bold tracking-[-0.02em]">{title}</h2>
+      {action && href && <Link href={href} className="group inline-flex items-center gap-1 text-[13px] font-semibold text-forest">{action}<svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" className="transition-transform duration-300 group-hover:-translate-y-0.5 group-hover:translate-x-0.5"><path d="M7 17L17 7M8 7h9v9" /></svg></Link>}
     </div>
   )
 }
 
 export function Eyebrow({ children, className }: { children: React.ReactNode; className?: string }) {
-  return <p className={cx('mb-2 text-xs font-semibold uppercase tracking-[0.08em] text-muted', className)}>{children}</p>
+  return <p className={cx('mb-2 flex items-center gap-2 text-[12px] font-semibold uppercase tracking-[0.14em] text-forest', className)}><span aria-hidden="true" className="size-1.5 rounded-full bg-current" />{children}</p>
 }
 
 /* ---------- Chips & pills ---------- */
@@ -172,29 +179,29 @@ const TONES: Record<Tone, string> = {
 }
 
 export function Pill({ tone = 'neutral', children, className }: { tone?: Tone; children: React.ReactNode; className?: string }) {
-  return <span className={cx('inline-flex items-center gap-1 whitespace-nowrap rounded-md px-2 py-0.5 text-xs font-medium', TONES[tone], className)}>{children}</span>
+  return <span className={cx('inline-flex items-center gap-1 whitespace-nowrap rounded-full px-2.5 py-1 text-xs font-semibold', TONES[tone], className)}>{children}</span>
 }
 
 export function Chip({ selected, onClick, children, tone = 'dark', className }: { selected?: boolean; onClick?: () => void; children: React.ReactNode; tone?: 'dark' | 'green' | 'purple'; className?: string }) {
   const on = tone === 'dark' ? 'border-dark bg-dark text-white' : tone === 'green' ? 'border-transparent bg-green-tint text-green-ink' : 'border-transparent bg-purple-tint text-purple-ink'
   return (
     <button type="button" onClick={onClick} aria-pressed={selected}
-      className={cx('inline-flex h-9 items-center gap-1 whitespace-nowrap rounded-full border px-4 text-[13px] transition', selected ? on : 'border-line bg-surface text-ink hover:bg-field', className)}>
+      className={cx('inline-flex h-9 items-center gap-1 whitespace-nowrap rounded-full border px-4 text-[13px] transition', selected ? on : 'border-line-strong bg-sand text-ink hover:border-forest', className)}>
       {children}
     </button>
   )
 }
 
 export function Tag({ children, tone = 'neutral' }: { children: React.ReactNode; tone?: 'neutral' | 'purple' }) {
-  return <span className={cx('inline-flex items-center rounded-md px-2.5 py-1 text-xs font-medium', tone === 'purple' ? 'bg-purple-tint text-purple-ink' : 'bg-chip text-ink')}>{children}</span>
+  return <span className={cx('inline-flex items-center rounded-[10px] px-3 py-1 text-xs font-medium', tone === 'purple' ? 'bg-purple-tint text-purple-ink' : 'bg-sand-2 text-muted-strong')}>{children}</span>
 }
 
 export function Segmented<T extends string>({ value, options, onChange, className }: { value: T; options: { value: T; label: string }[]; onChange: (v: T) => void; className?: string }) {
   return (
-    <div role="tablist" className={cx('flex rounded-[10px] bg-chip p-1', className)}>
+    <div role="tablist" className={cx('flex rounded-full bg-sand-2 p-1', className)}>
       {options.map(o => (
         <button key={o.value} type="button" role="tab" aria-selected={value === o.value} onClick={() => onChange(o.value)}
-          className={cx('h-10 flex-1 rounded-[8px] text-sm font-medium transition', value === o.value ? 'bg-dark text-white shadow-card' : 'text-muted')}>
+          className={cx('h-10 flex-1 rounded-full text-sm font-semibold transition-colors duration-300', value === o.value ? 'bg-forest text-bg shadow-card' : 'text-muted-strong hover:text-ink')}>
           {o.label}
         </button>
       ))}
@@ -219,8 +226,8 @@ export function TabChips<T extends string>({ value, options, onChange }: { value
 export function Toggle({ checked, onChange, label }: { checked: boolean; onChange: (v: boolean) => void; label: string }) {
   return (
     <button type="button" role="switch" aria-checked={checked} aria-label={label} onClick={() => onChange(!checked)}
-      className={cx('relative h-7 w-12 shrink-0 rounded-full transition-colors', checked ? 'bg-green' : 'bg-line')}>
-      <span className={cx('absolute top-1 size-5 rounded-full bg-surface shadow transition-all', checked ? 'left-6' : 'left-1')} />
+      className={cx('relative h-7 w-12 shrink-0 rounded-full transition-colors duration-300', checked ? 'bg-forest' : 'bg-line-strong')}>
+      <span className={cx('absolute top-[3px] size-[22px] rounded-full shadow transition-all duration-300', checked ? 'left-[23px] bg-lime' : 'left-[3px] bg-surface')} />
     </button>
   )
 }
@@ -237,7 +244,7 @@ export function ToggleRow({ title, sub, checked, onChange }: { title: string; su
   )
 }
 
-const inputCls = 'w-full rounded-xl border border-line bg-field px-4 text-[16px] text-ink placeholder:text-faint outline-none transition focus:border-green focus:bg-surface'
+const inputCls = 'w-full rounded-[14px] border border-line-strong bg-surface px-4 text-[16px] text-ink placeholder:text-faint outline-none transition focus:border-forest focus:ring-2 focus:ring-lime/50'
 
 export function Field({ label, hint, icon, className, ...rest }: { label?: string; hint?: string; icon?: string; className?: string } & React.InputHTMLAttributes<HTMLInputElement>) {
   return (
@@ -266,7 +273,7 @@ export function SearchField({ placeholder, value, onChange }: { placeholder: str
     <label className="relative block">
       <Icon name="search" className="pointer-events-none absolute left-4 top-1/2 size-[18px] -translate-y-1/2 text-muted" />
       <input type="search" value={value} onChange={e => onChange(e.target.value)} placeholder={placeholder}
-        className="h-12 w-full rounded-[10px] border border-line bg-surface pl-11 pr-4 text-[15px] outline-none placeholder:text-faint focus:border-green" />
+        className="h-12 w-full rounded-full border border-line-strong bg-surface pl-11 pr-4 text-[15px] outline-none placeholder:text-faint focus:border-forest focus:ring-2 focus:ring-lime/50" />
     </label>
   )
 }
@@ -290,7 +297,7 @@ export function UploadTile({ icon = 'upload', title, sub, onClick, className, ch
 export function Progress({ value, className, dark }: { value: number; className?: string; dark?: boolean }) {
   return (
     <div className={cx('h-2 overflow-hidden rounded-full', dark ? 'bg-white/15' : 'bg-chip', className)}>
-      <div className="h-full rounded-full bg-accent transition-all" style={{ width: Math.max(0, Math.min(100, value)) + '%' }} />
+      <div className={cx('h-full rounded-full transition-all duration-700', dark ? 'bg-lime' : 'bg-forest')} style={{ width: Math.max(0, Math.min(100, value)) + '%' }} />
     </div>
   )
 }
@@ -306,7 +313,7 @@ export function Steps({ step, total }: { step: number; total: number }) {
 /* ---------- Lists ---------- */
 
 export function IconTile({ icon, tone = 'neutral', className }: { icon: string; tone?: Tone; className?: string }) {
-  return <span className={cx('flex size-10 shrink-0 items-center justify-center rounded-xl', TONES[tone], tone === 'neutral' && 'bg-green-tint/60 text-ink', className)}><Icon name={icon} className="size-5" /></span>
+  return <span className={cx('flex size-10 shrink-0 items-center justify-center rounded-full', TONES[tone], tone === 'neutral' && 'bg-green-tint/60 text-ink', className)}><Icon name={icon} className="size-5" /></span>
 }
 
 export function ListRow({ icon, tone, title, sub, right, href, onClick, chevron = true, danger }: { icon?: string; tone?: Tone; title: React.ReactNode; sub?: React.ReactNode; right?: React.ReactNode; href?: string; onClick?: () => void; chevron?: boolean; danger?: boolean }) {
@@ -359,8 +366,8 @@ export function AvatarPile({ people, size = 30, max = 3 }: { people: { id: strin
 export function Empty({ icon = 'sparkle', title, sub, action }: { icon?: string; title: string; sub?: string; action?: React.ReactNode }) {
   return (
     <div className="flex flex-col items-center px-6 py-12 text-center">
-      <span className="mb-3 flex size-12 items-center justify-center rounded-xl bg-green-tint text-green-ink"><Icon name={icon} className="size-6" /></span>
-      <p className="text-[15px] font-medium">{title}</p>
+      <span className="mb-4 flex size-14 items-center justify-center rounded-full bg-lime text-forest"><Icon name={icon} strokeWidth={2} className="size-6" /></span>
+      <p className="font-display text-[20px] font-bold tracking-[-0.02em]">{title}</p>
       {sub && <p className="mt-1 max-w-72 text-sm text-muted">{sub}</p>}
       {action && <div className="mt-4">{action}</div>}
     </div>
@@ -431,11 +438,11 @@ export function Sheet({ open, onClose, title, children }: { open: boolean; onClo
   return (
     <div className="fixed inset-0 z-[150]" role="dialog" aria-modal="true" aria-label={title}>
       <button type="button" aria-label="Close" onClick={onClose} className="absolute inset-0 bg-dark/40" />
-      <div className="absolute inset-x-0 bottom-0 mx-auto max-h-[90dvh] max-w-[480px] overflow-y-auto rounded-t-[14px] lg:bottom-auto lg:top-1/2 lg:-translate-y-1/2 lg:rounded-[10px] lg:pb-6 bg-bg px-4 pb-[max(20px,env(safe-area-inset-bottom))] pt-3">
+      <div className="absolute inset-x-0 bottom-0 mx-auto max-h-[90dvh] max-w-[480px] overflow-y-auto rounded-t-[32px] lg:bottom-auto lg:top-1/2 lg:-translate-y-1/2 lg:rounded-[32px] lg:pb-6 bg-bg px-4 pb-[max(20px,env(safe-area-inset-bottom))] pt-3">
         <div className="mx-auto mb-3 h-1 w-10 rounded-full bg-line" />
         <div className="mb-4 flex items-center justify-between">
-          <h2 className="text-[20px]">{title}</h2>
-          <button type="button" onClick={onClose} aria-label="Close" className="inline-flex size-9 items-center justify-center rounded-full hover:bg-chip"><Icon name="x" /></button>
+          <h2 className="font-display text-[22px] font-bold tracking-[-0.02em]">{title}</h2>
+          <button type="button" onClick={onClose} aria-label="Close" className="inline-flex size-10 items-center justify-center rounded-[14px] border border-line-strong bg-bg transition-colors hover:border-forest hover:bg-forest hover:text-lime"><Icon name="x" /></button>
         </div>
         {children}
       </div>

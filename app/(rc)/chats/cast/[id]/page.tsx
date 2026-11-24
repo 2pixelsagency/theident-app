@@ -100,7 +100,7 @@ export default function CastChatPage() {
       <header className="sticky top-0 z-30 border-b border-line bg-surface/95 px-4 pb-3 pt-[max(14px,env(safe-area-inset-top))] backdrop-blur">
         <div className="flex items-center gap-3">
           <BackArrow onBack={goBack} />
-          <span className="flex size-11 items-center justify-center rounded-xl bg-green text-[17px] font-medium text-white">{initials(chat.name).slice(0, 1)}</span>
+          <span className="flex size-11 items-center justify-center rounded-full bg-green text-[17px] font-medium text-white">{initials(chat.name).slice(0, 1)}</span>
           <button type="button" onClick={() => setSheet('members')} className="min-w-0 flex-1 text-left">
             <span className="block truncate text-[16px] font-medium">{chat.name}</span>
             <span className="block text-xs text-green-ink">{members.length} {members.length === 1 ? 'person' : 'people'}{chat.production_name ? ' · ' + chat.production_name : ''}</span>

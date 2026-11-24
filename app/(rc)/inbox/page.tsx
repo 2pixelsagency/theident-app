@@ -73,7 +73,7 @@ export default function InboxPage() {
                   <li key={n.id}>
                     <button type="button" onClick={() => open(n)} className="block w-full text-left">
                       <Card className="flex items-start gap-3 p-4">
-                        <span className={cx('flex size-10 shrink-0 items-center justify-center rounded-xl', l.tile)}><Icon name={l.icon} /></span>
+                        <span className={cx('flex size-10 shrink-0 items-center justify-center rounded-full', l.tile)}><Icon name={l.icon} /></span>
                         <span className="min-w-0 flex-1">
                           <span className={cx('block text-[15px]', !n.read && 'font-medium')}>{n.title}{n.body && n.type !== 'message' ? ' — ' : ''}{n.type !== 'message' && <span className="font-normal">{n.body}</span>}</span>
                           {n.type === 'message' && n.body && <span className="block truncate text-sm text-ink/80">{n.body}</span>}

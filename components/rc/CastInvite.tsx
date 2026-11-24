@@ -122,7 +122,7 @@ export function ProductionChatCard({ jobId, canCreate, title }: { jobId: string;
   return (
     <button type="button" disabled={busy} onClick={() => (chat ? router.push('/chats/cast/' + chat.id) : start())}
       className="flex w-full items-center gap-3 rounded-[var(--radius)] border border-line bg-surface px-4 py-3 text-left shadow-card">
-      <span className="flex size-10 items-center justify-center rounded-xl bg-forest text-lime"><Icon name="users" className="size-5" /></span>
+      <span className="flex size-10 items-center justify-center rounded-full bg-forest text-lime"><Icon name="users" className="size-5" /></span>
       <span className="min-w-0 flex-1">
         <span className="block text-[15px] font-medium">Cast chat</span>
         <span className="block text-[13px] text-muted">{chat ? chat.n + (chat.n === 1 ? ' person' : ' people') + ' · booked cast join automatically' : 'Starts automatically when you book someone'}</span>

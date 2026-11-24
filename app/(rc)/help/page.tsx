@@ -56,7 +56,7 @@ export default function HelpPage() {
             <li key={t} className="flex gap-2"><Icon name="check" className="mt-0.5 size-4 shrink-0 text-green" />{t}</li>
           ))}
         </ul>
-        <a href={mail('Safety report')} className="mt-5 flex h-12 items-center justify-center rounded-[10px] bg-dark text-[15px] font-medium text-white">Report a safety concern</a>
+        <a href={mail('Safety report')} className="mt-5 flex h-12 items-center justify-center rounded-full bg-dark text-[15px] font-medium text-white">Report a safety concern</a>
       </Sheet>
     </>
   )

@@ -64,13 +64,13 @@ export default function PayPage() {
         </div>
 
         <Link href="/tax" className="mt-4 flex items-center gap-3 rounded-[var(--radius)] bg-mint p-4 text-ink">
-          <span className="flex size-11 items-center justify-center rounded-xl bg-surface"><Icon name="card" /></span>
+          <span className="flex size-11 items-center justify-center rounded-full bg-surface"><Icon name="card" /></span>
           <span className="flex-1"><span className="block text-[15px] font-medium">Set aside for tax</span><span className="block text-[13px]">We suggest ~{money(suggested)} put by so far (20%).</span></span>
           <Icon name="chevron-right" className="size-5" />
         </Link>
 
         <Link href="/pay/invoices" className="mt-3 flex items-center gap-3 rounded-[var(--radius)] border border-line bg-surface p-4 shadow-card">
-          <span className="flex size-11 items-center justify-center rounded-xl bg-green-tint text-green-ink"><Icon name="receipt" /></span>
+          <span className="flex size-11 items-center justify-center rounded-full bg-green-tint text-green-ink"><Icon name="receipt" /></span>
           <span className="flex-1"><span className="block text-[15px] font-medium">Invoices</span><span className="block text-[13px] text-muted">Create, download or email an invoice</span></span>
           <Icon name="chevron-right" className="size-5 text-faint" />
         </Link>
@@ -86,7 +86,7 @@ export default function PayPage() {
             {activity.map(a => (
               <li key={a.key}>
                 <Card className="flex items-center gap-3 p-4">
-                  <span className={cx('flex size-10 items-center justify-center rounded-xl', a.tile)}><Icon name={a.icon} /></span>
+                  <span className={cx('flex size-10 items-center justify-center rounded-full', a.tile)}><Icon name={a.icon} /></span>
                   <span className="min-w-0 flex-1"><span className="block truncate text-[15px] font-medium">{a.title}</span><span className="block truncate text-[13px] text-muted">{a.sub}</span></span>
                   <span className={cx('text-[16px] font-medium', a.amount > 0 ? 'text-green-ink' : 'text-red')}>{money(a.amount, { sign: true })}</span>
                 </Card>
