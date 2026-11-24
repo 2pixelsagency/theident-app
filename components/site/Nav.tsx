@@ -47,12 +47,12 @@ export default function SiteNav() {
         </nav>
         <span className="flex-1 md:hidden" />
         {signedIn ? (
-          <Link href="/home" className="hidden h-10 items-center gap-1.5 whitespace-nowrap group rounded-[10px] bg-forest px-4 text-[14px] font-semibold text-white transition-colors duration-300 hover:bg-lime hover:text-ink sm:inline-flex">
+          <Link href="/home" className="hidden h-10 items-center gap-1.5 whitespace-nowrap group rounded-full bg-forest px-5 text-[14px] font-semibold text-white transition-colors duration-300 hover:bg-lime hover:text-ink sm:inline-flex">
             Open app <Icon name="arrow-right" className="cta-arrow size-4" />
           </Link>
         ) : (<>
-        <Link href="/welcome" className="hidden rounded-[10px] px-3.5 py-2 text-[14px] font-semibold hover:bg-chip/70 sm:inline-flex">Log in</Link>
-        <Link href="/start?role=performer" className="hidden h-10 items-center gap-1.5 whitespace-nowrap rounded-[10px] group bg-forest sm:inline-flex px-4 text-[14px] font-semibold text-white transition-colors duration-300 hover:bg-lime hover:text-ink">
+        <Link href="/welcome" className="hidden rounded-full px-4 py-2 text-[14px] font-semibold hover:bg-sand sm:inline-flex">Log in</Link>
+        <Link href="/start?role=performer" className="hidden h-10 items-center gap-1.5 whitespace-nowrap rounded-full group bg-forest sm:inline-flex px-5 text-[14px] font-semibold text-white transition-colors duration-300 hover:bg-lime hover:text-ink">
           Start free trial <Icon name="arrow-right" className="cta-arrow size-4" />
         </Link>
         </>)}
@@ -64,9 +64,9 @@ export default function SiteNav() {
         <div className="fixed inset-x-3 top-[calc(max(12px,env(safe-area-inset-top))+64px)] z-50 rounded-[14px] border border-line bg-surface p-3 shadow-card md:hidden">
           {NAV.map(n => <Link key={n.href} href={n.href} className="flex items-center justify-between rounded-[10px] px-3 py-3.5 text-[17px] font-medium hover:bg-chip">{n.label}<Icon name="chevron-right" className="size-4 text-faint" /></Link>)}
           <div className="mt-2 grid grid-cols-2 gap-2 border-t border-line pt-3">
-            {signedIn ? <Link href="/home" className="col-span-2 inline-flex h-12 items-center justify-center rounded-[10px] bg-forest text-[15px] font-semibold text-white">Open app</Link> : (<>
-              <Link href="/welcome" className="inline-flex h-12 items-center justify-center rounded-[10px] border border-line text-[15px] font-semibold">Log in</Link>
-              <Link href="/start?role=performer" className="inline-flex h-12 items-center justify-center rounded-[10px] bg-lime text-[15px] font-semibold text-ink">Join</Link>
+            {signedIn ? <Link href="/home" className="col-span-2 inline-flex h-12 items-center justify-center rounded-full bg-forest text-[15px] font-semibold text-white">Open app</Link> : (<>
+              <Link href="/welcome" className="inline-flex h-12 items-center justify-center rounded-full border border-line text-[15px] font-semibold">Log in</Link>
+              <Link href="/start?role=performer" className="inline-flex h-12 items-center justify-center rounded-full bg-lime text-[15px] font-semibold text-ink">Join</Link>
             </>)}
           </div>
         </div>

@@ -106,13 +106,13 @@ export default function PublicBoard() {
 
         <aside className="rise mt-8 space-y-4 lg:sticky lg:top-32 lg:mt-7 lg:self-start">
           {!signedIn && (
-            <div className="rounded-[var(--radius)] bg-hero p-5 text-white">
+            <div className="relative overflow-hidden rounded-[24px] p-6 text-white" style={{ backgroundImage: 'var(--panel-forest)' }}>
               <p className="font-display text-[22px] font-bold leading-tight">Get matched to roles</p>
               <p className="mt-2 text-sm text-white/75">Build your profile once — showreel, credits, CV — and get an alert when a role fits you.</p>
-              <Link href="/start?role=performer" className="mt-4 inline-flex h-11 w-full items-center justify-center rounded-[10px] bg-lime text-sm font-semibold text-ink shadow-cta">Join · 7 days free</Link>
+              <Link href="/start?role=performer" className="mt-4 inline-flex min-h-12 w-full items-center justify-center rounded-full bg-lime text-[15px] font-semibold text-ink transition-colors hover:bg-bg">Join · 7 days free</Link>
             </div>
           )}
-          <div className="rounded-[var(--radius)] border border-line bg-surface p-5">
+          <div className="rounded-[24px] bg-sand p-6">
             <p className="flex items-center gap-2 text-[15px] font-semibold"><Icon name="megaphone" className="size-5 text-green-ink" /> Casting a show?</p>
             <p className="mt-1.5 text-sm text-muted">Post a role, review reels and self-tapes, and book your cast in one place.</p>
             <Link href={signedIn ? '/postings/new' : '/welcome?side=cast'} className="mt-3 inline-flex text-sm font-semibold text-green-ink">Post a casting →</Link>
