@@ -11,7 +11,7 @@ import { supabase } from '@/lib/supabase'
 const NAV = [
   { href: '/performers', label: 'Performers' },
   { href: '/casting', label: 'Casting' },
-  { href: '/people', label: 'Talent' },
+  { href: '/people', label: 'Browse talent' },
   { href: '/pricing', label: 'Pricing' },
   { href: '/blog', label: 'Blog' },
 ]
