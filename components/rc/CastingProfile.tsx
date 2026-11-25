@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import BrandMarquee from './BrandMarquee'
 import Link from 'next/link'
 import Icon from './Icon'
 import JobCard from './JobCard'
@@ -127,23 +128,15 @@ export default function CastingProfile({ data, owner, onBack, onShare, topRight,
 
         {(brands.length > 0 || owner) && (<>
           {head('Worked with', 'brands', brands.length)}
-          {brands.length ? (
-            <div className="grid grid-cols-3 gap-2 sm:grid-cols-4">
-              {brands.map(b => (
-                <div key={b.id} title={b.brand_name} className="flex min-h-[64px] items-center justify-center rounded-xl border border-line bg-surface px-3 py-3 text-center">
-                  <span className="line-clamp-2 font-display text-[15px] font-bold leading-tight tracking-[-0.01em]">{b.brand_name}</span>
-                </div>
-              ))}
-            </div>
-          ) : <p className="rounded-xl border border-dashed border-line px-4 py-3 text-[13px] text-muted">Theatres, broadcasters and brands you cast for.</p>}
+          {brands.length ? <BrandMarquee brands={brands} /> : <p className="rounded-xl border border-dashed border-line px-4 py-3 text-[13px] text-muted">Theatres, broadcasters and brands you cast for.</p>}
         </>)}
 
         {(testimonials.length > 0 || owner) && (<>
           {head('What performers say', 'testimonials', testimonials.length)}
           {testimonials.length ? (
-            <div className="scrollbar-none -mx-4 flex snap-x gap-3 overflow-x-auto px-4">
+            <div className="grid gap-3 sm:grid-cols-2">
               {testimonials.map(t => (
-                <figure key={t.id} className="w-[85%] shrink-0 snap-start rounded-[var(--radius)] bg-forest p-5 text-white sm:w-[70%]">
+                <figure key={t.id} className="rounded-[var(--radius)] bg-forest p-5 text-white">
                   <span aria-hidden className="font-display text-5xl leading-none text-lime">“</span>
                   <blockquote className="-mt-3 text-[16px] leading-relaxed">{t.quote}</blockquote>
                   <figcaption className="mt-4"><span className="block text-sm font-semibold">{t.author_name}</span>{t.author_title && <span className="block text-[13px] text-white/65">{t.author_title}</span>}</figcaption>

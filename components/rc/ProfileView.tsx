@@ -1,6 +1,8 @@
 'use client'
 
 import { useState } from 'react'
+import BrandMarquee from './BrandMarquee'
+import AgentDock from './AgentDock'
 import Link from 'next/link'
 import Icon from './Icon'
 import { VerifiedTick } from './JobCard'
@@ -139,16 +141,17 @@ export default function ProfileView(props: ProfileViewProps) {
 // genders table ids → labels (1 = prefer not to say: not shown)
 const GENDER_NAMES: Record<number, string> = { 2: 'Non-binary', 3: 'Trans woman', 4: 'Trans man', 5: 'Gender non-conforming', 6: 'Male', 7: 'Female' }
 
-// Credits as tabs by production type (All first), like Spotlight / Mandy CVs
+// Credits as tabs by production type, like Spotlight / Mandy CVs. Opens on the biggest type
+// (All is last — a full list is too long to land on).
 function CreditTabs({ groups }: { groups: Record<string, Credit[]> }) {
-  const names = Object.keys(groups)
-  const [tab, setTab] = useState('All')
+  const names = Object.keys(groups).sort((a, b) => groups[b].length - groups[a].length)
+  const [tab, setTab] = useState(() => names[0] || 'All')
   const list = tab === 'All' ? names.flatMap(n => groups[n]) : groups[tab] || []
   return (
     <>
       {names.length > 1 && (
         <div role="tablist" aria-label="Credit types" className="scrollbar-none -mx-4 mb-3 flex gap-2 overflow-x-auto px-4">
-          {['All', ...names].map(n => (
+          {[...names, 'All'].map(n => (
             <button key={n} type="button" role="tab" aria-selected={tab === n} onClick={() => setTab(n)}
               className={cx('h-9 shrink-0 rounded-full px-4 text-[13px] font-semibold transition-colors', tab === n ? 'bg-forest text-bg' : 'bg-chip text-muted-strong hover:text-ink')}>
               {n} <span className={tab === n ? 'text-bg/60' : 'text-faint'}>{n === 'All' ? names.reduce((a, k) => a + groups[k].length, 0) : groups[n].length}</span>
@@ -268,15 +271,7 @@ function PerformerProfile({ data, owner, onBack, onShare, topRight, actions, sta
         {(brands.length > 0 || owner) && (
           <>
             <Head title="Worked with" owner={owner} edit="brands" count={brands.length} />
-            {brands.length ? (
-              <div className="grid grid-cols-3 gap-2 sm:grid-cols-4">
-                {brands.map(b => (
-                  <div key={b.id} title={b.brand_name} className="flex min-h-[64px] items-center justify-center rounded-xl border border-line bg-surface px-3 py-3 text-center">
-                    <span className="line-clamp-2 font-display text-[15px] font-bold leading-tight tracking-[-0.01em]">{b.brand_name}</span>
-                  </div>
-                ))}
-              </div>
-            ) : <Ghost>Brands, theatres and studios you’ve worked with.</Ghost>}
+            {brands.length ? <BrandMarquee brands={brands} /> : <Ghost>Brands, theatres and studios you’ve worked with.</Ghost>}
           </>
         )}
 
@@ -301,6 +296,17 @@ function PerformerProfile({ data, owner, onBack, onShare, topRight, actions, sta
                 ))}
               </div>
             )}
+
+        {(gallery.length > 0 || owner) && (
+          <>
+            <Head title="Gallery" owner={owner} edit="gallery" count={gallery.length} />
+            {gallery.length ? <div className="grid grid-cols-3 gap-2">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              {gallery.map(g => <a key={g.id} href={g.url} target="_blank" rel="noopener noreferrer" aria-label={'Open photo of ' + (fullName(p) || 'this performer')}><img src={g.url} alt={(fullName(p) || 'Performer') + ' — production still or photo'} loading="lazy" className="aspect-square w-full rounded-xl object-cover" /></a>)}
+            </div> : <Ghost>Production stills and headshots — they show you in the work.</Ghost>}
+          </>
+        )}
+
           </>
         )}
 
@@ -344,9 +350,9 @@ function PerformerProfile({ data, owner, onBack, onShare, topRight, actions, sta
           <>
             <Head title="What directors say" owner={owner} edit="testimonials" count={testimonials.length} />
             {testimonials.length ? (
-              <div className="scrollbar-none -mx-4 flex snap-x gap-3 overflow-x-auto px-4">
+              <div className="grid gap-3 sm:grid-cols-2">
                 {testimonials.map(t => (
-                  <figure key={t.id} className="w-[85%] shrink-0 snap-start rounded-[var(--radius)] bg-forest p-5 text-white sm:w-[70%]">
+                  <figure key={t.id} className="rounded-[var(--radius)] bg-forest p-5 text-white">
                     <span aria-hidden className="font-display text-5xl leading-none text-lime">“</span>
                     <blockquote className="-mt-3 text-[16px] leading-relaxed">{t.quote}</blockquote>
                     <figcaption className="mt-4"><span className="block text-sm font-semibold">{t.author_name}</span>{t.author_title && <span className="block text-[13px] text-white/65">{t.author_title}</span>}</figcaption>
@@ -364,26 +370,8 @@ function PerformerProfile({ data, owner, onBack, onShare, topRight, actions, sta
           </>
         )}
 
-        {p.agent_name && (
-          <>
-            <h2 className="mb-3 mt-6 text-[18px]">Representation</h2>
-            <Card className="flex items-center gap-3 p-4">
-              <span className="flex size-11 items-center justify-center rounded-full bg-dark text-sm font-medium text-green">{p.agent_name.slice(0, 1)}</span>
-              <span className="min-w-0 flex-1"><span className="block text-[15px] font-medium">Represented by {p.agent_name}</span><span className="block truncate text-[13px] text-muted">{p.agent_email || p.agent_phone || 'Agent'}</span></span>
-              {p.agent_email && <a href={'mailto:' + p.agent_email} aria-label="Email agent" className="inline-flex size-10 items-center justify-center rounded-full bg-chip"><Icon name="mail" className="size-5" /></a>}
-            </Card>
-          </>
-        )}
+        <AgentDock p={p} agents={data.agents} />
 
-        {(gallery.length > 0 || owner) && (
-          <>
-            <Head title="Gallery" owner={owner} edit="gallery" count={gallery.length} />
-            {gallery.length ? <div className="grid grid-cols-3 gap-2">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              {gallery.map(g => <a key={g.id} href={g.url} target="_blank" rel="noopener noreferrer" aria-label={'Open photo of ' + (fullName(p) || 'this performer')}><img src={g.url} alt={(fullName(p) || 'Performer') + ' — production still or photo'} loading="lazy" className="aspect-square w-full rounded-xl object-cover" /></a>)}
-            </div> : <Ghost>Production stills and headshots — they show you in the work.</Ghost>}
-          </>
-        )}
 
         {!owner && signedIn && <ProfileSafety id={p.id} name={name} />}
         {empty && !owner && <p className={cx('mt-8 text-center text-sm text-muted')}>{owner ? 'Add a reel, credits and skills so casting directors can see what you do.' : (p.first_name || 'They') + ' haven’t added more to their profile yet.'}</p>}

@@ -6,6 +6,7 @@ import Icon from '@/components/rc/Icon'
 import { Button, Chip, Field, Steps, Toggle, toast } from '@/components/rc/ui'
 import { supabase } from '@/lib/supabase'
 import VideoEditor from '@/components/rc/VideoEditor'
+import PhotoCropper from '@/components/rc/PhotoCropper'
 import { PERFORMER_QUESTIONS, SIGNUP_QUESTIONS, applyDraft, emptyDraft, readDraft, shrinkImage, writeDraft, type OnboardingDraft } from '@/lib/rc/onboarding'
 
 const CRAFTS = ['Actor', 'Dancer', 'Singer', 'Musical theatre', 'Presenter', 'Model', 'Voiceover']
@@ -68,10 +69,15 @@ export default function CreateProfile() {
     return skills.filter(s => s.name.toLowerCase().includes(q) && !d.skillIds.includes(s.id)).slice(0, 8)
   }, [skills, skillQuery, d.skillIds])
 
-  const pickPhoto = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  // Pick → position / zoom in the cropper → save
+  const [cropping, setCropping] = useState<File | null>(null)
+  const pickPhoto = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     e.target.value = ''
-    if (!file) return
+    if (file) setCropping(file)
+  }
+  const usePhoto = async (file: File) => {
+    setCropping(null)
     try { update({ photo: await shrinkImage(file) }) } catch { toast('Couldn’t read that photo') }
   }
 
@@ -137,6 +143,7 @@ export default function CreateProfile() {
             : <><Icon name="camera" className="size-6" /><span className="mt-1 text-[11px]">Add photo</span></>}
         </button>
         <input ref={fileRef} type="file" accept="image/*" onChange={pickPhoto} className="hidden" />
+        <PhotoCropper file={cropping} onCancel={() => setCropping(null)} onDone={usePhoto} />
         <Field label="Your name" value={fullName} onChange={e => setName(e.target.value)} placeholder="First and last name" autoComplete="name" className="flex-1" autoFocus />
       </div>
     </>

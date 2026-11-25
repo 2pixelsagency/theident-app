@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
+import { createClient, type SupabaseClient } from '@supabase/supabase-js'
 import { createHmac, timingSafeEqual } from 'crypto'
+import { sendEmail, welcomeEmail } from '@/lib/email'
 
 export const runtime = 'nodejs'
 
@@ -33,6 +34,7 @@ export async function POST(req: NextRequest) {
   if (event.type === 'checkout.session.completed' && o.mode === 'subscription' && o.metadata?.profile_id) {
     const { error } = await admin().rpc('apply_plan', { p_profile: o.metadata.profile_id, p_customer: o.customer || null, p_subscription: o.subscription || null, p_status: 'active', p_kind: o.metadata.kind || null, p_period_end: null })
     if (error) return NextResponse.json({ error: 'could not apply' }, { status: 500 })
+    await sendWelcome(admin(), o.metadata.profile_id).catch(() => {})
     return NextResponse.json({ received: true })
   }
   if (event.type.startsWith('customer.subscription.') && o.metadata?.profile_id) {
@@ -52,4 +54,16 @@ export async function POST(req: NextRequest) {
     }
   }
   return NextResponse.json({ received: true })
+}
+
+// The welcome email goes out once, when the membership (or free trial) starts — never at sign-up
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+async function sendWelcome(db: SupabaseClient<any, 'public', any>, id: string) {
+  const { data: p } = await db.from('profiles').select('first_name, account_role, welcome_sent_at').eq('id', id).maybeSingle()
+  if (!p || p.welcome_sent_at) return
+  const { data: { user } } = await db.auth.admin.getUserById(id)
+  if (!user?.email) return
+  if (await sendEmail(user.email, 'Welcome to The Ident', welcomeEmail({ firstName: p.first_name, caster: p.account_role === 'caster' }))) {
+    await db.from('profiles').update({ welcome_sent_at: new Date().toISOString() }).eq('id', id)
+  }
 }

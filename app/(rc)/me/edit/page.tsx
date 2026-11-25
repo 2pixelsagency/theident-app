@@ -18,6 +18,7 @@ import VideoEditor, { type SavedVideo } from '@/components/rc/VideoEditor'
 import ProfileDetails from '@/components/rc/ProfileDetails'
 import Verification from '@/components/rc/Verification'
 import CvDetails from '@/components/rc/CvDetails'
+import PhotoCropper from '@/components/rc/PhotoCropper'
 import { moveItem, saveOrder } from '@/components/rc/ProfileExtras'
 
 // ids from the genders table (same labels as sign-up)
@@ -72,10 +73,16 @@ function Editor({ data, uid, caster, onRefresh, mutate }: { data: Data; uid: str
   const skillName = useMemo(() => new Map(data.allSkills.map(s => [s.id, s.name])), [data.allSkills])
   const skillResults = skillQuery.trim() ? data.allSkills.filter(s => s.name.toLowerCase().includes(skillQuery.toLowerCase()) && !skillIds.includes(s.id)).slice(0, 8) : []
 
-  const uploadImage = async (kind: 'avatar' | 'banner', e: React.ChangeEvent<HTMLInputElement>) => {
+  // Headshot: pick → position / zoom in the cropper → upload. Banner uploads as picked.
+  const [cropping, setCropping] = useState<File | null>(null)
+  const pickImage = (kind: 'avatar' | 'banner', e: React.ChangeEvent<HTMLInputElement>) => {
     const raw = e.target.files?.[0]
     e.target.value = ''
     if (!raw) return
+    if (kind === 'avatar') setCropping(raw)
+    else uploadImage('banner', raw)
+  }
+  const uploadImage = async (kind: 'avatar' | 'banner', raw: File) => {
     setBusyImage(kind)
     const f = await compressImage(raw, { maxDim: kind === 'banner' ? 2400 : 1600 })
     const path = uid + '/' + kind + '-' + stamp() + '.' + fileExt(f)
@@ -244,8 +251,8 @@ function Editor({ data, uid, caster, onRefresh, mutate }: { data: Data; uid: str
             </button>
           </div>
         </div>
-        <input ref={bannerRef} type="file" accept="image/*" className="hidden" onChange={e => uploadImage('banner', e)} />
-        <input ref={avatarRef} type="file" accept="image/*" className="hidden" onChange={e => uploadImage('avatar', e)} />
+        <input ref={bannerRef} type="file" accept="image/*" className="hidden" onChange={e => pickImage('banner', e)} />
+        <input ref={avatarRef} type="file" accept="image/*" className="hidden" onChange={e => pickImage('avatar', e)} />
       </section>
 
       <div className="space-y-5 px-4 pb-12 pt-5">
@@ -423,6 +430,7 @@ function Editor({ data, uid, caster, onRefresh, mutate }: { data: Data; uid: str
         <Button full size="lg" onClick={done} disabled={status === 'saving'}>Done</Button>
       </div>
 
+      <PhotoCropper file={cropping} onCancel={() => setCropping(null)} onDone={f => { setCropping(null); uploadImage('avatar', f) }} />
       <Sheet open={!!reelMenu} onClose={() => setReelMenu(null)} title={reelMenu?.label || 'Clip'}>
         {reelMenu && (() => {
           const i = data.reels.findIndex(x => x.id === reelMenu.id)
