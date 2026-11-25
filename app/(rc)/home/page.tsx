@@ -155,7 +155,7 @@ function LiveCard({ app, shows, now }: { app: PipelineApp; shows: { title: strin
       )}
 
       <div className="mt-3 grid grid-cols-4 gap-2">
-        {[['Schedule', '/castings/' + app.id + '/schedule'], ['Log pay', '/pay'], ['Cast chat', '/chats'], ['Digs', '/digs']].map(([label, href]) => (
+        {[['Schedule', '/castings/' + app.id + '/schedule'], ['Log pay', '/money'], ['Cast chat', '/chats'], ['Digs', '/digs']].map(([label, href]) => (
           <Link key={label} href={href} className="rounded-xl bg-chip/60 py-2.5 text-center text-[13px] font-medium">{label}</Link>
         ))}
       </div>

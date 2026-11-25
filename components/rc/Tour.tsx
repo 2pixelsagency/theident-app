@@ -17,7 +17,7 @@ const STEPS: Record<Role, Step[]> = {
     { icon: 'search', tone: 'bg-mint text-green-ink', title: 'Find work', body: 'Castings, auditions and side hustles with the pay and closing date up front. Save searches and apply in a tap.', href: '/find', cta: 'Open Find' },
     { icon: 'briefcase', tone: 'bg-butter text-ink', title: 'Track your castings', body: 'Every application moves from applied to self-tape, recall, pencil and booked. Deadlines land in your Diary.', href: '/castings', cta: 'Open Castings' },
     { icon: 'user', tone: 'bg-blossom text-ink', title: 'Your profile', body: 'Headshots, showreel, credits and skills. Upload your CV — including the one from Spotlight or Mandy — and we’ll fill it in for you.', href: '/me/edit', cta: 'Customise profile' },
-    { icon: 'menu', tone: 'bg-chip text-ink', title: 'Everything else is in More', body: 'Diary, Goals, To do, People, Your postings, What’s on, Classes, Theatre digs, Pay & earnings, Tax & expenses and Settings.', href: '/menu', cta: 'Open More' },
+    { icon: 'menu', tone: 'bg-chip text-ink', title: 'Everything else is in More', body: 'Diary, Goals, To do, People, Your postings, What’s on, Classes, Theatre digs, Money (pay, invoices, expenses and tax) and Settings.', href: '/menu', cta: 'Open More' },
   ],
   caster: [
     { icon: 'sparkle', tone: 'bg-lime text-forest', title: 'Welcome to The Ident', body: 'Post roles, review tapes and book your cast — all in one place. Here’s a 30-second look around.' },

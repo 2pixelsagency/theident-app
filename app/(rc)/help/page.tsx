@@ -9,7 +9,7 @@ const TOPICS: { q: string; a: string }[] = [
   { q: 'Getting verified', a: 'Casting teams and employers can be verified so their roles get the green tick. Email us from your work address with a link to your company or recent productions and we’ll confirm it, usually within two working days.' },
   { q: 'How applications & self-tapes work', a: 'Apply with your reel and any materials a role asks for. Your role then moves through Castings: Applied → Self-tape → Recall → Pencilled → Booked. You’ll get a notification at each step, and dates land in your Diary automatically.' },
   { q: 'Fair pay', a: 'Every role shows its pay up front. The Fair pay badge means the rate meets the industry minimum for that kind of work; side hustles must pay at least the National Living Wage.' },
-  { q: 'Payments & payouts', a: 'Log each payment in Pay & earnings and we’ll keep a running total and suggest what to put aside for tax. In-app payouts are coming soon.' },
+  { q: 'Payments & payouts', a: 'Log each payment in Money and we’ll keep a running total and suggest what to put aside for tax. In-app payouts are coming soon.' },
   { q: 'Theatre digs — staying safe', a: 'We check every host before they’re listed. Never pay a deposit outside an arrangement you’ve confirmed with the host, and tell someone in your company where you’re staying.' },
   { q: 'Side hustles & avoiding scams', a: 'Side hustles from members aren’t verified employers. Meet in public places, never pay to apply, and report anything that feels off — we’ll look into it.' },
 ]

@@ -13,9 +13,9 @@ import HomeSidebar from '@/components/rc/HomeSidebar'
 import { useIsDesktop } from '@/lib/rc/useIsDesktop'
 
 // Screens that use the full desktop width
-const WIDE = /^\/(home|find|classes|postings|talent|digs|whats-on|castings|chats|inbox|todo|blocks|diary|pay|tax)\/?$/
+const WIDE = /^\/(home|find|classes|postings|talent|digs|whats-on|castings|chats|inbox|todo|blocks|diary|pay|tax|money)\/?$/
 // Wide screens that also get the sticky profile sidebar (Home draws its own)
-const ASIDE = /^\/(find|classes|postings|talent|digs|whats-on|castings|chats|inbox|todo|blocks|diary|pay|tax)\/?$/
+const ASIDE = /^\/(find|classes|postings|talent|digs|whats-on|castings|chats|inbox|todo|blocks|diary|pay|tax|money)\/?$/
 
 function Shell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()

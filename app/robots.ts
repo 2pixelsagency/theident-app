@@ -10,7 +10,7 @@ export default async function robots(): Promise<MetadataRoute.Robots> {
     rules: {
       userAgent: '*',
       allow: '/',
-      disallow: ['/api/', '/admin', '/home', '/find', '/castings', '/chats', '/me', '/talent', '/postings', '/settings', '/inbox', '/todo', '/blocks', '/diary', '/pay', '/tax', '/plan', '/start', '/welcome', '/verify', '/auth', '/menu', '/join'],
+      disallow: ['/api/', '/admin', '/home', '/find', '/castings', '/chats', '/me', '/talent', '/postings', '/settings', '/inbox', '/todo', '/blocks', '/diary', '/pay', '/tax', '/money', '/plan', '/start', '/welcome', '/verify', '/auth', '/menu', '/join'],
     },
     sitemap: SITE_URL + '/sitemap.xml',
   }
