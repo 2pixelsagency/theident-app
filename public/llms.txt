@@ -1,26 +1,29 @@
 # The Ident
 
-> The Ident is a UK casting app for performers and casting teams. Performers (actors, dancers, singers, musicians, presenters, voiceover artists) find castings, auditions and paid work, apply with their showreel and self-tapes, and track every self-tape, recall, pencil and booking. Casting directors, producers and companies post roles, review applicants and tapes inline, recall by self-tape, video call or in person, and book their cast.
+> The Ident is a UK casting app and website where actors, dancers, singers and other performers find castings, auditions and paid work, apply with their reel and CV, and track every self-tape, recall and booking — and where casting directors post roles, review applicants and search for talent.
 
-Pricing: Performers £1.99/month, Casting £10.99/month, each after a 7-day free trial. Browsing the job board is free. No commission on work booked.
+- Website: https://www.theident.me — the app runs in the browser at https://app.theident.me
+- Who it's for: performers (actors, dancers, singers, musical theatre, voice artists, presenters — beginners, recent graduates and professionals) and casting directors, producers and companies.
+- Open to everyone: no agent or drama school training is needed to join.
+- What's different: pay and closing dates shown up front on roles; every casting tracked (applied, self-tape, recall, pencilled, booked); CV upload fills in your profile (including CVs from Spotlight or Mandy); no commission on work you book; Verified professional and Verified graduate badges; inclusive profile fields with private disability and access details.
+- Pricing: browsing roles is free. Subscriptions have a 7-day free trial — Performer £3.99/month, Graduate £1.99/month (graduated in the last 2 years, verified), Casting £10.99/month. Cancel any time.
+- How to register: go to https://www.theident.me, choose Performer or Casting, create an account with email, Apple or Google, and answer a few questions or upload a CV.
 
 ## Key pages
-- [Live roles (job board)](https://www.theident.me/jobs): castings, auditions and paid work, updated daily
-- [Talent directory](https://www.theident.me/people): public performer profiles with headshots, credits and skills
-- [For performers](https://www.theident.me/performers): what performers get
-- [For casting](https://www.theident.me/casting): what casting teams get
-- [Pricing](https://www.theident.me/pricing): plans and FAQ
-- [Contact & help](https://www.theident.me/contact)
-- [Privacy policy](https://www.theident.me/privacy) · [Terms of use](https://www.theident.me/terms)
 
-## Notes
-- Performer profiles live at https://www.theident.me/<name>. Contact details are never public.
-- Roles marked "Community" are posted by performers; others are posted by casting teams or shared (with credit) by The Ident.
+- [About The Ident](https://www.theident.me/about): what it is, who it's for, pricing, how to register
+- [Pricing](https://www.theident.me/pricing)
+- [For performers](https://www.theident.me/performers)
+- [For casting directors](https://www.theident.me/casting)
+- [Browse roles](https://www.theident.me/jobs): open castings, auditions and paid work
+- [Auditions by type and city](https://www.theident.me/auditions)
+- [Browse talent](https://www.theident.me/people)
 
-## Auditions by type and city
-- [All auditions in the UK](https://www.theident.me/auditions)
-- [Musical theatre auditions](https://www.theident.me/auditions/musical-theatre)
-- [Dance auditions](https://www.theident.me/auditions/dance)
-- [TV and film castings](https://www.theident.me/auditions/tv-and-film)
-- [Auditions in London](https://www.theident.me/auditions/london)
-- [Auditions in Manchester](https://www.theident.me/auditions/manchester)
+## Guides
+
+- [The best Spotlight alternatives for UK performers](https://www.theident.me/spotlight-alternatives)
+- [Casting websites for actors in the UK](https://www.theident.me/casting-websites-uk)
+- [Where to find acting auditions in the UK](https://www.theident.me/acting-auditions-uk)
+- [Casting platforms for emerging actors](https://www.theident.me/casting-platforms-for-emerging-actors)
+- [A guide to finding casting opportunities](https://www.theident.me/find-acting-jobs)
+- [Blog](https://www.theident.me/blog)
