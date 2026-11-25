@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { Button, toast } from '@/components/rc/ui'
 import { supabase } from '@/lib/supabase'
-import { REEL_BUCKET_MAX, fileExt, fmtSecs, frameAt, loadVideo, needsTranscode, recorderType, seek, transcode } from '@/lib/rc/media'
+import { REEL_BUCKET_MAX, fileExt, fmtSecs, frameAt, loadVideo, maxCrispSeconds, needsTranscode, recorderType, seek, transcode } from '@/lib/rc/media'
 
 const stamp = () => Date.now().toString(36)
 export type SavedVideo = { url?: string; poster_url: string | null; duration_s: number }
@@ -61,6 +61,10 @@ export default function VideoEditor({ uid, source, onDone, onCancel }: {
       }
 
       let file = source as File
+      // Too long to fit at full quality? Ask for a trim instead of blurring it
+      if (needsTranscode(file, v, start, end) && len > maxCrispSeconds() && file.size > REEL_BUCKET_MAX) {
+        setStage('ready'); toast('To keep it crisp, trim this to under ' + fmtSecs(maxCrispSeconds()) + ' — drag the handles to your best moments'); return
+      }
       if (needsTranscode(file, v, start, end)) {
         if (!recorderType()) {
           if (file.size > REEL_BUCKET_MAX || start > 0.25 || end < duration - 0.25) { setStage('ready'); toast('This browser can’t trim or compress video — try Chrome, or upload a clip under 50MB'); return }
@@ -69,7 +73,7 @@ export default function VideoEditor({ uid, source, onDone, onCancel }: {
           abort.current = new AbortController()
           file = await transcode(src, start, end, setProgress, abort.current.signal)
           // Some browsers overshoot the bitrate: one more, tighter pass instead of giving up
-          if (file.size > REEL_BUCKET_MAX) { setProgress(0); file = await transcode(src, start, end, setProgress, abort.current.signal, 0.55) }
+          if (file.size > REEL_BUCKET_MAX) { setProgress(0); file = await transcode(src, start, end, setProgress, abort.current.signal, 0.8) }
           setStage('uploading')
         }
       }
