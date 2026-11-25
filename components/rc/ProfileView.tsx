@@ -171,6 +171,30 @@ function CreditTabs({ groups }: { groups: Record<string, Credit[]> }) {
   )
 }
 
+// Skills grouped by category, strongest first, with the level (Native, Highly skilled…) as on Spotlight
+const LEVEL_ORDER = ['Native', 'Highly skilled', 'High standard', 'Skilled']
+function SkillGroups({ skills }: { skills: FullProfileData['skills'] }) {
+  const groups = skills.reduce<Record<string, FullProfileData['skills']>>((acc, s) => { (acc[s.category || 'Other skills'] ||= []).push(s); return acc }, {})
+  const rank = (l: string | null) => (l ? LEVEL_ORDER.indexOf(l) : 9)
+  return (
+    <div className="space-y-4">
+      {Object.entries(groups).sort(([a], [b]) => a.localeCompare(b)).map(([cat, list]) => (
+        <div key={cat}>
+          <p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.1em] text-muted">{cat}</p>
+          <div className="flex flex-wrap gap-2">
+            {[...list].sort((a, b) => rank(a.level) - rank(b.level) || a.name.localeCompare(b.name)).map(s => (
+              <span key={s.id} className="inline-flex items-center gap-1.5 rounded-full bg-green-tint px-3 py-1.5 text-[13px] text-green-ink">
+                {(s.level === 'Highly skilled' || s.level === 'Native') && <Icon name="star" className="size-3 fill-current" />}{s.name}
+                {s.level && <span className="text-[11px] text-green-ink/70">· {s.level}</span>}
+              </span>
+            ))}
+          </div>
+        </div>
+      ))}
+    </div>
+  )
+}
+
 function PerformerProfile({ data, owner, onBack, onShare, topRight, actions, statusLine, below, signedIn }: ProfileViewProps) {
   const p = data.profile!
   const { reels, skills, credits, brands, testimonials, gallery, hair, eyes, connections } = data
@@ -181,13 +205,15 @@ function PerformerProfile({ data, owner, onBack, onShare, topRight, actions, sta
   const facts = [playingAge(p) && 'Playing age ' + playingAge(p), p.height, p.location?.split(',')[0]].filter(Boolean).join(' · ')
 
   const stats = caster ? [] : ([
-    ['Location', p.location], ['Gender', GENDER_NAMES[p.gender_id ?? 0]], ['Playing age', playingAge(p)], ['Height', p.height],
+    ['Location', p.location], ['Actual age', data.age != null && (p.show_age || owner) ? data.age + (owner && !p.show_age ? ' (only you can see this)' : '') : null], ['Gender', GENDER_NAMES[p.gender_id ?? 0]], ['Playing age', playingAge(p)], ['Height', p.height],
     ['Eyes', eyes.find(e => e.id === p.eye_colour_id)?.name],
     ['Hair', [hair.find(h => h.id === p.hair_colour_id)?.name, p.hair_length, p.hair_type].filter(Boolean).join(' · ')], ['Vocal range', p.vocal_range],
     ['Also based in', p.extra_locations?.join(', ')], ['Can play', p.playing_genders?.join(', ')], ['Appearance', p.appearance?.join(', ')],
     ['Nationality', p.nationalities?.join(', ')], ['Right to work', p.right_to_work?.join(', ')], ['Twin', p.multiple_birth],
     ['Disability', data.access?.visible || owner ? [data.access?.disabilities?.join(', '), data.access?.access_notes].filter(Boolean).join(' — ') + (owner && data.access && !data.access.visible && data.access.disabilities?.length ? ' (only you can see this)' : '') : null],
     ['Agent', [p.agency_name, p.agent_name && p.agent_name !== p.agency_name ? p.agent_name : null, p.agent_address].filter(Boolean).join(' · ')],
+    ...data.agents.map(a => [(a.kind || 'Other') + ' agent', [a.agency_name, a.address, a.phone, a.email].filter(Boolean).join(' · ')] as const),
+    ['Weight', p.weight],
   ] as const).filter(([, v]) => !!v)
 
   // Credits grouped by production type, as on Spotlight/Mandy
@@ -226,6 +252,7 @@ function PerformerProfile({ data, owner, onBack, onShare, topRight, actions, sta
           <h1 className="mt-4 flex items-center gap-2 text-[32px] leading-tight text-white">{name}{p.is_verified && <VerifiedTick />}{!caster && p.pronouns && <span className="self-end pb-1.5 text-[14px] font-normal text-white/70">{p.pronouns}</span>}</h1>
           {craft && <p className="mt-1 text-[15px] font-medium text-lime">{craft}</p>}
           {facts && <p className="mt-1 text-sm text-white/75">{facts}</p>}
+          {!caster && p.headshot_credit && <p className="mt-1 text-[11px] text-white/50">Headshot © {p.headshot_credit}</p>}
           {actions && <div className="mt-5 flex gap-3">{actions}</div>}
           <p className="mt-3 text-xs text-white/60">
             {statusLine ?? (connections + ' connection' + (connections === 1 ? '' : 's'))}
@@ -291,7 +318,18 @@ function PerformerProfile({ data, owner, onBack, onShare, topRight, actions, sta
         {(skills.length > 0 || (owner && !caster)) && (
           <>
             <Head title="Skills" owner={owner} edit="skills" count={skills.length} />
-            {skills.length ? <div className="flex flex-wrap gap-2">{skills.map(s => <span key={s.id} className="rounded-full bg-green-tint px-3 py-1.5 text-[13px] text-green-ink">{s.name}</span>)}</div> : <Ghost>Accents, dance styles, instruments, stage combat…</Ghost>}
+            {skills.length ? <SkillGroups skills={skills} /> : <Ghost>Accents, dance styles, instruments, stage combat…</Ghost>}
+          </>
+        )}
+
+        {!caster && data.training.length > 0 && (
+          <>
+            <Head title="Training" owner={owner} edit="training" count={data.training.length} />
+            <Card className="divide-y divide-line">
+              {data.training.map(t => (
+                <div key={t.id} className="px-4 py-3"><p className="text-[15px] font-medium">{t.school}</p>{(t.course || t.years) && <p className="text-[13px] text-muted">{[t.course, t.years].filter(Boolean).join(' · ')}</p>}</div>
+              ))}
+            </Card>
           </>
         )}
 

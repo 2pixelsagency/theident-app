@@ -34,17 +34,25 @@ export async function buildCv(data: FullProfileData) {
   const eyes = data.eyes.find(e => e.id === p.eye_colour_id)?.name
   const hair = data.hair.find(h => h.id === p.hair_colour_id)?.name
   const facts: [string, string | null | undefined][] = [
-    ['Playing age', playingAge(p)], ['Height', p.height], ['Base', p.location], ['Eyes', eyes], ['Hair', hair],
+    ['Playing age', playingAge(p)], ['Actual age', data.age != null && p.show_age ? String(data.age) : null], ['Height', p.height], ['Weight', p.weight],
+    ['Base', [p.location, ...(p.extra_locations || [])].filter(Boolean).join(', ')], ['Eyes', eyes],
+    ['Hair', [hair, p.hair_length].filter(Boolean).join(', ')], ['Vocal range', p.vocal_range], ['Nationality', p.nationalities?.join(', ')],
   ]
   for (const [k, v] of facts.filter(([, v]) => !!v)) {
     w.ensure(14); w.y -= 14
     w.at(k, textX, w.y + 3, { size: 9, color: w.c.muted })
     w.at(String(v), textX + 70, w.y + 3, { size: 9.5 })
   }
-  if (p.agent_name) {
+  if (p.agency_name || p.agent_name) {
     w.space(8)
-    w.text('Represented by ' + p.agent_name, { font: w.bold, size: 9.5, x: textX, maxWidth: colW })
-    const contact = [p.agent_email, p.agent_phone].filter(Boolean).join('  ·  ')
+    w.text('Represented by ' + [p.agency_name, p.agent_name && p.agent_name !== p.agency_name ? p.agent_name : null].filter(Boolean).join(' — '), { font: w.bold, size: 9.5, x: textX, maxWidth: colW })
+    const contact = [p.agent_address, p.agent_email, p.agent_phone].filter(Boolean).join('  ·  ')
+    if (contact) w.text(contact, { size: 9, color: w.c.muted, x: textX, maxWidth: colW })
+  }
+  for (const a of data.agents) {
+    w.space(5)
+    w.text((a.kind ? a.kind + ': ' : '') + a.agency_name, { font: w.bold, size: 9.5, x: textX, maxWidth: colW })
+    const contact = [a.address, a.email, a.phone].filter(Boolean).join('  ·  ')
     if (contact) w.text(contact, { size: 9, color: w.c.muted, x: textX, maxWidth: colW })
   }
   w.y = Math.min(w.y, top - (photo ? photoH : 0)) - 18
@@ -86,12 +94,25 @@ export async function buildCv(data: FullProfileData) {
 
   if (data.skills.length) {
     section('Skills')
-    w.text(data.skills.map(s => s.name).join('  ·  '), { size: 10, gap: 1.5 })
+    // Grouped by category, with levels — as on a Spotlight CV
+    const groups = data.skills.reduce<Record<string, typeof data.skills>>((acc, s) => { (acc[s.category || 'Other skills'] ||= []).push(s); return acc }, {})
+    for (const [cat, list] of Object.entries(groups).sort(([a], [b]) => a.localeCompare(b))) {
+      w.ensure(24)
+      w.text(cat.toUpperCase(), { font: w.bold, size: 8, color: w.c.muted })
+      const byLevel = list.reduce<Record<string, string[]>>((acc, s) => { (acc[s.level || ''] ||= []).push(s.name); return acc }, {})
+      for (const lvl of ['Native', 'Highly skilled', 'High standard', 'Skilled', '']) {
+        if (!byLevel[lvl]) continue
+        w.text((lvl ? lvl + ': ' : '') + byLevel[lvl].join(', '), { size: 10, gap: 1.4 })
+      }
+      w.space(4)
+    }
   }
 
-  if (p.is_graduate && p.graduate_school) {
+  if (data.training.length || (p.is_graduate && p.graduate_school)) {
     section('Training')
-    w.text(p.graduate_school + (p.graduate_year ? '  —  ' + p.graduate_year : ''), { size: 10 })
+    if (data.training.length) {
+      for (const t of data.training) w.text([t.school, t.course, t.years].filter(Boolean).join(', '), { size: 10, gap: 1.4 })
+    } else w.text(p.graduate_school + (p.graduate_year ? '  —  ' + p.graduate_year : ''), { size: 10 })
   }
 
   if (data.reels.length) {
@@ -107,6 +128,8 @@ export async function buildCv(data: FullProfileData) {
     section('Worked with')
     w.text(data.brands.map(b => b.brand_name).join('  ·  '), { size: 10, gap: 1.5 })
   }
+
+  if (p.headshot_credit) { w.space(10); w.text('Headshot © ' + p.headshot_credit, { size: 8, color: w.c.muted }) }
 
   // Unbranded: a clean CV casting can file or forward as their own (no The Ident link or credit)
   w.footer(name)
