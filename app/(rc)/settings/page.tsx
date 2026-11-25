@@ -8,6 +8,7 @@ import { useAsync } from '@/lib/rc/useAsync'
 import { PLANS, planForProfile, price } from '@/lib/rc/plans'
 import { isNativeApp } from '@/lib/rc/authRedirect'
 import { signOutAndReset } from '@/lib/rc/onboarding'
+import { APP_VERSION } from '@/lib/version'
 import { fullName } from '@/lib/rc/format'
 import { SUPPORT_EMAIL } from '@/lib/rc/profile'
 import { NOTIFICATION_TYPES, disablePush, enablePush, pushState, type PrefKey, type PushState } from '@/lib/rc/push'
@@ -121,7 +122,7 @@ export default function SettingsPage() {
         </Card>
 
         <button type="button" onClick={() => signOutAndReset()} className="mt-6 h-12 w-full rounded-full border border-line-strong text-[15px] font-semibold text-red transition-colors hover:border-red">Log out</button>
-        <p className="mt-6 text-center text-xs text-faint">The Ident · beta</p>
+        <p className="mt-6 text-center text-xs text-faint">The Ident · version {APP_VERSION}</p>
       </div>
     </>
   )

@@ -2,7 +2,11 @@
 // from videos in the browser so uploads stay under the storage limit and load fast on set wifi.
 
 export const REEL_BUCKET_MAX = 50 * 1024 * 1024 // storage.buckets.reels file_size_limit
-const VIDEO_TARGET = 40 * 1024 * 1024 // aim well under the bucket limit so long clips still fit
+const VIDEO_TARGET = 46 * 1024 * 1024 // just under the 50MB bucket limit
+// Quality floor: never below 720p at ~1.2 Mbps (crisp for faces and movement). Clips that can't fit at
+// that quality are asked to trim rather than being blurred.
+export const MIN_VIDEO_BITS = 1_200_000
+export const maxCrispSeconds = () => Math.floor((VIDEO_TARGET * 8) / (MIN_VIDEO_BITS + 128_000))
 
 const baseType = (t: string) => t.split(';')[0]
 const extFor = (t: string) => (baseType(t) === 'video/webm' ? 'webm' : baseType(t) === 'video/quicktime' ? 'mov' : baseType(t) === 'image/webp' ? 'webp' : baseType(t) === 'image/png' ? 'png' : baseType(t).startsWith('video') ? 'mp4' : 'jpg')
@@ -83,9 +87,10 @@ export async function transcode(src: string, start: number, end: number, onProgr
   v.muted = false; v.volume = 1
   const len = Math.max(0.5, end - start)
   // Bitrate that lands the whole clip under the target; long clips drop to 480p / 360p so they still look clean
-  const audioBits = 96_000
-  const videoBits = Math.max(150_000, Math.min(2_500_000, Math.floor(((VIDEO_TARGET * 8) / len - audioBits) * squeeze)))
-  const maxShort = videoBits >= 900_000 ? 720 : videoBits >= 450_000 ? 480 : 360
+  const audioBits = 128_000
+  const videoBits = Math.max(MIN_VIDEO_BITS, Math.min(6_000_000, Math.floor(((VIDEO_TARGET * 8) / len - audioBits) * squeeze)))
+  // 1080p when there's room for it, otherwise 720p — never lower
+  const maxShort = videoBits >= 3_500_000 ? 1080 : 720
   const scale = Math.min(1, maxShort / Math.min(v.videoWidth || maxShort, v.videoHeight || maxShort))
   const c = document.createElement('canvas')
   c.width = Math.round((v.videoWidth || 1280) * scale / 2) * 2; c.height = Math.round((v.videoHeight || 720) * scale / 2) * 2
