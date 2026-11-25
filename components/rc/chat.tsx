@@ -29,7 +29,7 @@ export function Bubble({ mine, body, at, meta, read }: { mine: boolean; body: st
 }
 
 // Sticky composer; Enter sends, Shift+Enter adds a line
-export function Composer({ placeholder, onSend, disabled }: { placeholder: string; onSend: (body: string) => Promise<boolean>; disabled?: boolean }) {
+export function Composer({ placeholder, onSend, disabled, onExtra }: { placeholder: string; onSend: (body: string) => Promise<boolean>; disabled?: boolean; onExtra?: () => void }) {
   const [body, setBody] = useState('')
   const [sending, setSending] = useState(false)
   const send = async () => {
@@ -42,6 +42,7 @@ export function Composer({ placeholder, onSend, disabled }: { placeholder: strin
   }
   return (
     <div className="sticky bottom-0 z-20 flex items-end gap-2 border-t border-line bg-surface px-3 pb-[max(12px,env(safe-area-inset-bottom))] pt-3">
+      {onExtra && <button type="button" onClick={onExtra} disabled={disabled} aria-label="Add a poll or event" className="flex size-11 shrink-0 items-center justify-center rounded-full bg-chip text-ink transition hover:bg-line"><Icon name="plus" className="size-5" /></button>}
       <textarea value={body} onChange={e => setBody(e.target.value)} rows={1} placeholder={placeholder} disabled={disabled} aria-label="Message"
         onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send() } }}
         className="max-h-32 min-h-11 flex-1 resize-none rounded-full bg-chip/70 px-4 py-2.5 text-[15px] outline-none placeholder:text-faint" />
