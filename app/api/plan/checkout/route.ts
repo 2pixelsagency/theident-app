@@ -12,7 +12,7 @@ export async function POST(req: NextRequest) {
   const { data: { user } } = await anon.auth.getUser(jwt)
   if (!user) return NextResponse.json({ error: 'not signed in' }, { status: 401 })
   const admin = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!, { auth: { persistSession: false } })
-  const { data: p } = await admin.from('profiles').select('account_role, stripe_customer_id, plan_status, is_graduate, graduate_year').eq('id', user.id).maybeSingle()
+  const { data: p } = await admin.from('profiles').select('account_role, stripe_customer_id, plan_status, is_graduate, graduate_year, graduate_verified').eq('id', user.id).maybeSingle()
   const kind = planForProfile(p?.account_role, p), plan = PLANS[kind]
   const origin = req.headers.get('origin') || 'https://app.theident.me'
   let next = '/home'

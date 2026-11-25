@@ -20,12 +20,14 @@ export const planFor = (role: string | null | undefined): PlanKind => (role === 
 
 // Graduate price: performers who graduated (drama, dance or music school) this year or in the last 2 years
 export const GRADUATE_YEARS = 2
-export function isRecentGraduate(p: { is_graduate?: boolean | null; graduate_year?: number | null } | null | undefined) {
+type GradFields = { is_graduate?: boolean | null; graduate_year?: number | null; graduate_verified?: boolean | null }
+export function isRecentGraduate(p: GradFields | null | undefined) {
   const y = new Date().getFullYear()
   return !!p?.is_graduate && !!p.graduate_year && p.graduate_year >= y - GRADUATE_YEARS && p.graduate_year <= y + 1
 }
-export const planForProfile = (role: string | null | undefined, p?: { is_graduate?: boolean | null; graduate_year?: number | null } | null): PlanKind =>
-  role === 'caster' ? 'casting' : isRecentGraduate(p) ? 'graduate' : 'performer'
+// The graduate price needs a verified graduation (school email or proof checked by us)
+export const planForProfile = (role: string | null | undefined, p?: GradFields | null): PlanKind =>
+  role === 'caster' ? 'casting' : isRecentGraduate(p) && p?.graduate_verified ? 'graduate' : 'performer'
 export const price = (pence: number) => '£' + (pence / 100).toFixed(2)
 
 type PlanFields = { is_demo?: boolean; plan_status?: string | null; plan_period_end?: string | null; plan_grace_until?: string | null }
