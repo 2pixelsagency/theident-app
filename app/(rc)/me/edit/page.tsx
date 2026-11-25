@@ -17,6 +17,7 @@ import { compressImage, fileExt } from '@/lib/rc/media'
 import VideoEditor, { type SavedVideo } from '@/components/rc/VideoEditor'
 import ProfileDetails from '@/components/rc/ProfileDetails'
 import Verification from '@/components/rc/Verification'
+import CvDetails from '@/components/rc/CvDetails'
 import { moveItem, saveOrder } from '@/components/rc/ProfileExtras'
 
 // ids from the genders table (same labels as sign-up)
@@ -163,6 +164,8 @@ function Editor({ data, uid, caster, onRefresh, mutate }: { data: Data; uid: str
   // Skills save immediately (add / remove), reverting if the write fails
   const addSkill = async (sid: number) => {
     setSkillIds(l => [...l, sid])
+    const sk = data.allSkills.find(x => x.id === sid)
+    if (sk && !data.skills.some(x => x.id === sid)) mutate(x => x && { ...x, skills: [...x.skills, { id: sid, name: sk.name, level: null, category: null }] })
     const { error } = await supabase.from('profile_skills').insert({ profile_id: uid, skill_id: sid })
     if (error) { setSkillIds(l => l.filter(x => x !== sid)); toast('Couldn’t add that skill') }
   }
@@ -250,7 +253,8 @@ function Editor({ data, uid, caster, onRefresh, mutate }: { data: Data; uid: str
           existingCredits={data.credits.map(c => ({ title: c.title, role: c.role }))}
           current={{ first_name: p.first_name, last_name: p.last_name, what_i_do: p.what_i_do, location: p.location, bio: p.bio || p.summary, height: p.height,
             minimum_age: p.minimum_age, maximum_age: p.maximum_age, agent_name: p.agent_name, agent_email: p.agent_email, agent_phone: p.agent_phone,
-            website: p.website ?? null, graduate_school: p.graduate_school ?? null, vocal_range: p.vocal_range ?? null }} />}
+            website: p.website ?? null, graduate_school: p.graduate_school ?? null, vocal_range: p.vocal_range ?? null,
+            agency_name: p.agency_name ?? null, weight: p.weight ?? null, headshot_credit: p.headshot_credit ?? null, agent_address: p.agent_address ?? null }} />}
         {live && <CompletenessCard result={live} compact />}
         <div id="basics" className="scroll-mt-4 space-y-5">
         <Field label="Name" autoComplete="name" value={name} onChange={e => setName(e.target.value)} placeholder="First and last name" />
@@ -313,6 +317,9 @@ function Editor({ data, uid, caster, onRefresh, mutate }: { data: Data; uid: str
             </section>
 
             <ProfileDetails uid={uid} profile={p} access={data.access} />
+
+            <CvDetails uid={uid} profile={p} training={data.training} agents={data.agents}
+              skills={data.skills.filter(s => skillIds.includes(s.id))} onSkills={list => mutate(x => x && { ...x, skills: x.skills.map(s => list.find(l => l.id === s.id) ?? s) })} />
 
             <Verification uid={uid} profile={p} />
 

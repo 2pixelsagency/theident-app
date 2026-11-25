@@ -10,18 +10,20 @@ import { supabase } from '@/lib/supabase'
 type Found = {
   first_name: string; last_name: string; what_i_do: string; location: string; bio: string; height: string
   playing_age_min: number; playing_age_max: number; agent_name: string; agent_email: string; agent_phone: string; website: string
-  drama_school: string; graduation_year: number; vocal_range: string
+  drama_school: string; graduation_year: number; vocal_range: string; weight: string; headshot_credit: string; agent_address: string
+  agencies: { kind: string; agency_name: string; address: string; phone: string; email: string; website: string }[]
   credits: { title: string; role: string; type: string; year: number; director: string; company: string }[]
-  skills: { as_written: string; match: string; name: string; category: string }[]; training: string[]
+  skills: { as_written: string; match: string; name: string; category: string; level: string }[]; training: { school: string; course: string; years: string }[]
 }
 type Current = { first_name: string | null; last_name: string | null; what_i_do: string | null; location: string | null; bio: string | null; height: string | null
-  minimum_age: number | null; maximum_age: number | null; agent_name: string | null; agent_email: string | null; agent_phone: string | null; website: string | null; graduate_school: string | null; vocal_range?: string | null }
+  minimum_age: number | null; maximum_age: number | null; agent_name: string | null; agent_email: string | null; agent_phone: string | null; website: string | null; graduate_school: string | null; vocal_range?: string | null; agency_name?: string | null; weight?: string | null; headshot_credit?: string | null; agent_address?: string | null }
 
 const FIELDS: [keyof Found, string, keyof Current][] = [
   ['first_name', 'First name', 'first_name'], ['last_name', 'Last name', 'last_name'], ['what_i_do', 'What you do', 'what_i_do'],
   ['location', 'Location', 'location'], ['height', 'Height', 'height'], ['bio', 'Bio', 'bio'],
-  ['agent_name', 'Agent', 'agent_name'], ['agent_email', 'Agent email', 'agent_email'], ['agent_phone', 'Agent phone', 'agent_phone'],
+  ['agent_name', 'Agency', 'agency_name'], ['agent_email', 'Agent email', 'agent_email'], ['agent_phone', 'Agent phone', 'agent_phone'],
   ['website', 'Website', 'website'], ['drama_school', 'Drama school', 'graduate_school'], ['vocal_range', 'Vocal range', 'vocal_range'],
+  ['weight', 'Weight', 'weight'], ['headshot_credit', 'Headshot photographer', 'headshot_credit'], ['agent_address', 'Agency address', 'agent_address'],
 ]
 
 export default function CvImport({ uid, current, types, allSkills, mySkillIds, existingCredits }: {
@@ -52,7 +54,8 @@ export default function CvImport({ uid, current, types, allSkills, mySkillIds, e
     if (f.playing_age_min || f.playing_age_max) next['f:ages'] = !current.minimum_age && !current.maximum_age
     f.credits.forEach((c, i) => { next['c:' + i] = !existingCredits.some(x => (x.title || '').toLowerCase() === c.title.toLowerCase() && (x.role || '').toLowerCase() === c.role.toLowerCase()) })
     next['skills'] = true
-    if (f.training.length) next['training'] = !current.bio
+    if (f.training.length) next['training'] = true
+    if (f.agencies?.length) next['agencies'] = true
     setPick(next); setFound(f)
   }
 
@@ -60,7 +63,7 @@ export default function CvImport({ uid, current, types, allSkills, mySkillIds, e
   const byName = new Map(allSkills.map(s => [s.name.toLowerCase(), s]))
   const resolved = found ? found.skills.map(x => {
     const hit = byName.get((x.match || '').trim().toLowerCase()) || byName.get((x.name || '').trim().toLowerCase()) || byName.get(x.as_written.trim().toLowerCase())
-    return { label: hit?.name || (x.name || x.as_written).trim(), id: hit?.id ?? null, category: x.category, isNew: !hit }
+    return { label: hit?.name || (x.name || x.as_written).trim(), id: hit?.id ?? null, category: x.category, isNew: !hit, level: x.level || null }
   }).filter((x, i, a) => x.label && a.findIndex(y => y.label.toLowerCase() === x.label.toLowerCase()) === i && !(x.id && mySkillIds.includes(x.id))) : []
   const typeId = (t: string) => (types.find(x => x.name.toLowerCase() === t.toLowerCase()) || types.find(x => t.toLowerCase().includes(x.name.toLowerCase())) || types.find(x => x.name === 'Other'))?.id ?? null
   const toggle = (k: string) => setPick(p => ({ ...p, [k]: !p[k] }))
@@ -75,28 +78,35 @@ export default function CvImport({ uid, current, types, allSkills, mySkillIds, e
     if (typeof upd.vocal_range === 'string') upd.vocal_range = upd.vocal_range.slice(0, 60)
     if (pick['f:drama_school'] && found.drama_school) { upd.is_graduate = true; if (found.graduation_year >= 1950 && found.graduation_year <= 2100) upd.graduate_year = found.graduation_year }
     if (pick['f:ages']) { if (found.playing_age_min) upd.minimum_age = found.playing_age_min; if (found.playing_age_max) upd.maximum_age = found.playing_age_max }
-    if (pick['training'] && found.training.length) {
-      const base = (upd.bio as string) || current.bio || ''
-      upd.bio = (base ? base.trim() + '\n\n' : '') + 'Training: ' + found.training.join('; ') + '.'
-    }
+    const training = pick['training'] ? found.training.filter(t => t.school?.trim()).map((t, i) => ({ profile_id: uid, school: t.school.trim().slice(0, 160), course: t.course?.trim().slice(0, 200) || null, years: t.years?.trim().slice(0, 40) || null, sort_order: i })) : []
+    const agencies = pick['agencies'] ? (found.agencies || []).filter(a => a.agency_name?.trim()).map((a, i) => ({ profile_id: uid, kind: a.kind?.trim().slice(0, 40) || null, agency_name: a.agency_name.trim().slice(0, 120), address: a.address?.trim() || null, phone: a.phone?.trim() || null, email: a.email?.trim() || null, website: a.website?.trim() || null, sort_order: i })) : []
     const have = (c: { title: string; role: string }) => existingCredits.some(x => (x.title || '').toLowerCase() === c.title.toLowerCase() && (x.role || '').toLowerCase() === (c.role || '').toLowerCase())
     const credits = found.credits.filter((c, i) => pick['c:' + i] && c.title?.trim() && !have(c) && found.credits.findIndex(x => x.title === c.title && x.role === c.role) === i).map(c => ({
       profile_id: uid, title: c.title, role: c.role || null, year: c.year || null, director: c.director || null,
       production_company: c.company || null, production_type_id: typeId(c.type),
     }))
     let skillIds: number[] = []
+    let skillLevels = new Map<number, string | null>()
     if (pick['skills'] && resolved.length) {
       const fresh = resolved.filter(r => r.isNew)
       let cats: { id: number; name: string }[] = []
       if (fresh.length) cats = ((await supabase.from('skills_categories').select('id, name')).data || []) as { id: number; name: string }[]
       const created = await Promise.all(fresh.map(r => supabase.rpc('add_skill', { p_name: r.label, p_category_id: cats.find(c => c.name === r.category)?.id ?? null })))
-      skillIds = [...resolved.filter(r => r.id).map(r => r.id as number), ...created.map(c => c.data as number | null).filter((x): x is number => typeof x === 'number')]
+      const levelOf = new Map<number, string | null>()
+      resolved.filter(r => r.id).forEach(r => levelOf.set(r.id as number, r.level))
+      fresh.forEach((r, i) => { const id = created[i]?.data as number | null; if (typeof id === 'number') levelOf.set(id, r.level) })
+      skillIds = [...levelOf.keys()]
+      skillLevels = levelOf
     }
-    const skills = [...new Set(skillIds)].map(skill_id => ({ profile_id: uid, skill_id }))
+    const skills = [...new Set(skillIds)].map(skill_id => ({ profile_id: uid, skill_id, level: skillLevels.get(skill_id) || null }))
     const [prof, cred, sk] = await Promise.all([
       Object.keys(upd).length ? supabase.from('profiles').update(upd).eq('id', uid) : Promise.resolve({ error: null }),
       credits.length ? supabase.from('credits').insert(credits) : Promise.resolve({ error: null }),
-      skills.length ? supabase.from('profile_skills').upsert(skills, { onConflict: 'profile_id,skill_id', ignoreDuplicates: true }) : Promise.resolve({ error: null }),
+      skills.length ? supabase.from('profile_skills').upsert(skills, { onConflict: 'profile_id,skill_id' }) : Promise.resolve({ error: null }),
+    ])
+    const [tr, ag] = await Promise.all([
+      training.length ? supabase.from('profile_training').insert(training) : Promise.resolve({ error: null }),
+      agencies.length ? supabase.from('profile_agents').insert(agencies) : Promise.resolve({ error: null }),
     ])
     // If the details save fails, save them one by one so a single odd value doesn't lose the rest
     const missed: string[] = []
@@ -108,6 +118,8 @@ export default function CvImport({ uid, current, types, allSkills, mySkillIds, e
     }
     if (cred.error) missed.push('credits')
     if (sk.error) missed.push('skills')
+    if (tr.error) missed.push('training')
+    if (ag.error) missed.push('agencies')
     if (missed.length) { setBusy(null); setFound(null); toast('Added — except ' + missed.join(', ') + '. You can fill ' + (missed.length > 1 ? 'those' : 'that') + ' in below.'); setTimeout(() => window.location.reload(), 2500); return }
     toast('Added to your profile')
     // Reload so the editor's own draft picks up the new values instead of autosaving over them
@@ -140,7 +152,8 @@ export default function CvImport({ uid, current, types, allSkills, mySkillIds, e
               {(found.playing_age_min > 0 || found.playing_age_max > 0) && (
                 <PickRow on={!!pick['f:ages']} onToggle={() => toggle('f:ages')} label="Playing age" value={[found.playing_age_min || '?', found.playing_age_max || '?'].join('–')} note={current.minimum_age || current.maximum_age ? 'Replaces what’s there' : undefined} />
               )}
-              {found.training.length > 0 && <PickRow on={!!pick['training']} onToggle={() => toggle('training')} label="Training (added to your bio)" value={found.training.join('; ')} />}
+              {found.training.length > 0 && <PickRow on={!!pick['training']} onToggle={() => toggle('training')} label="Training" value={found.training.map(t => [t.school, t.course, t.years].filter(Boolean).join(', ')).join('\n')} />}
+              {(found.agencies?.length ?? 0) > 0 && <PickRow on={!!pick['agencies']} onToggle={() => toggle('agencies')} label="Other agencies" value={found.agencies.map(a => (a.kind ? a.kind + ': ' : '') + a.agency_name).join('\n')} />}
             </ul>
 
             {found.credits.length > 0 && (
@@ -161,7 +174,7 @@ export default function CvImport({ uid, current, types, allSkills, mySkillIds, e
                   <Box on={!!pick['skills']} />Skills ({resolved.length})
                 </button>
                 <div className="mt-2 flex flex-wrap gap-1.5">{resolved.map(r => (
-                  <span key={r.label} className={cx('rounded-full px-2.5 py-1 text-[12px] font-medium', r.isNew ? 'bg-butter text-ink' : 'bg-mint text-green-ink')}>{r.label}{r.isNew && <span className="ml-1 text-[10px] font-semibold uppercase tracking-[0.06em] text-muted-strong">new</span>}</span>
+                  <span key={r.label} className={cx('rounded-full px-2.5 py-1 text-[12px] font-medium', r.isNew ? 'bg-butter text-ink' : 'bg-mint text-green-ink')}>{r.label}{r.level && <span className="ml-1 text-[10px] text-muted-strong">· {r.level}</span>}{r.isNew && <span className="ml-1 text-[10px] font-semibold uppercase tracking-[0.06em] text-muted-strong">new</span>}</span>
                 ))}</div>
                 {resolved.some(r => r.isNew) && <p className="mt-2 text-[12px] text-muted">Skills marked new aren’t in our list yet — we’ll add them so casting can search for them too.</p>}
               </div>

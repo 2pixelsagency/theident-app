@@ -21,16 +21,25 @@ const str = { type: 'string' }
 const schemaFor = (categories: string[]) => ({
   type: 'object',
   additionalProperties: false,
-  required: ['first_name', 'last_name', 'what_i_do', 'location', 'bio', 'height', 'playing_age_min', 'playing_age_max', 'agent_name', 'agent_email', 'agent_phone', 'website', 'drama_school', 'graduation_year', 'vocal_range', 'credits', 'skills', 'training'],
+  required: ['first_name', 'last_name', 'what_i_do', 'location', 'bio', 'height', 'playing_age_min', 'playing_age_max', 'agent_name', 'agent_email', 'agent_phone', 'agent_address', 'website', 'drama_school', 'graduation_year', 'vocal_range', 'weight', 'headshot_credit', 'agencies', 'credits', 'skills', 'training'],
   properties: {
     first_name: str, last_name: str,
     what_i_do: { type: 'string', description: 'Short craft line, e.g. "Actor & Singer". Empty if unclear.' },
     location: str, bio: { type: 'string', description: 'A 2–4 sentence third-person summary built only from facts in the CV. Empty if there is too little to go on.' },
     height: { type: 'string', description: 'As written, e.g. 5\'9" or 175cm. Empty if absent.' },
     playing_age_min: { type: 'integer', description: '0 if not stated' }, playing_age_max: { type: 'integer', description: '0 if not stated' },
-    agent_name: str, agent_email: str, agent_phone: str, website: str,
+    agent_name: { type: 'string', description: 'The main (first-listed) agency name' }, agent_email: str, agent_phone: str,
+    agent_address: { type: 'string', description: 'Main agency address, empty if absent' },
+    website: { type: 'string', description: 'The performer’s own website (not the agency’s), empty if absent' },
     drama_school: { type: 'string', description: 'Main drama school / training institution if the CV names one.' },
     graduation_year: { type: 'integer', description: '0 if not stated' },
+    weight: { type: 'string', description: 'As written, e.g. "13 st 7 lb (85.72 kg)". Empty if absent.' },
+    headshot_credit: { type: 'string', description: 'Photographer credited on the headshot, e.g. "Nicholas Dawkes" from "© Nicholas Dawkes". Empty if absent.' },
+    agencies: {
+      type: 'array', description: 'Every agency listed after the first (e.g. a commercials agent). The first/main agent goes in agent_name etc.',
+      items: { type: 'object', additionalProperties: false, required: ['kind', 'agency_name', 'address', 'phone', 'email', 'website'],
+        properties: { kind: { type: 'string', description: 'Theatrical, Commercial, Voice, Presenting, Dance or Other' }, agency_name: str, address: str, phone: str, email: str, website: str } },
+    },
     vocal_range: { type: 'string', description: 'Singing range exactly as written, e.g. "F2 to D3 (belt to F2)". Empty if absent. Not repeated in skills.' },
     credits: {
       type: 'array',
@@ -48,16 +57,21 @@ const schemaFor = (categories: string[]) => ({
       type: 'array',
       description: 'Every skill on the CV: accents, dance styles, voice type, instruments, sports, licences, languages, stage combat… (not vocal range).',
       items: {
-        type: 'object', additionalProperties: false, required: ['as_written', 'match', 'name', 'category'],
+        type: 'object', additionalProperties: false, required: ['as_written', 'match', 'name', 'category', 'level'],
         properties: {
           as_written: { type: 'string', description: 'The skill as written on the CV' },
           match: { type: 'string', description: 'The name from <skills_list> that means the same thing (e.g. "Jazz Dancing" → "Jazz Dance", "American-Standard" accent → "American General Accent"), copied exactly. Empty if none is the same skill.' },
           name: { type: 'string', description: 'If match is empty: a short, clean name for a new skill in the style of the list, e.g. "Pas de Deux", "Dance Captain", "Songwriting". Otherwise the match.' },
           category: { type: 'string', enum: categories },
+          level: { type: 'string', enum: ['Native', 'High standard', 'Highly skilled', 'Skilled', ''], description: 'The level the CV gives this skill, or empty' },
         },
       },
     },
-    training: { type: 'array', items: str, description: 'Training lines, e.g. "BA Acting, Mountview (2021)".' },
+    training: {
+      type: 'array', description: 'Each training entry.',
+      items: { type: 'object', additionalProperties: false, required: ['school', 'course', 'years'],
+        properties: { school: str, course: { type: 'string', description: 'Course or qualification, empty if none' }, years: { type: 'string', description: 'e.g. "2014–2017" or "3 years, 2014–2017", empty if none' } } },
+    },
   },
 })
 
