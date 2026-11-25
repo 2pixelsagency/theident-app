@@ -2,7 +2,7 @@
 // from videos in the browser so uploads stay under the storage limit and load fast on set wifi.
 
 export const REEL_BUCKET_MAX = 50 * 1024 * 1024 // storage.buckets.reels file_size_limit
-const VIDEO_TARGET = 45 * 1024 * 1024
+const VIDEO_TARGET = 40 * 1024 * 1024 // aim well under the bucket limit so long clips still fit
 
 const baseType = (t: string) => t.split(';')[0]
 const extFor = (t: string) => (baseType(t) === 'video/webm' ? 'webm' : baseType(t) === 'video/quicktime' ? 'mov' : baseType(t) === 'image/webp' ? 'webp' : baseType(t) === 'image/png' ? 'png' : baseType(t).startsWith('video') ? 'mp4' : 'jpg')
@@ -76,13 +76,17 @@ export function needsTranscode(file: File, v: HTMLVideoElement, start: number, e
 
 // Re-encode [start, end] at ≤720p by playing it into a canvas recorder. Runs in real time, so a 60s clip
 // takes ~60s; onProgress gets 0–1. Bitrate is picked so the result lands under the bucket limit.
-export async function transcode(src: string, start: number, end: number, onProgress?: (p: number) => void, signal?: AbortSignal): Promise<File> {
+export async function transcode(src: string, start: number, end: number, onProgress?: (p: number) => void, signal?: AbortSignal, squeeze = 1): Promise<File> {
   const type = recorderType()
   if (!type) throw new Error('unsupported')
   const v = await loadVideo(src)
   v.muted = false; v.volume = 1
   const len = Math.max(0.5, end - start)
-  const scale = Math.min(1, 720 / Math.min(v.videoWidth || 720, v.videoHeight || 720))
+  // Bitrate that lands the whole clip under the target; long clips drop to 480p / 360p so they still look clean
+  const audioBits = 96_000
+  const videoBits = Math.max(150_000, Math.min(2_500_000, Math.floor(((VIDEO_TARGET * 8) / len - audioBits) * squeeze)))
+  const maxShort = videoBits >= 900_000 ? 720 : videoBits >= 450_000 ? 480 : 360
+  const scale = Math.min(1, maxShort / Math.min(v.videoWidth || maxShort, v.videoHeight || maxShort))
   const c = document.createElement('canvas')
   c.width = Math.round((v.videoWidth || 1280) * scale / 2) * 2; c.height = Math.round((v.videoHeight || 720) * scale / 2) * 2
   const ctx = c.getContext('2d')!
@@ -97,8 +101,7 @@ export async function transcode(src: string, start: number, end: number, onProgr
     dest.stream.getAudioTracks().forEach(t => stream.addTrack(t))
   } catch { /* silent clip or no WebAudio — video only */ }
 
-  const videoBits = Math.max(600_000, Math.min(2_500_000, Math.floor((VIDEO_TARGET * 8) / len) - 128_000))
-  const rec = new MediaRecorder(stream, { mimeType: type, videoBitsPerSecond: videoBits, audioBitsPerSecond: 128_000 })
+  const rec = new MediaRecorder(stream, { mimeType: type, videoBitsPerSecond: videoBits, audioBitsPerSecond: audioBits })
   const chunks: Blob[] = []
   rec.ondataavailable = e => { if (e.data.size) chunks.push(e.data) }
 

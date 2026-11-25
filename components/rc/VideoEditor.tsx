@@ -68,10 +68,12 @@ export default function VideoEditor({ uid, source, onDone, onCancel }: {
           setStage('encoding'); setProgress(0)
           abort.current = new AbortController()
           file = await transcode(src, start, end, setProgress, abort.current.signal)
+          // Some browsers overshoot the bitrate: one more, tighter pass instead of giving up
+          if (file.size > REEL_BUCKET_MAX) { setProgress(0); file = await transcode(src, start, end, setProgress, abort.current.signal, 0.55) }
           setStage('uploading')
         }
       }
-      if (file.size > REEL_BUCKET_MAX) { setStage('ready'); toast('Still over 50MB — trim it shorter'); return }
+      if (file.size > REEL_BUCKET_MAX) { setStage('ready'); toast('This clip is too long to fit — trim it to the best few minutes'); return }
       const path = uid + '/reel-' + stamp() + '.' + fileExt(file)
       const { error } = await supabase.storage.from('reels').upload(path, file, { contentType: file.type })
       if (error) throw error
@@ -122,13 +124,13 @@ export default function VideoEditor({ uid, source, onDone, onCancel }: {
       {stage === 'encoding' && (
         <div>
           <div className="h-2 overflow-hidden rounded-full bg-chip"><div className="h-full bg-forest transition-[width]" style={{ width: Math.round(progress * 100) + '%' }} /></div>
-          <p className="mt-1.5 text-xs text-muted">Compressing… {Math.round(progress * 100)}% — keep this screen open.</p>
+          <p className="mt-1.5 text-xs text-muted">Optimising your video… {Math.round(progress * 100)}% — keep this screen open. It plays through once, so a 2-minute clip takes about 2 minutes.</p>
         </div>
       )}
 
       <div className="grid grid-cols-2 gap-2">
         <Button variant="outline" onClick={() => (stage === 'encoding' ? abort.current?.abort() : onCancel())} disabled={stage === 'uploading'}>Cancel</Button>
-        <Button onClick={save} disabled={busy}>{stage === 'uploading' ? 'Saving…' : stage === 'encoding' ? 'Compressing…' : coverOnly ? 'Save cover' : 'Save clip'}</Button>
+        <Button onClick={save} disabled={busy}>{stage === 'uploading' ? 'Saving…' : stage === 'encoding' ? 'Optimising…' : coverOnly ? 'Save cover' : 'Save clip'}</Button>
       </div>
     </div>
   )
