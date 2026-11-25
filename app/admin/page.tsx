@@ -10,7 +10,7 @@ import { fullName } from '@/lib/rc/format'
 import { Claims, ShareCasting } from './ShareCasting'
 import { AreaChart, BarChart, SplitBar } from './Charts'
 
-type Tab = 'overview' | 'safety' | 'members' | 'jobs' | 'digs' | 'chats' | 'admins'
+type Tab = 'overview' | 'safety' | 'verify' | 'members' | 'jobs' | 'digs' | 'chats' | 'admins'
 type Person = { id: string; first_name: string | null; last_name: string | null; company_name?: string | null; picture_url?: string | null }
 type Flag = { id: string; source: 'message' | 'cast_message'; message_id: string; thread_id: string; sender_id: string | null; body: string; categories: string[]; severity: 'low' | 'medium' | 'high'; minor_involved: boolean; status: string; created_at: string }
 type Report = { id: string; reporter_id: string; target_type: string; target_id: string; reported_profile_id: string | null; reason: string; details: string | null; snapshot: string | null; status: string; created_at: string }
@@ -70,6 +70,7 @@ type Stats = Record<string, number>
 const NAV: { key: Tab; label: string; icon: string; sub: string; badge?: (s: Stats) => number; urgent?: (s: Stats) => boolean }[] = [
   { key: 'overview', label: 'Overview', icon: 'grid', sub: 'How The Ident is doing today' },
   { key: 'safety', label: 'Safety', icon: 'shield', sub: 'Flagged messages and member reports', badge: s => (s.open_flags || 0) + (s.open_reports || 0), urgent: s => (s.high_flags || 0) > 0 },
+  { key: 'verify', label: 'Verification', icon: 'shield-check', sub: 'Professional and graduate checks waiting for you' },
   { key: 'members', label: 'Members', icon: 'users', sub: 'Everyone on The Ident' },
   { key: 'jobs', label: 'Jobs', icon: 'briefcase', sub: 'Every listing, shared castings and claims', badge: s => s.claims_pending || 0 },
   { key: 'digs', label: 'Digs', icon: 'house', sub: 'Listings waiting for your OK', badge: s => s.digs_pending || 0 },
@@ -140,6 +141,7 @@ function Shell({ tab, setTab, thread, setThread }: { tab: Tab; setTab: (t: Tab) 
           </div>
           {tab === 'overview' && <Overview s={stats} go={go} />}
           {tab === 'safety' && <Safety open={setThread} />}
+          {tab === 'verify' && <Verify />}
           {tab === 'members' && <Members />}
           {tab === 'jobs' && <Jobs />}
           {tab === 'digs' && <Digs />}
@@ -632,6 +634,55 @@ function TestEmail() {
         <Button size="sm" variant="outline" onClick={() => send('casting')} disabled={!!busy}>{busy === 'casting' ? 'Sending…' : 'Casting version'}</Button>
       </div>
     </div>
+  )
+}
+
+// Verification queue: links, proofs and webmail confirmations that need a person to check
+type VCheck = { id: string; profile_id: string; kind: string; method: string; status: string; email: string | null; link: string | null; evidence_path: string | null; created_at: string; profiles: { first_name: string | null; last_name: string | null; slug: string | null; graduate_school: string | null; graduate_year: number | null; account_role: string | null } | null }
+function Verify() {
+  const [rows, setRows] = useState<VCheck[] | null>(null)
+  const load = useCallback(async () => {
+    const { data } = await supabase.from('verification_checks').select('id, profile_id, kind, method, status, email, link, evidence_path, created_at, profiles(first_name, last_name, slug, graduate_school, graduate_year, account_role)').eq('status', 'pending').order('created_at')
+    setRows((data || []) as unknown as VCheck[])
+  }, [])
+  // eslint-disable-next-line react-hooks/set-state-in-effect
+  useEffect(() => { load() }, [load])
+  const decide = async (c: VCheck, approve: boolean) => {
+    const { error } = await supabase.rpc('admin_decide_check', { p_id: c.id, p_approve: approve })
+    if (error) { toast('Couldn’t save that'); return }
+    toast(approve ? 'Approved' : 'Rejected'); load()
+  }
+  const openProof = async (path: string) => {
+    const { data } = await supabase.storage.from('verification').createSignedUrl(path, 300)
+    if (data?.signedUrl) window.open(data.signedUrl, '_blank', 'noopener'); else toast('Couldn’t open the file')
+  }
+  if (!rows) return <PageLoading />
+  if (!rows.length) return <Empty icon="shield-check" title="Nothing to check" sub="New verification requests will appear here." />
+  const how: Record<string, string> = { school_email: 'School email confirmed (not .ac.uk)', agent: 'Agent confirmed from a personal email', link: 'Professional profile link', evidence: 'Uploaded proof' }
+  return (
+    <ul className="space-y-3">
+      {rows.map(c => {
+        const p = c.profiles
+        return (
+          <li key={c.id} className="rounded-[18px] border border-line-soft bg-surface p-4">
+            <div className="flex flex-wrap items-start justify-between gap-3">
+              <div className="min-w-0">
+                <p className="text-[15px] font-semibold">{fullName(p) || 'Member'} <span className="ml-1 rounded-full bg-chip px-2 py-0.5 text-[11px] font-semibold uppercase tracking-[0.06em] text-muted-strong">{c.kind === 'graduate' ? 'Graduate' : 'Professional'}</span></p>
+                <p className="mt-0.5 text-[13px] text-muted">{how[c.method] || c.method}{c.kind === 'graduate' && p?.graduate_school ? ' · ' + p.graduate_school + (p.graduate_year ? ' ' + p.graduate_year : '') : ''}</p>
+                {c.email && <p className="mt-1 text-[13px]">{c.email}</p>}
+                {c.link && <a href={c.link} target="_blank" rel="noopener noreferrer" className="mt-1 block truncate text-[13px] font-medium text-green-ink underline">{c.link}</a>}
+                {c.evidence_path && <button type="button" onClick={() => openProof(c.evidence_path!)} className="mt-1 text-[13px] font-medium text-green-ink underline">Open uploaded proof</button>}
+                {p?.slug && <Link href={'/talent/' + c.profile_id} className="mt-1 block text-[12px] text-muted underline">View their profile</Link>}
+              </div>
+              <div className="flex gap-2">
+                <Button size="sm" variant="outline" onClick={() => decide(c, false)}>Reject</Button>
+                <Button size="sm" onClick={() => decide(c, true)}>Approve</Button>
+              </div>
+            </div>
+          </li>
+        )
+      })}
+    </ul>
   )
 }
 

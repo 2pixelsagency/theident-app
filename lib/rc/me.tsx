@@ -25,6 +25,8 @@ export type MyProfile = {
   is_demo?: boolean
   plan_status?: string | null
   plan_kind?: string | null
+  graduate_verified?: boolean | null
+  pro_verified?: boolean | null
   plan_period_end?: string | null
   plan_grace_until?: string | null
 }
@@ -47,7 +49,7 @@ const MeContext = createContext<Me | null>(null)
 // Where to go after logging in, set by MeProvider or public pages (e.g. Apply on /jobs/[id])
 export const PENDING_NEXT_KEY = 'ident.pendingNext'
 
-const PROFILE_COLS = 'id, first_name, last_name, picture_url, slug, location, what_i_do, account_role, company_name, availability_status, is_graduate, graduate_school, graduate_year, is_verified, email_verified, is_demo, plan_status, plan_kind, plan_period_end, plan_grace_until'
+const PROFILE_COLS = 'id, first_name, last_name, picture_url, slug, location, what_i_do, account_role, company_name, availability_status, is_graduate, graduate_school, graduate_year, graduate_verified, pro_verified, is_verified, email_verified, is_demo, plan_status, plan_kind, plan_period_end, plan_grace_until'
 
 export function MeProvider({ children }: { children: React.ReactNode }) {
   const router = useRouter()

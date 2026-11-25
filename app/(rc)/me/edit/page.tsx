@@ -16,6 +16,7 @@ import { loadFullProfile, type Credit, type FullProfile, type Reel } from '@/lib
 import { compressImage, fileExt } from '@/lib/rc/media'
 import VideoEditor, { type SavedVideo } from '@/components/rc/VideoEditor'
 import ProfileDetails from '@/components/rc/ProfileDetails'
+import Verification from '@/components/rc/Verification'
 import { moveItem, saveOrder } from '@/components/rc/ProfileExtras'
 
 // ids from the genders table (same labels as sign-up)
@@ -312,6 +313,8 @@ function Editor({ data, uid, caster, onRefresh, mutate }: { data: Data; uid: str
             </section>
 
             <ProfileDetails uid={uid} profile={p} access={data.access} />
+
+            <Verification uid={uid} profile={p} />
 
             <section>
               <h2 className="mb-3 text-[18px]">Graduate</h2>

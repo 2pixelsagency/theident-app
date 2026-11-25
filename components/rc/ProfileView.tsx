@@ -219,7 +219,8 @@ function PerformerProfile({ data, owner, onBack, onShare, topRight, actions, sta
               : <span className="shrink-0 rounded-[10px] ring-4 ring-dark"><Avatar name={name} size={104} /></span>}
             <div className="flex min-w-0 flex-wrap gap-2 pb-1">
               {!caster && p.availability_status === 'available' && <span className="inline-flex items-center gap-1.5 rounded-full bg-lime px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.08em] text-ink"><span className="size-1.5 rounded-full bg-forest" /> Open to work</span>}
-              {grad && <span className="inline-flex items-center gap-1 rounded-full bg-accent px-3 py-1.5 text-[11px] font-medium text-ink"><Icon name="graduation-cap" className="size-3.5" />{grad}</span>}
+              {!caster && p.pro_verified && <span title={p.pro_verified_via || 'Verified professional'} className="inline-flex items-center gap-1 rounded-full bg-white px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.08em] text-ink"><Icon name="shield-check" strokeWidth={2} className="size-3.5" /> Verified pro</span>}
+              {grad && <span className="inline-flex items-center gap-1 rounded-full bg-accent px-3 py-1.5 text-[11px] font-medium text-ink"><Icon name={p.graduate_verified ? 'check' : 'graduation-cap'} strokeWidth={p.graduate_verified ? 2.5 : 2} className="size-3.5" />{grad}{p.graduate_verified ? ' · verified' : ''}</span>}
             </div>
           </div>
           <h1 className="mt-4 flex items-center gap-2 text-[32px] leading-tight text-white">{name}{p.is_verified && <VerifiedTick />}{!caster && p.pronouns && <span className="self-end pb-1.5 text-[14px] font-normal text-white/70">{p.pronouns}</span>}</h1>
