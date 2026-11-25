@@ -25,12 +25,13 @@ export function FeatureCard({ size, dark, header, title, body, children }: {
   size: 'lg' | 'sm'; dark?: boolean; header: React.ReactNode; title: string; body: string; children: React.ReactNode
 }) {
   return (
-    <article data-reveal className={cx('group/card flex flex-col rounded-[var(--radius-feature)]',
+    // Phones: every card is the same size on the light background, so the stacked cards line up
+    <article data-reveal className={cx('group/card flex flex-col rounded-[var(--radius-feature)] max-md:h-[600px] max-md:overflow-hidden',
       size === 'lg' ? 'gap-3.5 p-6 md:p-8' : 'gap-3 p-6 md:p-7',
-      dark ? 'bg-forest text-bg' : 'bg-sand text-ink')}>
+      dark ? 'bg-forest text-bg max-md:bg-sand max-md:text-ink' : 'bg-sand text-ink')}>
       {header}
       <h3 className={cx('font-display font-bold tracking-[-0.02em]', size === 'lg' ? 'mt-1 text-[28px] leading-[1.1] md:text-[32px]' : 'mt-1.5 text-[26px] leading-[1.15]')}>{title}</h3>
-      <p className={cx('leading-[1.6]', size === 'lg' ? 'text-[14px]' : 'text-[13px]', dark ? 'text-on-dark-muted' : 'text-muted-strong')}>{body}</p>
+      <p className={cx('leading-[1.6]', size === 'lg' ? 'text-[14px]' : 'text-[13px]', dark ? 'text-on-dark-muted max-md:text-muted-strong' : 'text-muted-strong')}>{body}</p>
       {children}
     </article>
   )
@@ -38,7 +39,7 @@ export function FeatureCard({ size, dark, header, title, body, children }: {
 
 export function Panel({ size, background, stripes, children }: { size: 'lg' | 'sm'; background: string; stripes: 'light' | 'dark'; children: React.ReactNode }) {
   return (
-    <div className={cx('relative isolate flex items-center justify-center overflow-hidden', size === 'lg' ? 'mt-[18px] h-[360px] rounded-[24px]' : 'mt-3 h-[280px] rounded-[22px]')}>
+    <div className={cx('relative isolate flex items-center justify-center overflow-hidden', size === 'lg' ? 'mt-[18px] h-[360px] rounded-[24px]' : 'mt-3 h-[280px] rounded-[22px]', 'max-md:mt-auto max-md:h-[330px] max-md:shrink-0 max-md:rounded-[22px]')}>
       <div aria-hidden="true" className="absolute inset-0 -z-10" style={{ backgroundImage: background }} />
       <div aria-hidden="true" className={cx('absolute inset-x-0', size === 'lg' ? 'top-[37%] h-[124px]' : 'top-[34%] h-[100px]')}
           style={{ backgroundImage: stripes === 'dark' ? 'var(--stripes-dark)' : 'var(--stripes-light)' }} />

@@ -165,7 +165,7 @@ export function StatsCard({ stats }: { stats: Stat[] }) {
       header={<div className="flex items-center justify-between">
         <IconBadge tone="bg-lime"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" style={{ stroke: 'var(--forest)' }} strokeWidth="2.2" strokeLinecap="round"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2" /></svg></IconBadge>
       </div>}>
-      <dl className="mt-3 grid h-[280px] grid-cols-2 gap-2.5">
+      <dl className="mt-3 grid h-[280px] grid-cols-2 gap-2.5 max-md:mt-auto max-md:h-[330px] max-md:shrink-0">
         {stats.map((s, i) => (
           <div key={s.label} className={cx('flex flex-col-reverse justify-between rounded-[18px] p-[18px]', STAT_TONE[s.tone])}>
             <dt className="text-[15px] font-medium">{s.label}</dt>
