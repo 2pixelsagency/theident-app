@@ -17,6 +17,15 @@ const NAV = [
   { href: '/blog', label: 'Blog' },
 ]
 
+// Desktop: four items — the rest sit in the Explore dropdown (the phone menu lists everything)
+const MAIN = [{ href: '/performers', label: 'Performers' }, { href: '/casting', label: 'Casting' }]
+const EXPLORE = [
+  { href: '/jobs', label: 'Browse roles', sub: 'Castings, auditions and paid work', icon: 'briefcase' },
+  { href: '/people', label: 'Browse talent', sub: 'Performers open to work', icon: 'users' },
+  { href: '/auditions', label: 'Auditions by city', sub: 'London, Manchester and more', icon: 'pin' },
+  { href: '/blog', label: 'Blog & guides', sub: 'Self-tapes, agents, money', icon: 'bulb' },
+]
+
 // Floating glass nav: a pill that tightens and gains a shadow on scroll; full-screen sheet on mobile
 export default function SiteNav() {
   const pathname = usePathname()
@@ -55,11 +64,24 @@ export default function SiteNav() {
           <LogoMark className="size-5" />The Ident
         </Link>
         <nav className="hidden flex-1 items-center gap-1 md:flex">
-          {NAV.map(n => {
-            const on = pathname === n.href
-            return <Link key={n.href} href={n.href} aria-current={on ? 'page' : undefined}
-              className={cx('rounded-[10px] px-3.5 py-2 text-[14px] font-medium transition', on ? 'bg-chip text-ink' : 'text-muted hover:bg-chip/70 hover:text-ink')}>{n.label}</Link>
-          })}
+          {MAIN.map(n => <NavLink key={n.href} href={n.href} label={n.label} on={pathname.startsWith(n.href)} />)}
+          <div className="group/explore relative">
+            <button type="button" aria-haspopup="true" className={cx('inline-flex items-center gap-1 rounded-[10px] px-3.5 py-2 text-[14px] font-medium transition group-hover/explore:bg-chip/70 group-hover/explore:text-ink group-focus-within/explore:bg-chip/70', EXPLORE.some(e => pathname.startsWith(e.href)) ? 'bg-chip text-ink' : 'text-muted')}>
+              Explore <Icon name="chevron-down" strokeWidth={2} className="size-3.5 transition-transform group-hover/explore:rotate-180" />
+            </button>
+            {/* Panel: opens on hover or keyboard focus */}
+            <div className="invisible absolute left-0 top-full pt-2 opacity-0 transition duration-200 group-hover/explore:visible group-hover/explore:opacity-100 group-focus-within/explore:visible group-focus-within/explore:opacity-100">
+              <ul className="w-[300px] rounded-[18px] border border-line bg-surface p-2 shadow-[0_24px_50px_-24px_rgb(18_49_39/0.45)]">
+                {EXPLORE.map(e => (
+                  <li key={e.href}><Link href={e.href} className="flex items-center gap-3 rounded-[12px] px-3 py-2.5 hover:bg-sand">
+                    <span className="flex size-9 shrink-0 items-center justify-center rounded-[10px] bg-lime text-forest"><Icon name={e.icon} strokeWidth={2} className="size-[18px]" /></span>
+                    <span><span className="block text-[14px] font-semibold text-ink">{e.label}</span><span className="block text-[12px] text-muted">{e.sub}</span></span>
+                  </Link></li>
+                ))}
+              </ul>
+            </div>
+          </div>
+          <NavLink href="/pricing" label="Pricing" on={pathname === '/pricing'} />
         </nav>
         <span className="flex-1 md:hidden" />
         {signedIn ? (
@@ -97,4 +119,9 @@ export default function SiteNav() {
       )}
     </header>
   )
+}
+
+function NavLink({ href, label, on }: { href: string; label: string; on: boolean }) {
+  return <Link href={href} aria-current={on ? 'page' : undefined}
+    className={cx('rounded-[10px] px-3.5 py-2 text-[14px] font-medium transition', on ? 'bg-chip text-ink' : 'text-muted hover:bg-chip/70 hover:text-ink')}>{label}</Link>
 }
