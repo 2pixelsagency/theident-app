@@ -135,18 +135,70 @@ export function CreateSheet({ open, onClose, onCreate }: { open: boolean; onClos
           <Button full size="lg" onClick={submit} disabled={busy}>{busy ? 'Posting…' : 'Post poll'}</Button>
         </div>
       ) : (
-        <div className="space-y-3">
-          <Field label="What" value={ev.title} onChange={e => setEv(p => ({ ...p, title: e.target.value }))} placeholder="e.g. Cast drinks" autoFocus />
-          <div className="flex gap-3">
-            <Field className="flex-1" label="Date" type="date" value={ev.date} onChange={e => setEv(p => ({ ...p, date: e.target.value }))} />
-            <Field className="w-32" label="Time (optional)" type="time" value={ev.time || ''} onChange={e => setEv(p => ({ ...p, time: e.target.value }))} />
+        <div className="space-y-4">
+          {/* Live preview */}
+          <div className="flex items-center gap-3 rounded-[16px] bg-forest p-3 text-bg">
+            <span className="flex w-11 shrink-0 flex-col items-center rounded-[10px] bg-lime py-1 text-forest">
+              <span className="text-[9px] font-bold uppercase">{ev.date ? new Date(ev.date + 'T12:00').toLocaleDateString('en-GB', { month: 'short' }) : '—'}</span>
+              <span className="font-display text-[18px] font-bold leading-none">{ev.date ? new Date(ev.date + 'T12:00').getDate() : '?'}</span>
+            </span>
+            <span className="min-w-0">
+              <span className="block truncate text-[15px] font-semibold">{ev.title.trim() || 'Your event'}</span>
+              <span className="block truncate text-[12px] text-on-dark-muted">{ev.date ? fmtEventDate(ev) : 'Pick a date'}{ev.location ? ' · ' + ev.location : ''}</span>
+            </span>
           </div>
-          <Field label="Where (optional)" value={ev.location || ''} onChange={e => setEv(p => ({ ...p, location: e.target.value }))} placeholder="e.g. The Crown, stage door" />
-          <TextArea label="Details (optional)" value={ev.details || ''} onChange={e => setEv(p => ({ ...p, details: e.target.value }))} />
+
+          <Field label="What’s happening" value={ev.title} onChange={e => setEv(p => ({ ...p, title: e.target.value }))} placeholder="e.g. Cast drinks" autoFocus />
+
+          <div>
+            <span className="mb-1.5 block text-[13px] font-medium">When</span>
+            <div className="mb-2 flex flex-wrap gap-2">
+              {quickDates().map(([label, iso]) => (
+                <button key={label} type="button" onClick={() => setEv(p => ({ ...p, date: iso }))} aria-pressed={ev.date === iso}
+                  className={cx('h-9 rounded-full px-3.5 text-[13px] font-semibold transition-colors', ev.date === iso ? 'bg-forest text-lime' : 'bg-chip text-ink hover:bg-line')}>{label}</button>
+              ))}
+            </div>
+            <div className="grid grid-cols-[1.4fr_1fr] gap-2">
+              <PickerButton icon="calendar" value={ev.date ? new Date(ev.date + 'T12:00').toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' }) : 'Pick a date'} muted={!ev.date}>
+                <input type="date" aria-label="Date" value={ev.date} min={new Date().toISOString().slice(0, 10)} onChange={e => setEv(p => ({ ...p, date: e.target.value }))}
+                  className="absolute inset-0 size-full cursor-pointer opacity-0" onClick={e => (e.currentTarget as HTMLInputElement).showPicker?.()} />
+              </PickerButton>
+              <PickerButton icon="clock" value={ev.time || 'Any time'} muted={!ev.time}>
+                <select aria-label="Time" value={ev.time || ''} onChange={e => setEv(p => ({ ...p, time: e.target.value }))} className="absolute inset-0 size-full cursor-pointer opacity-0">
+                  <option value="">Any time</option>
+                  {TIMES.map(t => <option key={t} value={t}>{t}</option>)}
+                </select>
+              </PickerButton>
+            </div>
+          </div>
+
+          <Field label="Where" icon="pin" value={ev.location || ''} onChange={e => setEv(p => ({ ...p, location: e.target.value }))} placeholder="e.g. The Crown, by the stage door" />
+          <TextArea label="Anything else? (optional)" value={ev.details || ''} onChange={e => setEv(p => ({ ...p, details: e.target.value }))} placeholder="Dress code, who’s paying, a link…" />
           <Button full size="lg" onClick={submit} disabled={busy}>{busy ? 'Posting…' : 'Post event'}</Button>
         </div>
       )}
     </Sheet>
+  )
+}
+
+// Times every 15 minutes, 07:00 → 23:45
+const TIMES = Array.from({ length: 68 }, (_, i) => { const m = 7 * 60 + i * 15; return String(Math.floor(m / 60)).padStart(2, '0') + ':' + String(m % 60).padStart(2, '0') })
+const iso = (d: Date) => d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0')
+function quickDates(): [string, string][] {
+  const t = new Date(), add = (n: number) => { const d = new Date(t); d.setDate(d.getDate() + n); return d }
+  const next = (dow: number) => add(((dow - t.getDay() + 7) % 7) || 7)
+  return [['Tonight', iso(t)], ['Tomorrow', iso(add(1))], ['This Fri', iso(t.getDay() === 5 ? t : next(5))], ['This Sat', iso(t.getDay() === 6 ? t : next(6))]]
+}
+
+// Looks like a field; the real (invisible) date / select input sits on top so the native picker opens
+function PickerButton({ icon, value, muted, children }: { icon: string; value: string; muted?: boolean; children: React.ReactNode }) {
+  return (
+    <span className="relative flex h-12 items-center gap-2 rounded-[14px] border border-line-strong bg-surface px-3.5 transition focus-within:border-forest focus-within:ring-2 focus-within:ring-lime/50">
+      <Icon name={icon} className="size-[18px] shrink-0 text-muted" />
+      <span className={cx('min-w-0 flex-1 truncate text-[15px]', muted ? 'text-faint' : 'font-medium')}>{value}</span>
+      <Icon name="chevron-down" className="size-4 shrink-0 text-muted" />
+      {children}
+    </span>
   )
 }
 
