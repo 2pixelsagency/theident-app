@@ -98,7 +98,7 @@ export default function CreateAccount() {
       </form>
 
       <p className="mt-6 text-center text-[15px] text-muted">Already have an account? <Link href={'/welcome?side=' + side} className="font-semibold text-green-ink">Log in</Link></p>
-      <p className="mt-auto pt-8 text-center text-xs text-muted">By continuing you agree to our Terms &amp; Privacy Policy. We’ll email you once to verify your address.</p>
+      <p className="mt-auto pt-8 text-center text-xs text-muted">By continuing you agree to our <a href="https://www.theident.me/terms" target="_blank" rel="noopener noreferrer" className="underline">Terms</a> &amp; <a href="https://www.theident.me/privacy" target="_blank" rel="noopener noreferrer" className="underline">Privacy Policy</a>. We’ll email you once to verify your address.</p>
     </>
   )
 }

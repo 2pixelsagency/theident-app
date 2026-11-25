@@ -42,7 +42,33 @@ export function brandedEmail({ title, body, button, footer, steps, preheader, he
   )
 }
 
-// The first email a new member gets: welcome + their first steps (+ verify button for email sign-ups)
+// Sign-up: just the verify link. The welcome waits until they start a membership.
+export function verifyEmail(link: string) {
+  return brandedEmail({
+    title: 'Verify your email',
+    body: ['Confirm this is your email address to start applying for roles and posting jobs on The Ident. You can keep browsing in the meantime.'],
+    button: { label: 'Verify email', href: link },
+    footer: 'Or paste this link into your browser: ' + link + ' — it expires in 24 hours. Didn’t sign up? You can ignore this email.',
+  })
+}
+
+// One reminder for people who signed up but never started their membership
+export function nudgeEmail({ firstName, caster }: { firstName: string | null; caster: boolean }) {
+  return brandedEmail({
+    preheader: 'Your free trial is still waiting for you.',
+    title: 'Have you forgotten about us' + (firstName ? ', ' + firstName : '') + '?',
+    body: [
+      caster
+        ? 'You started setting up The Ident but didn’t finish. Your account is ready — start your free trial to post roles, review self-tapes and book your cast.'
+        : 'You started setting up The Ident but didn’t finish. Your account is ready — start your free trial to apply for roles, track every casting and get found by casting.',
+      'Try everything free for 7 days, then cancel any time.',
+    ],
+    button: { label: 'Start my free trial', href: 'https://app.theident.me/plan' },
+    footer: 'This is the only reminder we’ll send. Didn’t sign up? You can ignore this email.',
+  })
+}
+
+// Sent once a membership starts (paid or trial): welcome + their first steps (+ verify button if still unverified)
 export function welcomeEmail({ firstName, caster, verifyLink }: { firstName: string | null; caster: boolean; verifyLink?: string }) {
   const app = 'https://app.theident.me'
   const steps: Step[] = caster
@@ -59,7 +85,6 @@ export function welcomeEmail({ firstName, caster, verifyLink }: { firstName: str
         { title: 'Turn on notifications', text: 'Don’t miss an audition: get an alert the moment you’re invited, recalled or booked.' },
       ]
   return brandedEmail({
-    hero: caster ? 'casting' : 'performer',
     preheader: caster ? 'Post roles, review tapes and book your cast in one place.' : 'Your castings, goals and career — all in one place.',
     title: 'Welcome to The Ident' + (firstName ? ', ' + firstName : '') + ' 👋',
     body: [caster

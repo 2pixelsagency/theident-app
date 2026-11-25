@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
-import { sendEmail, welcomeEmail } from '@/lib/email'
+import { nudgeEmail, sendEmail, welcomeEmail } from '@/lib/email'
 
 export const runtime = 'nodejs'
 
@@ -20,7 +20,9 @@ export async function POST(req: NextRequest) {
   try { body = await req.json() } catch { /* default variant */ }
   const caster = body.variant === 'casting'
   const { data: p } = await asUser.from('profiles').select('first_name').eq('id', user.id).maybeSingle()
-  const ok = await sendEmail(user.email, '[Test] Welcome to The Ident' + (caster ? ' (casting)' : ''),
-    welcomeEmail({ firstName: p?.first_name || null, caster, verifyLink: 'https://app.theident.me/verify?token=preview' }))
+  // variant 'nudge' previews the "Have you forgotten about us?" reminder
+  const ok = body.variant === 'nudge'
+    ? await sendEmail(user.email, '[Test] Have you forgotten about us?', nudgeEmail({ firstName: p?.first_name || null, caster: false }))
+    : await sendEmail(user.email, '[Test] Welcome to The Ident' + (caster ? ' (casting)' : ''), welcomeEmail({ firstName: p?.first_name || null, caster }))
   return ok ? NextResponse.json({ ok: true, to: user.email }) : NextResponse.json({ error: 'email failed' }, { status: 502 })
 }

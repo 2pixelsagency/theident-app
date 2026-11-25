@@ -11,13 +11,14 @@ import { signOutAndReset } from '@/lib/rc/onboarding'
 // The membership screen: one plan per side, no free tier. Used at the end of sign-up and as the in-app gate.
 export default function PlanPaywall({ role, next = '/home', title, sub, firstTime }: { role: string | null | undefined; next?: string; title?: string; sub?: string; firstTime?: boolean }) {
   // Recent graduates get the graduate price (the server applies the same rule at checkout)
-  const [grad, setGrad] = useState<{ is_graduate: boolean | null; graduate_year: number | null; graduate_verified: boolean | null } | null>(null)
+  const [grad, setGrad] = useState<{ account_role: string | null; is_graduate: boolean | null; graduate_year: number | null; graduate_verified: boolean | null } | null>(null)
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session) supabase.from('profiles').select('is_graduate, graduate_year, graduate_verified').eq('id', session.user.id).maybeSingle().then(({ data }) => setGrad(data))
+      if (session) supabase.from('profiles').select('account_role, is_graduate, graduate_year, graduate_verified').eq('id', session.user.id).maybeSingle().then(({ data }) => setGrad(data))
     })
   }, [])
-  const kind = planForProfile(role, grad), plan = PLANS[kind]
+  // The account's own type wins over the page's role hint (e.g. after Apple/Google sign-in the hint can be missing)
+  const kind = planForProfile(grad?.account_role || role, grad), plan = PLANS[kind]
   const [busy, setBusy] = useState(false)
   // Apple doesn't allow web checkout for digital memberships inside the iOS app — no price or buy button there
   const [native] = useState(() => isNativeApp())
