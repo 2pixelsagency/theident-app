@@ -78,12 +78,12 @@ function PerformerHome() {
       <HomeCompleteness />
       <div className="rise-stagger px-4">
         {live && <LiveCard app={live} shows={todayShows} now={now} />}
-        <HiringCard />
         <LatestJobs limit={3} />
         <TodoList compact />
-        <BlockCard block={block} />
         <SectionTitle title="This week" action="Diary" href="/diary" />
         <WeekStrip kinds={kindsByDay(diary)} />
+        <BlockCard block={block} />
+        <HiringCard />
         <div className="h-6" />
       </div>
     </>

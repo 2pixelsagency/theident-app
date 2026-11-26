@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
 import { useEffect, useState, useSyncExternalStore } from 'react'
 import Icon from './Icon'
 
@@ -122,7 +122,7 @@ export function BackArrow({ back, onBack }: { back?: string; onBack?: () => void
   )
 }
 
-const headerCls = 'sticky top-0 z-30 bg-bg/95 px-4 pb-3 pt-[max(14px,env(safe-area-inset-top))] backdrop-blur lg:static lg:bg-transparent lg:pb-5 lg:pt-6 lg:backdrop-blur-none'
+const headerCls = 'sticky top-0 z-30 bg-bg/95 px-4 pb-2.5 pt-[max(12px,env(safe-area-inset-top))] backdrop-blur lg:static lg:bg-transparent lg:pb-5 lg:pt-6 lg:backdrop-blur-none'
 
 export function BackHeader({ title, right, back, onBack }: { title: string; right?: React.ReactNode; back?: string; onBack?: () => void }) {
   return (
@@ -136,12 +136,16 @@ export function BackHeader({ title, right, back, onBack }: { title: string; righ
   )
 }
 
-// Tab-root header. Keeps the same back arrow so every screen has one (falls back to Home).
+// Main tabs (reached from the tab bar) have no back arrow, like a native app
+const TAB_ROOTS = new Set(['/home', '/find', '/castings', '/chats', '/menu', '/talent', '/postings'])
+
+// Page header: a back arrow on inner screens (falls back to Home), none on the main tabs
 export function PageHeader({ title, right, sub, back = '/home' }: { title: string; right?: React.ReactNode; sub?: string; back?: string }) {
+  const root = TAB_ROOTS.has(usePathname())
   return (
     <header className={headerCls}>
       <div className="flex items-center gap-1.5">
-        <BackArrow back={back} />
+        {!root && <BackArrow back={back} />}
         <h1 className="flex-1 truncate font-display text-[24px] font-bold leading-tight tracking-[-0.03em] lg:text-[36px]">{title}</h1>
         {right}
       </div>
@@ -186,7 +190,7 @@ export function Chip({ selected, onClick, children, tone = 'dark', className }: 
   const on = tone === 'dark' ? 'border-dark bg-dark text-white' : tone === 'green' ? 'border-transparent bg-green-tint text-green-ink' : 'border-transparent bg-purple-tint text-purple-ink'
   return (
     <button type="button" onClick={onClick} aria-pressed={selected}
-      className={cx('inline-flex h-9 items-center gap-1 whitespace-nowrap rounded-full border px-4 text-[13px] transition', selected ? on : 'border-line-strong bg-sand text-ink hover:border-forest', className)}>
+      className={cx('inline-flex h-8 items-center gap-1 whitespace-nowrap rounded-full border px-3.5 text-[13px] font-medium transition', selected ? on : 'border-line-strong bg-sand text-ink hover:border-forest', className)}>
       {children}
     </button>
   )
@@ -201,7 +205,7 @@ export function Segmented<T extends string>({ value, options, onChange, classNam
     <div role="tablist" className={cx('flex rounded-full bg-sand-2 p-1', className)}>
       {options.map(o => (
         <button key={o.value} type="button" role="tab" aria-selected={value === o.value} onClick={() => onChange(o.value)}
-          className={cx('h-10 flex-1 rounded-full text-sm font-semibold transition-colors duration-300', value === o.value ? 'bg-forest text-bg shadow-card' : 'text-muted-strong hover:text-ink')}>
+          className={cx('h-9 flex-1 rounded-full text-[13px] font-semibold transition-colors duration-300', value === o.value ? 'bg-forest text-bg shadow-card' : 'text-muted-strong hover:text-ink')}>
           {o.label}
         </button>
       ))}
