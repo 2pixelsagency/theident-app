@@ -7,7 +7,7 @@ import Icon from '@/components/rc/Icon'
 import FindTabs from '@/components/rc/FindTabs'
 import JobCard from '@/components/rc/JobCard'
 import SwipeRow from '@/components/rc/SwipeRow'
-import { Button, Chip, Empty, Field, PageHeader, PageLoading, SearchField, Sheet, TabChips, Toggle, toast } from '@/components/rc/ui'
+import { Button, Chip, Empty, Field, PageHeader, PageLoading, SearchField, Sheet, Toggle, toast } from '@/components/rc/ui'
 import { supabase } from '@/lib/supabase'
 import { useMe } from '@/lib/rc/me'
 import { useAsync } from '@/lib/rc/useAsync'
@@ -121,10 +121,12 @@ export default function FindPage() {
       <PageHeader title="Find" />
       <div className="px-4 pb-24">
         <FindTabs value={tab} onChange={v => v === 'people' ? router.replace('/talent', { scroll: false }) : setTab(v)} />
-        <div className="mt-4"><SearchField value={q} onChange={setQ} placeholder={tab === 'side' ? 'Teaching, promo, modelling, events…' : 'Search roles, skills, locations…'} /></div>
+        <div className="mt-3"><SearchField value={q} onChange={setQ} placeholder={tab === 'side' ? 'Teaching, promo, modelling, events…' : 'Search roles, skills, locations…'} /></div>
 
         <div className="scrollbar-none -mx-4 mt-3 flex gap-2 overflow-x-auto px-4">
-          <Chip selected={active > 0} onClick={() => setShowFilters(true)}><Icon name="sliders" className="size-4" /> More filters{active > 0 ? ' · ' + active : ''}</Chip>
+          <Chip selected={active > 0} onClick={() => setShowFilters(true)}><Icon name="sliders" className="size-4" /> Filters{active > 0 ? ' · ' + active : ''}</Chip>
+          <Chip selected={view === 'saved'} onClick={() => setView(v => (v === 'saved' ? 'all' : 'saved'))}><Icon name="bookmark" className="size-3.5" /> Saved{savedCount ? ' ' + savedCount : ''}</Chip>
+          <Chip selected={view === 'later'} onClick={() => setView(v => (v === 'later' ? 'all' : 'later'))}><Icon name="clock" className="size-3.5" /> Later{laterCount ? ' ' + laterCount : ''}</Chip>
           {quick.map(c => <Chip key={c.label} selected={c.on} onClick={c.toggle}>{c.label}</Chip>)}
         </div>
 
@@ -139,15 +141,7 @@ export default function FindPage() {
           </Link>
         )}
 
-        <div className="mt-4">
-          <TabChips value={view} onChange={setView} options={[
-            { value: 'all', label: 'All' },
-            { value: 'saved', label: 'Saved', count: savedCount },
-            { value: 'later', label: 'Later', count: laterCount },
-          ]} />
-        </div>
-
-        <div className="mb-3 mt-3 flex items-center justify-between text-sm">
+        <div className="mb-2.5 mt-3 flex items-center justify-between text-sm">
           <span className="text-muted"><span className="font-medium text-ink">{shown.length.toLocaleString('en-GB')}</span> {noun}</span>
           <label className="relative flex items-center gap-1 font-medium text-green-ink">
             <select value={sort} onChange={e => setSort(e.target.value as Sort)} aria-label="Sort" className="cursor-pointer appearance-none bg-transparent pr-4 outline-none">

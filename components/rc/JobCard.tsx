@@ -39,10 +39,10 @@ export default function JobCard({ job, poster, saved, onToggleSave, bare, href }
     <El className="relative rounded-[var(--radius)] border border-line bg-surface p-4 shadow-card">
       <Link href={href || '/find/' + job.id} className="block pr-8">
         <span className="flex items-center gap-1.5">
-          <span className="text-[17px] font-medium leading-snug">{jobTitle(job)}</span>
+          <span className="text-[16px] font-semibold leading-snug">{jobTitle(job)}</span>
         </span>
         <span className="mt-0.5 block text-[13px] text-muted">{sub}</span>
-        <span className="mt-3 flex flex-wrap gap-2">
+        <span className="mt-2.5 flex flex-wrap gap-1.5">
           {pay && <Tag tone={side ? 'purple' : 'neutral'}>{pay}</Tag>}
           {tags.slice(0, 2).map(t => <Tag key={t as string}>{t}</Tag>)}
           <FairPayBadge job={job} compact />
