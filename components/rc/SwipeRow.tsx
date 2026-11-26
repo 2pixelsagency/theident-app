@@ -11,7 +11,7 @@ const THRESHOLD = 96
 
 // Email-style swipe: drag right to reveal `right` (e.g. Save), left to reveal `left` (e.g. Later).
 // Only horizontal drags are taken over, so the page still scrolls normally; a swipe never counts as a tap.
-export default function SwipeRow({ right, left, children, className }: { right: SwipeAction; left: SwipeAction; children: React.ReactNode; className?: string }) {
+export default function SwipeRow({ right, left, children, className, tour }: { right: SwipeAction; left: SwipeAction; children: React.ReactNode; className?: string; tour?: string }) {
   const [dx, setDx] = useState(0)
   const [dragging, setDragging] = useState(false)
   const start = useRef<{ x: number; y: number; axis: 'x' | 'y' | null } | null>(null)
@@ -61,7 +61,7 @@ export default function SwipeRow({ right, left, children, className }: { right: 
   const progress = Math.min(1, Math.abs(dx) / THRESHOLD)
 
   return (
-    <li className={cx('relative list-none', className)}>
+    <li data-tour={tour} className={cx('relative list-none', className)}>
       {dx !== 0 && (
         <div aria-hidden="true" className={cx('absolute inset-0 flex items-center rounded-[var(--radius)] px-6', TONE[showing.tone], dx > 0 ? 'justify-start' : 'justify-end')} style={{ opacity: 0.35 + progress * 0.65 }}>
           <span className="flex flex-col items-center gap-1 text-[13px] font-medium" style={{ transform: `scale(${0.85 + progress * 0.15})` }}>

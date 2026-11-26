@@ -11,8 +11,8 @@ import { useMe } from '@/lib/rc/me'
 import { fmtDate } from '@/lib/rc/format'
 import { signOutAndReset, type Role } from '@/lib/rc/onboarding'
 
-// Role-aware bottom tab bar, chosen at onboarding (profiles.account_role).
-// Five labelled tabs; your profile lives at the top of More (and on the Home avatar).
+// Role-aware bottom nav, chosen at onboarding (profiles.account_role).
+// Your profile is the avatar top-left on Home (and at the top of More).
 export const NAV: Record<Role, { href: string; label: string; icon: string }[]> = {
   performer: [
     { href: '/home', label: 'Home', icon: 'home' },
@@ -35,24 +35,39 @@ export function isTabRoot(pathname: string, role: Role) {
   return pathname === '/me' || NAV[role].some(n => n.href === pathname)
 }
 
-// Native-style tab bar docked to the bottom: icon + label, active tab = Forest pill with a Lime icon.
+// Instagram-style frosted-glass floating pill (icons only). Active tab gets a Forest circle with a Lime icon;
+// scrolling down shrinks the pill, scrolling up brings it back. Your profile is the avatar top-left on Home.
 export function BottomNav() {
   const pathname = usePathname()
   const { role, unreadMessages } = useMe()
+  const [compact, setCompact] = useState(false)
+
+  useEffect(() => {
+    let last = window.scrollY
+    const onScroll = () => {
+      const y = window.scrollY
+      if (y > last + 8 && y > 80) setCompact(true)
+      else if (y < last - 8 || y < 40) setCompact(false)
+      last = y
+    }
+    window.addEventListener('scroll', onScroll, { passive: true })
+    return () => window.removeEventListener('scroll', onScroll)
+  }, [])
+
   return (
-    <nav aria-label="Main" className="fixed inset-x-0 bottom-0 z-40 border-t border-line-soft bg-surface/90 pb-[env(safe-area-inset-bottom)] backdrop-blur-xl backdrop-saturate-150 lg:hidden">
-      <ul className="mx-auto flex h-[60px] max-w-[480px] items-stretch md:max-w-[640px]">
+    <nav aria-label="Main" className="pointer-events-none fixed inset-x-0 bottom-0 z-40 flex justify-center px-5 pb-[max(20px,calc(env(safe-area-inset-bottom)+10px))] lg:hidden">
+      <ul className={cx('pointer-events-auto flex w-full items-center justify-between rounded-full border border-white/60 bg-surface/55 px-2 shadow-[0_10px_30px_-10px_rgb(0_0_0/0.3)] backdrop-blur-xl backdrop-saturate-150 transition-all duration-300 ease-out',
+        compact ? 'h-[54px] max-w-[290px]' : 'h-[64px] max-w-[360px]')}>
         {NAV[role].map(item => {
           const active = pathname === item.href || pathname.startsWith(item.href + '/') || (item.href === '/menu' && pathname === '/me')
           return (
-            <li key={item.href} className="flex-1">
-              <Link href={item.href} aria-current={active ? 'page' : undefined}
-                className={cx('flex h-full flex-col items-center justify-center gap-0.5 text-[10.5px] font-semibold transition-colors active:opacity-60', active ? 'text-forest' : 'text-muted')}>
-                <span className={cx('relative flex h-7 w-12 items-center justify-center rounded-full transition-colors duration-300', active && 'bg-forest text-lime')}>
-                  <Icon name={item.icon} className="size-[21px]" strokeWidth={active ? 2 : 1.7} />
-                  {item.href === '/chats' && unreadMessages > 0 && <span className="absolute right-2 top-0.5 size-2 rounded-full bg-red ring-2 ring-surface" />}
-                </span>
-                {item.label}
+            <li key={item.href} className="flex flex-1 justify-center">
+              <Link href={item.href} aria-label={item.label} aria-current={active ? 'page' : undefined} data-tour={'tab-' + item.href.slice(1)}
+                className={cx('relative flex items-center justify-center rounded-full transition-all duration-300',
+                  active ? 'bg-forest text-lime' : 'text-ink/75 hover:text-ink',
+                  compact ? 'size-10' : 'size-12')}>
+                <Icon name={item.icon} className={compact ? 'size-[22px]' : 'size-6'} strokeWidth={active ? 2 : 1.6} />
+                {item.href === '/chats' && unreadMessages > 0 && <span className="absolute bottom-2 right-2 size-2 rounded-full bg-red ring-2 ring-surface" />}
               </Link>
             </li>
           )
@@ -98,7 +113,7 @@ export function SideNav() {
     const active = pathname === item.href || pathname.startsWith(item.href + '/')
     return (
       <li key={item.href}>
-        <Link href={item.href} aria-label={item.label} aria-current={active ? 'page' : undefined}
+        <Link href={item.href} aria-label={item.label} aria-current={active ? 'page' : undefined} data-tour={'tab-' + item.href.slice(1)}
           className={cx('group relative flex size-11 items-center justify-center rounded-[14px] transition-colors duration-300', active ? 'bg-forest text-lime' : 'text-muted hover:bg-sand hover:text-ink')}>
           <Icon name={item.icon} className="size-[22px]" strokeWidth={active ? 2 : 1.6} />
           {!!badge && <span className="absolute right-1.5 top-1.5 size-2 rounded-full bg-red ring-2 ring-surface" />}
@@ -110,13 +125,13 @@ export function SideNav() {
   return (
     <aside aria-label="Main" className="fixed inset-y-0 left-0 z-40 hidden w-[76px] flex-col items-center border-r border-line-soft bg-sand py-5 lg:flex">
       <Link href="/home" aria-label="The Ident home" className="flex size-11 items-center justify-center rounded-full bg-forest text-lime"><LogoMark className="size-5" /></Link>
-      <Link href="/me" aria-label="Your profile" className="mt-5 rounded-full ring-2 ring-transparent transition hover:ring-line"><Avatar src={profile?.picture_url} name={name} size={40} /></Link>
+      <Link href="/me" data-tour="profile" aria-label="Your profile" className="mt-5 rounded-full ring-2 ring-transparent transition hover:ring-line"><Avatar src={profile?.picture_url} name={name} size={40} /></Link>
       <nav className="scrollbar-none mt-6 flex w-full flex-1 flex-col items-center overflow-y-auto">
         <ul className="flex flex-col items-center gap-1">{NAV[role].filter(n => n.href !== '/me' && n.href !== '/menu').map(n => link(n, n.href === '/chats' ? unreadMessages : undefined))}
           {link({ href: '/inbox', label: 'Notifications', icon: 'bell' }, unreadNotifications)}
         </ul>
         <span className="my-4 h-px w-8 bg-line" />
-        <button type="button" onClick={() => setMore(m => !m)} aria-expanded={more} aria-controls="rail-more" aria-label={more ? 'Close more' : 'More: diary, pay, tax, digs…'}
+        <button type="button" data-tour="tab-menu" onClick={() => setMore(m => !m)} aria-expanded={more} aria-controls="rail-more" aria-label={more ? 'Close more' : 'More: diary, pay, tax, digs…'}
           className={cx('group relative flex size-11 items-center justify-center rounded-[14px] transition-colors duration-300', more || moreActive ? 'bg-forest text-lime' : 'text-muted hover:bg-sand hover:text-ink')}>
           <Icon name="plus" className={cx('size-[22px] transition-transform duration-300', more && 'rotate-45')} strokeWidth={2} />
         </button>
@@ -159,16 +174,15 @@ export function SideNav() {
 export function HomeHeader({ subline }: { subline?: string }) {
   const { name, profile, unreadNotifications } = useMe()
   return (
-    // One compact row: avatar (your profile) · greeting + date · notifications. Tabs cover search, chats and castings.
-    <header className="flex items-center gap-3 px-4 pb-3 pt-[max(14px,env(safe-area-inset-top))]">
-      <Link href="/me" aria-label="Your profile" className="shrink-0 rounded-full">
-        <Avatar src={profile?.picture_url} name={name} size={42} />
-      </Link>
-      <div className="min-w-0 flex-1">
-        <h1 className="min-h-[1.2em] truncate font-display text-[22px] font-bold leading-tight tracking-[-0.03em]"><Typewriter key={name} text={'Hi, ' + name} once="home-greeting" /></h1>
-        <p className="truncate text-[13px] text-muted">{subline ?? fmtDate(new Date(), { weekday: 'long', day: 'numeric', month: 'long' })}</p>
+    <header className="px-4 pb-2 pt-[max(16px,env(safe-area-inset-top))]">
+      <div className="flex items-center justify-between">
+        <Link href="/me" aria-label="Your profile" data-tour="profile-home" className="rounded-full">
+          <Avatar src={profile?.picture_url} name={name} size={40} />
+        </Link>
+        <span data-tour="home-alerts"><IconButton icon="bell" label="Notifications" href="/inbox" dot={unreadNotifications > 0} /></span>
       </div>
-      <IconButton icon="bell" label="Notifications" href="/inbox" dot={unreadNotifications > 0} />
+      <h1 className="mt-4 min-h-[1.2em] font-display text-[30px] font-bold tracking-[-0.03em]"><Typewriter key={name} text={'Hi, ' + name} once="home-greeting" /></h1>
+      <p className="rise mt-1 text-sm text-muted" style={{ '--d': '350ms' } as React.CSSProperties}>{subline ?? fmtDate(new Date(), { weekday: 'long', day: 'numeric', month: 'long' })}</p>
     </header>
   )
 }

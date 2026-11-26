@@ -59,7 +59,7 @@ export default function PostingsPage() {
     <>
       <PageHeader title="Your postings" />
       <div className="px-4 pb-8">
-        <Button variant="dark" size="lg" full icon="plus" href="/postings/new">Post a job</Button>
+        <div data-tour="postings-new"><Button variant="dark" size="lg" full icon="plus" href="/postings/new">Post a job</Button></div>
 
         <div className="mt-5"><TabChips value={tab} onChange={setTab} options={[{ value: 'open', label: 'Open', count: grouped.open.length }, { value: 'shortlisting', label: 'Shortlisting', count: grouped.shortlisting.length }, { value: 'closed', label: 'Closed', count: grouped.closed.length }]} /></div>
 

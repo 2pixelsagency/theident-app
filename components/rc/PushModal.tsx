@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import Icon from '@/components/rc/Icon'
 import { toast } from '@/components/rc/ui'
 import { enablePush, pushState, type PushState } from '@/lib/rc/push'
+import { TOUR_KEY } from '@/components/rc/Tour'
 
 const SEEN_KEY = 'ident.pushModalSeen'
 const WEEK = 7 * 864e5
@@ -15,7 +16,8 @@ export default function PushModal({ caster }: { caster?: boolean }) {
   const [busy, setBusy] = useState(false)
   useEffect(() => {
     let live = true
-    try { if (Date.now() - Number(localStorage.getItem(SEEN_KEY) || 0) < WEEK) return } catch { return }
+    // Not while the first-run tour is still to come / running — it asks next visit instead
+    try { if (Date.now() - Number(localStorage.getItem(SEEN_KEY) || 0) < WEEK || !localStorage.getItem(TOUR_KEY)) return } catch { return }
     const t = setTimeout(() => pushState().then(s => { if (live && (s === 'off' || s === 'ios-install')) setState(s) }), 2500)
     return () => { live = false; clearTimeout(t) }
   }, [])
