@@ -50,8 +50,7 @@ export default function MenuPage() {
       {!caster && (<>
         <p className="mb-2 mt-6 text-xs font-semibold uppercase tracking-[0.08em] text-muted">Money</p>
         <Card className="divide-y divide-line overflow-hidden">
-          <ListRow icon="card" title="Pay & earnings" sub="Payments, invoices and what to set aside" href="/pay" />
-          <ListRow icon="pound" title="Tax & expenses" sub="Receipts and your tax estimate" href="/tax" />
+          <ListRow icon="pound" title="Money" sub="Income, invoices, expenses and tax" href="/money" />
         </Card>
       </>)}
 

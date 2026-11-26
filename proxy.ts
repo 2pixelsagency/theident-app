@@ -12,7 +12,7 @@ const APP = 'https://app.theident.me'
 // Pages that belong to the website
 const SITE = /^\/(performers|casting|pricing|contact|privacy|terms|people|jobs|auditions|blog|casting-calls|spotlight-alternative|mandy-alternative|spotlight-alternatives|casting-websites-uk|acting-auditions-uk|casting-platforms-for-emerging-actors|find-acting-jobs|about)(\/|$)/
 // Pages that belong to the app (signed-in screens, auth and onboarding)
-const APP_PATHS = /^\/(home|welcome|start|auth|login|forgot-password|reset-password|verify|confirm|find|castings|chats|me|talent|postings|settings|inbox|todo|blocks|diary|pay|tax|plan|menu|join|admin|classes|digs|whats-on)(\/|$)/
+const APP_PATHS = /^\/(home|welcome|start|auth|login|forgot-password|reset-password|verify|confirm|find|castings|chats|me|talent|postings|settings|inbox|todo|blocks|diary|pay|tax|money|plan|menu|join|admin|classes|digs|whats-on)(\/|$)/
 
 export function proxy(request: NextRequest) {
   const host = (request.headers.get('host') || '').toLowerCase().split(':')[0]

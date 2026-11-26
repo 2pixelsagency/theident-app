@@ -20,7 +20,7 @@ export default function InvoicesPage() {
     return (data || []) as Invoice[]
   }, [id])
 
-  if (loading || !data) return <><BackHeader title="Invoices" back="/pay" /><PageLoading /></>
+  if (loading || !data) return <><BackHeader title="Invoices" back="/money" /><PageLoading /></>
   const unpaid = data.filter(i => i.status === 'sent')
   const outstanding = unpaid.reduce((s, i) => s + Number(i.total), 0)
   const overdue = unpaid.filter(isOverdue)
@@ -29,7 +29,7 @@ export default function InvoicesPage() {
 
   return (
     <>
-      <BackHeader title="Invoices" back="/pay" right={<Button size="sm" icon="plus" href="/pay/invoices/new">New</Button>} />
+      <BackHeader title="Invoices" back="/money" right={<Button size="sm" icon="plus" href="/pay/invoices/new">New</Button>} />
       <div className="px-4 pb-10">
         <div className="grid grid-cols-2 gap-3">
           <div className="rounded-[var(--radius)] bg-dark p-4 text-white">

@@ -117,7 +117,7 @@ function Editor({ initial, invoice, profileId, onSaved }: { initial: Draft; invo
     toast('Invoice sent to ' + saved.client_email)
   }
 
-  // Paid → also logged as a payment in Pay & earnings (and removed again if undone)
+  // Paid → also logged as a payment in Money (and removed again if undone)
   const togglePaid = async () => {
     const saved = invoice || (await save(true))
     if (!saved) return
@@ -127,7 +127,7 @@ function Editor({ initial, invoice, profileId, onSaved }: { initial: Draft; invo
       if (error) { setBusy(null); toast('Couldn’t log the payment'); return }
       const { data: upd } = await supabase.from('invoices').update({ status: 'paid', paid_at: new Date().toISOString(), payment_id: pay.id }).eq('id', saved.id).select('*').single()
       if (upd) onSaved(upd as Invoice)
-      toast('Marked as paid · added to Pay & earnings')
+      toast('Marked as paid · added to Money')
     } else {
       if (saved.payment_id) await supabase.from('payments').delete().eq('id', saved.payment_id)
       const { data: upd } = await supabase.from('invoices').update({ status: saved.sent_at ? 'sent' : 'draft', paid_at: null, payment_id: null }).eq('id', saved.id).select('*').single()
