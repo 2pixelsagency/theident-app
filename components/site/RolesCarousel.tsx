@@ -107,7 +107,7 @@ export default function RolesCarousel({ limit = 12 }: { limit?: number }) {
   const [pos, setPos] = useState({ p: 0, start: true, end: false })
   const { data } = useAsync(async () => {
     const today = toISODate(new Date())
-    const { data: jobs } = await supabase.from('jobs').select(JOB_SELECT).eq('is_published', true).eq('is_side_hustle', kind === 'side')
+    const { data: jobs } = await supabase.from('jobs').select(JOB_SELECT).eq('is_published', true).eq('is_demo', false).eq('is_side_hustle', kind === 'side')
       .or('application_deadline.is.null,application_deadline.gte.' + today).order('created_at', { ascending: false }).limit(limit)
     const list = (jobs || []) as unknown as Job[]
     const [posters, { data: counts }] = await Promise.all([
