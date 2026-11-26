@@ -24,7 +24,7 @@ Applied through the shared primitives in `components/rc/ui.tsx`, so screens inhe
 - Buttons, segmented tabs, search fields and chips are pills; inputs 14px radius with a Forest focus + Lime ring.
 - Headings in Bricolage bold (`PageHeader` 24→36px, `SectionTitle` 20px); eyebrows are 12px dot labels in Forest.
 - Switches: Forest track with a Lime knob. Progress bars fill Forest. Icon tiles and empty states use round badges.
-- Nav: the active tab is a Forest pill with a Lime icon; the desktop rail sits on Sand.
+- Nav: on the desktop rail the active tab is a Forest pill with a Lime icon (rail sits on Sand); the mobile pill uses a neutral white highlight.
 
 ## Hard rules
 - **Text on Lime is always Ink**, never white. Lime is the accent, not a body-text colour on Paper (too little contrast).
@@ -39,7 +39,7 @@ Applied through the shared primitives in `components/rc/ui.tsx`, so screens inhe
 ## Screen direction
 - **Talent profile = immersive full-bleed card:** near-full-screen headshot; name in large display type, an "Open to work" status pill and role tag overlaid on a dark bottom scrim; floating primary + secondary actions; a social-proof line; details (showreel, about, skills, credits) scroll below. Reuse the card style for the public profile and a swipeable casting deck.
 - **Stateful profile action** by casting relationship: *Invite to audition* (not engaged) → *Recall* (auditioned) → *Make offer / Book* (chosen). Drive it from the application record.
-- **Role-aware bottom nav = see-through frosted floating pill (icons only, shrinks on scroll, sliding Forest highlight):** performer = Home · Find · Castings · Chats · +; caster = Home · Talent · Postings · Chats · +. The + opens a panel of everything else (Profile, Money, Diary, Goals… Settings). Home header: profile picture top-left, notifications bell top-right, animated "Hi, name" greeting. Main tabs have no back arrow; inner screens do. Chosen at onboarding. ("Find" = the job board; don't label the personal pipeline "Roles" — use Castings/Diary.)
+- **Role-aware bottom nav = see-through frosted floating pill (icons only, shrinks on scroll, sliding neutral white highlight with an ink icon — no green):** performer = Home · Find · Castings · Chats · +; caster = Home · Talent · Postings · Chats · +. The + opens a panel of everything else (Profile, Money, Diary, Goals… Settings). Home header: profile picture top-left, notifications bell top-right, animated "Hi, name" greeting. Main tabs have no back arrow; inner screens do. Chosen at onboarding. ("Find" = the job board; don't label the personal pipeline "Roles" — use Castings/Diary.)
 - **Dashboard top bar:** "Hi, [name]" greeting with thin outline icons (inbox-with-dot, bell, chat, search).
 - **Auth & onboarding:** the Perform / Cast toggle on the photo log-in screen picks the side once. Sign up = create account → one-question-at-a-time onboarding from question 1 → plan → that side's dashboard. Email verification is a soft gate (browse yes; apply/post after verifying).
 
