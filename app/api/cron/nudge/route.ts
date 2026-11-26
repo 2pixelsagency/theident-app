@@ -6,6 +6,7 @@ export const runtime = 'nodejs'
 
 // Daily (vercel.json cron): one "Have you forgotten about us?" email to people who signed up
 // 1–14 days ago and never started a membership. Each person gets it at most once (nudge_sent_at).
+// Placeholder profiles and accounts that never signed in are skipped.
 export async function GET(req: NextRequest) {
   const secret = process.env.CRON_SECRET
   if (!secret || req.headers.get('authorization') !== 'Bearer ' + secret) return NextResponse.json({ error: 'unauthorised' }, { status: 401 })
@@ -22,7 +23,8 @@ export async function GET(req: NextRequest) {
   let sent = 0
   for (const p of rows || []) {
     const { data: { user } } = await db.auth.admin.getUserById(p.id)
-    if (!user?.email) continue
+    // Skip placeholder profiles (unclaimed @pending.theident.me) and anyone who never signed in — not real sign-ups
+    if (!user?.email || user.email.endsWith('@pending.theident.me') || !user.last_sign_in_at) continue
     // Mark first so a retry or overlapping run can never send twice
     await db.from('profiles').update({ nudge_sent_at: new Date().toISOString() }).eq('id', p.id)
     if (await sendEmail(user.email, 'Have you forgotten about us?', nudgeEmail({ firstName: p.first_name, caster: p.account_role === 'caster' }))) sent++
