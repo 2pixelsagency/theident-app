@@ -35,7 +35,7 @@ export function isTabRoot(pathname: string, role: Role) {
   return pathname === '/me' || NAV[role].some(n => n.href === pathname)
 }
 
-// Frosted, see-through floating pill. The dark highlight slides between tabs; the last button is a +
+// Frosted, see-through floating pill. A neutral white highlight slides between tabs (no colour — the pill sits over busy screens); the last button is a +
 // that opens everything that isn't a tab (it turns into ×). Scrolling down shrinks the pill.
 export function BottomNav() {
   const pathname = usePathname()
@@ -81,13 +81,13 @@ export function BottomNav() {
             <li key={n.href} style={{ transitionDelay: plus ? k * 25 + 'ms' : '0ms' }} className={cx('transition-all duration-300', plus ? 'translate-y-0 opacity-100' : 'translate-y-2 opacity-0')}>
               <Link href={n.href} role="menuitem" tabIndex={plus ? 0 : -1} onClick={() => setPlus(false)}
                 className="flex h-[74px] flex-col items-center justify-center gap-1.5 rounded-[16px] text-center text-[12px] font-semibold leading-tight text-ink transition active:scale-95 hover:bg-white/60">
-                <span className="flex size-9 items-center justify-center rounded-full bg-mint text-forest"><Icon name={n.icon} className="size-[18px]" strokeWidth={1.8} /></span>
+                <span className="flex size-9 items-center justify-center rounded-full bg-white/80 text-ink shadow-card"><Icon name={n.icon} className="size-[18px]" strokeWidth={1.8} /></span>
                 {n.label}
               </Link>
             </li>
           ))}
         </ul>
-        <Link href="/menu" tabIndex={plus ? 0 : -1} onClick={() => setPlus(false)} className="mt-1.5 flex h-10 items-center justify-center gap-1 rounded-[14px] text-[13px] font-semibold text-green-ink hover:bg-white/60">
+        <Link href="/menu" tabIndex={plus ? 0 : -1} onClick={() => setPlus(false)} className="mt-1.5 flex h-10 items-center justify-center gap-1 rounded-[14px] text-[13px] font-semibold text-ink hover:bg-white/60">
           See everything <Icon name="arrow-right" className="size-3.5" strokeWidth={2} />
         </Link>
       </div>
@@ -96,14 +96,14 @@ export function BottomNav() {
         <ul className={cx('pointer-events-auto relative flex w-full items-center rounded-full border border-white/40 bg-surface/25 px-2 shadow-[0_10px_30px_-12px_rgb(0_0_0/0.35)] backdrop-blur-2xl backdrop-saturate-[1.8] transition-all duration-300 ease-out',
           compact ? 'h-[54px] max-w-[290px]' : 'h-[64px] max-w-[360px]')}>
           {/* Sliding highlight behind the active tab */}
-          <span aria-hidden="true" className={cx('pointer-events-none absolute top-1/2 rounded-full bg-forest shadow-[0_6px_16px_-6px_rgb(0_0_0/0.5)] transition-all duration-500 ease-[cubic-bezier(.3,1.35,.5,1)]', activeIdx < 0 || plus ? 'scale-50 opacity-0' : 'scale-100 opacity-100')}
+          <span aria-hidden="true" className={cx('pointer-events-none absolute top-1/2 rounded-full bg-surface shadow-[0_4px_14px_-4px_rgb(0_0_0/0.25)] transition-all duration-500 ease-[cubic-bezier(.3,1.35,.5,1)]', activeIdx < 0 || plus ? 'scale-50 opacity-0' : 'scale-100 opacity-100')}
             style={{ width: size, height: size, marginTop: -size / 2, left: `calc(8px + (100% - 16px) * ${(Math.max(activeIdx, 0) + 0.5) / slots} - ${size / 2}px)` }} />
           {tabs.map((item, k) => {
             const active = k === activeIdx && !plus
             return (
               <li key={item.href} className="relative flex flex-1 justify-center">
                 <Link href={item.href} aria-label={item.label} aria-current={active ? 'page' : undefined} data-tour={'tab-' + item.href.slice(1)} onClick={() => setPlus(false)}
-                  className={cx('relative flex items-center justify-center rounded-full transition-[color,transform] duration-300 active:scale-90', active ? 'text-lime' : 'text-ink/75 hover:text-ink', compact ? 'size-10' : 'size-12')}>
+                  className={cx('relative flex items-center justify-center rounded-full transition-[color,transform] duration-300 active:scale-90', active ? 'text-ink' : 'text-ink/65 hover:text-ink', compact ? 'size-10' : 'size-12')}>
                   <Icon name={item.icon} className={cx('transition-transform duration-300', compact ? 'size-[22px]' : 'size-6', active && 'scale-110')} strokeWidth={active ? 2 : 1.6} />
                   {item.href === '/chats' && unreadMessages > 0 && <span className="absolute bottom-2 right-2 size-2 rounded-full bg-red ring-2 ring-surface" />}
                 </Link>
@@ -112,7 +112,7 @@ export function BottomNav() {
           })}
           <li className="relative flex flex-1 justify-center">
             <button type="button" onClick={() => setPlus(o => !o)} aria-expanded={plus} aria-controls="nav-plus" aria-label={plus ? 'Close' : 'More'} data-tour="tab-menu"
-              className={cx('relative flex items-center justify-center rounded-full transition-all duration-300 active:scale-90', plus ? 'bg-forest text-lime' : 'text-ink/75 hover:text-ink', compact ? 'size-10' : 'size-12')}>
+              className={cx('relative flex items-center justify-center rounded-full transition-all duration-300 active:scale-90', plus ? 'bg-surface text-ink shadow-[0_4px_14px_-4px_rgb(0_0_0/0.25)]' : 'text-ink/65 hover:text-ink', compact ? 'size-10' : 'size-12')}>
               <Icon name="plus" className={cx('transition-transform duration-300', compact ? 'size-[22px]' : 'size-6', plus && 'rotate-[135deg]')} strokeWidth={2} />
             </button>
           </li>
