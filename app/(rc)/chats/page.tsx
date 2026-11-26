@@ -57,7 +57,7 @@ export default function ChatsPage() {
 
   return (
     <>
-      <PageHeader title="Chats" right={<div className="flex items-center gap-1"><IconButton icon="users" label="Find people" href="/talent" /><IconButton icon="hash" label="Join with a code" onClick={() => setJoining(true)} /><IconButton icon="pen" label="New cast chat" href="/chats/new" className="text-green-ink" /></div>} />
+      <PageHeader title="Chats" right={<div className="flex items-center gap-1"><IconButton icon="users" label="Find people" href="/talent" /><span data-tour="chats-join"><IconButton icon="hash" label="Join with a code" onClick={() => setJoining(true)} /></span><span data-tour="chats-new"><IconButton icon="pen" label="New cast chat" href="/chats/new" className="text-green-ink" /></span></div>} />
       <div className="px-4 pb-8">
         <SearchField value={q} onChange={setQ} placeholder="Search messages…" />
         <div className="mt-3"><TabChips value={filter} onChange={setFilter} options={[{ value: 'all', label: 'All' }, { value: 'casting', label: 'Casting' }, { value: 'cast', label: 'Cast & crew' }]} /></div>

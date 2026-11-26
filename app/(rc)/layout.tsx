@@ -38,7 +38,7 @@ function Shell({ children }: { children: React.ReactNode }) {
       {profile && !noPlan && <Tour role={role} autoStart={pathname === '/home'} />}
       {/* Phone: single column. Desktop: beside the slim rail — boards and Home go wide, detail screens stay readable. */}
       <div className={noPlan ? '' : 'lg:pl-[76px]'}>
-        <div className={cx('mx-auto min-h-dvh w-full max-w-[480px] md:max-w-[640px] lg:pb-12', WIDE.test(pathname) ? 'lg:max-w-[1180px] lg:px-6' : 'lg:max-w-[760px]', showNav && 'pb-[calc(84px+env(safe-area-inset-bottom))] lg:pb-12')}><Suspense fallback={<PageLoading />}>{paywalled ? <div className="flex min-h-dvh flex-col px-6 pb-8"><PlanPaywall role={role} next={pathname} /></div> : gated ? <VerifyGate action={gated} />
+        <div className={cx('mx-auto min-h-dvh w-full max-w-[480px] md:max-w-[640px] lg:pb-12', WIDE.test(pathname) ? 'lg:max-w-[1180px] lg:px-6' : 'lg:max-w-[760px]', showNav && 'pb-32 lg:pb-12')}><Suspense fallback={<PageLoading />}>{paywalled ? <div className="flex min-h-dvh flex-col px-6 pb-8"><PlanPaywall role={role} next={pathname} /></div> : gated ? <VerifyGate action={gated} />
           : desktop && ASIDE.test(pathname) ? (
             <div className="grid grid-cols-[minmax(0,1fr)_340px] gap-6 pt-6">
               <div className="min-w-0">{children}</div>

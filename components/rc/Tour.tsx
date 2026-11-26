@@ -1,79 +1,163 @@
 'use client'
 
-import { useEffect, useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useEffect, useRef, useState } from 'react'
+import { usePathname, useRouter } from 'next/navigation'
 import Icon from './Icon'
 import { Button, cx } from './ui'
 import type { Role } from '@/lib/rc/onboarding'
 
-// A short first-run tour of The Ident, so nobody misses a feature. Shown once per device on Home;
-// replay any time from More → Take the tour (it fires the 'ident:tour' event).
-const KEY = 'ident-tour-v1'
-type Step = { icon: string; tone: string; title: string; body: string; href?: string; cta?: string }
+// Interactive first-run tour: it walks across the app's screens, dims everything except the real
+// button it's talking about, and points at it ("tap here to filter jobs"). Targets are marked in the
+// UI with data-tour="…"; a step can list several (the first visible one wins: phone tab bar vs desktop rail).
+// Shown once per device on Home; replay any time from More → Take the tour (fires 'ident:tour').
+export const TOUR_KEY = 'ident-tour-v2'
+type Step = { route: string; targets?: string[]; title: string; body: string }
 
 const STEPS: Record<Role, Step[]> = {
   performer: [
-    { icon: 'sparkle', tone: 'bg-lime text-forest', title: 'Welcome to The Ident', body: 'Find roles, apply with your reel and track every self-tape, recall and booking — all in one place. Here’s a 30-second look around.' },
-    { icon: 'search', tone: 'bg-mint text-green-ink', title: 'Find work', body: 'Castings, auditions and side hustles with the pay and closing date up front. Save searches and apply in a tap.', href: '/find', cta: 'Open Find' },
-    { icon: 'briefcase', tone: 'bg-butter text-ink', title: 'Track your castings', body: 'Every application moves from applied to self-tape, recall, pencil and booked. Deadlines land in your Diary.', href: '/castings', cta: 'Open Castings' },
-    { icon: 'user', tone: 'bg-blossom text-ink', title: 'Your profile', body: 'Headshots, showreel, credits and skills. Upload your CV — including the one from Spotlight or Mandy — and we’ll fill it in for you.', href: '/me/edit', cta: 'Customise profile' },
-    { icon: 'menu', tone: 'bg-chip text-ink', title: 'Everything else is in More', body: 'Diary, Goals, To do, People, Your postings, What’s on, Classes, Theatre digs, Money (pay, invoices, expenses and tax) and Settings.', href: '/menu', cta: 'Open More' },
+    { route: '/home', title: 'Welcome to The Ident 👋', body: 'A 30-second look around — we’ll show you exactly where everything lives.' },
+    { route: '/home', targets: ['profile-home', 'profile'], title: 'Your profile', body: 'Tap your picture for your profile — headshots, showreel, credits and skills. Upload your CV and we’ll fill it in for you.' },
+    { route: '/home', targets: ['home-alerts', 'tab-inbox'], title: 'Your alerts', body: 'Invites, self-tape requests, recalls and bookings land here the moment casting gets in touch.' },
+    { route: '/home', targets: ['tab-find'], title: 'Find work', body: 'Tap here for castings, auditions and side hustles — pay and closing date up front.' },
+    { route: '/find', targets: ['find-search'], title: 'Search roles', body: 'Type a role, skill or place — try “dancer London”.' },
+    { route: '/find', targets: ['find-filters'], title: 'Filter jobs', body: 'Tap Filters to narrow by type, pay, age and skills. Saved and Later keep your shortlist.' },
+    { route: '/find', targets: ['find-job'], title: 'Open a role', body: 'Tap a card for the full brief and apply in one tap. Swipe right to save it, left for later.' },
+    { route: '/castings', targets: ['tab-castings'], title: 'Your castings', body: 'Everything you’ve applied for lives here.' },
+    { route: '/castings', targets: ['castings-stages'], title: 'Track every stage', body: 'Each application moves from applied to self-tape, recall, pencil and booked — tap a stage to filter.' },
+    { route: '/castings', targets: ['castings-diary'], title: 'Your diary', body: 'Self-tape deadlines, recalls and shows go straight into your diary.' },
+    { route: '/chats', targets: ['tab-chats'], title: 'Chats', body: 'Messages from casting directors and your cast chats.' },
+    { route: '/chats', targets: ['chats-new'], title: 'Start a cast chat', body: 'Make a group for your show — polls, events with RSVPs and photos for the whole company.' },
+    { route: '/chats', targets: ['chats-join'], title: 'Join with a code', body: 'Been sent a cast chat code? Tap here to join.' },
+    { route: '/menu', targets: ['more-grid', 'tab-menu'], title: 'Everything else', body: 'Money (pay, invoices, tax), Diary, Goals, Classes, Theatre digs and more.' },
   ],
   caster: [
-    { icon: 'sparkle', tone: 'bg-lime text-forest', title: 'Welcome to The Ident', body: 'Post roles, review tapes and book your cast — all in one place. Here’s a 30-second look around.' },
-    { icon: 'megaphone', tone: 'bg-mint text-green-ink', title: 'Post a role', body: 'Ask for exactly the materials you need, add an NDA and a closing date. Applicants arrive with reels and CVs.', href: '/postings', cta: 'Open Postings' },
-    { icon: 'users', tone: 'bg-butter text-ink', title: 'Search talent', body: 'Find performers by skill, playing age and place — then invite them to apply or add them to a shortlist.', href: '/talent', cta: 'Open Talent' },
-    { icon: 'chat', tone: 'bg-blossom text-ink', title: 'Recall and book', body: 'Request a self-tape, set a video call or recall in person, then book — with cast chats for everyone you hire.', href: '/chats', cta: 'Open Chats' },
-    { icon: 'menu', tone: 'bg-chip text-ink', title: 'Everything else is in More', body: 'Diary, What’s on, Classes, Theatre digs, Settings and Help.', href: '/menu', cta: 'Open More' },
+    { route: '/home', title: 'Welcome to The Ident 👋', body: 'A 30-second look around — we’ll show you exactly where everything lives.' },
+    { route: '/home', targets: ['profile-home', 'profile'], title: 'Your company profile', body: 'Tap your picture for your profile — logo, credits and the shows you’ve cast.' },
+    { route: '/home', targets: ['home-alerts', 'tab-inbox'], title: 'Your alerts', body: 'New applicants, replies and confirmations land here.' },
+    { route: '/home', targets: ['tab-talent'], title: 'Search talent', body: 'Tap here to find performers by skill, playing age and place.' },
+    { route: '/talent', targets: ['talent-search'], title: 'Search', body: 'Type a name, skill or school — then invite them to apply or shortlist them.' },
+    { route: '/postings', targets: ['tab-postings'], title: 'Your postings', body: 'Every role you’ve posted and everyone who applied.' },
+    { route: '/postings', targets: ['postings-new'], title: 'Post a role', body: 'Ask for exactly the materials you need, add an NDA and a closing date.' },
+    { route: '/chats', targets: ['tab-chats'], title: 'Chats', body: 'Talk to applicants and run cast chats for everyone you book.' },
+    { route: '/chats', targets: ['chats-new'], title: 'Start a cast chat', body: 'One group for your company — polls, events and photos.' },
+    { route: '/menu', targets: ['more-grid', 'tab-menu'], title: 'Everything else', body: 'Diary, What’s on, Classes, Theatre digs and Settings.' },
   ],
 }
 
 export function startTour() { window.dispatchEvent(new Event('ident:tour')) }
 
+const findTarget = (names: string[]) => {
+  for (const n of names) {
+    for (const el of document.querySelectorAll<HTMLElement>(`[data-tour="${n}"]`)) {
+      const r = el.getBoundingClientRect()
+      if (r.width > 0 && r.height > 0) return el
+    }
+  }
+  return null
+}
+
 export default function Tour({ role, autoStart }: { role: Role; autoStart: boolean }) {
   const router = useRouter()
+  const pathname = usePathname()
   const [open, setOpen] = useState(false)
   const [i, setI] = useState(0)
+  // Where the current step's target is (null = not found → centred card)
+  const [found, setFound] = useState<{ i: number; rect: DOMRect | null } | null>(null)
+  const started = useRef(false)
+  const steps = STEPS[role], s = steps[Math.min(i, steps.length - 1)], last = i === steps.length - 1
 
   useEffect(() => {
-    const show = () => { setI(0); setOpen(true) }
+    const show = () => { started.current = true; setFound(null); setI(0); setOpen(true) }
     window.addEventListener('ident:tour', show)
     let seen = true
-    try { seen = !!localStorage.getItem(KEY) } catch { /* storage blocked: don't nag */ }
-    if (autoStart && !seen) show()
+    try { seen = !!localStorage.getItem(TOUR_KEY) } catch { /* storage blocked: don't nag */ }
+    if (autoStart && !seen && !started.current) show()
     return () => window.removeEventListener('ident:tour', show)
   }, [autoStart])
 
-  const close = () => { setOpen(false); try { localStorage.setItem(KEY, '1') } catch { /* */ } }
+  const close = (goHome?: boolean) => {
+    setOpen(false)
+    try { localStorage.setItem(TOUR_KEY, '1') } catch { /* */ }
+    if (goHome) router.push('/home')
+  }
+
+  // Go to the step's screen
+  useEffect(() => {
+    if (open && pathname !== s.route) router.push(s.route)
+  }, [open, i, pathname, s.route, router])
+
+  // Find the target once the screen has loaded, bring it into view and follow it on scroll/resize
+  useEffect(() => {
+    if (!open || !s.targets || pathname !== s.route) return
+    let el: HTMLElement | null = null, tries = 0, timer: ReturnType<typeof setTimeout>
+    const measure = () => { if (el) setFound({ i, rect: el.getBoundingClientRect() }) }
+    const poll = () => {
+      el = findTarget(s.targets!)
+      if (el) { el.scrollIntoView({ block: 'center', behavior: 'smooth' }); timer = setTimeout(measure, 380); return }
+      if (++tries > 40) { setFound({ i, rect: null }); return } // ~6s: show the card in the middle instead
+      timer = setTimeout(poll, 150)
+    }
+    timer = setTimeout(poll, 60)
+    window.addEventListener('scroll', measure, true)
+    window.addEventListener('resize', measure)
+    return () => { clearTimeout(timer); window.removeEventListener('scroll', measure, true); window.removeEventListener('resize', measure) }
+  }, [open, i, pathname, s.route, s.targets])
+
   useEffect(() => {
     if (!open) return
-    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') close() }
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') close()
+      if (e.key === 'ArrowRight') setI(k => Math.min(k + 1, steps.length - 1))
+      if (e.key === 'ArrowLeft') setI(k => Math.max(k - 1, 0))
+    }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [open])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, steps.length])
 
   if (!open) return null
-  const steps = STEPS[role], s = steps[i], last = i === steps.length - 1
+  const here = found && found.i === i ? found : null
+  const waiting = !!s.targets && (!here || pathname !== s.route)
+  const rect = !waiting && here ? here.rect : null
+
+  // Card placement: below the target if there's more room there, else above; arrow points at its centre
+  const vw = window.innerWidth, vh = window.innerHeight
+  const w = Math.min(340, vw - 24)
+  let cardStyle: React.CSSProperties = { left: (vw - w) / 2, top: '50%', transform: 'translateY(-50%)', width: w }
+  let arrow: { left: number; below: boolean } | null = null
+  if (rect) {
+    const below = vh - rect.bottom >= rect.top
+    const left = Math.min(Math.max(rect.left + rect.width / 2 - w / 2, 12), vw - w - 12)
+    cardStyle = below ? { left, top: rect.bottom + 16, width: w } : { left, bottom: vh - rect.top + 16, width: w }
+    arrow = { left: Math.min(Math.max(rect.left + rect.width / 2 - left - 8, 18), w - 34), below }
+  }
+
   return (
-    <div role="dialog" aria-modal="true" aria-labelledby="tour-title" className="fixed inset-0 z-[70] flex items-end justify-center bg-ink/40 p-4 backdrop-blur-sm sm:items-center">
-      <div className="w-full max-w-[420px] rounded-[28px] bg-surface p-6 shadow-[0_30px_80px_-30px_rgb(0_0_0/0.5)]">
-        <div className="flex items-center justify-between">
-          <div className="flex gap-1.5" aria-hidden="true">
-            {steps.map((_, k) => <span key={k} className={cx('h-1.5 rounded-full transition-all duration-300', k === i ? 'w-6 bg-forest' : 'w-1.5 bg-line-strong')} />)}
+    <div role="dialog" aria-modal="true" aria-labelledby="tour-title" className="fixed inset-0 z-[70]">
+      {rect
+        ? <div aria-hidden="true" className="pointer-events-none absolute rounded-[16px] ring-2 ring-lime transition-all duration-300 ease-out"
+            style={{ left: rect.left - 6, top: rect.top - 6, width: rect.width + 12, height: rect.height + 12, boxShadow: '0 0 0 9999px rgb(0 0 0 / 0.6)' }} />
+        : <div aria-hidden="true" className="absolute inset-0 bg-black/60" />}
+      {rect && <span aria-hidden="true" className="pointer-events-none absolute size-3 animate-ping rounded-full bg-lime" style={{ left: rect.left + rect.width / 2 - 6, top: rect.top + rect.height / 2 - 6 }} />}
+
+      {!waiting && (
+        <div key={i} className="absolute animate-[rc-step-in_240ms_ease-out] rounded-[22px] bg-surface p-5 shadow-[0_24px_60px_-20px_rgb(0_0_0/0.55)]" style={cardStyle}>
+          {arrow && <span aria-hidden="true" className={cx('absolute size-4 rotate-45 bg-surface', arrow.below ? '-top-2' : '-bottom-2')} style={{ left: arrow.left }} />}
+          <div className="flex items-center justify-between">
+            <span className="text-[12px] font-semibold text-muted">{i + 1} of {steps.length}</span>
+            <button type="button" onClick={() => close()} className="text-[13px] font-semibold text-muted hover:text-ink">Skip tour</button>
           </div>
-          <button type="button" onClick={close} className="text-[14px] font-semibold text-muted hover:text-ink">Skip</button>
+          <h2 id="tour-title" className="mt-1.5 font-display text-[20px] font-bold leading-tight tracking-[-0.02em]">{s.title}</h2>
+          <p className="mt-1.5 text-[14px] leading-relaxed text-muted-strong">{s.body}</p>
+          <div className="mt-4 flex items-center gap-2">
+            <div className="flex flex-1 gap-1" aria-hidden="true">
+              {steps.map((_, k) => <span key={k} className={cx('h-1.5 rounded-full transition-all duration-300', k === i ? 'w-4 bg-forest' : 'w-1.5 bg-line-strong')} />)}
+            </div>
+            {i > 0 && <Button size="sm" variant="outline" onClick={() => setI(i - 1)} aria-label="Back"><Icon name="arrow-left" className="size-4" /></Button>}
+            <Button size="sm" trailingIcon={last ? undefined : 'arrow-right'} onClick={() => (last ? close(true) : setI(i + 1))}>{last ? 'Done' : i === 0 ? 'Show me' : 'Next'}</Button>
+          </div>
         </div>
-        <div key={i} className="animate-[rc-step-in_260ms_ease-out]">
-          <span className={cx('mt-6 flex size-14 items-center justify-center rounded-2xl', s.tone)}><Icon name={s.icon} strokeWidth={2} className="size-7" /></span>
-          <h2 id="tour-title" className="mt-5 text-[24px] leading-tight">{s.title}</h2>
-          <p className="mt-2 text-[15px] leading-relaxed text-muted-strong">{s.body}</p>
-          {s.href && <button type="button" onClick={() => { close(); router.push(s.href!) }} className="mt-3 inline-flex items-center gap-1.5 text-[14px] font-semibold text-green-ink">{s.cta} <Icon name="arrow-right" strokeWidth={2} className="size-4" /></button>}
-        </div>
-        <div className="mt-7 flex gap-3">
-          {i > 0 && <Button variant="outline" className="flex-1" onClick={() => setI(i - 1)}>Back</Button>}
-          <Button className="flex-[2]" trailingIcon={last ? undefined : 'arrow-right'} onClick={() => (last ? close() : setI(i + 1))}>{last ? 'Get started' : 'Next'}</Button>
-        </div>
-      </div>
+      )}
     </div>
   )
 }

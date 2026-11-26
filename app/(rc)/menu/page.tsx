@@ -43,7 +43,7 @@ export default function MenuPage() {
         <Link href="/settings" aria-label="Settings" className="inline-flex size-10 items-center justify-center rounded-full text-ink active:opacity-60"><Icon name="settings" className="size-[22px]" /></Link>
       </div>
 
-      <Link href="/me" className="mt-3 flex items-center gap-3 rounded-[var(--radius)] bg-dark p-3.5 text-white">
+      <Link href="/me" data-tour="more-profile" className="mt-3 flex items-center gap-3 rounded-[var(--radius)] bg-dark p-3.5 text-white">
         <Avatar src={profile?.picture_url} name={fullName(profile)} size={44} />
         <span className="min-w-0 flex-1">
           <span className="block truncate text-[16px] font-semibold">{profile?.first_name || 'Your profile'}</span>
@@ -52,7 +52,7 @@ export default function MenuPage() {
         <span className="text-[13px] font-semibold text-lime">View profile ›</span>
       </Link>
 
-      <ul className="mt-4 grid grid-cols-3 gap-2.5">
+      <ul data-tour="more-grid" className="mt-4 grid grid-cols-3 gap-2.5">
         {tiles.map(t => (
           <li key={t.href}>
             <Link href={t.href} className="flex h-[84px] flex-col items-center justify-center gap-2 rounded-[16px] border border-line-soft bg-surface px-1 text-center text-[12.5px] font-semibold leading-tight shadow-card active:scale-[.97] transition-transform">

@@ -121,9 +121,9 @@ export default function FindPage() {
       <PageHeader title="Find" />
       <div className="px-4 pb-24">
         <FindTabs value={tab} onChange={v => v === 'people' ? router.replace('/talent', { scroll: false }) : setTab(v)} />
-        <div className="mt-3"><SearchField value={q} onChange={setQ} placeholder={tab === 'side' ? 'Teaching, promo, modelling, events…' : 'Search roles, skills, locations…'} /></div>
+        <div className="mt-3" data-tour="find-search"><SearchField value={q} onChange={setQ} placeholder={tab === 'side' ? 'Teaching, promo, modelling, events…' : 'Search roles, skills, locations…'} /></div>
 
-        <div className="scrollbar-none -mx-4 mt-3 flex gap-2 overflow-x-auto px-4">
+        <div data-tour="find-filters" className="scrollbar-none -mx-4 mt-3 flex gap-2 overflow-x-auto px-4">
           <Chip selected={active > 0} onClick={() => setShowFilters(true)}><Icon name="sliders" className="size-4" /> Filters{active > 0 ? ' · ' + active : ''}</Chip>
           <Chip selected={view === 'saved'} onClick={() => setView(v => (v === 'saved' ? 'all' : 'saved'))}><Icon name="bookmark" className="size-3.5" /> Saved{savedCount ? ' ' + savedCount : ''}</Chip>
           <Chip selected={view === 'later'} onClick={() => setView(v => (v === 'later' ? 'all' : 'later'))}><Icon name="clock" className="size-3.5" /> Later{laterCount ? ' ' + laterCount : ''}</Chip>
@@ -160,10 +160,10 @@ export default function FindPage() {
             action={active ? <Button size="sm" variant="outline" onClick={() => setFilters(NO_FILTERS)}>Clear filters</Button> : undefined} />
         ) : (
           <ul className="space-y-3">
-            {shown.map(j => {
+            {shown.map((j, k) => {
               const { right, left } = swipeFor(j)
               return (
-                <SwipeRow key={j.id} right={right} left={left}>
+                <SwipeRow key={j.id} right={right} left={left} tour={k === 0 ? 'find-job' : undefined}>
                   <JobCard bare job={j} poster={data?.posters.get(j.created_by || '')} saved={listOf(j.id) === 'saved'}
                     onToggleSave={() => (listOf(j.id) === 'saved' ? moveTo(j.id, null) : moveTo(j.id, 'saved', 'Saved'))} />
                 </SwipeRow>

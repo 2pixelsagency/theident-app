@@ -74,7 +74,7 @@ export default function TalentPage() {
       <PageHeader title={isCaster ? 'Talent' : 'Find'} />
       <div className="px-4 pb-24">
         {!isCaster && <FindTabs value="people" />}
-        <div className={isCaster ? '' : 'mt-4'}><SearchField value={q} onChange={setQ} placeholder={who === 'casting' ? 'Search casting directors, companies…' : 'Search names, skills, schools…'} /></div>
+        <div data-tour="talent-search" className={isCaster ? '' : 'mt-4'}><SearchField value={q} onChange={setQ} placeholder={who === 'casting' ? 'Search casting directors, companies…' : 'Search names, skills, schools…'} /></div>
         <div className="scrollbar-none -mx-4 mt-3 flex gap-2 overflow-x-auto px-4">
           {who === 'performers' && <Chip selected={extra > 0} onClick={() => setShowFilters(true)}><Icon name="sliders" className="size-4" /> More filters{extra ? ' · ' + extra : ''}</Chip>}
           {myTown && <Chip selected={nearMe} onClick={() => setNearMe(v => !v)}><Icon name="pin" className="size-4" /> Near {myTown}</Chip>}

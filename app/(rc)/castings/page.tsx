@@ -63,9 +63,9 @@ export default function CastingsPage() {
 
   return (
     <>
-      <PageHeader title="Castings" right={<IconButton icon="calendar" label="Diary" href="/diary" />} />
+      <PageHeader title="Castings" right={<span data-tour="castings-diary"><IconButton icon="calendar" label="Diary" href="/diary" /></span>} />
       <div className="px-4">
-        <TabChips value={tab} onChange={setTab} options={TABS.map(t => ({ ...t, count: t.value === 'active' ? undefined : counts[t.value] }))} />
+        <div data-tour="castings-stages"><TabChips value={tab} onChange={setTab} options={TABS.map(t => ({ ...t, count: t.value === 'active' ? undefined : counts[t.value] }))} /></div>
         {loading ? <PageLoading /> : shown.length === 0 ? (
           <Empty icon="briefcase" title={tab === 'active' ? 'Nothing in play yet' : 'Nothing here right now'}
             sub={tab === 'active' ? 'Roles you apply for appear here and move along as casting gets back to you.' : 'When casting moves one of your roles to this stage it’ll show up here.'}
