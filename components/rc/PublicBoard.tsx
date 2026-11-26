@@ -39,7 +39,7 @@ export default function PublicBoard() {
   const [cat, setCat] = useState<Cat>('all')
   const { data, loading } = useAsync(async () => {
     const today = toISODate(new Date())
-    const { data: jobs } = await supabase.from('jobs').select(JOB_SELECT).eq('is_published', true)
+    const { data: jobs } = await supabase.from('jobs').select(JOB_SELECT).eq('is_published', true).eq('is_demo', false) // demo roles are for testers in the app only
       .or('application_deadline.is.null,application_deadline.gte.' + today).order('created_at', { ascending: false }).limit(300)
     const list = (jobs || []) as unknown as Job[]
     return { jobs: list, posters: await loadPosters(list.map(j => j.created_by)) }
