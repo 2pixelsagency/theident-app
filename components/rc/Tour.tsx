@@ -28,7 +28,7 @@ const STEPS: Record<Role, Step[]> = {
     { route: '/chats', targets: ['tab-chats'], title: 'Chats', body: 'Messages from casting directors and your cast chats.' },
     { route: '/chats', targets: ['chats-new'], title: 'Start a cast chat', body: 'Make a group for your show — polls, events with RSVPs and photos for the whole company.' },
     { route: '/chats', targets: ['chats-join'], title: 'Join with a code', body: 'Been sent a cast chat code? Tap here to join.' },
-    { route: '/menu', targets: ['more-grid', 'tab-menu'], title: 'Everything else', body: 'Money (pay, invoices, tax), Diary, Goals, Classes, Theatre digs and more.' },
+    { route: '/home', targets: ['tab-menu'], title: 'Everything else', body: 'Tap + for Money (pay, invoices, tax), Diary, Goals, Classes, Theatre digs and Settings.' },
   ],
   caster: [
     { route: '/home', title: 'Welcome to The Ident 👋', body: 'A 30-second look around — we’ll show you exactly where everything lives.' },
@@ -40,7 +40,7 @@ const STEPS: Record<Role, Step[]> = {
     { route: '/postings', targets: ['postings-new'], title: 'Post a role', body: 'Ask for exactly the materials you need, add an NDA and a closing date.' },
     { route: '/chats', targets: ['tab-chats'], title: 'Chats', body: 'Talk to applicants and run cast chats for everyone you book.' },
     { route: '/chats', targets: ['chats-new'], title: 'Start a cast chat', body: 'One group for your company — polls, events and photos.' },
-    { route: '/menu', targets: ['more-grid', 'tab-menu'], title: 'Everything else', body: 'Diary, What’s on, Classes, Theatre digs and Settings.' },
+    { route: '/home', targets: ['tab-menu'], title: 'Everything else', body: 'Tap + for Diary, What’s on, Classes, Theatre digs and Settings.' },
   ],
 }
 
@@ -118,7 +118,10 @@ export default function Tour({ role, autoStart }: { role: Role; autoStart: boole
   if (!open) return null
   const here = found && found.i === i ? found : null
   const waiting = !!s.targets && (!here || pathname !== s.route)
-  const rect = !waiting && here ? here.rect : null
+  // While the next target is being found, keep the last highlight where it is (no flash to a full dim);
+  // it then glides to the new button and the card fades back in.
+  const rect = waiting ? found?.rect ?? null : here ? here.rect : null
+  const shownStep = waiting && found ? steps[found.i] ?? s : s
 
   // Card placement: below the target if there's more room there, else above; arrow points at its centre
   const vw = window.innerWidth, vh = window.innerHeight
@@ -132,23 +135,24 @@ export default function Tour({ role, autoStart }: { role: Role; autoStart: boole
     arrow = { left: Math.min(Math.max(rect.left + rect.width / 2 - left - 8, 18), w - 34), below }
   }
 
+  // One spotlight element that always exists: a hole around the target, or a zero-size hole in the middle
+  const hole = rect ? { left: rect.left - 6, top: rect.top - 6, width: rect.width + 12, height: rect.height + 12 } : { left: vw / 2, top: vh / 2, width: 0, height: 0 }
+
   return (
     <div role="dialog" aria-modal="true" aria-labelledby="tour-title" className="fixed inset-0 z-[70]">
-      {rect
-        ? <div aria-hidden="true" className="pointer-events-none absolute rounded-[16px] ring-2 ring-lime transition-all duration-300 ease-out"
-            style={{ left: rect.left - 6, top: rect.top - 6, width: rect.width + 12, height: rect.height + 12, boxShadow: '0 0 0 9999px rgb(0 0 0 / 0.6)' }} />
-        : <div aria-hidden="true" className="absolute inset-0 bg-black/60" />}
-      {rect && <span aria-hidden="true" className="pointer-events-none absolute size-3 animate-ping rounded-full bg-lime" style={{ left: rect.left + rect.width / 2 - 6, top: rect.top + rect.height / 2 - 6 }} />}
+      <div aria-hidden="true" className={cx('pointer-events-none absolute rounded-[16px] transition-all duration-500 ease-[cubic-bezier(.3,1.1,.4,1)]', rect && 'ring-2 ring-lime')}
+        style={{ ...hole, boxShadow: '0 0 0 9999px rgb(0 0 0 / 0.6)' }} />
+      {rect && !waiting && <span aria-hidden="true" className="pointer-events-none absolute size-3 animate-ping rounded-full bg-lime" style={{ left: rect.left + rect.width / 2 - 6, top: rect.top + rect.height / 2 - 6 }} />}
 
-      {!waiting && (
-        <div key={i} className="absolute animate-[rc-step-in_240ms_ease-out] rounded-[22px] bg-surface p-5 shadow-[0_24px_60px_-20px_rgb(0_0_0/0.55)]" style={cardStyle}>
+      {(
+        <div className={cx('absolute rounded-[22px] bg-surface p-5 shadow-[0_24px_60px_-20px_rgb(0_0_0/0.55)] transition-[opacity,transform] duration-200', waiting ? 'pointer-events-none translate-y-1 opacity-0' : 'translate-y-0 opacity-100')} style={cardStyle}>
           {arrow && <span aria-hidden="true" className={cx('absolute size-4 rotate-45 bg-surface', arrow.below ? '-top-2' : '-bottom-2')} style={{ left: arrow.left }} />}
           <div className="flex items-center justify-between">
             <span className="text-[12px] font-semibold text-muted">{i + 1} of {steps.length}</span>
             <button type="button" onClick={() => close()} className="text-[13px] font-semibold text-muted hover:text-ink">Skip tour</button>
           </div>
-          <h2 id="tour-title" className="mt-1.5 font-display text-[20px] font-bold leading-tight tracking-[-0.02em]">{s.title}</h2>
-          <p className="mt-1.5 text-[14px] leading-relaxed text-muted-strong">{s.body}</p>
+          <h2 id="tour-title" className="mt-1.5 font-display text-[20px] font-bold leading-tight tracking-[-0.02em]">{shownStep.title}</h2>
+          <p className="mt-1.5 text-[14px] leading-relaxed text-muted-strong">{shownStep.body}</p>
           <div className="mt-4 flex items-center gap-2">
             <div className="flex flex-1 gap-1" aria-hidden="true">
               {steps.map((_, k) => <span key={k} className={cx('h-1.5 rounded-full transition-all duration-300', k === i ? 'w-4 bg-forest' : 'w-1.5 bg-line-strong')} />)}
