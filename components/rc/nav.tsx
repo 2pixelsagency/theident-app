@@ -35,12 +35,13 @@ export function isTabRoot(pathname: string, role: Role) {
   return pathname === '/me' || NAV[role].some(n => n.href === pathname)
 }
 
-// Instagram-style frosted-glass floating pill (icons only). Active tab gets a Forest circle with a Lime icon;
-// scrolling down shrinks the pill, scrolling up brings it back. Your profile is the avatar top-left on Home.
+// Frosted, see-through floating pill. The dark highlight slides between tabs; the last button is a +
+// that opens everything that isn't a tab (it turns into ×). Scrolling down shrinks the pill.
 export function BottomNav() {
   const pathname = usePathname()
   const { role, unreadMessages } = useMe()
   const [compact, setCompact] = useState(false)
+  const [plus, setPlus] = useState(false)
 
   useEffect(() => {
     let last = window.scrollY
@@ -53,27 +54,71 @@ export function BottomNav() {
     window.addEventListener('scroll', onScroll, { passive: true })
     return () => window.removeEventListener('scroll', onScroll)
   }, [])
+  useEffect(() => {
+    if (!plus) return
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') setPlus(false) }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [plus])
+
+  const tabs = NAV[role].filter(n => n.href !== '/menu')
+  const slots = tabs.length + 1
+  const activeIdx = tabs.findIndex(t => pathname === t.href || pathname.startsWith(t.href + '/'))
+  const size = compact ? 40 : 48
+  const extras = [{ href: '/me', label: 'Profile', icon: 'user' }, ...MORE[role], { href: '/settings', label: 'Settings', icon: 'settings' }]
 
   return (
-    <nav aria-label="Main" className="pointer-events-none fixed inset-x-0 bottom-0 z-40 flex justify-center px-5 pb-[max(20px,calc(env(safe-area-inset-bottom)+10px))] lg:hidden">
-      <ul className={cx('pointer-events-auto flex w-full items-center justify-between rounded-full border border-white/60 bg-surface/55 px-2 shadow-[0_10px_30px_-10px_rgb(0_0_0/0.3)] backdrop-blur-xl backdrop-saturate-150 transition-all duration-300 ease-out',
-        compact ? 'h-[54px] max-w-[290px]' : 'h-[64px] max-w-[360px]')}>
-        {NAV[role].map(item => {
-          const active = pathname === item.href || pathname.startsWith(item.href + '/') || (item.href === '/menu' && pathname === '/me')
-          return (
-            <li key={item.href} className="flex flex-1 justify-center">
-              <Link href={item.href} aria-label={item.label} aria-current={active ? 'page' : undefined} data-tour={'tab-' + item.href.slice(1)}
-                className={cx('relative flex items-center justify-center rounded-full transition-all duration-300',
-                  active ? 'bg-forest text-lime' : 'text-ink/75 hover:text-ink',
-                  compact ? 'size-10' : 'size-12')}>
-                <Icon name={item.icon} className={compact ? 'size-[22px]' : 'size-6'} strokeWidth={active ? 2 : 1.6} />
-                {item.href === '/chats' && unreadMessages > 0 && <span className="absolute bottom-2 right-2 size-2 rounded-full bg-red ring-2 ring-surface" />}
+    <>
+      {/* + panel: rises out of the pill */}
+      <div aria-hidden={!plus} onClick={() => setPlus(false)}
+        className={cx('fixed inset-0 z-40 bg-ink/15 backdrop-blur-[2px] transition-opacity duration-300 lg:hidden', plus ? 'opacity-100' : 'pointer-events-none opacity-0')} />
+      <div id="nav-plus" role="menu" aria-label="More"
+        className={cx('fixed inset-x-5 z-50 mx-auto max-w-[360px] origin-bottom-right rounded-[26px] border border-white/50 bg-surface/70 p-3 shadow-[0_20px_50px_-20px_rgb(0_0_0/0.45)] backdrop-blur-2xl backdrop-saturate-150 transition-all duration-300 ease-[cubic-bezier(.2,.9,.3,1.2)] lg:hidden',
+          plus ? 'translate-y-0 scale-100 opacity-100' : 'pointer-events-none translate-y-4 scale-90 opacity-0')}
+        style={{ bottom: 'calc(max(20px, env(safe-area-inset-bottom) + 10px) + 76px)' }}>
+        <ul className="grid grid-cols-3 gap-1.5">
+          {extras.map((n, k) => (
+            <li key={n.href} style={{ transitionDelay: plus ? k * 25 + 'ms' : '0ms' }} className={cx('transition-all duration-300', plus ? 'translate-y-0 opacity-100' : 'translate-y-2 opacity-0')}>
+              <Link href={n.href} role="menuitem" tabIndex={plus ? 0 : -1} onClick={() => setPlus(false)}
+                className="flex h-[74px] flex-col items-center justify-center gap-1.5 rounded-[16px] text-center text-[12px] font-semibold leading-tight text-ink transition active:scale-95 hover:bg-white/60">
+                <span className="flex size-9 items-center justify-center rounded-full bg-mint text-forest"><Icon name={n.icon} className="size-[18px]" strokeWidth={1.8} /></span>
+                {n.label}
               </Link>
             </li>
-          )
-        })}
-      </ul>
-    </nav>
+          ))}
+        </ul>
+        <Link href="/menu" tabIndex={plus ? 0 : -1} onClick={() => setPlus(false)} className="mt-1.5 flex h-10 items-center justify-center gap-1 rounded-[14px] text-[13px] font-semibold text-green-ink hover:bg-white/60">
+          See everything <Icon name="arrow-right" className="size-3.5" strokeWidth={2} />
+        </Link>
+      </div>
+
+      <nav aria-label="Main" className="pointer-events-none fixed inset-x-0 bottom-0 z-50 flex justify-center px-5 pb-[max(20px,calc(env(safe-area-inset-bottom)+10px))] lg:hidden">
+        <ul className={cx('pointer-events-auto relative flex w-full items-center rounded-full border border-white/40 bg-surface/25 px-2 shadow-[0_10px_30px_-12px_rgb(0_0_0/0.35)] backdrop-blur-2xl backdrop-saturate-[1.8] transition-all duration-300 ease-out',
+          compact ? 'h-[54px] max-w-[290px]' : 'h-[64px] max-w-[360px]')}>
+          {/* Sliding highlight behind the active tab */}
+          <span aria-hidden="true" className={cx('pointer-events-none absolute top-1/2 rounded-full bg-forest shadow-[0_6px_16px_-6px_rgb(0_0_0/0.5)] transition-all duration-500 ease-[cubic-bezier(.3,1.35,.5,1)]', activeIdx < 0 || plus ? 'scale-50 opacity-0' : 'scale-100 opacity-100')}
+            style={{ width: size, height: size, marginTop: -size / 2, left: `calc(8px + (100% - 16px) * ${(Math.max(activeIdx, 0) + 0.5) / slots} - ${size / 2}px)` }} />
+          {tabs.map((item, k) => {
+            const active = k === activeIdx && !plus
+            return (
+              <li key={item.href} className="relative flex flex-1 justify-center">
+                <Link href={item.href} aria-label={item.label} aria-current={active ? 'page' : undefined} data-tour={'tab-' + item.href.slice(1)} onClick={() => setPlus(false)}
+                  className={cx('relative flex items-center justify-center rounded-full transition-[color,transform] duration-300 active:scale-90', active ? 'text-lime' : 'text-ink/75 hover:text-ink', compact ? 'size-10' : 'size-12')}>
+                  <Icon name={item.icon} className={cx('transition-transform duration-300', compact ? 'size-[22px]' : 'size-6', active && 'scale-110')} strokeWidth={active ? 2 : 1.6} />
+                  {item.href === '/chats' && unreadMessages > 0 && <span className="absolute bottom-2 right-2 size-2 rounded-full bg-red ring-2 ring-surface" />}
+                </Link>
+              </li>
+            )
+          })}
+          <li className="relative flex flex-1 justify-center">
+            <button type="button" onClick={() => setPlus(o => !o)} aria-expanded={plus} aria-controls="nav-plus" aria-label={plus ? 'Close' : 'More'} data-tour="tab-menu"
+              className={cx('relative flex items-center justify-center rounded-full transition-all duration-300 active:scale-90', plus ? 'bg-forest text-lime' : 'text-ink/75 hover:text-ink', compact ? 'size-10' : 'size-12')}>
+              <Icon name="plus" className={cx('transition-transform duration-300', compact ? 'size-[22px]' : 'size-6', plus && 'rotate-[135deg]')} strokeWidth={2} />
+            </button>
+          </li>
+        </ul>
+      </nav>
+    </>
   )
 }
 
