@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import Icon from './Icon'
 import ProfileView, { heroPrimary, heroSecondary } from './ProfileView'
+import PortfolioProfile from './PortfolioProfile'
 import { Toaster, toast } from './ui'
 import { supabase } from '@/lib/supabase'
 import { fullName } from '@/lib/rc/format'
@@ -28,8 +29,16 @@ export default function PublicProfileClient({ full, inSite = false }: { full: Fu
   const share = async () => {
     try { if (navigator.share) await navigator.share({ title: fullName(p), url: window.location.href }); else { await navigator.clipboard.writeText(window.location.href); toast('Link copied') } } catch { /* dismissed */ }
   }
+  // On the website (/performers/<slug>) a performer gets the portfolio layout; the app keeps the LinkedIn-style view
+  if (inSite) return (
+    <div className="bg-bg text-ink">
+      <PortfolioProfile data={full} onShare={share} />
+      <p className="pb-12 text-center text-xs text-faint">Made with <Link href="https://www.theident.me/" className="font-medium text-green-ink">The Ident</Link> · <Link href="/people" className="font-medium text-green-ink">Browse more talent</Link></p>
+      <Toaster />
+    </div>
+  )
   return (
-    // On the website (/performers/<slug>) it sits under the site nav as an inset, rounded card
+    // Casting pages (/<slug>) keep the in-app view
     <div className={inSite ? 'bg-bg px-3 pb-16 pt-[84px] text-ink md:px-6 md:pt-[100px]' : 'min-h-dvh bg-bg text-ink'}>
       <div className={inSite ? 'mx-auto w-full max-w-[760px] [&>section:first-child]:overflow-hidden [&>section:first-child]:rounded-[28px]' : 'mx-auto w-full max-w-[480px] md:max-w-[640px] lg:max-w-[720px]'}>
         <ProfileView
