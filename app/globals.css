@@ -172,3 +172,10 @@ button:not(:disabled), [role="button"]:not([aria-disabled="true"]), summary, lab
 :where(.bg-dark, .bg-hero, .bg-forest) :is(.bg-green):not(.bg-green-tint) { background-color: var(--lime); color: var(--ink); }
 :where(.bg-dark, .bg-hero, .bg-forest) :is(.ring-green) { --tw-ring-color: var(--lime); }
 .bg-dark.ring-green, .bg-dark .ring-green { --tw-ring-color: var(--lime); }
+
+/* Public portfolio profile (theident.me/performers/<slug>) */
+@keyframes pf-draw { from { stroke-dashoffset: 420; } to { stroke-dashoffset: 0; } }
+@keyframes pf-card-in { from { opacity: 0; transform: translateY(30px) rotate(-6deg) scale(.94); } to { opacity: 1; transform: rotate(-2deg); } }
+@keyframes pf-blob { 0%, 100% { transform: translate(0, 0) scale(1); } 50% { transform: translate(-18px, 14px) scale(1.08); } }
+@keyframes pf-float { 0%, 100% { transform: translateY(0) rotate(5deg); } 50% { transform: translateY(-10px) rotate(2deg); } }
+@media (prefers-reduced-motion: reduce) { .pf-motion { animation: none !important; } }

@@ -31,7 +31,7 @@ export type ProfileViewProps = {
 }
 
 // Everyone can download the generated (unbranded) CV; the file a member uploaded themselves is only shown to them
-function CvButtons({ data, owner }: { data: FullProfileData; owner?: boolean }) {
+export function CvButtons({ data, owner }: { data: FullProfileData; owner?: boolean }) {
   const [busy, setBusy] = useState<'pdf' | 'file' | null>(null)
   const path = data.profile?.cv_path
   const generate = async () => {
@@ -65,7 +65,7 @@ const isFile = (url: string) => /\/storage\/v1\/object\/public\/reels\/|\.(mp4|w
 
 // The header plays the main reel silently on loop (people who prefer reduced motion get the still).
 // No reel → cover photo or headshot.
-function HeroMedia({ reel, cover, headshot, name }: { reel?: FullProfileData['reels'][number]; cover: string | null | undefined; headshot: string | null | undefined; name: string }) {
+export function HeroMedia({ reel, cover, headshot, name }: { reel?: FullProfileData['reels'][number]; cover: string | null | undefined; headshot: string | null | undefined; name: string }) {
   const [sound, setSound] = useState(false)
   const image = cover || headshot
   const still = reel?.poster_url || cover
@@ -139,7 +139,7 @@ export default function ProfileView(props: ProfileViewProps) {
 }
 
 // genders table ids → labels (1 = prefer not to say: not shown)
-const GENDER_NAMES: Record<number, string> = { 2: 'Non-binary', 3: 'Trans woman', 4: 'Trans man', 5: 'Gender non-conforming', 6: 'Male', 7: 'Female' }
+export const GENDER_NAMES: Record<number, string> = { 2: 'Non-binary', 3: 'Trans woman', 4: 'Trans man', 5: 'Gender non-conforming', 6: 'Male', 7: 'Female' }
 
 // Credits as tabs by production type, like Spotlight / Mandy CVs. Opens on the biggest type
 // (All is last — a full list is too long to land on).
@@ -176,7 +176,7 @@ function CreditTabs({ groups }: { groups: Record<string, Credit[]> }) {
 
 // Skills grouped by category, strongest first, with the level (Native, Highly skilled…) as on Spotlight
 const LEVEL_ORDER = ['Native', 'Highly skilled', 'High standard', 'Skilled']
-function SkillGroups({ skills }: { skills: FullProfileData['skills'] }) {
+export function SkillGroups({ skills }: { skills: FullProfileData['skills'] }) {
   const groups = skills.reduce<Record<string, FullProfileData['skills']>>((acc, s) => { (acc[s.category || 'Other skills'] ||= []).push(s); return acc }, {})
   const rank = (l: string | null) => (l ? LEVEL_ORDER.indexOf(l) : 9)
   return (
