@@ -14,7 +14,8 @@ import type { Credit, FullProfileData } from '@/lib/rc/profile'
 
 // The public, shareable profile on the website (theident.me/performers/<slug>): a personal portfolio
 // rather than the in-app LinkedIn-style view. Name and pitch on the left, showreel on the right, then
-// numbers, credits, skills, gallery and what directors say — with a few gentle animations.
+// numbers, credits, skills, gallery and what directors say. Calm and premium: straight lines, ink/white/Forest,
+// only subtle fades and count-ups.
 export default function PortfolioProfile({ data, onShare }: { data: FullProfileData; onShare: () => void }) {
   const p = data.profile!
   const { reels, skills, credits, brands, testimonials, gallery, training, hair, eyes } = data
@@ -54,7 +55,7 @@ export default function PortfolioProfile({ data, onShare }: { data: FullProfileD
       <section className="relative mx-auto grid max-w-[1180px] items-center gap-10 px-5 pb-14 pt-[104px] md:px-8 md:pt-[124px] lg:min-h-[86vh] lg:grid-cols-[1.05fr_1fr] lg:gap-14">
         <div className="hero-in">
           <div className="rise flex flex-wrap items-center gap-2" style={{ '--d': '0ms' } as React.CSSProperties}>
-            {p.availability_status === 'available' && <span className="inline-flex items-center gap-1.5 rounded-full bg-lime px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.1em] text-ink"><span className="size-1.5 animate-pulse rounded-full bg-forest" /> Open to work</span>}
+            {p.availability_status === 'available' && <span className="inline-flex items-center gap-1.5 rounded-full border border-line bg-surface px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.1em] text-ink"><span className="size-1.5 rounded-full bg-green" /> Open to work</span>}
             {p.pro_verified && <span title={p.pro_verified_via || 'Verified professional'} className="inline-flex items-center gap-1 rounded-full border border-line bg-surface px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.1em] text-ink"><Icon name="shield-check" strokeWidth={2} className="size-3.5" /> Verified pro</span>}
             {grad && <span className="inline-flex items-center gap-1 rounded-full border border-line bg-surface px-3 py-1.5 text-[11px] font-semibold text-ink"><Icon name="graduation-cap" className="size-3.5" />{grad}</span>}
           </div>
@@ -64,15 +65,8 @@ export default function PortfolioProfile({ data, onShare }: { data: FullProfileD
           </p>
           <h1 className="mt-3 font-display text-[52px] font-bold leading-[0.95] tracking-[-0.045em] sm:text-[68px] lg:text-[88px]">
             {words.map((w, k) => (
-              <span key={k} className={cx('rise relative mr-[0.22em] inline-block', k === words.length - 1 && 'text-forest')} style={{ '--d': 140 + k * 110 + 'ms' } as React.CSSProperties}>
+              <span key={k} className="rise relative mr-[0.22em] inline-block" style={{ '--d': 140 + k * 110 + 'ms' } as React.CSSProperties}>
                 {w}
-                {k === 0 && (
-                  // Hand-drawn Lime underline under the first name
-                  <svg aria-hidden="true" viewBox="0 0 300 24" preserveAspectRatio="none" className="pointer-events-none absolute -bottom-[0.12em] left-0 h-[0.22em] w-full overflow-visible">
-                    <path d="M4 16 C 70 4, 150 4, 296 12" fill="none" stroke="var(--lime)" strokeWidth="9" strokeLinecap="round"
-                      className="pf-motion" style={{ strokeDasharray: 420, strokeDashoffset: 420, animation: 'pf-draw 1s cubic-bezier(.5,0,.2,1) 700ms forwards' }} />
-                  </svg>
-                )}
               </span>
             ))}
             {p.is_verified && <span className="rise inline-block align-middle" style={{ '--d': '400ms' } as React.CSSProperties}><VerifiedTick /></span>}
@@ -94,19 +88,17 @@ export default function PortfolioProfile({ data, onShare }: { data: FullProfileD
 
         {/* Showreel card, tilted, with a drifting Lime glow and the headshot floating over the corner */}
         <div className="relative mx-auto w-full max-w-[560px]">
-          <div aria-hidden="true" className="pf-motion absolute -right-6 -top-8 size-[70%] rounded-full bg-lime/50 blur-3xl" style={{ animation: 'pf-blob 9s ease-in-out infinite' }} />
-          <div aria-hidden="true" className="pf-motion absolute -bottom-10 -left-8 size-[45%] rounded-full bg-mint blur-3xl" style={{ animation: 'pf-blob 11s ease-in-out infinite reverse' }} />
-          <div className="pf-motion group relative aspect-[4/5] overflow-hidden rounded-[32px] bg-dark shadow-[0_40px_80px_-30px_rgb(0_0_0/0.55)] transition-transform duration-500 hover:!rotate-0 sm:aspect-[5/4] lg:aspect-[4/5]"
+          <div className="pf-motion relative aspect-[4/5] overflow-hidden rounded-[28px] bg-dark shadow-[0_30px_70px_-35px_rgb(0_0_0/0.45)] sm:aspect-[5/4] lg:aspect-[4/5]"
             style={{ animation: 'pf-card-in 1s cubic-bezier(.2,.8,.2,1) 250ms both' }}>
             <HeroMedia reel={reels[0]} cover={p.banner_url} headshot={p.picture_url} name={name} />
             <div className="pointer-events-none absolute inset-x-0 bottom-0 h-1/3 bg-gradient-to-t from-dark/70 to-transparent" />
             {reels[0] && <span className="absolute left-4 top-4 inline-flex items-center gap-1.5 rounded-full bg-dark/55 px-3 py-1.5 text-[12px] font-semibold text-white backdrop-blur-md"><Icon name="play" className="size-3 fill-current" /> {reels[0].label || 'Showreel'}</span>}
           </div>
-          <div className="pf-motion absolute -bottom-6 -left-4 sm:-left-8" style={{ animation: 'pf-float 6s ease-in-out infinite' }}>
+          <div className="rise absolute -bottom-6 left-6" style={{ '--d': '700ms' } as React.CSSProperties}>
             {p.picture_url
               // eslint-disable-next-line @next/next/no-img-element
-              ? <img src={p.picture_url} alt={name + ' headshot'} className="size-[104px] rounded-[22px] object-cover shadow-[0_20px_40px_-15px_rgb(0_0_0/0.5)] ring-4 ring-bg sm:size-[124px]" />
-              : <span className="block rounded-[22px] ring-4 ring-bg"><Avatar name={name} size={110} /></span>}
+              ? <img src={p.picture_url} alt={name + ' headshot'} className="size-[92px] rounded-[18px] object-cover shadow-[0_16px_32px_-16px_rgb(0_0_0/0.45)] ring-4 ring-bg sm:size-[108px]" />
+              : <span className="block rounded-[18px] ring-4 ring-bg"><Avatar name={name} size={100} /></span>}
           </div>
         </div>
       </section>
@@ -156,7 +148,7 @@ export default function PortfolioProfile({ data, onShare }: { data: FullProfileD
               <li key={r.id}>
                 <a href={r.url} target="_blank" rel="noopener noreferrer" className="group relative block aspect-video overflow-hidden rounded-[22px] bg-dark bg-cover bg-center" style={r.poster_url || p.picture_url ? { backgroundImage: `url(${r.poster_url || p.picture_url})` } : undefined}>
                   <span className="absolute inset-0 bg-gradient-to-t from-dark/75 to-dark/10 transition group-hover:from-dark/60" />
-                  <span className="absolute left-1/2 top-1/2 flex size-14 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full bg-lime text-ink transition duration-300 group-hover:scale-110"><Icon name="play" className="size-5 fill-current" /></span>
+                  <span className="absolute left-1/2 top-1/2 flex size-14 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full bg-white/90 text-ink transition duration-300 group-hover:scale-105"><Icon name="play" className="size-5 fill-current" /></span>
                   <span className="absolute bottom-3 left-4 right-4 truncate text-[14px] font-semibold text-white">{r.label || 'Showreel'}</span>
                 </a>
               </li>
@@ -176,7 +168,7 @@ export default function PortfolioProfile({ data, onShare }: { data: FullProfileD
               <ol className="relative space-y-3 border-l-2 border-line pl-6">
                 {training.map(t => (
                   <li key={t.id} className="relative rounded-[18px] bg-surface p-4 shadow-card">
-                    <span aria-hidden="true" className="absolute -left-[31px] top-5 size-3 rounded-full bg-lime ring-4 ring-bg" />
+                    <span aria-hidden="true" className="absolute -left-[31px] top-5 size-3 rounded-full bg-forest ring-4 ring-bg" />
                     {t.years && <p className="text-[12px] font-semibold text-muted">{t.years}</p>}
                     <p className="text-[15px] font-semibold">{t.school}</p>
                     {t.course && <p className="text-[13px] text-muted-strong">{t.course}</p>}
@@ -184,7 +176,7 @@ export default function PortfolioProfile({ data, onShare }: { data: FullProfileD
                 ))}
                 {!training.length && p.graduate_school && (
                   <li className="relative rounded-[18px] bg-surface p-4 shadow-card">
-                    <span aria-hidden="true" className="absolute -left-[31px] top-5 size-3 rounded-full bg-lime ring-4 ring-bg" />
+                    <span aria-hidden="true" className="absolute -left-[31px] top-5 size-3 rounded-full bg-forest ring-4 ring-bg" />
                     {p.graduate_year && <p className="text-[12px] font-semibold text-muted">{p.graduate_year}</p>}
                     <p className="text-[15px] font-semibold">{p.graduate_school}</p>
                   </li>
@@ -195,7 +187,7 @@ export default function PortfolioProfile({ data, onShare }: { data: FullProfileD
           {skills.length > 0 && (
             <div>
               <SectionTitle eyebrow="Skills" title="What I bring" />
-              <SkillGroups skills={skills} />
+              <SkillGroups skills={skills} plain />
             </div>
           )}
         </section>
@@ -223,7 +215,7 @@ export default function PortfolioProfile({ data, onShare }: { data: FullProfileD
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
             {testimonials.map(t => (
               <figure key={t.id} className="flex flex-col rounded-[24px] bg-forest p-6 text-white transition duration-300 hover:-translate-y-1">
-                <span aria-hidden className="font-display text-5xl leading-none text-lime">“</span>
+                <span aria-hidden className="font-display text-5xl leading-none text-white/40">“</span>
                 <blockquote className="-mt-3 flex-1 text-[16px] leading-relaxed">{t.quote}</blockquote>
                 <figcaption className="mt-5 text-[14px] font-semibold">{t.author_name}{t.author_title && <span className="block text-[12px] font-normal uppercase tracking-[0.06em] text-white/60">{t.author_title}</span>}</figcaption>
               </figure>
@@ -235,11 +227,10 @@ export default function PortfolioProfile({ data, onShare }: { data: FullProfileD
       {/* ---------- Work together ---------- */}
       <section className="mx-auto mt-20 max-w-[1180px] px-5 md:px-8">
         <div className="relative overflow-hidden rounded-[32px] bg-forest px-6 py-12 text-center text-white md:py-16">
-          <div aria-hidden="true" className="pf-motion absolute -right-10 -top-10 size-56 rounded-full bg-lime/25 blur-3xl" style={{ animation: 'pf-blob 10s ease-in-out infinite' }} />
           <h2 className="relative font-display text-[34px] font-bold leading-tight tracking-[-0.03em] md:text-[48px]">Want {p.first_name || 'them'} on your next project?</h2>
           <p className="relative mx-auto mt-3 max-w-[460px] text-[16px] text-white/70">Message, invite to audition or book — all through The Ident.</p>
           <div className="relative mt-7 flex flex-wrap justify-center gap-3">
-            <Link href="/welcome" className="inline-flex items-center gap-2 rounded-full bg-lime px-6 py-3.5 text-[15px] font-semibold text-ink transition hover:-translate-y-0.5"><Icon name="chat" className="size-[18px]" /> Message {p.first_name || ''}</Link>
+            <Link href="/welcome" className="inline-flex items-center gap-2 rounded-full bg-bg px-6 py-3.5 text-[15px] font-semibold text-ink transition hover:bg-white"><Icon name="chat" className="size-[18px]" /> Message {p.first_name || ''}</Link>
             <Link href="/start?role=caster" className="inline-flex items-center rounded-full border border-white/30 px-6 py-3.5 text-[15px] font-semibold text-white transition hover:bg-white/10">I’m casting</Link>
           </div>
         </div>
