@@ -176,7 +176,7 @@ function CreditTabs({ groups }: { groups: Record<string, Credit[]> }) {
 
 // Skills grouped by category, strongest first, with the level (Native, Highly skilled…) as on Spotlight
 const LEVEL_ORDER = ['Native', 'Highly skilled', 'High standard', 'Skilled']
-export function SkillGroups({ skills }: { skills: FullProfileData['skills'] }) {
+export function SkillGroups({ skills, plain }: { skills: FullProfileData['skills']; plain?: boolean }) {
   const groups = skills.reduce<Record<string, FullProfileData['skills']>>((acc, s) => { (acc[s.category || 'Other skills'] ||= []).push(s); return acc }, {})
   const rank = (l: string | null) => (l ? LEVEL_ORDER.indexOf(l) : 9)
   return (
@@ -186,9 +186,9 @@ export function SkillGroups({ skills }: { skills: FullProfileData['skills'] }) {
           <p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.1em] text-muted">{cat}</p>
           <div className="flex flex-wrap gap-2">
             {[...list].sort((a, b) => rank(a.level) - rank(b.level) || a.name.localeCompare(b.name)).map(s => (
-              <span key={s.id} className="inline-flex items-center gap-1.5 rounded-full bg-green-tint px-3 py-1.5 text-[13px] text-green-ink">
+              <span key={s.id} className={cx('inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[13px]', plain ? 'border border-line bg-surface text-ink' : 'bg-green-tint text-green-ink')}>
                 {(s.level === 'Highly skilled' || s.level === 'Native') && <Icon name="star" className="size-3 fill-current" />}{s.name}
-                {s.level && <span className="text-[11px] text-green-ink/70">· {s.level}</span>}
+                {s.level && <span className={cx('text-[11px]', plain ? 'text-muted' : 'text-green-ink/70')}>· {s.level}</span>}
               </span>
             ))}
           </div>
